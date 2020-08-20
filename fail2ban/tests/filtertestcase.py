@@ -215,7 +215,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	# Write: all at once and flush
 	if isinstance(fout, str):
 		fout = open(fout, mode)
-	fout.write('\n'.join(lines))
+	fout.write('\n'.join(lines)+'\n')
 	fout.flush()
 	if isinstance(in_, str): # pragma: no branch - only used with str in test cases
 		# Opened earlier, therefore must close it
@@ -878,7 +878,7 @@ class LogFileMonitor(LogCaptureTestCase):
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 		# and it should have not been enough
 
-		_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=5)
+		_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=12, n=3)
 		self.filter.getFailures(self.name)
 		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
 
@@ -897,7 +897,7 @@ class LogFileMonitor(LogCaptureTestCase):
 		# filter "marked" as the known beginning, otherwise it
 		# would not detect "rotation"
 		self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-											  skip=3, mode='w')
+											  skip=12, n=3, mode='w')
 		self.filter.getFailures(self.name)
 		#self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
@@ -916,7 +916,7 @@ class LogFileMonitor(LogCaptureTestCase):
 
 		# move aside, but leaving the handle still open...
 		os.rename(self.name, self.name + '.bak')
-		_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14).close()
+		_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14, n=1).close()
 		self.filter.getFailures(self.name)
 		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
 		self.assertEqual(self.filter.failManager.getFailTotal(), 3)
@@ -1027,13 +1027,13 @@ def get_monitor_failures_testcase(Filter_):
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 			# Now let's feed it with entries from the file
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=5)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=12)
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 			# and our dummy jail is empty as well
 			self.assertFalse(len(self.jail))
 			# since it should have not been enough
 
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=5)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=12, n=3)
 			if idle:
 				self.waitForTicks(1)
 				self.assertTrue(self.isEmpty(1))
@@ -1052,7 +1052,7 @@ def get_monitor_failures_testcase(Filter_):
 			#return
 			# just for fun let's copy all of them again and see if that results
 			# in a new ban
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=12, n=3)
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 
 		def test_rewrite_file(self):
@@ -1066,7 +1066,7 @@ def get_monitor_failures_testcase(Filter_):
 			# filter "marked" as the known beginning, otherwise it
 			# would not detect "rotation"
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-												  skip=3, mode='w')
+												  skip=12, n=3, mode='w')
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 
 		def _wait4failures(self, count=2):
@@ -1087,13 +1087,13 @@ def get_monitor_failures_testcase(Filter_):
 
 			# move aside, but leaving the handle still open...
 			os.rename(self.name, self.name + '.bak')
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14).close()
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14, n=1).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
 
 			# now remove the moved file
 			_killfile(None, self.name + '.bak')
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100).close()
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=12, n=3).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
@@ -1169,8 +1169,7 @@ def get_monitor_failures_testcase(Filter_):
 
 		def _test_move_into_file(self, interim_kill=False):
 			# if we move a new file into the location of an old (monitored) file
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-									  n=100).close()
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name).close()
 			# make sure that it is monitored first
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
@@ -1181,14 +1180,14 @@ def get_monitor_failures_testcase(Filter_):
 
 			# now create a new one to override old one
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name + '.new',
-									  n=100).close()
+				skip=12, n=3).close()
 			os.rename(self.name + '.new', self.name)
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
 			# and to make sure that it now monitored for changes
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-									  n=100).close()
+				skip=12, n=3).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 9)
 
@@ -1207,7 +1206,7 @@ def get_monitor_failures_testcase(Filter_):
 
 			# create a bogus file in the same directory and see if that doesn't affect
 			open(self.name + '.bak2', 'w').close()
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100).close()
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=12, n=3).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 			_killfile(None, self.name + '.bak2')
@@ -1239,8 +1238,8 @@ def get_monitor_failures_testcase(Filter_):
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01, count=6) # was needed if we write twice above
 
 			# now copy and get even more
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
-      # check for 3 failures (not 9), because 6 already get above...
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=12, n=3)
+			# check for 3 failures (not 9), because 6 already get above...
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			# total count in this test:
 			self.assertEqual(self.filter.failManager.getFailTotal(), 12)
@@ -1606,11 +1605,19 @@ class GetFailures(LogCaptureTestCase):
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailures03(self):
-		output = ('203.162.223.135', 9, 1124013600.0)
+		output = ('203.162.223.135', 6, 1124013600.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=0)
 		self.filter.addFailRegex(r"error,relay=<HOST>,.*550 User unknown")
 		self.filter.getFailures(GetFailures.FILENAME_03)
+		_assert_correct_last_attempt(self, self.filter, output)
+
+	def testGetFailures03_InOperation(self):
+		output = ('203.162.223.135', 9, 1124013600.0)
+
+		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=0)
+		self.filter.addFailRegex(r"error,relay=<HOST>,.*550 User unknown")
+		self.filter.getFailures(GetFailures.FILENAME_03, inOperation=True)
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailures03_Seek1(self):
@@ -1673,6 +1680,7 @@ class GetFailures(LogCaptureTestCase):
 			for enc in (None, 'utf-8', 'ascii'):
 				if enc is not None:
 					self.tearDown();self.setUp();
+					if DefLogSys.getEffectiveLevel() > 7: DefLogSys.setLevel(7); # ensure decode_line logs always
 					self.filter.checkFindTime = False;
 					self.filter.setLogEncoding(enc);
 				# speedup search using exact date pattern:

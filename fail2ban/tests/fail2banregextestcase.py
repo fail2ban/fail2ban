@@ -172,7 +172,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"--print-all-matched",
 			FILENAME_01, RE_00
 		))
-		self.assertLogged('Lines: 19 lines, 0 ignored, 13 matched, 6 missed')
+		self.assertLogged('Lines: 19 lines, 0 ignored, 16 matched, 3 missed')
 
 		self.assertLogged('Error decoding line');
 		self.assertLogged('Continuing to process line ignoring invalid characters')
@@ -186,7 +186,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"--print-all-matched", "--raw",
 			FILENAME_01, RE_00
 		))
-		self.assertLogged('Lines: 19 lines, 0 ignored, 16 matched, 3 missed')
+		self.assertLogged('Lines: 19 lines, 0 ignored, 19 matched, 0 missed')
 
 	def testDirectRE_1raw_noDns(self):
 		self.assertTrue(_test_exec(
@@ -194,7 +194,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"--print-all-matched", "--raw", "--usedns=no",
 			FILENAME_01, RE_00
 		))
-		self.assertLogged('Lines: 19 lines, 0 ignored, 13 matched, 6 missed')
+		self.assertLogged('Lines: 19 lines, 0 ignored, 16 matched, 3 missed')
 		# usage of <F-ID>\S+</F-ID> causes raw handling automatically:
 		self.pruneLog()
 		self.assertTrue(_test_exec(
