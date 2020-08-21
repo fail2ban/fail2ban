@@ -625,11 +625,14 @@ class Filter(JailThread):
 						self.__lastDate = date
 					else:
 						logSys.error("findFailure failed to parse timeText: %s", m)
+				# matched empty value - date is optional or not available - set it to last known or now:
+				elif self.__lastDate and self.__lastDate > MyTime.time() - 60:
+					# set it to last known:
+					tupleLine = ("", self.__lastTimeText, line)
+					date = self.__lastDate
 				else:
-					# matched empty value - date is optional or not available - set it to now:
+					# set it to now:
 					date = MyTime.time()
-					self.__lastTimeText = ""
-					self.__lastDate = date
 			else:
 				tupleLine = ("", "", line)
 			# still no date - try to use last known:
