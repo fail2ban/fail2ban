@@ -125,6 +125,10 @@ class Utils():
 			with self.__lock:
 				self._cache.pop(k, None)
 
+		def clear(self):
+			with self.__lock:
+				self._cache.clear()
+
 
 	@staticmethod
 	def setFBlockMode(fhandle, value):

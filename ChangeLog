@@ -59,12 +59,19 @@ ver. 0.10.6-dev (20??/??/??) - development edition
   - `aggressive`: matches 401 and any variant (with and without username)
 * `filter.d/sshd.conf`: normalizing of user pattern in all RE's, allowing empty user (gh-2749)
 
-### New Features
+### New Features and Enhancements
 * new filter and jail for GitLab recognizing failed application logins (gh-2689)
-
-### Enhancements
 * introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;
 * datetemplate: improved anchor detection for capturing groups `(^...)`;
+* datepattern: improved handling with wrong recognized timestamps (timezones, no datepattern, etc)
+  as well as some warnings signaling user about invalid pattern or zone (gh-2814):
+  - filter gets mode in-operation, which gets activated if filter starts processing of new messages;
+    in this mode a timestamp read from log-line that appeared recently (not an old line), deviating too much
+    from now (up too 24h), will be considered as now (assuming a timezone issue), so could avoid unexpected 
+    bypass of failure (previously exceeding `findtime`);
+  - better interaction with non-matching optional datepattern or invalid timestamps;
+  - implements special datepattern `{NONE}` - allow to find failures totally without date-time in log messages,
+    whereas filter will use now as timestamp (gh-2802)
 * performance optimization of `datepattern` (better search algorithm in datedetector, especially for single template);
 * fail2ban-client: extended to unban IP range(s) by subnet (CIDR/mask) or hostname (DNS), gh-2791;
 
