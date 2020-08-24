@@ -517,6 +517,11 @@ class IPAddr(object):
 		
 		return (self.addr & mask) == net.addr
 
+	def contains(self, ip):
+		"""Return whether the object (as network) contains given IP
+		"""
+		return isinstance(ip, IPAddr) and (ip == self or ip.isInNet(self))
+
 	# Pre-calculated map: addr to maskplen
 	def __getMaskMap():
 		m6 = (1 << 128)-1

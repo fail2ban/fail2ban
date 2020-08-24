@@ -282,6 +282,8 @@ class DateDetector(object):
 				elif "{DATE}" in key:
 					self.addDefaultTemplate(preMatch=pattern, allDefaults=False)
 					return
+				elif key == "{NONE}":
+					template = _getPatternTemplate('{UNB}^', key)
 				else:
 					template = _getPatternTemplate(pattern, key)
 
