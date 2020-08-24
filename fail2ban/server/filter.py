@@ -113,6 +113,8 @@ class Filter(JailThread):
 		self.onIgnoreRegex = None
 		## if true ignores obsolete failures (failure time < now - findTime):
 		self.checkFindTime = True
+		## shows that filter is in operation mode (processing new messages):
+		self.inOperation = True
 		## if true prevents against retarded banning in case of RC by too many failures (disabled only for test purposes):
 		self.banASAP = True
 		## Ticks counter
@@ -587,16 +589,26 @@ class Filter(JailThread):
 		if self.__ignoreCache: c.set(key, False)
 		return False
 
+	def _logWarnOnce(self, nextLTM, *args):
+		"""Log some issue as warning once per day, otherwise level 7"""
+		if MyTime.time() < getattr(self, nextLTM, 0):
+			if logSys.getEffectiveLevel() <= 7: logSys.log(7, *(args[0]))
+		else:
+			setattr(self, nextLTM, MyTime.time() + 24*60*60)
+			for args in args:
+				logSys.warning('[%s] ' + args[0], self.jailName, *args[1:])
+
 	def processLine(self, line, date=None):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
+		logSys.log(7, "Working on line %r", line)
+
+		noDate = False
 		if date:
 			tupleLine = line
 			self.__lastTimeText = tupleLine[1]
 			self.__lastDate = date
 		else:
-			logSys.log(7, "Working on line %r", line)
-
 			# try to parse date:
 			timeMatch = self.dateDetector.matchTime(line)
 			m = timeMatch[0]
@@ -607,22 +619,59 @@ class Filter(JailThread):
 				tupleLine = (line[:s], m, line[e:])
 				if m: # found and not empty - retrive date:
 					date = self.dateDetector.getTime(m, timeMatch)
-
-				if date is None:
-					if m: logSys.error("findFailure failed to parse timeText: %s", m)
+					if date is not None:
+						# Lets get the time part
+						date = date[0]
+						self.__lastTimeText = m
+						self.__lastDate = date
+					else:
+						logSys.error("findFailure failed to parse timeText: %s", m)
+				# matched empty value - date is optional or not available - set it to last known or now:
+				elif self.__lastDate and self.__lastDate > MyTime.time() - 60:
+					# set it to last known:
+					tupleLine = ("", self.__lastTimeText, line)
 					date = self.__lastDate
 				else:
-					# Lets get the time part
-					date = date[0]
-					self.__lastTimeText = m
+					# set it to now:
+					date = MyTime.time()
+			else:
+				tupleLine = ("", "", line)
+			# still no date - try to use last known:
+			if date is None:
+				noDate = True
+				if self.__lastDate and self.__lastDate > MyTime.time() - 60:
+					tupleLine = ("", self.__lastTimeText, line)
+					date = self.__lastDate
+		
+		if self.checkFindTime:
+			# if in operation (modifications have been really found):
+			if self.inOperation:
+				# if weird date - we'd simulate now for timeing issue (too large deviation from now):
+				if (date is None or date < MyTime.time() - 60 or date > MyTime.time() + 60):
+					# log time zone issue as warning once per day:
+					self._logWarnOnce("_next_simByTimeWarn",
+						("Simulate NOW in operation since found time has too large deviation %s ~ %s +/- %s",
+							date, MyTime.time(), 60),
+						("Please check jail has possibly a timezone issue. Line with odd timestamp: %s", 
+							line))
+					# simulate now as date:
+					date = MyTime.time()
 					self.__lastDate = date
 			else:
-				tupleLine = (line, self.__lastTimeText, "")
-				date = self.__lastDate
+				# in initialization (restore) phase, if too old - ignore:
+				if date is not None and date < MyTime.time() - self.getFindTime():
+					# log time zone issue as warning once per day:
+					self._logWarnOnce("_next_ignByTimeWarn",
+						("Ignore line since time %s < %s - %s",
+							date, MyTime.time(), self.getFindTime()),
+						("Please check jail has possibly a timezone issue. Line with odd timestamp: %s", 
+							line))
+					# ignore - too old (obsolete) entry:
+					return []
 
 		# save last line (lazy convert of process line tuple to string on demand):
 		self.processedLine = lambda: "".join(tupleLine[::2])
-		return self.findFailure(tupleLine, date)
+		return self.findFailure(tupleLine, date, noDate=noDate)
 
 	def processLineAndAdd(self, line, date=None):
 		"""Processes the line for failures and populates failManager
@@ -634,6 +683,9 @@ class Filter(JailThread):
 				fail = element[3]
 				logSys.debug("Processing line with time:%s and ip:%s", 
 						unixTime, ip)
+				# ensure the time is not in the future, e. g. by some estimated (assumed) time:
+				if self.checkFindTime and unixTime > MyTime.time():
+					unixTime = MyTime.time()
 				tick = FailTicket(ip, unixTime, data=fail)
 				if self._inIgnoreIPList(ip, tick):
 					continue
@@ -756,7 +808,7 @@ class Filter(JailThread):
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, tupleLine, date):
+	def findFailure(self, tupleLine, date, noDate=False):
 		failList = list()
 
 		ll = logSys.getEffectiveLevel()
@@ -765,11 +817,6 @@ class Filter(JailThread):
 		if self.__useDns == "raw":
 			returnRawHost = True
 			cidr = IPAddr.CIDR_RAW
-
-		if self.checkFindTime and date is not None and date < MyTime.time() - self.getFindTime():
-			if ll <= 5: logSys.log(5, "Ignore line since time %s < %s - %s", 
-				date, MyTime.time(), self.getFindTime())
-			return failList
 
 		if self.__lineBufferSize > 1:
 			self.__lineBuffer.append(tupleLine)
@@ -821,17 +868,13 @@ class Filter(JailThread):
 					if not self.checkAllRegex:
 						break
 					continue
-				if date is None:
-					logSys.warning(
-						"Found a match for %r but no valid date/time "
-						"found for %r. Please try setting a custom "
-						"date pattern (see man page jail.conf(5)). "
-						"If format is complex, please "
-						"file a detailed issue on"
-						" https://github.com/fail2ban/fail2ban/issues "
-						"in order to get support for this format.",
-						 "\n".join(failRegex.getMatchedLines()), tupleLine[1])
-					continue
+				if noDate:
+					self._logWarnOnce("_next_noTimeWarn",
+						("Found a match but no valid date/time found for %r.", tupleLine[1]),
+						("Match without a timestamp: %s", "\n".join(failRegex.getMatchedLines())),
+						("Please try setting a custom date pattern (see man page jail.conf(5)).",)
+					)
+					if date is None and self.checkFindTime: continue
 				# we should check all regex (bypass on multi-line, otherwise too complex):
 				if not self.checkAllRegex or self.__lineBufferSize > 1:
 					self.__lineBuffer, buf = failRegex.getUnmatchedTupleLines(), None
@@ -940,7 +983,7 @@ class FileFilter(Filter):
 					log.setPos(lastpos)
 			self.__logs[path] = log
 			logSys.info("Added logfile: %r (pos = %s, hash = %s)" , path, log.getPos(), log.getHash())
-			if autoSeek:
+			if autoSeek and not tail:
 				self.__autoSeek[path] = autoSeek
 			self._addLogPath(path)			# backend specific
 
@@ -1024,7 +1067,7 @@ class FileFilter(Filter):
 	# MyTime.time()-self.findTime. When a failure is detected, a FailTicket
 	# is created and is added to the FailManager.
 
-	def getFailures(self, filename):
+	def getFailures(self, filename, inOperation=None):
 		log = self.getLog(filename)
 		if log is None:
 			logSys.error("Unable to get failures in %s", filename)
@@ -1069,9 +1112,14 @@ class FileFilter(Filter):
 			if has_content:
 				while not self.idle:
 					line = log.readline()
-					if not line or not self.active:
-						# The jail reached the bottom or has been stopped
+					if not self.active: break; # jail has been stopped
+					if not line:
+						# The jail reached the bottom, simply set in operation for this log
+						# (since we are first time at end of file, growing is only possible after modifications):
+						log.inOperation = True
 						break
+					# acquire in operation from log and process:
+					self.inOperation = inOperation if inOperation is not None else log.inOperation
 					self.processLineAndAdd(line.rstrip('\r\n'))
 		finally:
 			log.close()
@@ -1210,7 +1258,7 @@ except ImportError: # pragma: no cover
 
 class FileContainer:
 
-	def __init__(self, filename, encoding, tail = False):
+	def __init__(self, filename, encoding, tail=False):
 		self.__filename = filename
 		self.setEncoding(encoding)
 		self.__tail = tail
@@ -1231,6 +1279,8 @@ class FileContainer:
 				self.__pos = 0
 		finally:
 			handler.close()
+		## shows that log is in operation mode (expecting new messages only from here):
+		self.inOperation = tail
 
 	def getFileName(self):
 		return self.__filename
@@ -1304,16 +1354,17 @@ class FileContainer:
 			return line.decode(enc, 'strict')
 		except (UnicodeDecodeError, UnicodeEncodeError) as e:
 			global _decode_line_warn
-			lev = logging.DEBUG
-			if _decode_line_warn.get(filename, 0) <= MyTime.time():
+			lev = 7
+			if not _decode_line_warn.get(filename, 0):
 				lev = logging.WARNING
-				_decode_line_warn[filename] = MyTime.time() + 24*60*60
+				_decode_line_warn.set(filename, 1)
 			logSys.log(lev,
-				"Error decoding line from '%s' with '%s'."
-				" Consider setting logencoding=utf-8 (or another appropriate"
-				" encoding) for this jail. Continuing"
-				" to process line ignoring invalid characters: %r",
-				filename, enc, line)
+				"Error decoding line from '%s' with '%s'.", filename, enc)
+			if logSys.getEffectiveLevel() <= lev:
+				logSys.log(lev, "Consider setting logencoding=utf-8 (or another appropriate"
+					" encoding) for this jail. Continuing"
+					" to process line ignoring invalid characters: %r",
+					line)
 			# decode with replacing error chars:
 			line = line.decode(enc, 'replace')
 		return line
@@ -1334,7 +1385,7 @@ class FileContainer:
 		## print "D: Closed %s with pos %d" % (handler, self.__pos)
 		## sys.stdout.flush()
 
-_decode_line_warn = {}
+_decode_line_warn = Utils.Cache(maxCount=1000, maxTime=24*60*60);
 
 
 ##

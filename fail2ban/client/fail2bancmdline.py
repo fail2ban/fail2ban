@@ -308,6 +308,10 @@ class Fail2banCmdLine():
 	# since method is also exposed in API via globally bound variable
 	@staticmethod
 	def _exit(code=0):
+		# implicit flush without to produce broken pipe error (32):
+		sys.stderr.close()
+		sys.stdout.close()
+		# exit:
 		if hasattr(os, '_exit') and os._exit:
 			os._exit(code)
 		else:
@@ -318,8 +322,6 @@ class Fail2banCmdLine():
 		logSys.debug("Exit with code %s", code)
 		# because of possible buffered output in python, we should flush it before exit:
 		logging.shutdown()
-		sys.stdout.flush()
-		sys.stderr.flush()
 		# exit
 		Fail2banCmdLine._exit(code)
 
