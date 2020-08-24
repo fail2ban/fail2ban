@@ -87,7 +87,7 @@ class ObserverThread(JailThread):
 		except KeyError:
 			raise KeyError("Invalid event index : %s" % i)
 
-	def __delitem__(self, name):
+	def __delitem__(self, i):
 		try:
 			del self._queue[i]
 		except KeyError:
