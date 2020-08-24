@@ -59,10 +59,6 @@ class FailManager:
 		with self.__lock:
 			return len(self.__failList), sum([f.getRetry() for f in self.__failList.values()])
 
-	def getFailTotal(self):
-		with self.__lock:
-			return self.__failTotal
-
 	def setMaxRetry(self, value):
 		self.__maxRetry = value
 	
