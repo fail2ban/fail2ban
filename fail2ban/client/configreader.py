@@ -34,6 +34,30 @@ from ..helpers import getLogger, _as_bool, _merge_dicts, substituteRecursiveTags
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+CONVERTER = {
+	"bool": _as_bool,
+	"int": int,
+}
+def _OptionsTemplateGen(options):
+	"""Iterator over the options template with default options.
+	
+	Each options entry is composed of an array or tuple with:
+		[[type, name, ?default?], ...]
+	Or it is a dict:
+		{name: [type, default], ...}
+	"""
+	if isinstance(options, (list,tuple)):
+		for optname in options:
+			if len(optname) > 2:
+				opttype, optname, optvalue = optname
+			else:
+				(opttype, optname), optvalue = optname, None
+			yield opttype, optname, optvalue
+	else:
+		for optname in options:
+			opttype, optvalue = options[optname]
+			yield opttype, optname, optvalue
+
 
 class ConfigReader():
 	"""Generic config reader class.
@@ -233,29 +257,17 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 		if pOptions is None:
 			pOptions = {}
 		# Get only specified options:
-		for optname in options:
-			if isinstance(options, (list,tuple)):
-				if len(optname) > 2:
-					opttype, optname, optvalue = optname
-				else:
-					(opttype, optname), optvalue = optname, None
-			else:
-				opttype, optvalue = options[optname]
+		for opttype, optname, optvalue in _OptionsTemplateGen(options):
 			if optname in pOptions:
 				continue
 			try:
-				if convert:
-					if opttype == "bool":
-						v = self.getboolean(sec, optname)
-						if v is None: continue
-					elif opttype == "int":
-						v = self.getint(sec, optname)
-						if v is None: continue
-					else:
-						v = self.get(sec, optname, vars=pOptions)
-				else:
-					v = self.get(sec, optname, vars=pOptions)
+				v = self.get(sec, optname, vars=pOptions)
 				values[optname] = v
+				if convert:
+					conv = CONVERTER.get(opttype)
+					if conv:
+						if v is None: continue
+						values[optname] = conv(v)
 			except NoSectionError as e:
 				if shouldExist:
 					raise
@@ -350,33 +362,20 @@ class DefinitionInitConfigReader(ConfigReader):
 				if opt == '__name__' or opt in self._opts: continue
 				self._opts[opt] = self.get("Definition", opt)
 
-	def convertOptions(self, opts, pOptions={}):
-		options = self._configOpts
-		for optname in options:
-			if isinstance(options, (list,tuple)):
-				if len(optname) > 2:
-					opttype, optname, optvalue = optname
-				else:
-					(opttype, optname), optvalue = optname, None
-			else:
-				opttype, optvalue = options[optname]
-			if optname in pOptions:
-				continue
-			try:
-				if opttype == "bool":
-					v = opts.get(optname)
-					if v is None or isinstance(v, bool): continue
-					v = _as_bool(v)
-					opts[optname] = v
-				elif opttype == "int":
-					v = opts.get(optname)
-					if v is None or isinstance(v, (int, long)): continue
-					v = int(v)
-					opts[optname] = v
-			except ValueError:
-				logSys.warning("Wrong %s value %r for %r. Using default one: %r",
-					opttype, v, optname, optvalue)
-				opts[optname] = optvalue
+	def convertOptions(self, opts, configOpts):
+		"""Convert interpolated combined options to expected type.
+		"""
+		for opttype, optname, optvalue in _OptionsTemplateGen(configOpts):
+			conv = CONVERTER.get(opttype)
+			if conv:
+				v = opts.get(optname)
+				if v is None: continue
+				try:
+					opts[optname] = conv(v)
+				except ValueError:
+					logSys.warning("Wrong %s value %r for %r. Using default one: %r",
+						opttype, v, optname, optvalue)
+					opts[optname] = optvalue
 
 	def getCombOption(self, optname):
 		"""Get combined definition option (as string) using pre-set and init
@@ -413,7 +412,7 @@ class DefinitionInitConfigReader(ConfigReader):
 		if not opts:
 			raise ValueError('recursive tag definitions unable to be resolved')
 		# convert options after all interpolations:
-		self.convertOptions(opts)
+		self.convertOptions(opts, self._configOpts)
 		return opts
 	
 	def convert(self):
