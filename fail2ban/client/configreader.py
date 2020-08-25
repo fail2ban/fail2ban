@@ -282,7 +282,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 					values[optname] = optvalue
 				# elif logSys.getEffectiveLevel() <= logLevel:
 				# 	logSys.log(logLevel, "Non essential option '%s' not defined in '%s'.", optname, sec)
-			except ValueError:				
+			except ValueError:
 				logSys.warning("Wrong value for '" + optname + "' in '" + sec +
 							"'. Using default one: '" + repr(optvalue) + "'")
 				values[optname] = optvalue
