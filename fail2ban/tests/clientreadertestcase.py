@@ -490,7 +490,9 @@ class FilterReaderTest(unittest.TestCase):
 		self.__share_cfg = {}
 
 	def testConvert(self):
-		output = [['multi-set', 'testcase01', 'addfailregex', [
+		output = [
+			['set', 'testcase01', 'maxlines', 1],
+			['multi-set', 'testcase01', 'addfailregex', [
 			"^\\s*(?:\\S+ )?(?:kernel: \\[\\d+\\.\\d+\\] )?(?:@vserver_\\S+ )"
 			"?(?:(?:\\[\\d+\\])?:\\s+[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?|"
 			"[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?(?:\\[\\d+\\])?:)?\\s*(?:"
@@ -512,7 +514,6 @@ class FilterReaderTest(unittest.TestCase):
 			['set', 'testcase01', 'addjournalmatch',
 				"FIELD= with spaces ", "+", "AFIELD= with + char and spaces"],
 			['set', 'testcase01', 'datepattern', "%Y %m %d %H:%M:%S"],
-			['set', 'testcase01', 'maxlines', 1], # Last for overide test
 		]
 		filterReader = FilterReader("testcase01", "testcase01", {})
 		filterReader.setBaseDir(TEST_FILES_DIR)
@@ -529,7 +530,7 @@ class FilterReaderTest(unittest.TestCase):
 		filterReader.read()
 		#filterReader.getOptions(["failregex", "ignoreregex"])
 		filterReader.getOptions(None)
-		output[-1][-1] = "5"
+		output[0][-1] = 5; # maxlines = 5
 		self.assertSortedEqual(filterReader.convert(), output)
 
 	def testFilterReaderSubstitionDefault(self):

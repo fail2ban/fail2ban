@@ -228,7 +228,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	# Or it is a dict:
 	#  {name: [type, default], ...}
 	
-	def getOptions(self, sec, options, pOptions=None, shouldExist=False):
+	def getOptions(self, sec, options, pOptions=None, shouldExist=False, convert=True):
 		values = dict()
 		if pOptions is None:
 			pOptions = {}
@@ -244,12 +244,15 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 			if optname in pOptions:
 				continue
 			try:
-				if opttype == "bool":
-					v = self.getboolean(sec, optname)
-					if v is None: continue
-				elif opttype == "int":
-					v = self.getint(sec, optname)
-					if v is None: continue
+				if convert:
+					if opttype == "bool":
+						v = self.getboolean(sec, optname)
+						if v is None: continue
+					elif opttype == "int":
+						v = self.getint(sec, optname)
+						if v is None: continue
+					else:
+						v = self.get(sec, optname, vars=pOptions)
 				else:
 					v = self.get(sec, optname, vars=pOptions)
 				values[optname] = v
@@ -267,7 +270,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 					values[optname] = optvalue
 				# elif logSys.getEffectiveLevel() <= logLevel:
 				# 	logSys.log(logLevel, "Non essential option '%s' not defined in '%s'.", optname, sec)
-			except ValueError:
+			except ValueError:				
 				logSys.warning("Wrong value for '" + optname + "' in '" + sec +
 							"'. Using default one: '" + repr(optvalue) + "'")
 				values[optname] = optvalue
@@ -324,8 +327,9 @@ class DefinitionInitConfigReader(ConfigReader):
 			pOpts = dict()
 		if self._initOpts:
 			pOpts = _merge_dicts(pOpts, self._initOpts)
+		# type-convert only in combined (otherwise int/bool converting prevents substitution):
 		self._opts = ConfigReader.getOptions(
-			self, "Definition", self._configOpts, pOpts)
+			self, "Definition", self._configOpts, pOpts, convert=False)
 		self._pOpts = pOpts
 		if self.has_section("Init"):
 			# get only own options (without options from default):
@@ -346,10 +350,34 @@ class DefinitionInitConfigReader(ConfigReader):
 				if opt == '__name__' or opt in self._opts: continue
 				self._opts[opt] = self.get("Definition", opt)
 
+	def convertOptions(self, opts, pOptions={}):
+		options = self._configOpts
+		for optname in options:
+			if isinstance(options, (list,tuple)):
+				if len(optname) > 2:
+					opttype, optname, optvalue = optname
+				else:
+					(opttype, optname), optvalue = optname, None
+			else:
+				opttype, optvalue = options[optname]
+			if optname in pOptions:
+				continue
+			try:
+				if opttype == "bool":
+					v = opts.get(optname)
+					if v is None or isinstance(v, bool): continue
+					v = _as_bool(v)
+					opts[optname] = v
+				elif opttype == "int":
+					v = opts.get(optname)
+					if v is None or isinstance(v, (int, long)): continue
+					v = int(v)
+					opts[optname] = v
+			except ValueError:
+				logSys.warning("Wrong %s value %r for %r. Using default one: %r",
+					opttype, v, optname, optvalue)
+				opts[optname] = optvalue
 
-	def _convert_to_boolean(self, value):
-		return _as_bool(value)
-	
 	def getCombOption(self, optname):
 		"""Get combined definition option (as string) using pre-set and init
 		options as preselection (values with higher precedence as specified in section).
@@ -384,6 +412,8 @@ class DefinitionInitConfigReader(ConfigReader):
 			ignore=ignore, addrepl=self.getCombOption)
 		if not opts:
 			raise ValueError('recursive tag definitions unable to be resolved')
+		# convert options after all interpolations:
+		self.convertOptions(opts)
 		return opts
 	
 	def convert(self):
