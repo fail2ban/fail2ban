@@ -87,6 +87,21 @@ option = %s
 		self.assertTrue(self.c.read(f))	# we got some now
 		return self.c.getOptions('section', [("int", 'option')])['option']
 
+	def testConvert(self):
+		self.c.add_section("Definition")
+		self.c.set("Definition", "a", "1")
+		self.c.set("Definition", "b", "1")
+		self.c.set("Definition", "c", "test")
+		opts = self.c.getOptions("Definition", 
+			(('int', 'a', 0), ('bool', 'b', 0), ('int', 'c', 0)))
+		self.assertSortedEqual(opts, {'a': 1, 'b': True, 'c': 0})
+		opts = self.c.getOptions("Definition", 
+			(('int', 'a'), ('bool', 'b'), ('int', 'c')))
+		self.assertSortedEqual(opts, {'a': 1, 'b': True, 'c': None})
+		opts = self.c.getOptions("Definition", 
+			{'a': ('int', 0), 'b': ('bool', 0), 'c': ('int', 0)})
+		self.assertSortedEqual(opts, {'a': 1, 'b': True, 'c': 0})
+
 	def testInaccessibleFile(self):
 		f = os.path.join(self.d, "d.conf")  # inaccessible file
 		self._write('d.conf', 0)
@@ -483,14 +498,12 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertRaises(NoSectionError, c.getOptions, 'test', {})
 
 
-class FilterReaderTest(unittest.TestCase):
-
-	def __init__(self, *args, **kwargs):
-		super(FilterReaderTest, self).__init__(*args, **kwargs)
-		self.__share_cfg = {}
+class FilterReaderTest(LogCaptureTestCase):
 
 	def testConvert(self):
-		output = [['multi-set', 'testcase01', 'addfailregex', [
+		output = [
+			['set', 'testcase01', 'maxlines', 1],
+			['multi-set', 'testcase01', 'addfailregex', [
 			"^\\s*(?:\\S+ )?(?:kernel: \\[\\d+\\.\\d+\\] )?(?:@vserver_\\S+ )"
 			"?(?:(?:\\[\\d+\\])?:\\s+[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?|"
 			"[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?(?:\\[\\d+\\])?:)?\\s*(?:"
@@ -512,7 +525,6 @@ class FilterReaderTest(unittest.TestCase):
 			['set', 'testcase01', 'addjournalmatch',
 				"FIELD= with spaces ", "+", "AFIELD= with + char and spaces"],
 			['set', 'testcase01', 'datepattern', "%Y %m %d %H:%M:%S"],
-			['set', 'testcase01', 'maxlines', 1], # Last for overide test
 		]
 		filterReader = FilterReader("testcase01", "testcase01", {})
 		filterReader.setBaseDir(TEST_FILES_DIR)
@@ -529,8 +541,17 @@ class FilterReaderTest(unittest.TestCase):
 		filterReader.read()
 		#filterReader.getOptions(["failregex", "ignoreregex"])
 		filterReader.getOptions(None)
-		output[-1][-1] = "5"
+		output[0][-1] = 5; # maxlines = 5
 		self.assertSortedEqual(filterReader.convert(), output)
+
+	def testConvertOptions(self):
+		filterReader = FilterReader("testcase01", "testcase01", {'maxlines': '<test>', 'test': 'X'},
+		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
+		filterReader.read()
+		filterReader.getOptions(None)
+		opts = filterReader.getCombined();
+		self.assertNotEqual(opts['maxlines'], 'X'); # wrong int value 'X' for 'maxlines'
+		self.assertLogged("Wrong int value 'X' for 'maxlines'. Using default one:")
 
 	def testFilterReaderSubstitionDefault(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sweet@example.com fromip=<IP>']]
