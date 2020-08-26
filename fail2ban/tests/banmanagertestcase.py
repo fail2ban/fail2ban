@@ -154,6 +154,21 @@ class AddFailure(unittest.TestCase):
 		finally:
 			self.__banManager.setBanTime(btime)
 
+	def testBanList(self):
+		tickets = [
+			BanTicket('192.0.2.1', 1167605999.0),
+			BanTicket('192.0.2.2', 1167605999.0),
+		]
+		tickets[1].setBanTime(-1)
+		for t in tickets:
+			self.__banManager.addBanTicket(t)
+		self.assertSortedEqual(self.__banManager.getBanList(ordered=True, withTime=True),
+			[
+			  '192.0.2.1 \t2006-12-31 23:59:59 + 600 = 2007-01-01 00:09:59',
+			  '192.0.2.2 \t2006-12-31 23:59:59 + -1 = 9999-12-31 23:59:59'
+			]
+		)
+
 
 class StatusExtendedCymruInfo(unittest.TestCase):
 	def setUp(self):

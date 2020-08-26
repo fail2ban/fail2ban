@@ -28,6 +28,8 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 * ensure we've unique action name per jail (also if parameter `actname` is not set but name deviates from standard name, gh-2686)
 * don't use `%(banaction)s` interpolation because it can be complex value (containing `[...]` and/or quotes), 
   so would bother the action interpolation
+* fixed type conversion in config readers (take place after all interpolations get ready), that allows to 
+  specify typed parameters variable (as substitutions) as well as to supply it in other sections or as init parameters.
 * `action.d/*-ipset*.conf`: several ipset actions fixed (no timeout per default anymore), so no discrepancy
   between ipset and fail2ban (removal from ipset will be managed by fail2ban only, gh-2703)
 * `action.d/cloudflare.conf`: fixed `actionunban` (considering new-line chars and optionally real json-parsing
@@ -45,6 +47,7 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 
 ### New Features and Enhancements
 * new filter and jail for GitLab recognizing failed application logins (gh-2689)
+* `filter.d/guacamole.conf` extended with `logging` parameter to follow webapp-logging if it's configured (gh-2631)
 * introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;
 * datetemplate: improved anchor detection for capturing groups `(^...)`;
 * datepattern: improved handling with wrong recognized timestamps (timezones, no datepattern, etc)
