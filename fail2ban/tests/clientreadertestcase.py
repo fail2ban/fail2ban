@@ -562,6 +562,17 @@ class FilterReaderTest(LogCaptureTestCase):
 		c = filterReader.convert()
 		self.assertSortedEqual(c, output)
 
+	def testFilterReaderSubstKnown(self):
+		# testcase02.conf + testcase02.local, test covering that known/option is not overridden
+		# with unmodified (not available) value of option from .local config file, so wouldn't
+		# cause self-recursion if option already has a reference to known/option in .conf file.
+		filterReader = FilterReader('testcase02', "jailname", {},
+		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
+		filterReader.read()
+		filterReader.getOptions(None)
+		opts = filterReader.getCombined()
+		self.assertTrue('sshd' in opts['failregex'])
+		
 	def testFilterReaderSubstitionSet(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sour@example.com fromip=<IP>']]
 		filterReader = FilterReader('substition', "jailname", {'honeypot': 'sour@example.com'},
