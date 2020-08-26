@@ -398,8 +398,8 @@ def splitWithOptions(option):
 # tags (<tag>) in tagged options.
 #
 
-# max tag replacement count:
-MAX_TAG_REPLACE_COUNT = 10
+# max tag replacement count (considering tag X in tag Y repeat):
+MAX_TAG_REPLACE_COUNT = 25
 
 # compiled RE for tag name (replacement name) 
 TAG_CRE = re.compile(r'<([^ <>]+)>')
@@ -433,6 +433,7 @@ def substituteRecursiveTags(inptags, conditional='',
 	done = set()
 	noRecRepl = hasattr(tags, "getRawItem")
 	# repeat substitution while embedded-recursive (repFlag is True)
+	repCounts = {}
 	while True:
 		repFlag = False
 		# substitute each value:
@@ -444,7 +445,7 @@ def substituteRecursiveTags(inptags, conditional='',
 			value = orgval = uni_string(tags[tag])
 			# search and replace all tags within value, that can be interpolated using other tags:
 			m = tre_search(value)
-			refCounts = {}
+			rplc = repCounts.get(tag, {})
 			#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
 			while m:
 				# found replacement tag:
@@ -454,13 +455,13 @@ def substituteRecursiveTags(inptags, conditional='',
 					m = tre_search(value, m.end())
 					continue
 				#logSys.log(5, 'found: %s' % rtag)
-				if rtag == tag or refCounts.get(rtag, 1) > MAX_TAG_REPLACE_COUNT:
+				if rtag == tag or rplc.get(rtag, 1) > MAX_TAG_REPLACE_COUNT:
 					# recursive definitions are bad
 					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 					raise ValueError(
 						"properties contain self referencing definitions "
 						"and cannot be resolved, fail tag: %s, found: %s in %s, value: %s" % 
-						(tag, rtag, refCounts, value))
+						(tag, rtag, rplc, value))
 				repl = None
 				if conditional:
 					repl = tags.get(rtag + '?' + conditional)
@@ -480,7 +481,7 @@ def substituteRecursiveTags(inptags, conditional='',
 				value = value.replace('<%s>' % rtag, repl)
 				#logSys.log(5, 'value now: %s' % value)
 				# increment reference count:
-				refCounts[rtag] = refCounts.get(rtag, 0) + 1
+				rplc[rtag] = rplc.get(rtag, 0) + 1
 				# the next match for replace:
 				m = tre_search(value, m.start())
 			#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
@@ -488,6 +489,7 @@ def substituteRecursiveTags(inptags, conditional='',
 			if orgval != value:
 				# check still contains any tag - should be repeated (possible embedded-recursive substitution):
 				if tre_search(value):
+					repCounts[tag] = rplc
 					repFlag = True
 				# copy return tags dict to prevent modifying of inptags:
 				if id(tags) == id(inptags):
