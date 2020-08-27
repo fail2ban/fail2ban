@@ -103,3 +103,7 @@ Mar 29 22:51:42 kismet sm-mta[24202]: x2TMpAlI024202: internettl.org [104.152.52
 
 # failJSON: { "time": "2005-03-29T22:51:43", "match": true , "host": "192.0.2.2", "desc": "long PID, ID longer as 14 chars (gh-2563)" }
 Mar 29 22:51:43 server sendmail[3529565]: xA32R2PQ3529565: [192.0.2.2] did not issue MAIL/EXPN/VRFY/ETRN during connection to MTA
+# failJSON: { "time": "2005-03-29T22:51:45", "match": true , "host": "192.0.2.3", "desc": "sendmail 8.15.2 default names IPv4/6 (gh-2787)" }
+Mar 29 22:51:45 server sm-mta[50437]: 06QDQnNf050437: example.com [192.0.2.3] did not issue MAIL/EXPN/VRFY/ETRN during connection to IPv4
+# failJSON: { "time": "2005-03-29T22:51:46", "match": true , "host": "2001:DB8::1", "desc": "IPv6" }
+Mar 29 22:51:46 server sm-mta[50438]: 06QDQnNf050438: example.com [IPv6:2001:DB8::1] did not issue MAIL/EXPN/VRFY/ETRN during connection to IPv6
