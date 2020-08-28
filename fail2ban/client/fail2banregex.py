@@ -294,8 +294,8 @@ class Fail2banRegex(object):
 			self._filter.setDatePattern(pattern)
 			self._datepattern_set = True
 			if pattern is not None:
-				self.output( "Use      datepattern : %s" % (
-					self._filter.getDatePattern()[1], ) )
+				self.output( "Use      datepattern : %s : %s" % (
+					pattern, self._filter.getDatePattern()[1], ) )
 
 	def setMaxLines(self, v):
 		if not self._maxlines_set:
