@@ -62,6 +62,9 @@ ver. 0.10.6-dev (20??/??/??) - development edition
 * `filter.d/sshd.conf`: normalizing of user pattern in all RE's, allowing empty user (gh-2749)
 
 ### New Features and Enhancements
+* fail2ban-regex:
+  - speedup formatted output (bypass unneeded stats creation)
+  - extended with prefregex statistic
 * new filter and jail for GitLab recognizing failed application logins (gh-2689)
 * `filter.d/guacamole.conf` extended with `logging` parameter to follow webapp-logging if it's configured (gh-2631)
 * introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;
