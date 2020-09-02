@@ -373,7 +373,7 @@ OPTION_EXTRACT_CRE = re.compile(
 	r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$)', re.DOTALL)
 # split by new-line considering possible new-lines within options [...]:
 OPTION_SPLIT_CRE = re.compile(
-	r'(?:[^\[\n]+(?:\s*\[\s*(?:[\w\-_\.]+=(?:"[^"]*"|\'[^\']*\'|[^,\]]*)\s*(?:,|\]\s*\[)?\s*)*\])?\s*|[^\n]+)(?=\n\s*|$)', re.DOTALL)
+	r'(?:[^\[\s]+(?:\s*\[\s*(?:[\w\-_\.]+=(?:"[^"]*"|\'[^\']*\'|[^,\]]*)\s*(?:,|\]\s*\[)?\s*)*\])?\s*|\S+)(?=\n\s*|\s+|$)', re.DOTALL)
 
 def extractOptions(option):
 	match = OPTION_CRE.match(option)

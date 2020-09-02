@@ -264,6 +264,17 @@ class JailReaderTest(LogCaptureTestCase):
 	def __init__(self, *args, **kwargs):
 		super(JailReaderTest, self).__init__(*args, **kwargs)
 
+	def testSplitWithOptions(self):
+		# covering all separators - new-line and spaces:
+		for sep in ('\n', '\t', ' '):
+			self.assertEqual(splitWithOptions('a%sb' % (sep,)),           ['a',           'b'])
+			self.assertEqual(splitWithOptions('a[x=y]%sb' % (sep,)),      ['a[x=y]',      'b'])
+			self.assertEqual(splitWithOptions('a[x=y][z=z]%sb' % (sep,)), ['a[x=y][z=z]', 'b'])
+			self.assertEqual(splitWithOptions('a[x="y][z"]%sb' % (sep,)), ['a[x="y][z"]', 'b'])
+			self.assertEqual(splitWithOptions('a[x="y z"]%sb' % (sep,)),  ['a[x="y z"]',  'b'])
+			self.assertEqual(splitWithOptions('a[x="y\tz"]%sb' % (sep,)), ['a[x="y\tz"]', 'b'])
+			self.assertEqual(splitWithOptions('a[x="y\nz"]%sb' % (sep,)), ['a[x="y\nz"]', 'b'])
+
 	def testIncorrectJail(self):
 		jail = JailReader('XXXABSENTXXX', basedir=CONFIG_DIR, share_config=CONFIG_DIR_SHARE_CFG)
 		self.assertRaises(ValueError, jail.read)

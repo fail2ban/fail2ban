@@ -66,6 +66,8 @@ ver. 0.10.6-dev (20??/??/??) - development edition
   - speedup formatted output (bypass unneeded stats creation)
   - extended with prefregex statistic
   - more informative output for `datepattern` (e. g. set from filter) - pattern : description
+* parsing of action in jail-configs considers space between action-names as separator also
+  (previously only new-line was allowed), for example `action = a b` would specify 2 actions `a` and `b`
 * new filter and jail for GitLab recognizing failed application logins (gh-2689)
 * `filter.d/guacamole.conf` extended with `logging` parameter to follow webapp-logging if it's configured (gh-2631)
 * introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;
