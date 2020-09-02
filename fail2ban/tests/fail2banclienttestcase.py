@@ -888,7 +888,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"action = ",
 				"         test-action2[name='%(__name__)s', restore='restored: <restored>', info=', err-code: <F-ERRCODE>']" \
 					if 2 in actions else "",
-				"         test-action2[name='%(__name__)s', actname=test-action3, _exec_once=1, restore='restored: <restored>']"
+				"         test-action2[name='%(__name__)s', actname=test-action3, _exec_once=1, restore='restored: <restored>',"
 										" actionflush=<_use_flush_>]" \
 					if 3 in actions else "",
 				"logpath = " + test2log,

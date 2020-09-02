@@ -557,6 +557,9 @@ class Transmitter(TransmitterBase):
 			jail=self.jailName)
 		self.setGetTest("ignorecache", '', None, jail=self.jailName)
 
+	def testJailPrefRegex(self):
+		self.setGetTest("prefregex", "^Test", jail=self.jailName)
+
 	def testJailRegex(self):
 		self.jailAddDelRegexTest("failregex",
 			[
