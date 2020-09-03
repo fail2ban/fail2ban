@@ -51,6 +51,7 @@ ver. 0.10.6-dev (20??/??/??) - development edition
 * `action.d/cloudflare.conf`: fixed `actionunban` (considering new-line chars and optionally real json-parsing
    with `jq`, gh-2140, gh-2656)
 * `action.d/nftables.conf` (type=multiport only): fixed port range selector, replacing `:` with `-` (gh-2763)
+* `action.d/firewallcmd-*.conf` (multiport only): fixed port range selector, replacing `:` with `-` (gh-2821)
 * `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
   should be interpolated in definition section (inside the filter-config, gh-2650)
 * `filter.d/courier-smtp.conf`: prefregex extended to consider port in log-message (gh-2697)
