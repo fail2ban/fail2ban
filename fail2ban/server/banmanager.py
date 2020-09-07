@@ -66,8 +66,7 @@ class BanManager:
 	# @param value the time
 	
 	def setBanTime(self, value):
-		with self.__lock:
-			self.__banTime = int(value)
+		self.__banTime = int(value)
 	
 	##
 	# Get the ban time.
@@ -76,8 +75,7 @@ class BanManager:
 	# @return the time
 	
 	def getBanTime(self):
-		with self.__lock:
-			return self.__banTime
+		return self.__banTime
 	
 	##
 	# Set the total number of banned address.
@@ -85,8 +83,7 @@ class BanManager:
 	# @param value total number
 	
 	def setBanTotal(self, value):
-		with self.__lock:
-			self.__banTotal = value
+		self.__banTotal = value
 	
 	##
 	# Get the total number of banned address.
@@ -94,8 +91,7 @@ class BanManager:
 	# @return the total number
 	
 	def getBanTotal(self):
-		with self.__lock:
-			return self.__banTotal
+		return self.__banTotal
 
 	##
 	# Returns a copy of the IP list.
@@ -103,8 +99,7 @@ class BanManager:
 	# @return IP list
 	
 	def getBanList(self):
-		with self.__lock:
-			return list(self.__banList.keys())
+		return list(self.__banList.keys())
 
 	##
 	# Returns a iterator to ban list (used in reload, so idle).
@@ -112,9 +107,8 @@ class BanManager:
 	# @return ban list iterator
 	
 	def __iter__(self):
-		# ensure iterator is safe (traverse over the list in snapshot created within lock):
-		with self.__lock:
-			return iter(list(self.__banList.values()))
+		# ensure iterator is safe - traverse over the list in snapshot created within lock (GIL):
+		return iter(list(self.__banList.values()))
 
 	##
 	# Returns normalized value
