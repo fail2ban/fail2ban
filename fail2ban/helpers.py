@@ -224,9 +224,10 @@ def __stopOnIOError(logSys=None, logHndlr=None): # pragma: no cover
 		sys.exit(0)
 
 try:
-    BrokenPipeError
+	BrokenPipeError = BrokenPipeError
 except NameError: # pragma: 3.x no cover
-    BrokenPipeError = IOError
+	BrokenPipeError = IOError
+
 __origLog = logging.Logger._log
 def __safeLog(self, level, msg, args, **kwargs):
 	"""Safe log inject to avoid possible errors by unsafe log-handlers, 
@@ -373,7 +374,7 @@ OPTION_EXTRACT_CRE = re.compile(
 	r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$)', re.DOTALL)
 # split by new-line considering possible new-lines within options [...]:
 OPTION_SPLIT_CRE = re.compile(
-	r'(?:[^\[\n]+(?:\s*\[\s*(?:[\w\-_\.]+=(?:"[^"]*"|\'[^\']*\'|[^,\]]*)\s*(?:,|\]\s*\[)?\s*)*\])?\s*|[^\n]+)(?=\n\s*|$)', re.DOTALL)
+	r'(?:[^\[\s]+(?:\s*\[\s*(?:[\w\-_\.]+=(?:"[^"]*"|\'[^\']*\'|[^,\]]*)\s*(?:,|\]\s*\[)?\s*)*\])?\s*|\S+)(?=\n\s*|\s+|$)', re.DOTALL)
 
 def extractOptions(option):
 	match = OPTION_CRE.match(option)

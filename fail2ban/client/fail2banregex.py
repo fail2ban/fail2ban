@@ -21,7 +21,6 @@ Fail2Ban  reads log file that contains password failure report
 and bans the corresponding IP addresses using firewall rules.
 
 This tools can test regular expressions for "fail2ban".
-
 """
 
 __author__ = "Fail2Ban Developers"
@@ -109,19 +108,22 @@ class _f2bOptParser(OptionParser):
 	def format_help(self, *args, **kwargs):
 		""" Overwritten format helper with full ussage."""
 		self.usage = ''
-		return "Usage: " + usage() + __doc__ + """
+		return "Usage: " + usage() + "\n" + __doc__ + """
 LOG:
-    string                  a string representing a log line
-    filename                path to a log file (/var/log/auth.log)
-    "systemd-journal"       search systemd journal (systemd-python required)
+  string                a string representing a log line
+  filename              path to a log file (/var/log/auth.log)
+  systemd-journal       search systemd journal (systemd-python required),
+                        optionally with backend parameters, see `man jail.conf`
+                        for usage and examples (systemd-journal[journalflags=1]).
 
 REGEX:
-    string                  a string representing a 'failregex'
-    filename                path to a filter file (filter.d/sshd.conf)
+  string                a string representing a 'failregex'
+  filter                name of filter, optionally with options (sshd[mode=aggressive])
+  filename              path to a filter file (filter.d/sshd.conf)
 
 IGNOREREGEX:
-    string                  a string representing an 'ignoreregex'
-    filename                path to a filter file (filter.d/sshd.conf)
+  string                a string representing an 'ignoreregex'
+  filename              path to a filter file (filter.d/sshd.conf)
 \n""" + OptionParser.format_help(self, *args, **kwargs) + """\n
 Report bugs to https://github.com/fail2ban/fail2ban/issues\n
 """ + __copyright__ + "\n"
@@ -252,6 +254,8 @@ class Fail2banRegex(object):
 
 		self.share_config=dict()
 		self._filter = Filter(None)
+		self._prefREMatched = 0
+		self._prefREGroups = list()
 		self._ignoreregex = list()
 		self._failregex = list()
 		self._time_elapsed = None
@@ -292,8 +296,8 @@ class Fail2banRegex(object):
 			self._filter.setDatePattern(pattern)
 			self._datepattern_set = True
 			if pattern is not None:
-				self.output( "Use      datepattern : %s" % (
-					self._filter.getDatePattern()[1], ) )
+				self.output( "Use      datepattern : %s : %s" % (
+					pattern, self._filter.getDatePattern()[1], ) )
 
 	def setMaxLines(self, v):
 		if not self._maxlines_set:
@@ -453,19 +457,33 @@ class Fail2banRegex(object):
 			lines = []
 			ret = []
 			for match in found:
-				# Append True/False flag depending if line was matched by
-				# more than one regex
-				match.append(len(ret)>1)
-				regex = self._failregex[match[0]]
-				regex.inc()
-				regex.appendIP(match)
+				if not self._opts.out:
+					# Append True/False flag depending if line was matched by
+					# more than one regex
+					match.append(len(ret)>1)
+					regex = self._failregex[match[0]]
+					regex.inc()
+					regex.appendIP(match)
 				if not match[3].get('nofail'):
 					ret.append(match)
 				else:
 					is_ignored = True
+			if self._opts.out: # (formated) output - don't need stats:
+				return None, ret, None
+			# prefregex stats:
+			if self._filter.prefRegex:
+				pre = self._filter.prefRegex
+				if pre.hasMatched():
+					self._prefREMatched += 1
+					if self._verbose:
+						if len(self._prefREGroups) < self._maxlines:
+							self._prefREGroups.append(pre.getGroups())
+						else:
+							if len(self._prefREGroups) == self._maxlines:
+								self._prefREGroups.append('...')
 		except RegexException as e: # pragma: no cover
 			output( 'ERROR: %s' % e )
-			return False
+			return None, 0, None
 		if self._filter.getMaxLines() > 1:
 			for bufLine in orgLineBuffer[int(fullBuffer):]:
 				if bufLine not in self._filter._Filter__lineBuffer:
@@ -651,7 +669,18 @@ class Fail2banRegex(object):
 			pprint_list(out, " #) [# of hits] regular expression")
 			return total
 
-		# Print title
+		# Print prefregex:
+		if self._filter.prefRegex:
+			#self._filter.prefRegex.hasMatched()
+			pre = self._filter.prefRegex 
+			out = [pre.getRegex()]
+			if self._verbose:
+				for grp in self._prefREGroups:
+					out.append("    %s" % (grp,))
+			output( "\n%s: %d total" % ("Prefregex", self._prefREMatched) )
+			pprint_list(out)
+
+		# Print regex's:
 		total = print_failregexes("Failregex", self._failregex)
 		_ = print_failregexes("Ignoreregex", self._ignoreregex)
 
