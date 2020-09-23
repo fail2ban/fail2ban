@@ -224,9 +224,10 @@ def __stopOnIOError(logSys=None, logHndlr=None): # pragma: no cover
 		sys.exit(0)
 
 try:
-    BrokenPipeError
+	BrokenPipeError = BrokenPipeError
 except NameError: # pragma: 3.x no cover
-    BrokenPipeError = IOError
+	BrokenPipeError = IOError
+
 __origLog = logging.Logger._log
 def __safeLog(self, level, msg, args, **kwargs):
 	"""Safe log inject to avoid possible errors by unsafe log-handlers, 
