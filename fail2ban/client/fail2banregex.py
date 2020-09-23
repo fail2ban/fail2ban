@@ -21,7 +21,6 @@ Fail2Ban  reads log file that contains password failure report
 and bans the corresponding IP addresses using firewall rules.
 
 This tools can test regular expressions for "fail2ban".
-
 """
 
 __author__ = "Fail2Ban Developers"
@@ -109,21 +108,22 @@ class _f2bOptParser(OptionParser):
 	def format_help(self, *args, **kwargs):
 		""" Overwritten format helper with full ussage."""
 		self.usage = ''
-		return "Usage: " + usage() + __doc__ + """
+		return "Usage: " + usage() + "\n" + __doc__ + """
 LOG:
-    string                  a string representing a log line
-    filename                path to a log file (/var/log/auth.log)
-    "systemd-journal"       search systemd journal. Optionally specify
-                            `systemd-journal[journalflags=X]` to determine
-                            which journals are used (systemd-python required)
+  string                a string representing a log line
+  filename              path to a log file (/var/log/auth.log)
+  systemd-journal       search systemd journal (systemd-python required),
+                        optionally with backend parameters, see `man jail.conf`
+                        for usage and examples (systemd-journal[journalflags=1]).
 
 REGEX:
-    string                  a string representing a 'failregex'
-    filename                path to a filter file (filter.d/sshd.conf)
+  string                a string representing a 'failregex'
+  filter                name of filter, optionally with options (sshd[mode=aggressive])
+  filename              path to a filter file (filter.d/sshd.conf)
 
 IGNOREREGEX:
-    string                  a string representing an 'ignoreregex'
-    filename                path to a filter file (filter.d/sshd.conf)
+  string                a string representing an 'ignoreregex'
+  filename              path to a filter file (filter.d/sshd.conf)
 \n""" + OptionParser.format_help(self, *args, **kwargs) + """\n
 Report bugs to https://github.com/fail2ban/fail2ban/issues\n
 """ + __copyright__ + "\n"

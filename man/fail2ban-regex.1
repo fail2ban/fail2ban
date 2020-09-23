@@ -18,12 +18,17 @@ a string representing a log line
 filename
 path to a log file (\fI\,/var/log/auth.log\/\fP)
 .TP
-"systemd\-journal"
-search systemd journal (systemd\-python required)
+systemd\-journal
+search systemd journal (systemd\-python required),
+optionally with backend parameters, see `man jail.conf`
+for usage and examples (systemd\-journal[journalflags=1]).
 .SS "REGEX:"
 .TP
 string
 a string representing a 'failregex'
+.TP
+filter
+name of filter, optionally with options (sshd[mode=aggressive])
 .TP
 filename
 path to a filter file (filter.d/sshd.conf)
