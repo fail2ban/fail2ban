@@ -1,7 +1,7 @@
 Source: fail2ban
 Section: net
 Priority: optional
-Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
+Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>,
  Sylvestre Ledru <sylvestre@debian.org>
 Build-Depends:
