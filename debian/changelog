@@ -5,6 +5,7 @@ fail2ban (0.11.1-4) UNRELEASED; urgency=medium
     contact address.
   * d/control: Update Vcs-* fields with new Debian Python Team Salsa
     layout.
+  * d/watch: Use https protocol.
 
  -- Ondřej Nový <onovy@debian.org>  Thu, 24 Sep 2020 08:42:58 +0200
 

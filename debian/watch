@@ -3,4 +3,4 @@
 # Site		Directory		Pattern			Version	Script
 version=3
 opts="filenamemangle=s/.*\/(.*)/fail2ban-$1\.tar\.gz/" \
- http://github.com/fail2ban/fail2ban/tags .*archive/(\d[\d\.]+).tar.gz
+ https://github.com/fail2ban/fail2ban/tags .*archive/(\d[\d\.]+).tar.gz
