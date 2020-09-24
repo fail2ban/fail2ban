@@ -14,8 +14,8 @@ Build-Depends:
  , sqlite3
  , 2to3
 Homepage: http://www.fail2ban.org
-Vcs-Git: https://salsa.debian.org/python-team/applications/fail2ban.git
-Vcs-Browser: https://salsa.debian.org/python-team/applications/fail2ban
+Vcs-Git: https://salsa.debian.org/python-team/packages/fail2ban.git
+Vcs-Browser: https://salsa.debian.org/python-team/packages/fail2ban
 Standards-Version: 4.4.1
 
 

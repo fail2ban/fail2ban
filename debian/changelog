@@ -3,6 +3,8 @@ fail2ban (0.11.1-4) UNRELEASED; urgency=medium
   * Use debhelper-compat instead of debian/compat.
   * d/control: Update Maintainer field with new Debian Python Team
     contact address.
+  * d/control: Update Vcs-* fields with new Debian Python Team Salsa
+    layout.
 
  -- Ondřej Nový <onovy@debian.org>  Thu, 24 Sep 2020 08:42:58 +0200
 
