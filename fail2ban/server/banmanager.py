@@ -57,7 +57,7 @@ class BanManager:
 		## Total number of banned IP address
 		self.__banTotal = 0
 		## The time for next unban process (for performance and load reasons):
-		self.__nextUnbanTime = BanTicket.MAX_TIME
+		self._nextUnbanTime = BanTicket.MAX_TIME
 	
 	##
 	# Set the ban time.
@@ -290,8 +290,8 @@ class BanManager:
 			self.__banList[fid] = ticket
 			self.__banTotal += 1
 			# correct next unban time:
-			if self.__nextUnbanTime > eob:
-				self.__nextUnbanTime = eob
+			if self._nextUnbanTime > eob:
+				self._nextUnbanTime = eob
 			return True
 
 	##
@@ -322,12 +322,8 @@ class BanManager:
 	
 	def unBanList(self, time, maxCount=0x7fffffff):
 		with self.__lock:
-			# Permanent banning
-			if self.__banTime < 0:
-				return list()
-
 			# Check next unban time:
-			nextUnbanTime = self.__nextUnbanTime
+			nextUnbanTime = self._nextUnbanTime
 			if nextUnbanTime > time:
 				return list()
 
@@ -340,12 +336,12 @@ class BanManager:
 				if time > eob:
 					unBanList[fid] = ticket
 					if len(unBanList) >= maxCount: # stop search cycle, so reset back the next check time
-						nextUnbanTime = self.__nextUnbanTime
+						nextUnbanTime = self._nextUnbanTime
 						break
 				elif nextUnbanTime > eob:
 					nextUnbanTime = eob
 
-			self.__nextUnbanTime = nextUnbanTime
+			self._nextUnbanTime = nextUnbanTime
 			# Removes tickets.
 			if len(unBanList):
 				if len(unBanList) / 2.0 <= len(self.__banList) / 3.0:
