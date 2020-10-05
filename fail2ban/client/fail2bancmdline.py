@@ -27,13 +27,17 @@ import sys
 
 from ..version import version, normVersion
 from ..protocol import printFormatted
-from ..helpers import getLogger, str2LogLevel, getVerbosityFormat
+from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, BrokenPipeError
 
 # Gets the instance of the logger.
 logSys = getLogger("fail2ban")
 
 def output(s): # pragma: no cover
-	print(s)
+	try:
+		print(s)
+	except (BrokenPipeError, IOError) as e: # pragma: no cover
+		if e.errno != 32: # closed / broken pipe
+			raise
 
 # Config parameters required to start fail2ban which can be also set via command line (overwrite fail2ban.conf),
 CONFIG_PARAMS = ("socket", "pidfile", "logtarget", "loglevel", "syslogsocket")
@@ -308,18 +312,24 @@ class Fail2banCmdLine():
 	# since method is also exposed in API via globally bound variable
 	@staticmethod
 	def _exit(code=0):
-		if hasattr(os, '_exit') and os._exit:
-			os._exit(code)
-		else:
-			sys.exit(code)
+		# implicit flush without to produce broken pipe error (32):
+		sys.stderr.close()
+		try:
+			sys.stdout.flush()
+			# exit:
+			if hasattr(sys, 'exit') and sys.exit:
+				sys.exit(code)
+			else:
+				os._exit(code)
+		except (BrokenPipeError, IOError) as e: # pragma: no cover
+			if e.errno != 32: # closed / broken pipe
+				raise
 
 	@staticmethod
 	def exit(code=0):
 		logSys.debug("Exit with code %s", code)
 		# because of possible buffered output in python, we should flush it before exit:
 		logging.shutdown()
-		sys.stdout.flush()
-		sys.stderr.flush()
 		# exit
 		Fail2banCmdLine._exit(code)
 

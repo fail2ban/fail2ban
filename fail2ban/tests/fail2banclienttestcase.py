@@ -37,7 +37,7 @@ from threading import Thread
 
 from ..client import fail2banclient, fail2banserver, fail2bancmdline
 from ..client.fail2bancmdline import Fail2banCmdLine
-from ..client.fail2banclient import exec_command_line as _exec_client, VisualWait
+from ..client.fail2banclient import exec_command_line as _exec_client, CSocket, VisualWait
 from ..client.fail2banserver import Fail2banServer, exec_command_line as _exec_server
 from .. import protocol
 from ..server import server
@@ -421,6 +421,14 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		self.assertRaises(exitType, self.exec_command_line[0],
 			(self.exec_command_line[1:] + startparams + args))
 
+	def execCmdDirect(self, startparams, *args):
+		sock = startparams[startparams.index('-s')+1]
+		s = CSocket(sock)
+		try:
+			return s.send(args)
+		finally:
+			s.close()
+
 	#
 	# Common tests
 	#
@@ -615,12 +623,6 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		self.assertLogged("Base configuration directory " + pjoin(tmp, "miss") + " does not exist")
 		self.pruneLog()
 
-		## wrong socket
-		self.execCmd(FAILED, (),
-			"--async", "-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "miss/f2b.sock"), "start")
-		self.assertLogged("There is no directory " + pjoin(tmp, "miss") + " to contain the socket file")
-		self.pruneLog()
-
 		## not running
 		self.execCmd(FAILED, (),
 			"-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "f2b.sock"), "reload")
@@ -714,12 +716,6 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.execCmd(FAILED, (),
 			"-c", pjoin(tmp, "miss"))
 		self.assertLogged("Base configuration directory " + pjoin(tmp, "miss") + " does not exist")
-		self.pruneLog()
-
-		## wrong socket
-		self.execCmd(FAILED, (),
-			"-c", pjoin(tmp, "config"), "-x", "-s", pjoin(tmp, "miss/f2b.sock"))
-		self.assertLogged("There is no directory " + pjoin(tmp, "miss") + " to contain the socket file")
 		self.pruneLog()
 
 		## already exists:
@@ -860,7 +856,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"action = ",
 				"         test-action2[name='%(__name__)s', restore='restored: <restored>', info=', err-code: <F-ERRCODE>']" \
 					if 2 in actions else "",
-				"         test-action2[name='%(__name__)s', actname=test-action3, _exec_once=1, restore='restored: <restored>']"
+				"         test-action2[name='%(__name__)s', actname=test-action3, _exec_once=1, restore='restored: <restored>',"
 										" actionflush=<_use_flush_>]" \
 					if 3 in actions else "",
 				"logpath = " + test2log,
@@ -1007,6 +1003,30 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"[test-jail2] Found 192.0.2.3", 
 			"[test-jail2] Ban 192.0.2.3", 
 			all=True)
+		# test banned command:
+		self.assertSortedEqual(self.execCmdDirect(startparams,
+			'banned'), (0, [
+				{'test-jail1': ['192.0.2.4', '192.0.2.1', '192.0.2.8', '192.0.2.3', '192.0.2.2']},
+				{'test-jail2': ['192.0.2.4', '192.0.2.9', '192.0.2.8']}
+			]
+		))
+		self.assertSortedEqual(self.execCmdDirect(startparams,
+			'banned', '192.0.2.1', '192.0.2.4', '192.0.2.222'), (0, [
+			  ['test-jail1'], ['test-jail1', 'test-jail2'], []
+			]
+		))
+		self.assertSortedEqual(self.execCmdDirect(startparams,
+			'get', 'test-jail1', 'banned')[1], [
+				'192.0.2.4', '192.0.2.1', '192.0.2.8', '192.0.2.3', '192.0.2.2'])
+		self.assertSortedEqual(self.execCmdDirect(startparams,
+			'get', 'test-jail2', 'banned')[1], [
+				'192.0.2.4', '192.0.2.9', '192.0.2.8'])
+		self.assertEqual(self.execCmdDirect(startparams,
+			'get', 'test-jail1', 'banned', '192.0.2.3')[1],  1)
+		self.assertEqual(self.execCmdDirect(startparams,
+			'get', 'test-jail1', 'banned', '192.0.2.9')[1],  0)
+		self.assertEqual(self.execCmdDirect(startparams,
+			'get', 'test-jail1', 'banned', '192.0.2.3', '192.0.2.9')[1],  [1, 0])
 
 		# rotate logs:
 		_write_file(test1log, "w+")
@@ -1138,12 +1158,40 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertNotLogged("[test-jail1] Found 192.0.2.5")
 
 		# unban single ips:
-		self.pruneLog("[test-phase 6]")
+		self.pruneLog("[test-phase 6a]")
 		self.execCmd(SUCCESS, startparams,
 			"--async", "unban", "192.0.2.5", "192.0.2.6")
 		self.assertLogged(
 			"192.0.2.5 is not banned",
 			"[test-jail1] Unban 192.0.2.6", all=True, wait=MID_WAITTIME
+		)
+		# unban ips by subnet (cidr/mask):
+		self.pruneLog("[test-phase 6b]")
+		self.execCmd(SUCCESS, startparams,
+			"--async", "unban", "192.0.2.2/31")
+		self.assertLogged(
+			"[test-jail1] Unban 192.0.2.2",
+			"[test-jail1] Unban 192.0.2.3", all=True, wait=MID_WAITTIME
+		)		
+		self.execCmd(SUCCESS, startparams,
+			"--async", "unban", "192.0.2.8/31", "192.0.2.100/31")
+		self.assertLogged(
+			"[test-jail1] Unban 192.0.2.8",
+			"192.0.2.100/31 is not banned", all=True, wait=MID_WAITTIME)
+
+		# ban/unban subnet(s):
+		self.pruneLog("[test-phase 6c]")
+		self.execCmd(SUCCESS, startparams,
+			"--async", "set", "test-jail1", "banip", "192.0.2.96/28", "192.0.2.112/28")
+		self.assertLogged(
+			"[test-jail1] Ban 192.0.2.96/28",
+			"[test-jail1] Ban 192.0.2.112/28", all=True, wait=MID_WAITTIME
+		)
+		self.execCmd(SUCCESS, startparams,
+			"--async", "set", "test-jail1", "unbanip", "192.0.2.64/26"); # contains both subnets .96/28 and .112/28
+		self.assertLogged(
+			"[test-jail1] Unban 192.0.2.96/28",
+			"[test-jail1] Unban 192.0.2.112/28", all=True, wait=MID_WAITTIME
 		)
 
 		# reload all (one jail) with unban all:
@@ -1155,8 +1203,6 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"Jail 'test-jail1' reloaded",
 			"[test-jail1] Unban 192.0.2.1",
-			"[test-jail1] Unban 192.0.2.2",
-			"[test-jail1] Unban 192.0.2.3",
 			"[test-jail1] Unban 192.0.2.4", all=True
 		)
 		# no restart occurred, no more ban (unbanned all using option "--unban"):
@@ -1164,8 +1210,6 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"Jail 'test-jail1' stopped",
 			"Jail 'test-jail1' started",
 			"[test-jail1] Ban 192.0.2.1",
-			"[test-jail1] Ban 192.0.2.2",
-			"[test-jail1] Ban 192.0.2.3",
 			"[test-jail1] Ban 192.0.2.4", all=True
 		)
 

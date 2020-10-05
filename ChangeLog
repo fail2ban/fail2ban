@@ -44,10 +44,15 @@ ver. 0.10.6-dev (20??/??/??) - development edition
 * ensure we've unique action name per jail (also if parameter `actname` is not set but name deviates from standard name, gh-2686)
 * don't use `%(banaction)s` interpolation because it can be complex value (containing `[...]` and/or quotes), 
   so would bother the action interpolation
+* fixed type conversion in config readers (take place after all interpolations get ready), that allows to 
+  specify typed parameters variable (as substitutions) as well as to supply it in other sections or as init parameters.
 * `action.d/*-ipset*.conf`: several ipset actions fixed (no timeout per default anymore), so no discrepancy
   between ipset and fail2ban (removal from ipset will be managed by fail2ban only, gh-2703)
 * `action.d/cloudflare.conf`: fixed `actionunban` (considering new-line chars and optionally real json-parsing
    with `jq`, gh-2140, gh-2656)
+* `action.d/nftables.conf` (type=multiport only): fixed port range selector, replacing `:` with `-` (gh-2763)
+* `action.d/firewallcmd-*.conf` (multiport only): fixed port range selector, replacing `:` with `-` (gh-2821)
+* `action.d/bsd-ipfw.conf`: fixed selection of rule-no by large list or initial `lowest_rule_num` (gh-2836)
 * `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
   should be interpolated in definition section (inside the filter-config, gh-2650)
 * `filter.d/courier-smtp.conf`: prefregex extended to consider port in log-message (gh-2697)
@@ -56,13 +61,30 @@ ver. 0.10.6-dev (20??/??/??) - development edition
   - `normal`: matches 401 with supplied username only
   - `ddos`: matches 401 without supplied username only
   - `aggressive`: matches 401 and any variant (with and without username)
+* `filter.d/sshd.conf`: normalizing of user pattern in all RE's, allowing empty user (gh-2749)
 
-### New Features
-
-### Enhancements
+### New Features and Enhancements
+* fail2ban-regex:
+  - speedup formatted output (bypass unneeded stats creation)
+  - extended with prefregex statistic
+  - more informative output for `datepattern` (e. g. set from filter) - pattern : description
+* parsing of action in jail-configs considers space between action-names as separator also
+  (previously only new-line was allowed), for example `action = a b` would specify 2 actions `a` and `b`
+* new filter and jail for GitLab recognizing failed application logins (gh-2689)
+* `filter.d/guacamole.conf` extended with `logging` parameter to follow webapp-logging if it's configured (gh-2631)
 * introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;
 * datetemplate: improved anchor detection for capturing groups `(^...)`;
+* datepattern: improved handling with wrong recognized timestamps (timezones, no datepattern, etc)
+  as well as some warnings signaling user about invalid pattern or zone (gh-2814):
+  - filter gets mode in-operation, which gets activated if filter starts processing of new messages;
+    in this mode a timestamp read from log-line that appeared recently (not an old line), deviating too much
+    from now (up too 24h), will be considered as now (assuming a timezone issue), so could avoid unexpected 
+    bypass of failure (previously exceeding `findtime`);
+  - better interaction with non-matching optional datepattern or invalid timestamps;
+  - implements special datepattern `{NONE}` - allow to find failures totally without date-time in log messages,
+    whereas filter will use now as timestamp (gh-2802)
 * performance optimization of `datepattern` (better search algorithm in datedetector, especially for single template);
+* fail2ban-client: extended to unban IP range(s) by subnet (CIDR/mask) or hostname (DNS), gh-2791;
 * `filter.d/apache-auth.conf`: allow patterns to be used from fcgi (gh-2635);
 
 

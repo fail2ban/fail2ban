@@ -521,6 +521,32 @@ class Server:
 			cnt += jail.actions.removeBannedIP(value, ifexists=ifexists)
 		return cnt
 		
+	def banned(self, name=None, ids=None):
+		if name is not None:
+			# single jail:
+			jails = [self.__jails[name]]
+		else:
+			# in all jails:
+			jails = self.__jails.values()
+		# check banned ids:
+		res = []
+		if name is None and ids:
+			for ip in ids:
+				ret = []
+				for jail in jails:
+					if jail.actions.getBanned([ip]):
+						ret.append(jail.name)
+				res.append(ret)
+		else:
+			for jail in jails:
+				ret = jail.actions.getBanned(ids)
+				if name is not None:
+					return ret
+					res.append(ret)
+				else:
+					res.append({jail.name: ret})
+		return res
+		
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
 	

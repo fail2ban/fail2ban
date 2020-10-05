@@ -168,19 +168,6 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		if not ret:
 			return None
 
-		# verify that directory for the socket file exists
-		socket_dir = os.path.dirname(self._conf["socket"])
-		if not os.path.exists(socket_dir):
-			logSys.error(
-				"There is no directory %s to contain the socket file %s."
-				% (socket_dir, self._conf["socket"]))
-			return None
-		if not os.access(socket_dir, os.W_OK | os.X_OK): # pragma: no cover
-			logSys.error(
-				"Directory %s exists but not accessible for writing"
-				% (socket_dir,))
-			return None
-
 		# Check already running
 		if not self._conf["force"] and os.path.exists(self._conf["socket"]):
 			logSys.error("Fail2ban seems to be in unexpected state (not running but the socket exists)")

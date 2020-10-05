@@ -252,7 +252,7 @@ class CommandActionTest(LogCaptureTestCase):
 		delattr(self.__action, 'ac')
 		# produce self-referencing query except:
 		self.assertRaisesRegexp(ValueError, r"possible self referencing definitions in query",
-			lambda: self.__action.replaceTag("<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x>>>>>>>>>>>>>>>>>>>>>", 
+			lambda: self.__action.replaceTag("<x"*30+">"*30,
 				self.__action._properties, conditional="family=inet6")
 		)
 

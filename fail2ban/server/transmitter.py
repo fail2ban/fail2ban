@@ -118,6 +118,9 @@ class Transmitter:
 			if len(value) == 1 and value[0] == "--all":
 				return self.__server.setUnbanIP()
 			return self.__server.setUnbanIP(None, value)
+		elif name == "banned":
+			# check IP is banned in all jails:
+			return self.__server.banned(None, command[1:])
 		elif name == "echo":
 			return command[1:]
 		elif name == "server-status":
@@ -274,7 +277,8 @@ class Transmitter:
 			value = command[2]
 			self.__server.setPrefRegex(name, value)
 			if self.__quiet: return
-			return self.__server.getPrefRegex(name)
+			v = self.__server.getPrefRegex(name)
+			return v.getRegex() if v else ""
 		elif command[1] == "addfailregex":
 			value = command[2]
 			self.__server.addFailRegex(name, value, multiple=multiple)
@@ -424,7 +428,10 @@ class Transmitter:
 				return None
 			else:
 				return db.purgeage
-		# Filter
+		# Jail, Filter
+		elif command[1] == "banned":
+			# check IP is banned in all jails:
+			return self.__server.banned(name, command[2:])
 		elif command[1] == "logpath":
 			return self.__server.getLogPath(name)
 		elif command[1] == "logencoding":
@@ -440,7 +447,8 @@ class Transmitter:
 		elif command[1] == "ignorecache":
 			return self.__server.getIgnoreCache(name)
 		elif command[1] == "prefregex":
-			return self.__server.getPrefRegex(name)
+			v = self.__server.getPrefRegex(name)
+			return v.getRegex() if v else ""
 		elif command[1] == "failregex":
 			return self.__server.getFailRegex(name)
 		elif command[1] == "ignoreregex":

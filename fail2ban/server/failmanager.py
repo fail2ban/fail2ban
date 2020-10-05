@@ -47,21 +47,15 @@ class FailManager:
 		self.__bgSvc = BgService()
 	
 	def setFailTotal(self, value):
-		with self.__lock:
-			self.__failTotal = value
+		self.__failTotal = value
 		
 	def getFailTotal(self):
-		with self.__lock:
-			return self.__failTotal
+		return self.__failTotal
 	
 	def getFailCount(self):
 		# may be slow on large list of failures, should be used for test purposes only...
 		with self.__lock:
 			return len(self.__failList), sum([f.getRetry() for f in self.__failList.values()])
-
-	def getFailTotal(self):
-		with self.__lock:
-			return self.__failTotal
 
 	def setMaxRetry(self, value):
 		self.__maxRetry = value
@@ -127,8 +121,7 @@ class FailManager:
 		return attempts
 	
 	def size(self):
-		with self.__lock:
-			return len(self.__failList)
+		return len(self.__failList)
 	
 	def cleanup(self, time):
 		with self.__lock:

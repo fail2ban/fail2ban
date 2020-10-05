@@ -291,9 +291,8 @@ def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
 			date_result -= datetime.timedelta(days=1)
 	if assume_year:
 		if not now: now = MyTime.now()
-		if date_result > now:
-			# Could be last year?
-			# also reset month and day as it's not yesterday...
+		if date_result > now + datetime.timedelta(days=1): # ignore by timezone issues (+24h)
+			# assume last year - also reset month and day as it's not yesterday...
 			date_result = date_result.replace(
 				year=year-1, month=month, day=day)
 
