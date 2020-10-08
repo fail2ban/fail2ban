@@ -312,6 +312,8 @@ Jul 17 23:04:01 srv sshd[1300]: Connection closed by authenticating user test 12
 Feb 17 17:40:17 sshd[19725]: Connection from 192.0.2.10 port 62004 on 192.0.2.10 port 22
 # failJSON: { "time": "2005-02-17T17:40:17", "match": true , "host": "192.0.2.10", "desc": "ddos: port scanner (invalid protocol identifier)" }
 Feb 17 17:40:17 sshd[19725]: error: kex_exchange_identification: client sent invalid protocol identifier ""
+# failJSON: { "time": "2005-02-17T17:40:18", "match": true , "host": "192.0.2.10", "desc": "ddos: flood attack vector, gh-2850" }
+Feb 17 17:40:18 sshd[19725]: error: kex_exchange_identification: Connection closed by remote host
 
 # failJSON: { "time": "2005-03-15T09:21:01", "match": true , "host": "192.0.2.212", "desc": "DDOS mode causes failure on close within preauth stage" }
 Mar 15 09:21:01 host sshd[2717]: Connection closed by 192.0.2.212 [preauth]
