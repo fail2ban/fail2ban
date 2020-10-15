@@ -1,0 +1,2 @@
+# failJSON: { "time": "2005-08-13T21:30:40", "match": true, "host": "123.45.67.89" }
+[21:30:40] [Server thread/INFO]: Player[/123.45.67.89:12345] logged in with entity id 551 at (825.302579326729, 65.0, -886.9107800126116)
