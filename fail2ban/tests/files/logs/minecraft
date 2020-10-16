@@ -1,2 +1,6 @@
 # failJSON: { "time": "2005-08-13T21:30:40", "match": true, "host": "123.45.67.89" }
 [21:30:40] [Server thread/INFO]: Player[/123.45.67.89:12345] logged in with entity id 551 at (825.302579326729, 65.0, -886.9107800126116)
+# failJSON: { "time": "2005-08-13T21:30:40", "match": true, "host": "123.45.67.89" }
+[21:30:40] [Server thread/INFO]: Disconnecting com.mojang.authlib.GameProfile@12345678[id=7de34b7e-069d-48a5-92c5-f583ae7c7a8b,name=Player,properties={textures=[com.mojang.authlib.properties.Property@12345678]},legacy=false] (/123.45.67.89:12345): You are not white-listed on this server!
+# failJSON: { "time": "2005-08-13T21:30:40", "match": true, "host": "123.45.67.89" }
+[21:30:40] [Server thread/INFO]: com.mojang.authlib.GameProfile@12345678[id=<null>,name=Player,properties={},legacy=false] (/123.45.67.89:12345) lost connection: Disconnected
