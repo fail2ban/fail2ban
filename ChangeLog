@@ -73,6 +73,7 @@ ver. 0.10.6-dev (20??/??/??) - development edition
 * new filter and jail for GitLab recognizing failed application logins (gh-2689)
 * new filter and jail for SoftEtherVPN recognizing failed application logins (gh-2723)
 * `filter.d/guacamole.conf` extended with `logging` parameter to follow webapp-logging if it's configured (gh-2631)
+* `filter.d/bitwarden.conf` enhanced to support syslog (gh-2778)
 * introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;
 * datetemplate: improved anchor detection for capturing groups `(^...)`;
 * datepattern: improved handling with wrong recognized timestamps (timezones, no datepattern, etc)
