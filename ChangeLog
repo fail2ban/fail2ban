@@ -293,7 +293,14 @@ ver. 0.11.2 (2020/11/23) - heal-the-world-with-security-tools
 * fail2ban-client: extended to unban IP range(s) by subnet (CIDR/mask) or hostname (DNS), gh-2791;
 * extended capturing of alternate tags in filter, allowing combine of multiple groups to single tuple token with new tag
   prefix `<F-TUPLE_`, that would combine value of `<F-V>` with all value of `<F-TUPLE_V?_n?>` tags (gh-2755)
+<<<<<<< HEAD
 
+=======
+* `actioncheck` behavior is changed now (gh-488), so invariant check as well as restore or repair
+   of sane environment (in case of recognized unsane state) would only occur on action errors (e. g.
+   if ban or unban operations are exiting with other code as 0)
+* new action for mikrotik routerOS, adds and removes entries from address lists on the router
+>>>>>>> Add action for mikrotik routerOS
 
 ver. 0.11.1 (2020/01/11) - this-is-the-way
 -----------
