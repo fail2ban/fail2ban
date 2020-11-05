@@ -36,6 +36,7 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
    with `jq`, gh-2140, gh-2656)
 * `action.d/nftables.conf` (type=multiport only): fixed port range selector, replacing `:` with `-` (gh-2763)
 * `action.d/firewallcmd-*.conf` (multiport only): fixed port range selector, replacing `:` with `-` (gh-2821)
+* `action.d/bsd-ipfw.conf`: fixed selection of rule-no by large list or initial `lowest_rule_num` (gh-2836)
 * `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
   should be interpolated in definition section (inside the filter-config, gh-2650)
 * `filter.d/courier-smtp.conf`: prefregex extended to consider port in log-message (gh-2697)
