@@ -43,7 +43,7 @@ class FailManager:
 		self.__maxRetry = 3
 		self.__maxTime = 600
 		self.__failTotal = 0
-		self.maxMatches = 50
+		self.maxMatches = 5
 		self.__bgSvc = BgService()
 	
 	def setFailTotal(self, value):
