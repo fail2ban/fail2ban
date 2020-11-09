@@ -71,6 +71,7 @@ ver. 0.10.6-dev (20??/??/??) - development edition
 * parsing of action in jail-configs considers space between action-names as separator also
   (previously only new-line was allowed), for example `action = a b` would specify 2 actions `a` and `b`
 * new filter and jail for GitLab recognizing failed application logins (gh-2689)
+* new filter and jail for Grafana recognizing failed application logins (gh-2855)
 * new filter and jail for SoftEtherVPN recognizing failed application logins (gh-2723)
 * `filter.d/guacamole.conf` extended with `logging` parameter to follow webapp-logging if it's configured (gh-2631)
 * `filter.d/bitwarden.conf` enhanced to support syslog (gh-2778)
