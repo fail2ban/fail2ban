@@ -455,7 +455,18 @@ class CommandAction(ActionBase):
 				ret = True
 				# avoid double execution of same command for both families:
 				if cmd and cmd not in self._operationExecuted(tag, lambda f: f != famoper):
-					ret = self.executeCmd(cmd, self.timeout)
+					realCmd = cmd
+					if self._jail:
+						# simulate action info with "empty" ticket:
+						aInfo = getattr(self._jail.actions, 'actionInfo', None)
+						if not aInfo:
+							aInfo = self._jail.actions._getActionInfo(None)
+							setattr(self._jail.actions, 'actionInfo', aInfo)
+						aInfo['time'] = MyTime.time()
+						aInfo['family'] = famoper
+						# replace dynamical tags, important - don't cache, no recursion and auto-escape here
+						realCmd = self.replaceDynamicTags(cmd, aInfo)
+					ret = self.executeCmd(realCmd, self.timeout)
 					res &= ret
 				if afterExec: afterExec(famoper, ret)
 				self._operationExecuted(tag, famoper, cmd if ret else None)
