@@ -3,3 +3,9 @@
 
 # failJSON: { "time": "2019-11-25T21:39:58", "match": true , "host": "192.168.0.21" }
 2019-11-25 21:39:58.464 +01:00 [WRN] Failed login attempt, 2FA invalid. 192.168.0.21
+
+# failJSON: { "time": "2019-11-25T21:39:58", "match": true , "host": "192.168.0.21" }
+2019-11-25 21:39:58.464 +01:00 [Warning] Failed login attempt, 2FA invalid. 192.168.0.21
+
+# failJSON: { "time": "2019-09-24T13:16:50", "match": true , "host": "192.168.0.23" }
+2019-09-24T13:16:50 e5a81dbf7fd1 Bitwarden-Identity[1]: [Bit.Core.IdentityServer.ResourceOwnerPasswordValidator] Failed login attempt. 192.168.0.23

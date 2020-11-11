@@ -1448,9 +1448,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),					
 			}),
 			# dummy --
-			('j-dummy', 'dummy[name=%(__name__)s, init="==", target="/tmp/fail2ban.dummy"]', {
+			('j-dummy', '''dummy[name=%(__name__)s, init="=='<family>/<ip>'==bt:<bantime>==bc:<bancount>==", target="/tmp/fail2ban.dummy"]''', {
 				'ip4': ('family: inet4',), 'ip6': ('family: inet6',),
 				'start': (
+					'''`printf %b "=='/'==bt:600==bc:0==\\n"''', ## empty family (independent in this action, same for both), no ip on start, initial bantime and bancount
 					'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- started"`',
 				), 
 				'flush': (

@@ -457,7 +457,9 @@ class Actions(JailThread, Mapping):
 			return mi[idx] if mi[idx] is not None else self.__ticket
 
 
-	def __getActionInfo(self, ticket):
+	def _getActionInfo(self, ticket):
+		if not ticket:
+			ticket = BanTicket("", MyTime.time())
 		aInfo = Actions.ActionInfo(ticket, self._jail)
 		return aInfo
 
@@ -491,7 +493,7 @@ class Actions(JailThread, Mapping):
 			bTicket = BanTicket.wrap(ticket)
 			btime = ticket.getBanTime(self.__banManager.getBanTime())
 			ip = bTicket.getIP()
-			aInfo = self.__getActionInfo(bTicket)
+			aInfo = self._getActionInfo(bTicket)
 			reason = {}
 			if self.__banManager.addBanTicket(bTicket, reason=reason):
 				cnt += 1
@@ -568,7 +570,7 @@ class Actions(JailThread, Mapping):
 		"""
 		actions = actions or self._actions
 		ip = ticket.getIP()
-		aInfo = self.__getActionInfo(ticket)
+		aInfo = self._getActionInfo(ticket)
 		if log:
 			logSys.notice("[%s] Reban %s%s", self._jail.name, aInfo["ip"], (', action %r' % actions.keys()[0] if len(actions) == 1 else ''))
 		for name, action in actions.iteritems():
@@ -602,7 +604,7 @@ class Actions(JailThread, Mapping):
 				if not action._prolongable:
 					continue
 				if aInfo is None:
-					aInfo = self.__getActionInfo(ticket)
+					aInfo = self._getActionInfo(ticket)
 				if not aInfo.immutable: aInfo.reset()
 				action.prolong(aInfo)
 			except Exception as e:
@@ -696,7 +698,7 @@ class Actions(JailThread, Mapping):
 		else:
 			unbactions = actions
 		ip = ticket.getIP()
-		aInfo = self.__getActionInfo(ticket)
+		aInfo = self._getActionInfo(ticket)
 		if log:
 			logSys.notice("[%s] Unban %s", self._jail.name, aInfo["ip"])
 		for name, action in unbactions.iteritems():
