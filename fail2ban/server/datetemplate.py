@@ -24,7 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import re, time
+import re
 from abc import abstractmethod
 
 from .strptime import reGroupDictStrptime, timeRE, getTimePatternRE

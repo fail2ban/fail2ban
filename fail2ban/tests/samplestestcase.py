@@ -28,7 +28,6 @@ import inspect
 import json
 import os
 import re
-import sys
 import time
 import unittest
 from ..server.failregex import Regex

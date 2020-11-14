@@ -33,12 +33,10 @@ Many contributions by Yaroslav O. Halchenko, Steven Hiscocks, Sergey G. Brester 
 
 __license__ = "GPL"
 
-import getopt
 import logging
 import os
 import shlex
 import sys
-import time
 import time
 import urllib
 from optparse import OptionParser, Option

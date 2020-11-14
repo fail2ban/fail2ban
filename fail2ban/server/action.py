@@ -22,11 +22,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import logging
-import os
 import re
-import signal
-import subprocess
-import tempfile
 import threading
 import time
 from abc import ABCMeta

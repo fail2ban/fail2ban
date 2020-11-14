@@ -27,7 +27,6 @@ import fcntl
 import logging
 import os
 import re
-import sys
 import time
 
 from .actions import Actions

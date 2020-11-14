@@ -27,7 +27,6 @@ __license__ = "GPL"
 import glob
 import json
 import os.path
-import re
 
 from .configreader import ConfigReaderUnshared, ConfigReader
 from .filterreader import FilterReader

@@ -28,7 +28,6 @@ import os
 import sys
 import unittest
 import tempfile
-import time
 
 from ..server.mytime import MyTime
 from ..server.ticket import FailTicket, BanTicket

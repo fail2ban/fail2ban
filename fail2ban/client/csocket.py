@@ -28,7 +28,6 @@ __license__ = "GPL"
 from pickle import dumps, loads, HIGHEST_PROTOCOL
 from ..protocol import CSPROTO
 import socket
-import sys
 
 class CSocket:
 	
