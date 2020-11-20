@@ -121,8 +121,11 @@ class MyTime:
 
 		@return ISO-capable string representation of given unixTime
 		"""
-		return datetime.datetime.fromtimestamp(
-			unixTime).replace(microsecond=0).strftime(format)
+		# consider end of 9999th year (in GMT+23 to avoid year overflow in other TZ)
+		dt = datetime.datetime.fromtimestamp(
+			unixTime).replace(microsecond=0
+		) if unixTime < 253402214400 else datetime.datetime(9999, 12, 31, 23, 59, 59)
+		return dt.strftime(format)
 
 	## precreate/precompile primitives used in str2seconds:
 

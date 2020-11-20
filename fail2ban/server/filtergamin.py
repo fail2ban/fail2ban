@@ -79,7 +79,8 @@ class FilterGamin(FileFilter):
 		this is a common logic and must be shared/provided by FileFilter
 		"""
 		self.getFailures(path)
-		self.performBan()
+		if not self.banASAP: # pragma: no cover
+			self.performBan()
 		self.__modified = False
 
 	##

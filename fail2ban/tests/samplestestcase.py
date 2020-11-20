@@ -32,7 +32,7 @@ import sys
 import time
 import unittest
 from ..server.failregex import Regex
-from ..server.filter import Filter
+from ..server.filter import Filter, FileContainer
 from ..client.filterreader import FilterReader
 from .utils import setUpMyTime, tearDownMyTime, TEST_NOW, CONFIG_DIR
 
@@ -157,10 +157,11 @@ def testSampleRegexsFactory(name, basedir):
 		while i < len(filenames):
 			filename = filenames[i]; i += 1;
 			logFile = fileinput.FileInput(os.path.join(TEST_FILES_DIR, "logs",
-				filename))
+				filename), mode='rb')
 
 			ignoreBlock = False
 			for line in logFile:
+				line = FileContainer.decode_line(logFile.filename(), 'UTF-8', line)
 				jsonREMatch = re.match("^#+ ?(failJSON|(?:file|filter)Options|addFILE):(.+)$", line)
 				if jsonREMatch:
 					try:
@@ -202,6 +203,7 @@ def testSampleRegexsFactory(name, basedir):
 						raise ValueError("%s: %s:%i" %
 							(e, logFile.filename(), logFile.filelineno()))
 					line = next(logFile)
+					line = FileContainer.decode_line(logFile.filename(), 'UTF-8', line)
 				elif ignoreBlock or line.startswith("#") or not line.strip():
 					continue
 				else: # pragma: no cover - normally unreachable
@@ -214,37 +216,41 @@ def testSampleRegexsFactory(name, basedir):
 					flt = self._readFilter(fltName, name, basedir, opts=None)
 					self._filterTests = [(fltName, flt, {})]
 
+				line = line.rstrip('\r\n')
 				# process line using several filter options (if specified in the test-file):
 				for fltName, flt, opts in self._filterTests:
+					# Bypass if constraint (as expression) is not valid:
+					if faildata.get('constraint') and not eval(faildata['constraint']):
+						continue
 					flt, regexsUsedIdx = flt
 					regexList = flt.getFailRegex()
-
 					failregex = -1
 					try:
 						fail = {}
 						# for logtype "journal" we don't need parse timestamp (simulate real systemd-backend handling):
-						checktime = True
 						if opts.get('logtype') != 'journal':
 							ret = flt.processLine(line)
 						else: # simulate journal processing, time is known from journal (formatJournalEntry):
-							checktime = False
 							if opts.get('test.prefix-line'): # journal backends creates common prefix-line:
 								line = opts.get('test.prefix-line') + line
-							ret = flt.processLine(('', TEST_NOW_STR, line.rstrip('\r\n')), TEST_NOW)
-						if not ret:
-							# Bypass if filter constraint specified:
-							if faildata.get('filter') and name != faildata.get('filter'):
-								continue
-							# Check line is flagged as none match
-							self.assertFalse(faildata.get('match', True),
-								"Line not matched when should have")
-							continue
+							ret = flt.processLine(('', TEST_NOW_STR, line), TEST_NOW)
+						if ret:
+							# filter matched only (in checkAllRegex mode it could return 'nofail' too):
+							found = []
+							for ret in ret:
+								failregex, fid, fail2banTime, fail = ret
+								# bypass pending and nofail:
+								if fid is None or fail.get('nofail'):
+									regexsUsedIdx.add(failregex)
+									regexsUsedRe.add(regexList[failregex])
+									continue
+								found.append(ret)
+							ret = found
 
-						failregex, fid, fail2banTime, fail = ret[0]
-						# Bypass no failure helpers-regexp:
-						if not faildata.get('match', False) and (fid is None or fail.get('nofail')):
-							regexsUsedIdx.add(failregex)
-							regexsUsedRe.add(regexList[failregex])
+						if not ret:
+							# Check line is flagged as none match
+							self.assertFalse(faildata.get('match', False),
+								"Line not matched when should have")
 							continue
 
 						# Check line is flagged to match
@@ -253,39 +259,41 @@ def testSampleRegexsFactory(name, basedir):
 						self.assertEqual(len(ret), 1,
 							"Multiple regexs matched %r" % (map(lambda x: x[0], ret)))
 
-						# Verify match captures (at least fid/host) and timestamp as expected
-						for k, v in faildata.iteritems():
-							if k not in ("time", "match", "desc", "filter"):
-								fv = fail.get(k, None)
-								if fv is None:
-									# Fallback for backwards compatibility (previously no fid, was host only):
-									if k == "host":
-										fv = fid
-									# special case for attempts counter:
-									if k == "attempts":
-										fv = len(fail.get('matches', {}))
-								# compare sorted (if set)
-								if isinstance(fv, (set, list, dict)):
-									self.assertSortedEqual(fv, v)
-									continue
-								self.assertEqual(fv, v)
+						for ret in ret:
+							failregex, fid, fail2banTime, fail = ret
+							# Verify match captures (at least fid/host) and timestamp as expected
+							for k, v in faildata.iteritems():
+								if k not in ("time", "match", "desc", "constraint"):
+									fv = fail.get(k, None)
+									if fv is None:
+										# Fallback for backwards compatibility (previously no fid, was host only):
+										if k == "host":
+											fv = fid
+										# special case for attempts counter:
+										if k == "attempts":
+											fv = len(fail.get('matches', {}))
+									# compare sorted (if set)
+									if isinstance(fv, (set, list, dict)):
+										self.assertSortedEqual(fv, v)
+										continue
+									self.assertEqual(fv, v)
 
-						t = faildata.get("time", None)
-						if checktime or t is not None:
-							try:
-								jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S")
-							except ValueError:
-								jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f")
-							jsonTime = time.mktime(jsonTimeLocal.timetuple())
-							jsonTime += jsonTimeLocal.microsecond / 1000000.0
-							self.assertEqual(fail2banTime, jsonTime,
-								"UTC Time  mismatch %s (%s) != %s (%s)  (diff %.3f seconds)" % 
-								(fail2banTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(fail2banTime)),
-								jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(jsonTime)),
-								fail2banTime - jsonTime) )
+							t = faildata.get("time", None)
+							if t is not None:
+								try:
+									jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S")
+								except ValueError:
+									jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f")
+								jsonTime = time.mktime(jsonTimeLocal.timetuple())
+								jsonTime += jsonTimeLocal.microsecond / 1000000.0
+								self.assertEqual(fail2banTime, jsonTime,
+									"UTC Time  mismatch %s (%s) != %s (%s)  (diff %.3f seconds)" % 
+									(fail2banTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(fail2banTime)),
+									jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(jsonTime)),
+									fail2banTime - jsonTime) )
 
-						regexsUsedIdx.add(failregex)
-						regexsUsedRe.add(regexList[failregex])
+							regexsUsedIdx.add(failregex)
+							regexsUsedRe.add(regexList[failregex])
 					except AssertionError as e: # pragma: no cover
 						import pprint
 						raise AssertionError("%s: %s on: %s:%i, line:\n %sregex (%s):\n %s\n"

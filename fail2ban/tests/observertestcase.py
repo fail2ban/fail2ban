@@ -36,7 +36,6 @@ from ..server.failmanager import FailManager
 from ..server.observer import Observers, ObserverThread
 from ..server.utils import Utils
 from .utils import LogCaptureTestCase
-from ..server.filter import Filter
 from .dummyjail import DummyJail
 
 from .databasetestcase import getFail2BanDb, Fail2BanDb
@@ -224,7 +223,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		jail.actions.setBanTime(10)
 		jail.setBanTimeExtra('increment', 'true')
 		jail.setBanTimeExtra('multipliers', '1 2 4 8 16 32 64 128 256 512 1024 2048')
-		ip = "127.0.0.2"
+		ip = "192.0.2.1"
 		# used as start and fromtime (like now but time independence, cause test case can run slow):
 		stime = int(MyTime.time())
 		ticket = FailTicket(ip, stime, [])
@@ -385,10 +384,12 @@ class BanTimeIncrDB(LogCaptureTestCase):
 
 		# two separate jails :
 		jail1 = DummyJail(backend='polling')
+		jail1.filter.ignoreSelf = False
 		jail1.setBanTimeExtra('increment', 'true')
 		jail1.database = self.db
 		self.db.addJail(jail1)
 		jail2 = DummyJail(name='DummyJail-2', backend='polling')
+		jail2.filter.ignoreSelf = False
 		jail2.database = self.db
 		self.db.addJail(jail2)
 		ticket1 = FailTicket(ip, stime, [])
@@ -477,7 +478,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		self.assertEqual(tickets, [])
 
 		# add failure:
-		ip = "127.0.0.2"
+		ip = "192.0.2.1"
 		ticket = FailTicket(ip, stime-120, [])
 		failManager = FailManager()
 		failManager.setMaxRetry(3)

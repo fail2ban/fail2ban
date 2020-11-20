@@ -36,15 +36,16 @@ logSys = getLogger(__name__)
 RE_GROUPED = re.compile(r'(?<!(?:\(\?))(?<!\\)\((?!\?)')
 RE_GROUP = ( re.compile(r'^((?:\(\?\w+\))?\^?(?:\(\?\w+\))?)(.*?)(\$?)$'), r"\1(\2)\3" )
 
+RE_EXLINE_NO_BOUNDS = re.compile(r'^\{UNB\}')
 RE_EXLINE_BOUND_BEG = re.compile(r'^\{\^LN-BEG\}')
-RE_EXSANC_BOUND_BEG = re.compile(r'^\(\?:\^\|\\b\|\\W\)')
+RE_EXSANC_BOUND_BEG = re.compile(r'^\((?:\?:)?\^\|\\b\|\\W\)')
 RE_EXEANC_BOUND_BEG = re.compile(r'\(\?=\\b\|\\W\|\$\)$')
-RE_NO_WRD_BOUND_BEG = re.compile(r'^\(*(?:\(\?\w+\))?(?:\^|\(*\*\*|\(\?:\^)')
+RE_NO_WRD_BOUND_BEG = re.compile(r'^\(*(?:\(\?\w+\))?(?:\^|\(*\*\*|\((?:\?:)?\^)')
 RE_NO_WRD_BOUND_END = re.compile(r'(?<!\\)(?:\$\)?|\\b|\\s|\*\*\)*)$')
 RE_DEL_WRD_BOUNDS = ( re.compile(r'^\(*(?:\(\?\w+\))?\(*\*\*|(?<!\\)\*\*\)*$'), 
 	                    lambda m: m.group().replace('**', '') )
 
-RE_LINE_BOUND_BEG = re.compile(r'^(?:\(\?\w+\))?(?:\^|\(\?:\^(?!\|))')
+RE_LINE_BOUND_BEG = re.compile(r'^(?:\(\?\w+\))?(?:\^|\((?:\?:)?\^(?!\|))')
 RE_LINE_BOUND_END = re.compile(r'(?<![\\\|])(?:\$\)?)$')
 
 RE_ALPHA_PATTERN = re.compile(r'(?<!\%)\%[aAbBpc]')
@@ -119,7 +120,7 @@ class DateTemplate(object):
 		if boundBegin:
 			self.flags |= DateTemplate.WORD_BEGIN if wordBegin != 'start' else DateTemplate.LINE_BEGIN
 			if wordBegin != 'start':
-				regex = r'(?:^|\b|\W)' + regex
+				regex = r'(?=^|\b|\W)' + regex
 			else:
 				regex = r"^(?:\W{0,2})?" + regex
 				if not self.name.startswith('{^LN-BEG}'):
@@ -128,8 +129,10 @@ class DateTemplate(object):
 		if boundEnd:
 			self.flags |= DateTemplate.WORD_END
 			regex += r'(?=\b|\W|$)'
-		if RE_LINE_BOUND_BEG.search(regex): self.flags |= DateTemplate.LINE_BEGIN
-		if RE_LINE_BOUND_END.search(regex): self.flags |= DateTemplate.LINE_END
+		if not (self.flags & DateTemplate.LINE_BEGIN) and RE_LINE_BOUND_BEG.search(regex):
+			self.flags |= DateTemplate.LINE_BEGIN
+		if not (self.flags & DateTemplate.LINE_END) and RE_LINE_BOUND_END.search(regex):
+			self.flags |= DateTemplate.LINE_END
 		# remove possible special pattern "**" in front and end of regex:
 		regex = RE_DEL_WRD_BOUNDS[0].sub(RE_DEL_WRD_BOUNDS[1], regex)
 		self._regex = regex
@@ -188,7 +191,7 @@ class DateTemplate(object):
 	def unboundPattern(pattern):
 		return RE_EXEANC_BOUND_BEG.sub('',
 			RE_EXSANC_BOUND_BEG.sub('',
-				RE_EXLINE_BOUND_BEG.sub('', pattern)
+				RE_EXLINE_BOUND_BEG.sub('', RE_EXLINE_NO_BOUNDS.sub('', pattern))
 			)
 		)
 
@@ -297,6 +300,10 @@ class DatePatternRegex(DateTemplate):
 	def setRegex(self, pattern, wordBegin=True, wordEnd=True):
 		# original pattern:
 		self._pattern = pattern
+		# if unbound signalled - reset boundaries left and right:
+		if RE_EXLINE_NO_BOUNDS.search(pattern):
+			pattern = RE_EXLINE_NO_BOUNDS.sub('', pattern)
+			wordBegin = wordEnd = False
 		# if explicit given {^LN-BEG} - remove it from pattern and set 'start' in wordBegin:
 		if wordBegin and RE_EXLINE_BOUND_BEG.search(pattern):
 			pattern = RE_EXLINE_BOUND_BEG.sub('', pattern)

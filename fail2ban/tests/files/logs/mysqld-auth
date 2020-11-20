@@ -33,3 +33,7 @@ Sep 16 21:30:32 catinthehat mysqld: 130916 21:30:32 [Warning] Access denied for 
 2019-09-06T01:45:18 srv mysqld: 2019-09-06  1:45:18 140581192722176 [Warning] Access denied for user 'global'@'192.0.2.2' (using password: YES)
 # failJSON: { "time": "2019-09-24T13:16:50", "match": true , "host": "192.0.2.3", "desc": "ISO timestamp within log message" }
 2019-09-24T13:16:50 srv mysqld[1234]: 2019-09-24 13:16:50 8756 [Warning] Access denied for user 'root'@'192.0.2.3' (using password: YES)
+
+# filterOptions: [{"logtype": "file"}, {"logtype": "short"}, {"logtype": "journal"}]
+# failJSON: { "match": true , "host": "192.0.2.1", "user":"root", "desc": "mariadb 10.4 log format, gh-2611" }
+2020-01-16 21:34:14 4644 [Warning] Access denied for user 'root'@'192.0.2.1' (using password: YES)

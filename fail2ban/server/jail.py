@@ -161,6 +161,10 @@ class Jail(object):
 		"""
 		return self.__db
 
+	@database.setter
+	def database(self, value):
+		self.__db = value;
+
 	@property
 	def filter(self):
 		"""The filter which the jail is using to monitor log files.
@@ -191,6 +195,12 @@ class Jail(object):
 			("Filter", self.filter.status(flavor=flavor)),
 			("Actions", self.actions.status(flavor=flavor)),
 			]
+
+	@property
+	def hasFailTickets(self):
+		"""Retrieve whether queue has tickets to ban.
+		"""
+		return not self.__queue.empty()
 
 	def putFailTicket(self, ticket):
 		"""Add a fail ticket to the jail.

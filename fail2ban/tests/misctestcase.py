@@ -34,7 +34,7 @@ from StringIO import StringIO
 from utils import LogCaptureTestCase, logSys as DefLogSys
 
 from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger, \
-	splitwords, uni_decode, uni_string
+	getVerbosityFormat, splitwords, uni_decode, uni_string
 from ..server.mytime import MyTime
 
 
@@ -66,6 +66,8 @@ class HelpersTest(unittest.TestCase):
 		self.assertEqual(splitwords(' 1, 2 , '), ['1', '2'])
 		self.assertEqual(splitwords(' 1\n  2'), ['1', '2'])
 		self.assertEqual(splitwords(' 1\n  2, 3'), ['1', '2', '3'])
+		# string as unicode:
+		self.assertEqual(splitwords(u' 1\n  2, 3'), ['1', '2', '3'])
 
 
 if sys.version_info >= (2,7):
@@ -199,7 +201,8 @@ class TestsUtilsTest(LogCaptureTestCase):
 		uni_decode((b'test\xcf' if sys.version_info >= (3,) else u'test\xcf'))
 		uni_string(b'test\xcf')
 		uni_string('test\xcf')
-		uni_string(u'test\xcf')
+		if sys.version_info < (3,) and 'PyPy' not in sys.version:
+			uni_string(u'test\xcf')
 
 	def testSafeLogging(self):
 		# logging should be exception-safe, to avoid possible errors (concat, str. conversion, representation failures, etc)
@@ -388,11 +391,27 @@ class TestsUtilsTest(LogCaptureTestCase):
 		self.assertSortedEqual(['Z', {'A': ['B', 'C'], 'B': ['E', 'F']}], [{'B': ['F', 'E'], 'A': ['C', 'B']}, 'Z'],
 			level=-1)
 		self.assertRaises(AssertionError, lambda: self.assertSortedEqual(
-			['Z', {'A': ['B', 'C'], 'B': ['E', 'F']}], [{'B': ['F', 'E'], 'A': ['C', 'B']}, 'Z']))
+			['Z', {'A': ['B', 'C'], 'B': ['E', 'F']}], [{'B': ['F', 'E'], 'A': ['C', 'B']}, 'Z'],
+			nestedOnly=True))
+		self.assertSortedEqual(
+			(0, [['A1'], ['A2', 'A1'], []]),
+			(0, [['A1'], ['A1', 'A2'], []]),
+		)
+		self.assertSortedEqual(list('ABC'), list('CBA'))
+		self.assertRaises(AssertionError, self.assertSortedEqual, ['ABC'], ['CBA'])
+		self.assertRaises(AssertionError, self.assertSortedEqual, [['ABC']], [['CBA']])
 		self._testAssertionErrorRE(r"\['A'\] != \['C', 'B'\]",
 			self.assertSortedEqual, ['A'], ['C', 'B'])
 		self._testAssertionErrorRE(r"\['A', 'B'\] != \['B', 'C'\]",
 			self.assertSortedEqual, ['A', 'B'], ['C', 'B'])
+
+	def testVerbosityFormat(self):
+		self.assertEqual(getVerbosityFormat(1),
+			'%(asctime)s %(name)-24s[%(process)d]: %(levelname)-7s %(message)s')
+		self.assertEqual(getVerbosityFormat(1, padding=False),
+			'%(asctime)s %(name)s[%(process)d]: %(levelname)s %(message)s')
+		self.assertEqual(getVerbosityFormat(1, addtime=False, padding=False),
+			'%(name)s[%(process)d]: %(levelname)s %(message)s')
 
 	def testFormatterWithTraceBack(self):
 		strout = StringIO()

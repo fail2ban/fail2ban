@@ -130,7 +130,7 @@ Comments: use '#' for comment lines and '; ' (space is important) for inline com
 The items that can be set in section [Definition] are:
 .TP
 .B loglevel
-verbosity level of log output: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG, TRACEDEBUG, HEAVYDEBUG or corresponding numeric value (50-5). Default: ERROR (equal 40)
+verbosity level of log output: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG, TRACEDEBUG, HEAVYDEBUG or corresponding numeric value (50-5). Default: INFO (equal 20)
 .TP
 .B logtarget
 log target: filename, SYSLOG, STDERR or STDOUT. Default: STDOUT if not set in fail2ban.conf/fail2ban.local
@@ -298,7 +298,14 @@ requires Gamin (a file alteration monitor) to be installed. If Gamin is not inst
 uses a polling algorithm which does not require external libraries.
 .TP
 .B systemd
-uses systemd python library to access the systemd journal. Specifying \fBlogpath\fR is not valid for this backend and instead utilises \fBjournalmatch\fR from the jails associated filter config.
+uses systemd python library to access the systemd journal. Specifying \fBlogpath\fR is not valid for this backend and instead utilises \fBjournalmatch\fR from the jails associated filter config. Multiple systemd-specific flags can be passed to the backend, including \fBjournalpath\fR and \fBjournalfiles\fR, to explicitly set the path to a directory or set of files. \fBjournalflags\fR, which by default is 4 and excludes user session files, can be set to include them with \fBjournalflags=1\fR, see the python-systemd documentation for other settings and further details. Examples:
+.PP
+.RS
+.nf
+backend = systemd[journalpath=/run/log/journal/machine-1]
+backend = systemd[journalfiles="/path/to/system.journal, /path/to/user.journal"]
+backend = systemd[journalflags=1]
+.fi
 
 .SS Actions
 Each jail can be configured with only a single filter, but may have multiple actions. By default, the name of a action is the action filename, and in the case of Python actions, the ".py" file extension is stripped. Where multiple of the same action are to be used, the \fBactname\fR option can be assigned to the action to avoid duplication e.g.:
@@ -460,11 +467,27 @@ Similar to actions, filters have an [Init] section which can be overridden in \f
 specifies the maximum number of lines to buffer to match multi-line regexs. For some log formats this will not required to be changed. Other logs may require to increase this value if a particular log file is frequently written to.
 .TP
 \fBdatepattern\fR
-specifies a custom date pattern/regex as an alternative to the default date detectors e.g. %Y-%m-%d %H:%M(?::%S)?. For a list of valid format directives, see Python library documentation for strptime behaviour.
-.br
-Also, special values of \fIEpoch\fR (UNIX Timestamp), \fITAI64N\fR and \fIISO8601\fR can be used.
+specifies a custom date pattern/regex as an alternative to the default date detectors e.g. %%Y-%%m-%%d %%H:%%M(?::%%S)?.
+For a list of valid format directives, see Python library documentation for strptime behaviour.
 .br
 \fBNOTE:\fR due to config file string substitution, that %'s must be escaped by an % in config files.
+.br
+Also, special values of \fIEpoch\fR (UNIX Timestamp), \fITAI64N\fR and \fIISO8601\fR can be used as datepattern.
+.br
+Normally the regexp generated for datepattern additionally gets word-start and word-end boundaries to avoid accidental match inside of some word in a message.
+There are several prefixes and words with special meaning that could be specified with custom datepattern to control resulting regex:
+.RS
+.IP
+\fI{DEFAULT}\fR - can be used to add default date patterns of fail2ban.
+.IP
+\fI{DATE}\fR - can be used as part of regex that will be replaced with default date patterns.
+.IP
+\fI{^LN-BEG}\fR - prefix (similar to \fI^\fR) changing word-start boundary to line-start boundary (ignoring up to 2 characters). If used as value (not as a prefix), it will also set all default date patterns (similar to \fI{DEFAULT}\fR), but anchored at begin of message line.
+.IP
+\fI{UNB}\fR - prefix to disable automatic word boundaries in regex.
+.IP
+\fI{NONE}\fR - value would allow to find failures totally without date-time in log message. Filter will use now as a timestamp (or last known timestamp from previous line with timestamp).
+.RE
 .TP
 \fBjournalmatch\fR
 specifies the systemd journal match used to filter the journal entries. See \fBjournalctl(1)\fR and \fBsystemd.journal-fields(7)\fR for matches syntax and more details on special journal fields. This option is only valid for the \fIsystemd\fR backend.

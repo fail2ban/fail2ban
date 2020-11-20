@@ -134,28 +134,13 @@ class install_command_f2b(install):
 			cmdclass = self.distribution.cmdclass
 			cmdclass['build_py'] = build_py_2to3
 			cmdclass['build_scripts'] = build_scripts_2to3
-		if not self.without_tests:
-			self.distribution.scripts += [
-				'bin/fail2ban-testcases',
-			]
+		if self.without_tests:
+			self.distribution.scripts.remove('bin/fail2ban-testcases')
 
-			self.distribution.packages += [
-				'fail2ban.tests',
-				'fail2ban.tests.action_d',
-			]
+			self.distribution.packages.remove('fail2ban.tests')
+			self.distribution.packages.remove('fail2ban.tests.action_d')
 
-			self.distribution.package_data = {
-				'fail2ban.tests':
-					[ join(w[0], f).replace("fail2ban/tests/", "", 1)
-						for w in os.walk('fail2ban/tests/files')
-						for f in w[2]] +
-					[ join(w[0], f).replace("fail2ban/tests/", "", 1)
-						for w in os.walk('fail2ban/tests/config')
-						for f in w[2]] +
-					[ join(w[0], f).replace("fail2ban/tests/", "", 1)
-						for w in os.walk('fail2ban/tests/action_d')
-						for f in w[2]]
-			}
+			del self.distribution.package_data['fail2ban.tests']
 		install.finalize_options(self)
 	def run(self):
 		install.run(self)
@@ -239,13 +224,28 @@ setup(
 		'bin/fail2ban-client',
 		'bin/fail2ban-server',
 		'bin/fail2ban-regex',
+		'bin/fail2ban-testcases',
 		# 'bin/fail2ban-python', -- link (binary), will be installed via install_scripts_f2b wrapper
 	],
 	packages = [
 		'fail2ban',
 		'fail2ban.client',
 		'fail2ban.server',
+		'fail2ban.tests',
+		'fail2ban.tests.action_d',
 	],
+	package_data = {
+		'fail2ban.tests':
+			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
+				for w in os.walk('fail2ban/tests/files')
+				for f in w[2]] +
+			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
+				for w in os.walk('fail2ban/tests/config')
+				for f in w[2]] +
+			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
+				for w in os.walk('fail2ban/tests/action_d')
+				for f in w[2]]
+	},
 	data_files = [
 		('/etc/fail2ban',
 			glob("config/*.conf")

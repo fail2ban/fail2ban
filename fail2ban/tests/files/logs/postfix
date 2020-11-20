@@ -137,6 +137,11 @@ Jan 14 16:18:16 xxx postfix/smtpd[14933]: warning: host[192.0.2.5]: SASL CRAM-MD
 
 # filterOptions: [{"mode": "ddos"}, {"mode": "aggressive"}]
 
+# failJSON: { "time": "2005-02-10T13:26:34", "match": true , "host": "192.0.2.1" }
+Feb 10 13:26:34 srv postfix/smtpd[123]: disconnect from unknown[192.0.2.1] helo=1 auth=0/1 quit=1 commands=2/3
+# failJSON: { "time": "2005-02-10T13:26:34", "match": true , "host": "192.0.2.2" }
+Feb 10 13:26:34 srv postfix/smtpd[123]: disconnect from unknown[192.0.2.2] ehlo=1 auth=0/1 rset=1 quit=1 commands=3/4
+
 # failJSON: { "time": "2005-02-18T09:45:10", "match": true , "host": "192.0.2.10" }
 Feb 18 09:45:10 xxx postfix/smtpd[42]: lost connection after CONNECT from spammer.example.com[192.0.2.10]
 # failJSON: { "time": "2005-02-18T09:45:12", "match": true , "host": "192.0.2.42" }

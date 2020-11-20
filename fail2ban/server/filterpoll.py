@@ -111,13 +111,16 @@ class FilterPoll(FileFilter):
 				modlst = []
 				Utils.wait_for(lambda: not self.active or self.getModified(modlst),
 					self.sleeptime)
+				if not self.active: # pragma: no cover - timing
+					break
 				for filename in modlst:
 					self.getFailures(filename)
 					self.__modified = True
 
 				self.ticks += 1
 				if self.__modified:
-					self.performBan()
+					if not self.banASAP: # pragma: no cover
+						self.performBan()
 					self.__modified = False
 			except Exception as e: # pragma: no cover
 				if not self.active: # if not active - error by stop...
@@ -139,7 +142,7 @@ class FilterPoll(FileFilter):
 		try:
 			logStats = os.stat(filename)
 			stats = logStats.st_mtime, logStats.st_ino, logStats.st_size
-			pstats = self.__prevStats.get(filename, (0))
+			pstats = self.__prevStats.get(filename, (0,))
 			if logSys.getEffectiveLevel() <= 4:
 				# we do not want to waste time on strftime etc if not necessary
 				dt = logStats.st_mtime - pstats[0]

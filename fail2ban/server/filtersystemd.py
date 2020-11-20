@@ -190,6 +190,13 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	def getJournalReader(self):
 		return self.__journal
 
+	def getJrnEntTime(self, logentry):
+		""" Returns time of entry as tuple (ISO-str, Posix)."""
+		date = logentry.get('_SOURCE_REALTIME_TIMESTAMP')
+		if date is None:
+				date = logentry.get('__REALTIME_TIMESTAMP')
+		return (date.isoformat(), time.mktime(date.timetuple()) + date.microsecond/1.0E6)
+
 	##
 	# Format journal log entry into syslog style
 	#
@@ -222,9 +229,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				logelements[-1] += v
 			logelements[-1] += ":"
 			if logelements[-1] == "kernel:":
-				if '_SOURCE_MONOTONIC_TIMESTAMP' in logentry:
-					monotonic = logentry.get('_SOURCE_MONOTONIC_TIMESTAMP')
-				else:
+				monotonic = logentry.get('_SOURCE_MONOTONIC_TIMESTAMP')
+				if monotonic is None:
 					monotonic = logentry.get('__MONOTONIC_TIMESTAMP')[0]
 				logelements.append("[%12.6f]" % monotonic.total_seconds())
 		msg = logentry.get('MESSAGE','')
@@ -235,13 +241,11 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 		logline = " ".join(logelements)
 
-		date = logentry.get('_SOURCE_REALTIME_TIMESTAMP',
-				logentry.get('__REALTIME_TIMESTAMP'))
+		date = self.getJrnEntTime(logentry)
 		logSys.log(5, "[%s] Read systemd journal entry: %s %s", self.jailName,
-			date.isoformat(), logline)
+			date[0], logline)
 		## use the same type for 1st argument:
-		return ((logline[:0], date.isoformat(), logline.replace('\n', '\\n')),
-			time.mktime(date.timetuple()) + date.microsecond/1.0E6)
+		return ((logline[:0], date[0], logline.replace('\n', '\\n')), date[1])
 
 	def seekToTime(self, date):
 		if not isinstance(date, datetime.datetime):
@@ -262,9 +266,12 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				"Jail regexs will be checked against all journal entries, "
 				"which is not advised for performance reasons.")
 
-		# Seek to now - findtime in journal
-		start_time = datetime.datetime.now() - \
-				datetime.timedelta(seconds=int(self.getFindTime()))
+		# Try to obtain the last known time (position of journal)
+		start_time = 0
+		if self.jail.database is not None:
+			start_time = self.jail.database.getJournalPos(self.jail, 'systemd-journal') or 0
+		# Seek to max(last_known_time, now - findtime) in journal
+		start_time = max( start_time, MyTime.time() - int(self.getFindTime()) )
 		self.seekToTime(start_time)
 		# Move back one entry to ensure do not end up in dead space
 		# if start time beyond end of journal
@@ -303,16 +310,20 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 							e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
 					self.ticks += 1
 					if logentry:
-						self.processLineAndAdd(
-							*self.formatJournalEntry(logentry))
+						line = self.formatJournalEntry(logentry)
+						self.processLineAndAdd(*line)
 						self.__modified += 1
 						if self.__modified >= 100: # todo: should be configurable
 							break
 					else:
 						break
 				if self.__modified:
-					self.performBan()
+					if not self.banASAP: # pragma: no cover
+						self.performBan()
 					self.__modified = 0
+					# update position in log (time and iso string):
+					if self.jail.database is not None:
+						self.jail.database.updateJournal(self.jail, 'systemd-journal', line[1], line[0][1])
 			except Exception as e: # pragma: no cover
 				if not self.active: # if not active - error by stop...
 					break

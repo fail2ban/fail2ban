@@ -140,7 +140,8 @@ class FilterPyinotify(FileFilter):
 		"""
 		if not self.idle:
 			self.getFailures(path)
-			self.performBan()
+			if not self.banASAP: # pragma: no cover
+				self.performBan()
 			self.__modified = False
 
 	def _addPending(self, path, reason, isDir=False):
@@ -187,7 +188,8 @@ class FilterPyinotify(FileFilter):
 		for path, isDir in found.iteritems():
 			self._delPending(path)
 			# refresh monitoring of this:
-			self._refreshWatcher(path, isDir=isDir)
+			if isDir is not None:
+				self._refreshWatcher(path, isDir=isDir)
 			if isDir:
 				# check all files belong to this dir:
 				for logpath in self.__watchFiles:
@@ -270,7 +272,13 @@ class FilterPyinotify(FileFilter):
 
 	def _addLogPath(self, path):
 		self._addFileWatcher(path)
-		self._process_file(path)
+		# initial scan:
+		if self.active:
+			# we can execute it right now:
+			self._process_file(path)
+		else:
+			# retard until filter gets started, isDir=None signals special case: process file only (don't need to refresh monitor):
+			self._addPending(path, ('INITIAL', path), isDir=None)
 
     ##
 	# Delete a log path
@@ -278,9 +286,9 @@ class FilterPyinotify(FileFilter):
 	# @param path the log file to delete
 
 	def _delLogPath(self, path):
+		self._delPending(path)
 		if not self._delFileWatcher(path): # pragma: no cover
 			logSys.error("Failed to remove watch on path: %s", path)
-		self._delPending(path)
 
 		path_dir = dirname(path)
 		for k in self.__watchFiles:
@@ -290,8 +298,8 @@ class FilterPyinotify(FileFilter):
 		if path_dir:
 			# Remove watches for the directory
 			# since there is no other monitored file under this directory
-			self._delDirWatcher(path_dir)
 			self._delPending(path_dir)
+			self._delDirWatcher(path_dir)
 
 	# pyinotify.ProcessEvent default handler:
 	def __process_default(self, event):

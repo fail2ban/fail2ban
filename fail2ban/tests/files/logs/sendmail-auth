@@ -17,3 +17,8 @@ Feb 24 14:00:00 server sendmail[26592]: u0CB32qX026592: [192.0.2.1]: possible SM
 
 # failJSON: { "time": "2005-02-24T14:00:01", "match": true , "host": "192.0.2.2", "desc": "long PID, ID longer as 14 chars (gh-2563)" }
 Feb 24 14:00:01 server sendmail[3529566]: xA32R2PQ3529566: [192.0.2.2]: possible SMTP attack: command=AUTH, count=5
+
+# failJSON: { "time": "2005-02-25T04:02:27", "match": true , "host": "192.0.2.3", "desc": "sendmail 8.16.1, AUTH_FAIL_LOG_USER (gh-2757)" }
+Feb 25 04:02:27 relay1 sendmail[16664]: 06I02CNi016764: AUTH failure (LOGIN): authentication failure (-13) SASL(-13): authentication failure: checkpass failed, user=user@example.com, relay=example.com [192.0.2.3] (may be forged)
+# failJSON: { "time": "2005-02-25T04:02:28", "match": true , "host": "192.0.2.4", "desc": "injection attempt on user name" }
+Feb 25 04:02:28 relay1 sendmail[16665]: 06I02CNi016765: AUTH failure (LOGIN): authentication failure (-13) SASL(-13): authentication failure: checkpass failed, user=criminal, relay=[192.0.2.100], relay=[192.0.2.4] (may be forged)
