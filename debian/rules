@@ -30,9 +30,7 @@ override_dh_auto_configure:
 
 override_dh_install:
 	rm -f $(DESTDIR)/usr/share/doc/fail2ban/README.Solaris
-	rm -f $(DESTDIR)/etc/fail2ban/paths-fedora.conf
-	rm -f $(DESTDIR)/etc/fail2ban/paths-freebsd.conf
-	rm -f $(DESTDIR)/etc/fail2ban/paths-osx.conf
+	find "$(DESTDIR)/etc/fail2ban/" -type f -name 'paths-*.conf' -not -name 'paths-common.conf' -not -name 'paths-debian.conf' -delete
 	: # Remove explicitly created /var/run/fail2ban
 	: # just to please lintian since init file will
 	: # take care about it anyways
