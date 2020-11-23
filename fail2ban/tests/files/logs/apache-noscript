@@ -20,3 +20,6 @@
 [Sun Mar 11 08:56:20.913548 2018] [proxy_fcgi:error] [pid 742:tid 140142593419008] [client 192.0.2.106:50900] AH01071: Got error 'Primary script unknown\n'
 # failJSON: { "time": "2019-07-09T14:27:42", "match": true , "host": "127.0.0.1", "desc": "script unknown, without \n (gh-2466)" }
 [Tue Jul 09 14:27:42.650548 2019] [proxy_fcgi:error] [pid 22075:tid 140322524440320] [client 127.0.0.1] AH01071: Got error 'Primary script unknown'
+
+# failJSON: { "time": "2020-08-11T08:56:17", "match": true , "host": "192.0.2.1", "desc": "script not found with AH02811 and cgi-bin path segment in script (gh-2805)" }
+[Tue Aug 11 08:56:17.580412 2020] [cgi:error] [pid 27550:tid 140110750279424] [client 192.0.2.1:18071] AH02811: script not found or unable to stat: /usr/lib/cgi-bin/kerbynet
