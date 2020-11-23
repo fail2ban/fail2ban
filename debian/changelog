@@ -1,13 +1,9 @@
-fail2ban (0.11.1-4) UNRELEASED; urgency=medium
+fail2ban (0.11.2-1~upstream1) unstable; urgency=medium
 
-  * Use debhelper-compat instead of debian/compat.
-  * d/control: Update Maintainer field with new Debian Python Team
-    contact address.
-  * d/control: Update Vcs-* fields with new Debian Python Team Salsa
-    layout.
-  * d/watch: Use https protocol.
+  [ Sergey Brester ]
+  * upstream package for debian, https://github.com/fail2ban/fail2ban/releases/tag/0.11.2
 
- -- Ondřej Nový <onovy@debian.org>  Thu, 24 Sep 2020 08:42:58 +0200
+ -- Sergey G. Brester <serg.brester@sebres.de>  Mon, 23 Nov 2020 21:54:36 +0100
 
 fail2ban (0.11.1-3) unstable; urgency=medium
 
