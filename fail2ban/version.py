@@ -24,7 +24,7 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko, Steven Hiscocks, Daniel Black"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2005-2016 Yaroslav Halchenko, 2013-2014 Steven Hiscocks, Daniel Black"
 __license__ = "GPL-v2+"
 
-version = "0.11.2-dev"
+version = "0.11.2"
 
 def normVersion():
   """ Returns fail2ban version in normalized machine-readable format"""
