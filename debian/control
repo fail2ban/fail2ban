@@ -5,7 +5,7 @@ Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>,
  Sylvestre Ledru <sylvestre@debian.org>
 Build-Depends:
- debhelper-compat (= 9)
+ debhelper-compat (= 12)
  , debhelper (>= 9.20160709)
  , dh-python
  , python3
@@ -17,7 +17,6 @@ Homepage: http://www.fail2ban.org
 Vcs-Git: https://salsa.debian.org/python-team/packages/fail2ban.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/fail2ban
 Standards-Version: 4.4.1
-
 
 Package: fail2ban
 Architecture: all

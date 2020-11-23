@@ -12,7 +12,7 @@ export DH_VERBOSE=1
 export PYBUILD_DISABLE_python2=1
 
 %:
-	dh $@ --with python3,systemd --buildsystem pybuild
+	dh $@ --with python3 --buildsystem pybuild
 
 DESTDIR=$(CURDIR)/debian/fail2ban
 PYVERSION=$(shell py3versions -dv)
