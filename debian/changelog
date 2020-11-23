@@ -3,6 +3,7 @@ fail2ban (0.11.1-4) UNRELEASED; urgency=medium
   * Fix day-of-week for changelog entry 0.5.4-2.
   * Update watch file format version to 4.
   * Bump debhelper from deprecated 9 to 12.
+  * Update standards version to 4.5.0, no changes needed.
 
  -- Sylvestre Ledru <sylvestre@debian.org>  Mon, 23 Nov 2020 21:47:27 -0000
 
