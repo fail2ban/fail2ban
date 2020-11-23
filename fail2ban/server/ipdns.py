@@ -337,7 +337,7 @@ class IPAddr(object):
 		return repr(self.ntoa)
 
 	def __str__(self):
-		return self.ntoa if isinstance(self.ntoa, basestring) else str(self.ntoa)
+		return self.ntoa
 
 	def __reduce__(self):
 		"""IPAddr pickle-handler, that simply wraps IPAddr to the str

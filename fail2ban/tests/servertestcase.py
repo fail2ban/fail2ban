@@ -41,7 +41,7 @@ from ..server.jailthread import JailThread
 from ..server.ticket import BanTicket
 from ..server.utils import Utils
 from .dummyjail import DummyJail
-from .utils import LogCaptureTestCase, with_alt_time, MyTime
+from .utils import LogCaptureTestCase
 from ..helpers import getLogger, extractOptions, PREFER_ENC
 from .. import version
 
@@ -381,50 +381,6 @@ class Transmitter(TransmitterBase):
 		# resulted to ban for "192.0.2.2" but not for "192.0.2.1":
 		self.assertLogged("Ban 192.0.2.2", wait=True)
 		self.assertNotLogged("Ban 192.0.2.1")
-
-	@with_alt_time
-	def testJailBanList(self):
-		jail = "TestJailBanList"
-		self.server.addJail(jail, FAST_BACKEND)
-		self.server.startJail(jail)
-
-		# Helper to process set banip/set unbanip commands and compare the list of
-		# banned IP addresses with outList.
-		def _getBanListTest(jail, banip=None, unbanip=None, args=(), outList=[]):
-			# Ban IP address
-			if banip is not None:
-				self.assertEqual(
-					self.transm.proceed(["set", jail, "banip", banip]),
-					(0, 1))
-				self.assertLogged("Ban %s" % banip, wait=True) # Give chance to ban
-			# Unban IP address
-			if unbanip is not None:
-				self.assertEqual(
-					self.transm.proceed(["set", jail, "unbanip", unbanip]),
-					(0, 1))
-				self.assertLogged("Unban %s" % unbanip, wait=True) # Give chance to unban
-			# Compare the list of banned IP addresses with outList
-			self.assertSortedEqual(
-				self.transm.proceed(["get", jail, "banip"]+list(args)),
-				(0, outList), nestedOnly=False)
-			MyTime.setTime(MyTime.time() + 1)
-
-		_getBanListTest(jail,
-			outList=[])
-		_getBanListTest(jail, banip="127.0.0.1", args=('--with-time',), 
-			outList=["127.0.0.1 \t2005-08-14 12:00:01 + 600 = 2005-08-14 12:10:01"])
-		_getBanListTest(jail, banip="192.168.0.1", args=('--with-time',), 
-			outList=[
-				"127.0.0.1 \t2005-08-14 12:00:01 + 600 = 2005-08-14 12:10:01",
-				"192.168.0.1 \t2005-08-14 12:00:02 + 600 = 2005-08-14 12:10:02"])
-		_getBanListTest(jail, banip="192.168.1.10",
-			outList=["127.0.0.1", "192.168.0.1", "192.168.1.10"])
-		_getBanListTest(jail, unbanip="127.0.0.1",
-			outList=["192.168.0.1", "192.168.1.10"])
-		_getBanListTest(jail, unbanip="192.168.1.10",
-			outList=["192.168.0.1"])
-		_getBanListTest(jail, unbanip="192.168.0.1",
-			outList=[])
 
 	def testJailMaxMatches(self):
 		self.setGetTest("maxmatches", "5", 5, jail=self.jailName)
@@ -1037,15 +993,6 @@ class TransmitterLogging(TransmitterBase):
 		self.assertEqual(self.transm.proceed(["set", "logtarget", "STDERR"]), (0, "STDERR"))
 		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "flushed"))
 
-	def testBanTimeIncr(self):
-		self.setGetTest("bantime.increment", "true", True, jail=self.jailName)
-		self.setGetTest("bantime.rndtime", "30min", 30*60, jail=self.jailName)
-		self.setGetTest("bantime.maxtime", "1000 days", 1000*24*60*60, jail=self.jailName)
-		self.setGetTest("bantime.factor", "2", "2", jail=self.jailName)
-		self.setGetTest("bantime.formula", "ban.Time * math.exp(float(ban.Count+1)*banFactor)/math.exp(1*banFactor)", jail=self.jailName)
-		self.setGetTest("bantime.multipliers", "1 5 30 60 300 720 1440 2880", "1 5 30 60 300 720 1440 2880", jail=self.jailName)
-		self.setGetTest("bantime.overalljails", "true", "true", jail=self.jailName)
-
 
 class JailTests(unittest.TestCase):
 
@@ -1213,20 +1160,8 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				logSys.debug(l)
 		return True
 
-	def _testActionInfos(self):
-		if not hasattr(self, '__aInfos'):
-			dmyjail = DummyJail()
-			self.__aInfos = {}
-			for t, ip in (('ipv4', '192.0.2.1'), ('ipv6', '2001:DB8::')):
-				ticket = BanTicket(ip)
-				ticket.setBanTime(600)
-				self.__aInfos[t] = _actions.Actions.ActionInfo(ticket, dmyjail)
-		return self.__aInfos
-
 	def _testExecActions(self, server):
 		jails = server._Server__jails
-
-		aInfos = self._testActionInfos()
 		for jail in jails:
 			# print(jail, jails[jail])
 			for a in jails[jail].actions:
@@ -1243,16 +1178,16 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				action.start()
 				# test ban ip4 :
 				logSys.debug('# === ban-ipv4 ==='); self.pruneLog()
-				action.ban(aInfos['ipv4'])
+				action.ban({'ip': IPAddr('192.0.2.1'), 'family': 'inet4'})
 				# test unban ip4 :
 				logSys.debug('# === unban ipv4 ==='); self.pruneLog()
-				action.unban(aInfos['ipv4'])
+				action.unban({'ip': IPAddr('192.0.2.1'), 'family': 'inet4'})
 				# test ban ip6 :
 				logSys.debug('# === ban ipv6 ==='); self.pruneLog()
-				action.ban(aInfos['ipv6'])
+				action.ban({'ip': IPAddr('2001:DB8::'), 'family': 'inet6'})
 				# test unban ip6 :
 				logSys.debug('# === unban ipv6 ==='); self.pruneLog()
-				action.unban(aInfos['ipv6'])
+				action.unban({'ip': IPAddr('2001:DB8::'), 'family': 'inet6'})
 				# test stop :
 				logSys.debug('# === stop ==='); self.pruneLog()
 				action.stop()
@@ -1448,10 +1383,9 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),					
 			}),
 			# dummy --
-			('j-dummy', '''dummy[name=%(__name__)s, init="=='<family>/<ip>'==bt:<bantime>==bc:<bancount>==", target="/tmp/fail2ban.dummy"]''', {
+			('j-dummy', 'dummy[name=%(__name__)s, init="==", target="/tmp/fail2ban.dummy"]', {
 				'ip4': ('family: inet4',), 'ip6': ('family: inet6',),
 				'start': (
-					'''`printf %b "=='/'==bt:600==bc:0==\\n"''', ## empty family (independent in this action, same for both), no ip on start, initial bantime and bancount
 					'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- started"`',
 				), 
 				'flush': (
@@ -2043,7 +1977,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 
 		jails = server._Server__jails
 
-		aInfos = self._testActionInfos()
+		tickets = {
+			'ip4': BanTicket('192.0.2.1'),
+			'ip6': BanTicket('2001:DB8::'),
+		}
 		for jail, act, tests in testJailsActions:
 			# print(jail, jails[jail])
 			for a in jails[jail].actions:
@@ -2061,28 +1998,32 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					self.assertLogged(*tests['start'], all=True)
 				elif tests.get('ip4-start') and tests.get('ip6-start'):
 					self.assertNotLogged(*tests['ip4-start']+tests['ip6-start'], all=True)
+				ainfo = {
+					'ip4': _actions.Actions.ActionInfo(tickets['ip4'], jails[jail]),
+					'ip6': _actions.Actions.ActionInfo(tickets['ip6'], jails[jail]),
+				}
 				# test ban ip4 :
 				self.pruneLog('# === ban-ipv4 ===')
-				action.ban(aInfos['ipv4'])
+				action.ban(ainfo['ip4'])
 				if tests.get('ip4-start'): self.assertLogged(*tests.get('*-start', ())+tests['ip4-start'], all=True)
 				if tests.get('ip6-start'): self.assertNotLogged(*tests['ip6-start'], all=True)
 				self.assertLogged(*tests.get('ip4-check',())+tests['ip4-ban'], all=True)
 				self.assertNotLogged(*tests['ip6'], all=True)
 				# test unban ip4 :
 				self.pruneLog('# === unban ipv4 ===')
-				action.unban(aInfos['ipv4'])
+				action.unban(ainfo['ip4'])
 				self.assertLogged(*tests.get('ip4-check',())+tests['ip4-unban'], all=True)
 				self.assertNotLogged(*tests['ip6'], all=True)
 				# test ban ip6 :
 				self.pruneLog('# === ban ipv6 ===')
-				action.ban(aInfos['ipv6'])
+				action.ban(ainfo['ip6'])
 				if tests.get('ip6-start'): self.assertLogged(*tests.get('*-start', ())+tests['ip6-start'], all=True)
 				if tests.get('ip4-start'): self.assertNotLogged(*tests['ip4-start'], all=True)
 				self.assertLogged(*tests.get('ip6-check',())+tests['ip6-ban'], all=True)
 				self.assertNotLogged(*tests['ip4'], all=True)
 				# test unban ip6 :
 				self.pruneLog('# === unban ipv6 ===')
-				action.unban(aInfos['ipv6'])
+				action.unban(ainfo['ip6'])
 				self.assertLogged(*tests.get('ip6-check',())+tests['ip6-unban'], all=True)
 				self.assertNotLogged(*tests['ip4'], all=True)
 				# test flush for actions should supported this:

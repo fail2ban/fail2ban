@@ -44,7 +44,7 @@ from ..server import server
 from ..server.mytime import MyTime
 from ..server.utils import Utils
 from .utils import LogCaptureTestCase, logSys as DefLogSys, with_tmpdir, shutil, logging, \
-	STOCK, CONFIG_DIR as STOCK_CONF_DIR, TEST_NOW, tearDownMyTime
+	STOCK, CONFIG_DIR as STOCK_CONF_DIR
 
 from ..helpers import getLogger
 
@@ -78,35 +78,6 @@ fail2banclient.output = \
 fail2banserver.output = \
 protocol.output = _test_output
 
-def _time_shift(shift):
-	# jump to the future (+shift minutes):
-	logSys.debug("===>>> time shift + %s min", shift)
-	MyTime.setTime(MyTime.time() + shift*60)
-
-
-Observers = server.Observers
-
-def _observer_wait_idle():
-	"""Helper to wait observer becomes idle"""
-	if Observers.Main is not None:
-		Observers.Main.wait_empty(MID_WAITTIME)
-		Observers.Main.wait_idle(MID_WAITTIME / 5)
-
-def _observer_wait_before_incrban(cond, timeout=MID_WAITTIME):
-	"""Helper to block observer before increase bantime until some condition gets true"""
-	if Observers.Main is not None:
-		# switch ban handler:
-		_obs_banFound = Observers.Main.banFound
-		def _banFound(*args, **kwargs):
-			# restore original handler:
-			Observers.Main.banFound = _obs_banFound
-			# wait for:
-			logSys.debug('  [Observer::banFound] *** observer blocked for test')
-			Utils.wait_for(cond, timeout)
-			logSys.debug('  [Observer::banFound] +++ observer runs again')
-			# original banFound:
-			_obs_banFound(*args, **kwargs)
-		Observers.Main.banFound = _banFound
 
 #
 # Mocking .exit so we could test its correct operation.
@@ -343,7 +314,6 @@ def with_foreground_server_thread(startextra={}):
 				# to wait for end of server, default accept any exit code, because multi-threaded, 
 				# thus server can exit in-between...
 				def _stopAndWaitForServerEnd(code=(SUCCESS, FAILED)):
-					tearDownMyTime()
 					# if seems to be down - try to catch end phase (wait a bit for end:True to recognize down state):
 					if not phase.get('end', None) and not os.path.exists(pjoin(tmp, "f2b.pid")):
 						Utils.wait_for(lambda: phase.get('end', None) is not None, MID_WAITTIME)
@@ -383,7 +353,6 @@ def with_foreground_server_thread(startextra={}):
 					# so don't kill (same process) - if success, just wait for end of worker:
 					if phase.get('end', None):
 						th.join()
-				tearDownMyTime()
 		return wrapper
 	return _deco_wrapper
 
@@ -410,7 +379,6 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		server.DEF_LOGTARGET = SRV_DEF_LOGTARGET
 		server.DEF_LOGLEVEL = SRV_DEF_LOGLEVEL
 		LogCaptureTestCase.tearDown(self)
-		tearDownMyTime()
 
 	@staticmethod
 	def _test_exit(code=0):
@@ -478,14 +446,14 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 
 	@with_foreground_server_thread(startextra={'f2b_local':(
 			"[Thread]",
-			"stacksize = 128"
+			"stacksize = 32"
 			"",
 		)})
 	def testStartForeground(self, tmp, startparams):
 		# check thread options were set:
 		self.pruneLog()
 		self.execCmd(SUCCESS, startparams, "get", "thread")
-		self.assertLogged("{'stacksize': 128}")
+		self.assertLogged("{'stacksize': 32}")
 		# several commands to server:
 		self.execCmd(SUCCESS, startparams, "ping")
 		self.execCmd(FAILED, startparams, "~~unknown~cmd~failed~~")
@@ -1035,8 +1003,6 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"[test-jail2] Found 192.0.2.3", 
 			"[test-jail2] Ban 192.0.2.3", 
 			all=True)
-		# if observer available wait for it becomes idle (write all tickets to db):
-		_observer_wait_idle()
 		# test banned command:
 		self.assertSortedEqual(self.execCmdDirect(startparams,
 			'banned'), (0, [
@@ -1105,17 +1071,6 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"stdout: '[test-jail2] test-action3: ++ ban 192.0.2.22",
 			"stdout: '[test-jail2] test-action3: ++ ban 192.0.2.22 ", all=True, wait=MID_WAITTIME)
-
-		# get banned ips:
-		_observer_wait_idle()
-		self.pruneLog("[test-phase 2d.1]")
-		self.execCmd(SUCCESS, startparams, "get", "test-jail2", "banip", "\n")
-		self.assertLogged(
-			"192.0.2.4", "192.0.2.8", "192.0.2.21", "192.0.2.22", all=True, wait=MID_WAITTIME)
-		self.pruneLog("[test-phase 2d.2]")
-		self.execCmd(SUCCESS, startparams, "get", "test-jail1", "banip")
-		self.assertLogged(
-			"192.0.2.1", "192.0.2.2", "192.0.2.3", "192.0.2.4", "192.0.2.8", all=True, wait=MID_WAITTIME)
 
 		# restart jail with unban all:
 		self.pruneLog("[test-phase 2e]")
@@ -1334,7 +1289,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			'failregex = ^ failure "<F-ID>[^"]+</F-ID>" - <ADDR>',
 			'maxretry = 1', # ban by first failure
 			'enabled = true',
-	  )
+		)
 	})
 	def testServerActions_NginxBlockMap(self, tmp, startparams):
 		cfg = pjoin(tmp, "config")
@@ -1509,152 +1464,6 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# just to debug actionstop:
 		self.assertFalse(exists(tofn))
 
-	@with_foreground_server_thread()
-	def testServerObserver(self, tmp, startparams):
-		cfg = pjoin(tmp, "config")
-		test1log = pjoin(tmp, "test1.log")
-
-		os.mkdir(pjoin(cfg, "action.d"))
-		def _write_action_cfg(actname="test-action1", prolong=True):
-			fn = pjoin(cfg, "action.d", "%s.conf" % actname)
-			_write_file(fn, "w",
-				"[DEFAULT]",
-				"",
-				"[Definition]",
-				"actionban =     printf %%s \"[%(name)s] %(actname)s: ++ ban <ip> -c <bancount> -t <bantime> : <F-MSG>\"", \
-				"actionprolong = printf %%s \"[%(name)s] %(actname)s: ++ prolong <ip> -c <bancount> -t <bantime> : <F-MSG>\"" \
-					if prolong else "",
-				"actionunban =   printf %%b '[%(name)s] %(actname)s: -- unban <ip>'",
-			)
-			if unittest.F2B.log_level <= logging.DEBUG: # pragma: no cover
-				_out_file(fn)
-
-		def _write_jail_cfg(backend="polling"):
-			_write_file(pjoin(cfg, "jail.conf"), "w",
-				"[INCLUDES]", "",
-				"[DEFAULT]", "",
-				"usedns = no",
-				"maxretry = 3",
-				"findtime = 1m",
-				"bantime = 5m",
-				"bantime.increment = true",
-				"datepattern = {^LN-BEG}EPOCH",
-				"",
-				"[test-jail1]", "backend = " + backend, "filter =", 
-				"action = test-action1[name='%(__name__)s']",
-				"         test-action2[name='%(__name__)s']",
-				"logpath = " + test1log,
-				r"failregex = ^\s*failure <F-ERRCODE>401|403</F-ERRCODE> from <HOST>:\s*<F-MSG>.*</F-MSG>$",
-				"enabled = true",
-				"",
-			)
-			if unittest.F2B.log_level <= logging.DEBUG: # pragma: no cover
-				_out_file(pjoin(cfg, "jail.conf"))
-
-		# create test config:
-		_write_action_cfg(actname="test-action1", prolong=False)
-		_write_action_cfg(actname="test-action2", prolong=True)
-		_write_jail_cfg()
-
-		_write_file(test1log, "w")
-		# initial start:
-		self.pruneLog("[test-phase 0) time-0]")
-		self.execCmd(SUCCESS, startparams, "reload")
-		# generate bad ip:
-		_write_file(test1log, "w+", *(
-		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.11: I'm bad \"hacker\" `` $(echo test)",) * 3
-		))
-		# wait for ban:
-		_observer_wait_idle()
-		self.assertLogged(
-			"stdout: '[test-jail1] test-action1: ++ ban 192.0.2.11 -c 1 -t 300 : ",
-			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.11 -c 1 -t 300 : ",
-			all=True, wait=MID_WAITTIME)
-		# wait for observer idle (write all tickets to db):
-		_observer_wait_idle()
-
-		self.pruneLog("[test-phase 1) time+10m]")
-		# jump to the future (+10 minutes):
-		_time_shift(10)
-		_observer_wait_idle()
-		self.assertLogged(
-			"stdout: '[test-jail1] test-action1: -- unban 192.0.2.11",
-			"stdout: '[test-jail1] test-action2: -- unban 192.0.2.11",
-			"0 ticket(s) in 'test-jail1'",
-			all=True, wait=MID_WAITTIME)
-		_observer_wait_idle()
-
-		self.pruneLog("[test-phase 2) time+10m]")
-		# following tests are time-related - observer can prolong ticket (increase ban-time) 
-		# before banning, so block it here before banFound called, prolong case later:
-		wakeObs = False
-		_observer_wait_before_incrban(lambda: wakeObs)
-		# write again (IP already bad):
-		_write_file(test1log, "w+", *(
-		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.11: I'm very bad \"hacker\" `` $(echo test)",) * 2
-		))
-		# wait for ban:
-		self.assertLogged(
-			"stdout: '[test-jail1] test-action1: ++ ban 192.0.2.11 -c 2 -t 300 : ",
-			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.11 -c 2 -t 300 : ",
-			all=True, wait=MID_WAITTIME)
-		# get banned ips with time:
-		self.pruneLog("[test-phase 2) time+10m - get-ips]")
-		self.execCmd(SUCCESS, startparams, "get", "test-jail1", "banip", "--with-time")
-		self.assertLogged(
-			"192.0.2.11", "+ 300 =", all=True, wait=MID_WAITTIME)
-		# unblock observer here and wait it is done:
-		wakeObs = True
-		_observer_wait_idle()
-
-		self.pruneLog("[test-phase 2) time+11m]")
-		# jump to the future (+1 minute):
-		_time_shift(1)
-		# wait for observer idle (write all tickets to db):
-		_observer_wait_idle()
-		# wait for prolong:
-		self.assertLogged(
-			"stdout: '[test-jail1] test-action2: ++ prolong 192.0.2.11 -c 2 -t 600 : ",
-			all=True, wait=MID_WAITTIME)
-
-		# get banned ips with time:
-		_observer_wait_idle()
-		self.pruneLog("[test-phase 2) time+11m - get-ips]")
-		self.execCmd(SUCCESS, startparams, "get", "test-jail1", "banip", "--with-time")
-		self.assertLogged(
-			"192.0.2.11", "+ 600 =", all=True, wait=MID_WAITTIME)
-
-		# test stop with busy observer:
-		self.pruneLog("[test-phase end) stop on busy observer]")
-		tearDownMyTime()
-		a = {'state': 0}
-		obsMain = Observers.Main
-		def _long_action():
-			logSys.info('++ observer enters busy state ...')
-			a['state'] = 1
-			Utils.wait_for(lambda: a['state'] == 2, MAX_WAITTIME)
-			obsMain.db_purge(); # does nothing (db is already None)
-			logSys.info('-- observer leaves busy state.')
-		obsMain.add('call', _long_action)
-		obsMain.add('call', lambda: None)
-		# wait observer enter busy state:
-		Utils.wait_for(lambda: a['state'] == 1, MAX_WAITTIME)
-		# overwrite default wait time (normally 5 seconds):
-		obsMain_stop = obsMain.stop
-		def _stop(wtime=(0.01 if unittest.F2B.fast else 0.1), forceQuit=True):
-			return obsMain_stop(wtime, forceQuit)
-		obsMain.stop = _stop
-		# stop server and wait for end:
-		self.stopAndWaitForServerEnd(SUCCESS)
-		# check observer and db state:
-		self.assertNotLogged('observer leaves busy state')
-		self.assertFalse(obsMain.idle)
-		self.assertEqual(obsMain._ObserverThread__db, None)
-		# server is exited without wait for observer, stop it now:
-		a['state'] = 2
-		self.assertLogged('observer leaves busy state', wait=True)
-		obsMain.join()
-
 	# test multiple start/stop of the server (threaded in foreground) --
 	if False: # pragma: no cover
 		@with_foreground_server_thread()
@@ -1665,4 +1474,3 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		def testServerStartStop(self):
 			for i in xrange(2000):
 				self._testServerStartStop()
-

@@ -113,19 +113,6 @@ class MyTime:
 			return time.localtime(x)
 		else:
 			return time.localtime(MyTime.myTime)
-	
-	@staticmethod
-	def time2str(unixTime, format="%Y-%m-%d %H:%M:%S"):
-		"""Convert time to a string representing as date and time using given format.
-		Default format is ISO 8601, YYYY-MM-DD HH:MM:SS without microseconds.
-
-		@return ISO-capable string representation of given unixTime
-		"""
-		# consider end of 9999th year (in GMT+23 to avoid year overflow in other TZ)
-		dt = datetime.datetime.fromtimestamp(
-			unixTime).replace(microsecond=0
-		) if unixTime < 253402214400 else datetime.datetime(9999, 12, 31, 23, 59, 59)
-		return dt.strftime(format)
 
 	## precreate/precompile primitives used in str2seconds:
 

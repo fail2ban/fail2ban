@@ -389,7 +389,6 @@ def gatherTests(regexps=None, opts=None):
 	from . import sockettestcase
 	from . import misctestcase
 	from . import databasetestcase
-	from . import observertestcase
 	from . import samplestestcase
 	from . import fail2banclienttestcase
 	from . import fail2banregextestcase
@@ -420,6 +419,7 @@ def gatherTests(regexps=None, opts=None):
 		tests = FilteredTestSuite()
 
 	# Server
+	#tests.addTest(unittest.makeSuite(servertestcase.StartStop))
 	tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
 	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
 	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
@@ -459,10 +459,6 @@ def gatherTests(regexps=None, opts=None):
 	tests.addTest(unittest.makeSuite(misctestcase.MyTimeTest))
 	# Database
 	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
-	# Observer
-	tests.addTest(unittest.makeSuite(observertestcase.ObserverTest))
-	tests.addTest(unittest.makeSuite(observertestcase.BanTimeIncr))
-	tests.addTest(unittest.makeSuite(observertestcase.BanTimeIncrDB))
 
 	# Filter
 	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
@@ -769,11 +765,10 @@ class LogCaptureTestCase(unittest.TestCase):
 		# Let's log everything into a string
 		self._log = LogCaptureTestCase._MemHandler(unittest.F2B.log_lazy)
 		logSys.handlers = [self._log]
-		# lowest log level to capture messages (expected in tests) is Lev.9
-		if self._old_level <= logging.DEBUG: # pragma: no cover
+		if self._old_level <= logging.DEBUG:
 			logSys.handlers += self._old_handlers
-		if self._old_level > logging.DEBUG-1:
-			logSys.setLevel(logging.DEBUG-1)
+		else: # lowest log level to capture messages
+			logSys.setLevel(logging.DEBUG)
 		super(LogCaptureTestCase, self).setUp()
 
 	def tearDown(self):

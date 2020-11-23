@@ -6,36 +6,30 @@
 Fail2Ban: Changelog
 ===================
 
-ver. 0.11.2-dev (20??/??/??) - development edition
+ver. 0.10.6 (2020/11/23) - just-what-the-doctor-ordered
 -----------
 
-### Compatibility:
-* to v.0.10:
-  - 0.11 is totally compatible to 0.10 (configuration- and API-related stuff), but the database
-    got some new tables and fields (auto-converted during the first start), so once updated to 0.11, you
-    have to remove the database /var/lib/fail2ban/fail2ban.sqlite3 (or its different to 0.10 schema)
-    if you would need to downgrade to 0.10 for some reason.
-* to v.0.9:
-  - Filter (or `failregex`) internal capture-groups:
+### Incompatibility list (v.0.10 compared to v.0.9):
+* Filter (or `failregex`) internal capture-groups:
 
-    * If you've your own `failregex` or custom filters using conditional match `(?P=host)`, you should
-      rewrite the regex like in example below resp. using `(?:(?P=ip4)|(?P=ip6)` instead of `(?P=host)`
-      (or `(?:(?P=ip4)|(?P=ip6)|(?P=dns))` corresponding your `usedns` and `raw` settings).
+  - If you've your own `failregex` or custom filters using conditional match `(?P=host)`, you should
+    rewrite the regex like in example below resp. using `(?:(?P=ip4)|(?P=ip6)` instead of `(?P=host)`
+    (or `(?:(?P=ip4)|(?P=ip6)|(?P=dns))` corresponding your `usedns` and `raw` settings).
 
-      Of course you can always define your own capture-group (like below `_cond_ip_`) to do this.
-      ```
-      testln="1500000000 failure from 192.0.2.1: bad host 192.0.2.1"
-      fail2ban-regex "$testln" "^\s*failure from (?P<_cond_ip_><HOST>): bad host (?P=_cond_ip_)$"
-      ```
-    * New internal groups (currently reserved for internal usage):
-      `ip4`, `ip6`, `dns`, `fid`, `fport`, additionally `user` and another captures in lower case if
-      mapping from tag `<F-*>` used in failregex (e. g. `user` by `<F-USER>`).
+    Of course you can always define your own capture-group (like below `_cond_ip_`) to do this.
+    ```
+    testln="1500000000 failure from 192.0.2.1: bad host 192.0.2.1"
+    fail2ban-regex "$testln" "^\s*failure from (?P<_cond_ip_><HOST>): bad host (?P=_cond_ip_)$"
+    ```
+  - New internal groups (currently reserved for internal usage):
+    `ip4`, `ip6`, `dns`, `fid`, `fport`, additionally `user` and another captures in lower case if
+    mapping from tag `<F-*>` used in failregex (e. g. `user` by `<F-USER>`).
 
-  - v.0.10 and 0.11 use more precise date template handling, that can be theoretically incompatible to some
-    user configurations resp. `datepattern`.
+* v.0.10 uses more precise date template handling, that can be theoretically incompatible to some
+  user configurations resp. `datepattern`.
 
-  - Since v0.10 fail2ban supports the matching of IPv6 addresses, but not all ban actions are
-    IPv6-capable now.
+* Since v0.10 fail2ban supports the matching of IPv6 addresses, but not all ban actions are
+  IPv6-capable now.
 
 ### Fixes
 * [stability] prevent race condition - no ban if filter (backend) is continuously busy if
@@ -61,6 +55,9 @@ ver. 0.11.2-dev (20??/??/??) - development edition
 * `action.d/bsd-ipfw.conf`: fixed selection of rule-no by large list or initial `lowest_rule_num` (gh-2836)
 * `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
   should be interpolated in definition section (inside the filter-config, gh-2650)
+* `filter.d/dovecot.conf`: 
+  - add managesieve and submission support (gh-2795);
+  - accept messages with more verbose logging (gh-2573);
 * `filter.d/courier-smtp.conf`: prefregex extended to consider port in log-message (gh-2697)
 * `filter.d/traefik-auth.conf`: filter extended with parameter mode (`normal`, `ddos`, `aggressive`) to handle 
   the match of username differently (gh-2693):
@@ -94,36 +91,6 @@ ver. 0.11.2-dev (20??/??/??) - development edition
     whereas filter will use now as timestamp (gh-2802)
 * performance optimization of `datepattern` (better search algorithm in datedetector, especially for single template);
 * fail2ban-client: extended to unban IP range(s) by subnet (CIDR/mask) or hostname (DNS), gh-2791;
-* extended capturing of alternate tags in filter, allowing combine of multiple groups to single tuple token with new tag
-  prefix `<F-TUPLE_`, that would combine value of `<F-V>` with all value of `<F-TUPLE_V?_n?>` tags (gh-2755)
-
-
-ver. 0.11.1 (2020/01/11) - this-is-the-way
------------
-
-### Fixes
-* purge database will be executed now (within observer).
-* restoring currently banned ip after service restart fixed 
-  (now < timeofban + bantime), ignore old log failures (already banned)
-* upgrade database: update new created table `bips` with entries from table `bans` (allows restore
-  current bans after upgrade from version <= 0.10)
-
-### New Features
-* Increment ban time (+ observer) functionality introduced.
-* Database functionality extended with bad ips.
-* New tags (usable in actions):
-  - `<bancount>` - ban count of this offender if known as bad (started by 1 for unknown)
-  - `<bantime>` - current ban-time of the ticket (prolongation can be retarded up to 10 sec.)
-* Introduced new action command `actionprolong` to prolong ban-time (e. g. set new timeout if expected);
-  Several actions (like ipset, etc.) rewritten using net logic with `actionprolong`.
-  Note: because ban-time is dynamic, it was removed from jail.conf as timeout argument (check jail.local).
-
-### Enhancements
-* algorithm of restore current bans after restart changed: update the restored ban-time (and therefore 
-  end of ban) of the ticket with ban-time of jail (as maximum), for all tickets with ban-time greater
-  (or persistent); not affected if ban-time of the jail is unchanged between stop/start.
-* added new setup-option `--without-tests` to skip building and installing of tests files (gh-2287).
-* added new command `fail2ban-client get <JAIL> banip ?sep-char|--with-time?` to get the banned ip addresses (gh-1916).
 
 
 ver. 0.10.5 (2020/01/10) - deserve-more-respect-a-jedis-weapon-must
@@ -504,14 +471,9 @@ TODO: implementing of options resp. other tasks from PR #1346
   - `<fid>` - failure identifier (if raw resp. failures without IP address)
   - `<ip-rev>` - PTR reversed representation of IP address
   - `<ip-host>` - host name of the IP address
-  - `<bancount>` - ban count of this offender if known as bad (started by 1 for unknown)
-  - `<bantime>` - current ban-time of the ticket (prolongation can be retarded up to 10 sec.)
   - `<F-...>` - interpolates to the corresponding filter group capture `...`
   - `<fq-hostname>` - fully-qualified name of host (the same as `$(hostname -f)`)
   - `<sh-hostname>` - short hostname (the same as `$(uname -n)`)
-* Introduced new action command `actionprolong` to prolong ban-time (e. g. set new timeout if expected);
-  Several actions (like ipset, etc.) rewritten using net logic with `actionprolong`.
-  Note: because ban-time is dynamic, it was removed from jail.conf as timeout argument (check jail.local).
 * Allow to use filter options by `fail2ban-regex`, example:
   fail2ban-regex text.log "sshd[mode=aggressive]"
 * Samples test case factory extended with filter options - dict in JSON to control 
@@ -585,9 +547,6 @@ ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
 * testSocket: sporadical bug repaired - wait for server thread starts a socket (listener)
 * testExecuteTimeoutWithNastyChildren: sporadical bug repaired - wait for pid file inside bash,
   kill tree in any case (gh-1155)
-* purge database will be executed now (within observer).
-* restoring currently banned ip after service restart fixed 
-  (now < timeofban + bantime), ignore old log failures (already banned)
 * Fixed high-load of pyinotify-backend,
   see https://github.com/fail2ban/fail2ban/issues/885#issuecomment-248964591
 * Database: stability fix - repack cursor iterator as long as locked
@@ -625,9 +584,6 @@ ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
     - new conditional section functionality used in config resp. includes:
       - [Init?family=inet4] - IPv4 qualified hosts only
       - [Init?family=inet6] - IPv6 qualified hosts only
-* Increment ban time (+ observer) functionality introduced.
-  Thanks Serg G. Brester (sebres)
-* Database functionality extended with bad ips.
 * New reload functionality (now totally without restart, unbanning/rebanning, etc.),
   see gh-1557
 * Several commands extended and new commands introduced:

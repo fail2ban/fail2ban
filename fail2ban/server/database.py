@@ -138,7 +138,7 @@ class Fail2BanDb(object):
 	filename
 	purgeage
 	"""
-	__version__ = 4
+	__version__ = 2
 	# Note all SCRIPTS strings must end in ';' for py26 compatibility
 	_CREATE_SCRIPTS = (
 		 ('fail2banDb', "CREATE TABLE IF NOT EXISTS fail2banDb(version INTEGER);")
@@ -166,36 +166,21 @@ class Fail2BanDb(object):
 			"jail TEXT NOT NULL, " \
 			"ip TEXT, " \
 			"timeofban INTEGER NOT NULL, " \
-			"bantime INTEGER NOT NULL, " \
-			"bancount INTEGER NOT NULL default 1, " \
 			"data JSON, " \
 			"FOREIGN KEY(jail) REFERENCES jails(name) " \
 			");" \
 			"CREATE INDEX IF NOT EXISTS bans_jail_timeofban_ip ON bans(jail, timeofban);" \
 			"CREATE INDEX IF NOT EXISTS bans_jail_ip ON bans(jail, ip);" \
 			"CREATE INDEX IF NOT EXISTS bans_ip ON bans(ip);")
-		,('bips', "CREATE TABLE IF NOT EXISTS bips(" \
-			"ip TEXT NOT NULL, " \
-			"jail TEXT NOT NULL, " \
-			"timeofban INTEGER NOT NULL, " \
-			"bantime INTEGER NOT NULL, " \
-			"bancount INTEGER NOT NULL default 1, " \
-			"data JSON, " \
-			"PRIMARY KEY(ip, jail), " \
-			"FOREIGN KEY(jail) REFERENCES jails(name) " \
-			");" \
-			"CREATE INDEX IF NOT EXISTS bips_timeofban ON bips(timeofban);" \
-			"CREATE INDEX IF NOT EXISTS bips_ip ON bips(ip);")
 	)
 	_CREATE_TABS = dict(_CREATE_SCRIPTS)
 
 
-	def __init__(self, filename, purgeAge=24*60*60, outDatedFactor=3):
+	def __init__(self, filename, purgeAge=24*60*60):
 		self.maxMatches = 10
 		self._lock = RLock()
 		self._dbFilename = filename
 		self._purgeAge = purgeAge
-		self._outDatedFactor = outDatedFactor;
 		self._connectDB()
 
 	def _connectDB(self, checkIntegrity=False):
@@ -381,32 +366,13 @@ class Fail2BanDb(object):
 
 			if version < 2 and self._tableExists(cur, "logs"):
 				cur.executescript("BEGIN TRANSACTION;"
-							"CREATE TEMPORARY TABLE logs_temp AS SELECT * FROM logs;"
-							"DROP TABLE logs;"
-							"%s;"
-							"INSERT INTO logs SELECT * from logs_temp;"
-							"DROP TABLE logs_temp;"
-							"UPDATE fail2banDb SET version = 2;"
-							"COMMIT;" % Fail2BanDb._CREATE_TABS['logs'])
-
-			if version < 3 and self._tableExists(cur, "bans"):
-				# set ban-time to -2 (note it means rather unknown, as persistent, will be fixed by restore):
-				cur.executescript("BEGIN TRANSACTION;"
-							"CREATE TEMPORARY TABLE bans_temp AS SELECT jail, ip, timeofban, -2 as bantime, 1 as bancount, data FROM bans;"
-							"DROP TABLE bans;"
-							"%s;\n"
-							"INSERT INTO bans SELECT * from bans_temp;"
-							"DROP TABLE bans_temp;"
-							"COMMIT;" % Fail2BanDb._CREATE_TABS['bans'])
-			if version < 4 and not self._tableExists(cur, "bips"):
-				cur.executescript("BEGIN TRANSACTION;"
-							"%s;\n"
-							"UPDATE fail2banDb SET version = 4;"
-							"COMMIT;" % Fail2BanDb._CREATE_TABS['bips'])
-				if self._tableExists(cur, "bans"):
-					cur.execute(
-							"INSERT OR REPLACE INTO bips(ip, jail, timeofban, bantime, bancount, data)"
-							"  SELECT ip, jail, timeofban, bantime, bancount, data FROM bans order by timeofban")
+						"CREATE TEMPORARY TABLE logs_temp AS SELECT * FROM logs;"
+						"DROP TABLE logs;"
+						"%s;"
+						"INSERT INTO logs SELECT * from logs_temp;"
+						"DROP TABLE logs_temp;"
+						"UPDATE fail2banDb SET version = 2;"
+						"COMMIT;" % Fail2BanDb._CREATE_TABS['logs'])
 
 			cur.execute("SELECT version FROM fail2banDb LIMIT 1")
 			return cur.fetchone()[0]
@@ -619,13 +585,8 @@ class Fail2BanDb(object):
 			data = data.copy()
 			del data['matches']
 		cur.execute(
-			"INSERT INTO bans(jail, ip, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
-			(jail.name, ip, int(round(ticket.getTime())), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
-				data))
-		cur.execute(
-			"INSERT OR REPLACE INTO bips(ip, jail, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
-			(ip, jail.name, int(round(ticket.getTime())), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
-				data))
+			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
+			(jail.name, ip, int(round(ticket.getTime())), data))
 
 	@commitandrollback
 	def delBan(self, cur, jail, *args):
@@ -638,20 +599,16 @@ class Fail2BanDb(object):
 		args : list of IP
 			IPs to be removed, if not given all tickets of jail will be removed.
 		"""
-		query1 = "DELETE FROM bips WHERE jail = ?"
-		query2 = "DELETE FROM bans WHERE jail = ?"
+		query = "DELETE FROM bans WHERE jail = ?"
 		queryArgs = [jail.name];
 		if not len(args):
-			cur.execute(query1, queryArgs);
-			cur.execute(query2, queryArgs);
+			cur.execute(query, queryArgs);
 			return
-		query1 += " AND ip = ?"
-		query2 += " AND ip = ?"
+		query += " AND ip = ?"
 		queryArgs.append('');
 		for ip in args:
 			queryArgs[1] = str(ip);
-			cur.execute(query1, queryArgs);
-			cur.execute(query2, queryArgs);
+			cur.execute(query, queryArgs);
 
 	@commitandrollback
 	def _getBans(self, cur, jail=None, bantime=None, ip=None):
@@ -769,42 +726,18 @@ class Fail2BanDb(object):
 				self._bansMergedCache[cacheKey] = tickets if ip is None else ticket
 			return tickets if ip is None else ticket
 
-	@commitandrollback
-	def getBan(self, cur, ip, jail=None, forbantime=None, overalljails=None, fromtime=None):
-		ip = str(ip)
-		if not overalljails:
-			query = "SELECT bancount, timeofban, bantime FROM bips"
-		else:
-			query = "SELECT sum(bancount), max(timeofban), sum(bantime) FROM bips"
-		query += " WHERE ip = ?"
-		queryArgs = [ip]
-		if not overalljails and jail is not None:
-			query += " AND jail=?"
-			queryArgs.append(jail.name)
-		if forbantime is not None:
-			query += " AND timeofban > ?"
-			queryArgs.append(MyTime.time() - forbantime)
-		if fromtime is not None:
-			query += " AND timeofban > ?"
-			queryArgs.append(fromtime)
-		if overalljails or jail is None:
-			query += " GROUP BY ip ORDER BY timeofban DESC LIMIT 1"
-		cur = self._db.cursor()
-		# repack iterator as long as in lock:
-		return list(cur.execute(query, queryArgs))
-
 	def _getCurrentBans(self, cur, jail = None, ip = None, forbantime=None, fromtime=None):
+		if fromtime is None:
+			fromtime = MyTime.time()
 		queryArgs = []
 		if jail is not None:
-			query = "SELECT ip, timeofban, bantime, bancount, data FROM bips WHERE jail=?"
+			query = "SELECT ip, timeofban, data FROM bans WHERE jail=?"
 			queryArgs.append(jail.name)
 		else:
-			query = "SELECT ip, max(timeofban), bantime, bancount, data FROM bips WHERE 1"
+			query = "SELECT ip, max(timeofban), data FROM bans WHERE 1"
 		if ip is not None:
 			query += " AND ip=?"
 			queryArgs.append(ip)
-		query += " AND (timeofban + bantime > ? OR bantime <= -1)"
-		queryArgs.append(fromtime)
 		if forbantime not in (None, -1): # not specified or persistent (all)
 			query += " AND timeofban > ?"
 			queryArgs.append(fromtime - forbantime)
@@ -815,89 +748,32 @@ class Fail2BanDb(object):
 		cur = self._db.cursor()
 		return cur.execute(query, queryArgs)
 
-	@commitandrollback
-	def getCurrentBans(self, cur, jail=None, ip=None, forbantime=None, fromtime=None,
-		correctBanTime=True, maxmatches=None
-	):
-		"""Reads tickets (with merged info) currently affected from ban from the database.
-		
-		There are all the tickets corresponding parameters jail/ip, forbantime,
-		fromtime (normally now).
-		
-		If correctBanTime specified (default True) it will fix the restored ban-time 
-		(and therefore endOfBan) of the ticket (normally it is ban-time of jail as maximum)
-		for all tickets with ban-time greater (or persistent).
-		"""
-		if fromtime is None:
-			fromtime = MyTime.time()
+	def getCurrentBans(self, jail = None, ip = None, forbantime=None, fromtime=None, maxmatches=None):
 		tickets = []
 		ticket = None
-		if correctBanTime is True:
-			correctBanTime = jail.getMaxBanTime() if jail is not None else None
-			# don't change if persistent allowed:
-			if correctBanTime == -1: correctBanTime = None
 
-		for ticket in self._getCurrentBans(cur, jail=jail, ip=ip, 
-			forbantime=forbantime, fromtime=fromtime
-		):
-			# can produce unpack error (database may return sporadical wrong-empty row):
-			try:
-				banip, timeofban, bantime, bancount, data = ticket
-				# additionally check for empty values:
-				if banip is None or banip == "": # pragma: no cover
-					raise ValueError('unexpected value %r' % (banip,))
-				# if bantime unknown (after upgrade-db from earlier version), just use min known ban-time:
-				if bantime == -2: # todo: remove it in future version
-					bantime = jail.actions.getBanTime() if jail is not None else (
-						correctBanTime if correctBanTime else 600)
-				elif correctBanTime and correctBanTime >= 0:
-					# if persistent ban (or greater as max), use current max-bantime of the jail:
-					if bantime == -1 or bantime > correctBanTime:
-						bantime = correctBanTime
-				# after correction check the end of ban again:
-				if bantime != -1 and timeofban + bantime <= fromtime:
-					# not persistent and too old - ignore it:
-					logSys.debug("ignore ticket (with new max ban-time %r): too old %r <= %r, ticket: %r",
-						bantime, timeofban + bantime, fromtime, ticket)
-					continue
-			except ValueError as e: # pragma: no cover
-				logSys.debug("get current bans: ignore row %r - %s", ticket, e)
-				continue
-			# logSys.debug('restore ticket   %r, %r, %r', banip, timeofban, data)
-			ticket = FailTicket(banip, timeofban, data=data)
-			# filter matches if expected (current count > as maxmatches specified):
-			if maxmatches is None:
-				maxmatches = self.maxMatches
-			if maxmatches:
-				matches = ticket.getMatches()
-				if matches and len(matches) > maxmatches:
-					ticket.setMatches(matches[-maxmatches:])
-			else:
-				ticket.setMatches(None)
-			# logSys.debug('restored ticket: %r', ticket)
-			ticket.setBanTime(bantime)
-			ticket.setBanCount(bancount)
-			if ip is not None: return ticket
-			tickets.append(ticket)
+		with self._lock:
+			results = list(self._getCurrentBans(self._db.cursor(), 
+				jail=jail, ip=ip, forbantime=forbantime, fromtime=fromtime))
+
+		if results:
+			for banip, timeofban, data in results:
+				# logSys.debug('restore ticket   %r, %r, %r', banip, timeofban, data)
+				ticket = FailTicket(banip, timeofban, data=data)
+				# filter matches if expected (current count > as maxmatches specified):
+				if maxmatches is None:
+					maxmatches = self.maxMatches
+				if maxmatches:
+					matches = ticket.getMatches()
+					if matches and len(matches) > maxmatches:
+						ticket.setMatches(matches[-maxmatches:])
+				else:
+					ticket.setMatches(None)
+				# logSys.debug('restored ticket: %r', ticket)
+				if ip is not None: return ticket
+				tickets.append(ticket)
 
 		return tickets
-
-	def _cleanjails(self, cur):
-		"""Remove empty jails jails and log files from database.
-		"""
-		cur.execute(
-			"DELETE FROM jails WHERE enabled = 0 "
-				"AND NOT EXISTS(SELECT * FROM bans WHERE jail = jails.name) "
-				"AND NOT EXISTS(SELECT * FROM bips WHERE jail = jails.name)")
-
-	def _purge_bips(self, cur):
-		"""Purge old bad ips (jails and log files from database).
-		Currently it is timed out IP, whose time since last ban is several times out-dated (outDatedFactor is default 3).
-		Permanent banned ips will be never removed.
-		"""
-		cur.execute(
-			"DELETE FROM bips WHERE timeofban < ? and bantime != -1 and (timeofban + (bantime * ?)) < ?",
-			(int(MyTime.time()) - self._purgeAge, self._outDatedFactor, int(MyTime.time()) - self._purgeAge))
 
 	@commitandrollback
 	def purge(self, cur):
@@ -907,6 +783,7 @@ class Fail2BanDb(object):
 		cur.execute(
 			"DELETE FROM bans WHERE timeofban < ?",
 			(MyTime.time() - self._purgeAge, ))
-		self._purge_bips(cur)
-		self._cleanjails(cur)
+		cur.execute(
+			"DELETE FROM jails WHERE enabled = 0 "
+				"AND NOT EXISTS(SELECT * FROM bans WHERE jail = jails.name)")
 

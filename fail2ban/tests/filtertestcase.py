@@ -92,7 +92,7 @@ class _tmSerial():
 	@staticmethod
 	def _tm(time):
 		# ## strftime it too slow for large time serializer :
-		# return MyTime.time2str(time)
+		# return datetime.datetime.fromtimestamp(time).strftime("%Y-%m-%d %H:%M:%S")
 		c = _tmSerial
 		sec = (time % 60)
 		if c._last_s == time - sec:
@@ -304,7 +304,7 @@ class BasicFilter(unittest.TestCase):
 		unittest.F2B.SkipIfFast()
 		## test function "_tm" works correct (returns the same as slow strftime):
 		for i in xrange(1417512352, (1417512352 // 3600 + 3) * 3600):
-			tm = MyTime.time2str(i)
+			tm = datetime.datetime.fromtimestamp(i).strftime("%Y-%m-%d %H:%M:%S")
 			if _tm(i) != tm: # pragma: no cover - never reachable
 				self.assertEqual((_tm(i), i), (tm, i))
 

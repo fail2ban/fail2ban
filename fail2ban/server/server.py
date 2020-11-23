@@ -32,7 +32,6 @@ import signal
 import stat
 import sys
 
-from .observer import Observers, ObserverThread
 from .jails import Jails
 from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
@@ -112,7 +111,7 @@ class Server:
 		self.__prev_signals[s] = signal.getsignal(s)
 		signal.signal(s, new)
 
-	def start(self, sock, pidfile, force=False, observer=True, conf={}):
+	def start(self, sock, pidfile, force=False, conf={}):
 		# First set the mask to only allow access to owner
 		os.umask(0o077)
 		# Second daemonize before logging etc, because it will close all handles:
@@ -166,12 +165,6 @@ class Server:
 		except (OSError, IOError) as e: # pragma: no cover
 			logSys.error("Unable to create PID file: %s", e)
 		
-		# Create observers and start it:
-		if observer:
-			if Observers.Main is None:
-				Observers.Main = ObserverThread()
-				Observers.Main.start()
-
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
@@ -212,19 +205,8 @@ class Server:
 			for s, sh in self.__prev_signals.iteritems():
 				signal.signal(s, sh)
 
-		# Give observer a small chance to complete its work before exit
-		obsMain = Observers.Main
-		if obsMain is not None:
-			if obsMain.stop(forceQuit=False):
-				obsMain = None
-			Observers.Main = None
-
 		# Now stop all the jails
 		self.stopAllJail()
-
-		# Stop observer ultimately
-		if obsMain is not None:
-			obsMain.stop()
 
 		# Explicit close database (server can leave in a thread, 
 		# so delayed GC can prevent commiting changes)
@@ -232,12 +214,11 @@ class Server:
 			self.__db.close()
 			self.__db = None
 
-		# Stop async and exit
+		# Stop async
 		if self.__asyncServer is not None:
 			self.__asyncServer.stop()
 			self.__asyncServer = None
 		logSys.info("Exiting Fail2ban")
-
 
 	def addJail(self, name, backend):
 		addflg = True
@@ -568,27 +549,6 @@ class Server:
 		
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
-
-	def getBanList(self, name, withTime=False):
-		"""Returns the list of banned IP addresses for a jail.
-
-		Parameters
-		----------
-		name : str
-			The name of a jail.
-
-		Returns
-		-------
-		list
-			The list of banned IP addresses.
-		"""
-		return self.__jails[name].actions.getBanList(withTime)
-
-	def setBanTimeExtra(self, name, opt, value):
-		self.__jails[name].setBanTimeExtra(opt, value)
-
-	def getBanTimeExtra(self, name, opt):
-		return self.__jails[name].getBanTimeExtra(opt)
 	
 	def isStarted(self):
 		return self.__asyncServer is not None and self.__asyncServer.isActive()
@@ -833,8 +793,6 @@ class Server:
 				logSys.error(
 					"Unable to import fail2ban database module as sqlite "
 					"is not available.")
-		if Observers.Main is not None:
-			Observers.Main.db_set(self.__db)
 	
 	def getDatabase(self):
 		return self.__db

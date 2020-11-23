@@ -355,7 +355,7 @@ class Utils():
 				return e.errno == errno.EPERM
 			else:
 				return True
-	else: # pragma: no cover (no windows currently supported)
+	else: # pragma : no cover (no windows currently supported)
 		@staticmethod
 		def pid_exists(pid):
 			import ctypes

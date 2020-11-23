@@ -33,7 +33,6 @@ import time
 from .actions import Actions
 from .failmanager import FailManagerEmpty, FailManager
 from .ipdns import DNSUtils, IPAddr
-from .observer import Observers
 from .ticket import FailTicket
 from .jailthread import JailThread
 from .datedetector import DateDetector, validateTimeZone
@@ -690,16 +689,13 @@ class Filter(JailThread):
 				if self._inIgnoreIPList(ip, tick):
 					continue
 				logSys.info(
-					"[%s] Found %s - %s", self.jailName, ip, MyTime.time2str(unixTime)
+					"[%s] Found %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
 				)
 				attempts = self.failManager.addFailure(tick)
 				# avoid RC on busy filter (too many failures) - if attempts for IP/ID reached maxretry,
 				# we can speedup ban, so do it as soon as possible:
 				if self.banASAP and attempts >= self.failManager.getMaxRetry():
 					self.performBan(ip)
-				# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
-				if Observers.Main is not None:
-					Observers.Main.add('failureFound', self.failManager, self.jail, tick)
 			# reset (halve) error counter (successfully processed line):
 			if self._errors:
 				self._errors //= 2
@@ -1136,7 +1132,7 @@ class FileFilter(Filter):
 		fs = container.getFileSize()
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
 			logSys.debug("Seek to find time %s (%s), file size %s", date, 
-				MyTime.time2str(date), fs)
+				datetime.datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S"), fs)
 		minp = container.getPos()
 		maxp = fs
 		tryPos = minp
@@ -1215,7 +1211,7 @@ class FileFilter(Filter):
 		container.setPos(foundPos)
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
 			logSys.debug("Position %s from %s, found time %s (%s) within %s seeks", lastPos, fs, foundTime, 
-				(MyTime.time2str(foundTime) if foundTime is not None else ''), cntr)
+				(datetime.datetime.fromtimestamp(foundTime).strftime("%Y-%m-%d %H:%M:%S") if foundTime is not None else ''), cntr)
 		
 	def status(self, flavor="basic"):
 		"""Status of Filter plus files being monitored.

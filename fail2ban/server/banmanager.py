@@ -66,7 +66,7 @@ class BanManager:
 	# @param value the time
 	
 	def setBanTime(self, value):
-			self.__banTime = int(value)
+		self.__banTime = int(value)
 	
 	##
 	# Get the ban time.
@@ -75,7 +75,7 @@ class BanManager:
 	# @return the time
 	
 	def getBanTime(self):
-			return self.__banTime
+		return self.__banTime
 	
 	##
 	# Set the total number of banned address.
@@ -83,7 +83,7 @@ class BanManager:
 	# @param value total number
 	
 	def setBanTotal(self, value):
-			self.__banTotal = value
+		self.__banTotal = value
 	
 	##
 	# Get the total number of banned address.
@@ -91,29 +91,15 @@ class BanManager:
 	# @return the total number
 	
 	def getBanTotal(self):
-			return self.__banTotal
+		return self.__banTotal
 
 	##
 	# Returns a copy of the IP list.
 	#
 	# @return IP list
 	
-	def getBanList(self, ordered=False, withTime=False):
-		if not ordered:
-			return list(self.__banList.keys())
-		with self.__lock:
-			lst = []
-			for ticket in self.__banList.itervalues():
-				eob = ticket.getEndOfBanTime(self.__banTime)
-				lst.append((ticket,eob))
-		lst.sort(key=lambda t: t[1])
-		t2s = MyTime.time2str
-		if withTime:
-			return ['%s \t%s + %d = %s' % (
-					t[0].getID(), 
-					t2s(t[0].getTime()), t[0].getBanTime(self.__banTime), t2s(t[1])
-				) for t in lst]
-		return [t[0].getID() for t in lst]
+	def getBanList(self):
+		return list(self.__banList.keys())
 
 	##
 	# Returns a iterator to ban list (used in reload, so idle).
@@ -122,7 +108,7 @@ class BanManager:
 	
 	def __iter__(self):
 		# ensure iterator is safe - traverse over the list in snapshot created within lock (GIL):
-			return iter(list(self.__banList.values()))
+		return iter(list(self.__banList.values()))
 
 	##
 	# Returns normalized value
@@ -259,6 +245,21 @@ class BanManager:
 			return []
 
 	##
+	# Create a ban ticket.
+	#
+	# Create a BanTicket from a FailTicket. The timestamp of the BanTicket
+	# is the current time. This is a static method.
+	# @param ticket the FailTicket
+	# @return a BanTicket
+	
+	@staticmethod
+	def createBanTicket(ticket):
+		# we should always use correct time to calculate correct end time (ban time is variable now, 
+		# + possible double banning by restore from database and from log file)
+		# so use as lastTime always time from ticket.
+		return BanTicket(ticket=ticket)
+	
+	##
 	# Add a ban ticket.
 	#
 	# Add a BanTicket instance into the ban list.
@@ -267,9 +268,6 @@ class BanManager:
 	
 	def addBanTicket(self, ticket, reason={}):
 		eob = ticket.getEndOfBanTime(self.__banTime)
-		if eob < MyTime.time():
-			reason['expired'] = 1
-			return False
 		with self.__lock:
 			# check already banned
 			fid = ticket.getID()
@@ -291,7 +289,6 @@ class BanManager:
 			# not yet banned - add new one:
 			self.__banList[fid] = ticket
 			self.__banTotal += 1
-			ticket.incrBanCount()
 			# correct next unban time:
 			if self._nextUnbanTime > eob:
 				self._nextUnbanTime = eob

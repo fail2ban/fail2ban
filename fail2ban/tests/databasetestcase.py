@@ -164,46 +164,9 @@ class DatabaseTest(LogCaptureTestCase):
 
 			self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
 			self.assertRaises(NotImplementedError, self.db.updateDb, Fail2BanDb.__version__ + 1)
-			# check current bans (should find exactly 1 ticket after upgrade):
-			tickets = self.db.getCurrentBans(fromtime=1388009242, correctBanTime=123456)
-			self.assertEqual(len(tickets), 1)
-			self.assertEqual(tickets[0].getBanTime(), 123456); # ban-time was unknown (normally updated from jail)
 		finally:
 			if self.db and self.db._dbFilename != ":memory:":
 				os.remove(self.db._dbBackupFilename)
-
-	def testUpdateDb2(self):
-		self.db = None
-		if self.dbFilename is None: # pragma: no cover
-			_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
-		shutil.copyfile(
-			os.path.join(TEST_FILES_DIR, 'database_v2.db'), self.dbFilename)
-		self.db = Fail2BanDb(self.dbFilename)
-		self.assertEqual(self.db.getJailNames(), set(['pam-generic']))
-		self.assertEqual(self.db.getLogPaths(), set(['/var/log/auth.log']))
-		bans = self.db.getBans()
-		self.assertEqual(len(bans), 2)
-		# compare first ticket completely:
-		ticket = FailTicket("1.2.3.7", 1417595494, [
-			u'Dec  3 09:31:08 f2btest test:auth[27658]: pam_unix(test:auth): authentication failure; logname= uid=0 euid=0 tty=test ruser= rhost=1.2.3.7',
-			u'Dec  3 09:31:32 f2btest test:auth[27671]: pam_unix(test:auth): authentication failure; logname= uid=0 euid=0 tty=test ruser= rhost=1.2.3.7',
-			u'Dec  3 09:31:34 f2btest test:auth[27673]: pam_unix(test:auth): authentication failure; logname= uid=0 euid=0 tty=test ruser= rhost=1.2.3.7'
-		])
-		ticket.setAttempt(3)
-		self.assertEqual(bans[0], ticket)
-		# second ban found also:
-		self.assertEqual(bans[1].getIP(), "1.2.3.8")
-		# updated ?
-		self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
-		# check current bans (should find 2 tickets after upgrade):
-		self.jail = DummyJail(name='pam-generic')
-		tickets = self.db.getCurrentBans(jail=self.jail, fromtime=1417595494)
-		self.assertEqual(len(tickets), 2)
-		self.assertEqual(tickets[0].getBanTime(), 600)
-		# further update should fail:
-		self.assertRaises(NotImplementedError, self.db.updateDb, Fail2BanDb.__version__ + 1)
-		# clean:
-		os.remove(self.db._dbBackupFilename)
 
 	def testAddJail(self):
 		self.jail = DummyJail()
@@ -437,7 +400,7 @@ class DatabaseTest(LogCaptureTestCase):
 	def testGetBansMerged(self):
 		self.testAddJail()
 
-		jail2 = DummyJail(name='DummyJail-2')
+		jail2 = DummyJail()
 		self.db.addJail(jail2)
 
 		ticket = FailTicket("127.0.0.1", MyTime.time() - 40, ["abc\n"])
@@ -519,25 +482,10 @@ class DatabaseTest(LogCaptureTestCase):
 		tickets = self.db.getCurrentBans(jail=self.jail, forbantime=15,
 			fromtime=MyTime.time() + MyTime.str2seconds("1year"))
 		self.assertEqual(len(tickets), 0)
-		# persistent bantime (-1), so never expired (but no persistent tickets):
+		# persistent bantime (-1), so never expired:
 		tickets = self.db.getCurrentBans(jail=self.jail, forbantime=-1,
 			fromtime=MyTime.time() + MyTime.str2seconds("1year"))
-		self.assertEqual(len(tickets), 0)
-		# add persistent one:
-		ticket.setBanTime(-1)
-		self.db.addBan(self.jail, ticket)
-		# persistent bantime (-1), so never expired (but jail has other max bantime now):
-		tickets = self.db.getCurrentBans(jail=self.jail, forbantime=-1,
-			fromtime=MyTime.time() + MyTime.str2seconds("1year"))
-		# no tickets should be found (max ban time = 600):
-		self.assertEqual(len(tickets), 0)
-		self.assertLogged("ignore ticket (with new max ban-time %r)" % self.jail.getMaxBanTime())
-		# change jail to persistent ban and try again (1 persistent ticket):
-		self.jail.actions.setBanTime(-1)
-		tickets = self.db.getCurrentBans(jail=self.jail, forbantime=-1,
-			fromtime=MyTime.time() + MyTime.str2seconds("1year"))
-		self.assertEqual(len(tickets), 1)
-		self.assertEqual(tickets[0].getBanTime(), -1); # current jail ban time.
+		self.assertEqual(len(tickets), 2)
 
 	def testActionWithDB(self):
 		# test action together with database functionality
@@ -549,9 +497,8 @@ class DatabaseTest(LogCaptureTestCase):
 			"action_checkainfo",
 			os.path.join(TEST_FILES_DIR, "action.d/action_checkainfo.py"),
 			{})
-		ticket = FailTicket("1.2.3.4")
+		ticket = FailTicket("1.2.3.4", MyTime.time(), ['test', 'test'])
 		ticket.setAttempt(5)
-		ticket.setMatches(['test', 'test'])
 		self.jail.putFailTicket(ticket)
 		actions._Actions__checkBan()
 		self.assertLogged("ban ainfo %s, %s, %s, %s" % (True, True, True, True))

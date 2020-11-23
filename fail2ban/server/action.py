@@ -262,10 +262,6 @@ class ActionBase(object):
 		"""
 		return self.ban(aInfo)
 
-	@property
-	def _prolongable(self): # pragma: no cover - abstract
-		return False
-
 	def unban(self, aInfo): # pragma: no cover - abstract
 		"""Executed when a ban expires.
 
@@ -277,11 +273,6 @@ class ActionBase(object):
 		"""
 		pass
 
-
-WRAP_CMD_PARAMS = {
-	'timeout': 'str2seconds',
-	'bantime': 'ignore',
-}
 
 class CommandAction(ActionBase):
 	"""A action which executes OS shell commands.
@@ -355,10 +346,7 @@ class CommandAction(ActionBase):
 	def __setattr__(self, name, value):
 		if not name.startswith('_') and not self.__init and not callable(value):
 			# special case for some parameters:
-			wrp = WRAP_CMD_PARAMS.get(name)
-			if wrp == 'ignore': # ignore (filter) dynamic parameters
-				return
-			elif wrp == 'str2seconds':
+			if name in ('timeout', 'bantime'):
 				value = MyTime.str2seconds(value)
 			# parameters changed - clear properties and substitution cache:
 			self.__properties = None
@@ -455,18 +443,7 @@ class CommandAction(ActionBase):
 				ret = True
 				# avoid double execution of same command for both families:
 				if cmd and cmd not in self._operationExecuted(tag, lambda f: f != famoper):
-					realCmd = cmd
-					if self._jail:
-						# simulate action info with "empty" ticket:
-						aInfo = getattr(self._jail.actions, 'actionInfo', None)
-						if not aInfo:
-							aInfo = self._jail.actions._getActionInfo(None)
-							setattr(self._jail.actions, 'actionInfo', aInfo)
-						aInfo['time'] = MyTime.time()
-						aInfo['family'] = famoper
-						# replace dynamical tags, important - don't cache, no recursion and auto-escape here
-						realCmd = self.replaceDynamicTags(cmd, aInfo)
-					ret = self.executeCmd(realCmd, self.timeout)
+					ret = self.executeCmd(cmd, self.timeout)
 					res &= ret
 				if afterExec: afterExec(famoper, ret)
 				self._operationExecuted(tag, famoper, cmd if ret else None)
@@ -565,26 +542,6 @@ class CommandAction(ActionBase):
 		if not self._processCmd(cmd, aInfo):
 			raise RuntimeError("Error banning %(ip)s" % aInfo)
 		self.__started[family] = self.__started.get(family, 0) | 3; # started and contains items
-
-	@property
-	def _prolongable(self):
-		return (hasattr(self, 'actionprolong') and self.actionprolong 
-			and not str(self.actionprolong).isspace())
-	
-	def prolong(self, aInfo):
-		"""Executes the "actionprolong" command.
-
-		Replaces the tags in the action command with actions properties
-		and ban information, and executes the resulting command.
-
-		Parameters
-		----------
-		aInfo : dict
-			Dictionary which includes information in relation to
-			the ban.
-		"""
-		if not self._processCmd('<actionprolong>', aInfo):
-			raise RuntimeError("Error prolonging %(ip)s" % aInfo)
 
 	def unban(self, aInfo):
 		"""Executes the "actionunban" command.
@@ -695,10 +652,8 @@ class CommandAction(ActionBase):
 					ret &= False
 		return ret
 
-	ESCAPE_CRE = re.compile(r"""[\\#&;`|*?~<>^()\[\]{}$'"\n\r]""")
-	
-	@classmethod
-	def escapeTag(cls, value):
+	@staticmethod
+	def escapeTag(value):
 		"""Escape characters which may be used for command injection.
 
 		Parameters
@@ -715,15 +670,12 @@ class CommandAction(ActionBase):
 		-----
 		The following characters are escaped::
 
-			\\#&;`|*?~<>^()[]{}$'"\n\r
+			\\#&;`|*?~<>^()[]{}$'"
 
 		"""
-		_map2c = {'\n': 'n', '\r': 'r'}
-		def substChar(m):
-			c = m.group()
-			return '\\' + _map2c.get(c, c)
-		
-		value = cls.ESCAPE_CRE.sub(substChar, value)
+		for c in '\\#&;`|*?~<>^()[]{}$\'"':
+			if c in value:
+				value = value.replace(c, '\\' + c)
 		return value
 
 	@classmethod
@@ -879,7 +831,7 @@ class CommandAction(ActionBase):
 			tickData = aInfo.get("F-*")
 			if not tickData: tickData = {}
 			def substTag(m):
-				tag = mapTag2Opt(m.group(1))
+				tag = mapTag2Opt(m.groups()[0])
 				try:
 					value = uni_string(tickData[tag])
 				except KeyError:
@@ -1023,8 +975,7 @@ class CommandAction(ActionBase):
 		RuntimeError
 			If command execution times out.
 		"""
-		if logSys.getEffectiveLevel() < logging.DEBUG:
-			logSys.log(9, realCmd)
+		logSys.debug(realCmd)
 		if not realCmd:
 			logSys.debug("Nothing to do")
 			return True

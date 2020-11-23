@@ -39,7 +39,6 @@ from .ipdns import IPAddr
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
-from .observer import Observers
 from .utils import Utils
 from ..helpers import getLogger
 
@@ -219,16 +218,6 @@ class Actions(JailThread, Mapping):
 			return 1 if ids[0] in lst else 0
 		return map(lambda ip: 1 if ip in lst else 0, ids)
 
-	def getBanList(self, withTime=False):
-		"""Returns the list of banned IP addresses.
-
-		Returns
-		-------
-		list
-			The list of banned IP addresses.
-		"""
-		return self.__banManager.getBanList(ordered=True, withTime=withTime)
-
 	def addBannedIP(self, ip):
 		"""Ban an IP or list of IPs."""
 		unixTime = MyTime.time()
@@ -381,8 +370,6 @@ class Actions(JailThread, Mapping):
 			"fid":			lambda self: self.__ticket.getID(),
 			"failures":	lambda self: self.__ticket.getAttempt(),
 			"time":			lambda self: self.__ticket.getTime(),
-			"bantime":  lambda self: self._getBanTime(),
-			"bancount":  lambda self: self.__ticket.getBanCount(),
 			"matches":	lambda self: "\n".join(self.__ticket.getMatches()),
 			# to bypass actions, that should not be executed for restored tickets
 			"restored":	lambda self: (1 if self.__ticket.restored else 0),
@@ -408,11 +395,6 @@ class Actions(JailThread, Mapping):
 		
 		def copy(self): # pragma: no cover
 			return self.__class__(self.__ticket, self.__jail, self.immutable, self.data.copy())
-
-		def _getBanTime(self):
-			btime = self.__ticket.getBanTime()
-			if btime is None: btime = self.__jail.actions.getBanTime()
-			return int(btime)
 
 		def _mi4ip(self, overalljails=False):
 			"""Gets bans merged once, a helper for lambda(s), prevents stop of executing action by any exception inside.
@@ -457,9 +439,7 @@ class Actions(JailThread, Mapping):
 			return mi[idx] if mi[idx] is not None else self.__ticket
 
 
-	def _getActionInfo(self, ticket):
-		if not ticket:
-			ticket = BanTicket("", MyTime.time())
+	def __getActionInfo(self, ticket):
 		aInfo = Actions.ActionInfo(ticket, self._jail)
 		return aInfo
 
@@ -489,19 +469,13 @@ class Actions(JailThread, Mapping):
 			tickets = self.__getFailTickets(self.banPrecedence)
 		rebanacts = None
 		for ticket in tickets:
-
-			bTicket = BanTicket.wrap(ticket)
-			btime = ticket.getBanTime(self.__banManager.getBanTime())
+			bTicket = BanManager.createBanTicket(ticket)
 			ip = bTicket.getIP()
-			aInfo = self._getActionInfo(bTicket)
+			aInfo = self.__getActionInfo(bTicket)
 			reason = {}
 			if self.__banManager.addBanTicket(bTicket, reason=reason):
 				cnt += 1
-				# report ticket to observer, to check time should be increased and hereafter observer writes ban to database (asynchronous)
-				if Observers.Main is not None and not bTicket.restored:
-					Observers.Main.add('banFound', bTicket, self._jail, btime)
 				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.restored else 'Restore '), ip)
-				# do actions :
 				for name, action in self._actions.iteritems():
 					try:
 						if bTicket.restored and getattr(action, 'norestored', False):
@@ -519,10 +493,7 @@ class Actions(JailThread, Mapping):
 				if self.banEpoch: # be sure tickets always have the same ban epoch (default 0):
 					bTicket.banEpoch = self.banEpoch
 			else:
-				if reason.get('expired', 0):
-					logSys.info('[%s] Ignore %s, expired bantime', self._jail.name, ip)
-					continue
-				bTicket = reason.get('ticket', bTicket)
+				bTicket = reason['ticket']
 				# if already banned (otherwise still process some action)
 				if bTicket.banned:
 					# compare time of failure occurrence with time ticket was really banned:
@@ -550,8 +521,12 @@ class Actions(JailThread, Mapping):
 						cnt += self.__reBan(bTicket, actions=rebanacts)
 				else: # pragma: no cover - unexpected: ticket is not banned for some reasons - reban using all actions:
 					cnt += self.__reBan(bTicket)
-			# add ban to database moved to observer (should previously check not already banned 
-			# and increase ticket time if "bantime.increment" set)
+			# add ban to database:
+			if not bTicket.restored and self._jail.database is not None:
+				# ignore too old (repeated and ignored) tickets,
+				# [todo] replace it with inOperation later (once it gets back-ported):
+				if not reason and bTicket.getTime() >= MyTime.time() - 60:
+					self._jail.database.addBan(self._jail, bTicket)
 		if cnt:
 			logSys.debug("Banned %s / %s, %s ticket(s) in %r", cnt, 
 				self.__banManager.getBanTotal(), self.__banManager.size(), self._jail.name)
@@ -570,7 +545,7 @@ class Actions(JailThread, Mapping):
 		"""
 		actions = actions or self._actions
 		ip = ticket.getIP()
-		aInfo = self._getActionInfo(ticket)
+		aInfo = self.__getActionInfo(ticket)
 		if log:
 			logSys.notice("[%s] Reban %s%s", self._jail.name, aInfo["ip"], (', action %r' % actions.keys()[0] if len(actions) == 1 else ''))
 		for name, action in actions.iteritems():
@@ -590,29 +565,6 @@ class Actions(JailThread, Mapping):
 		if self.banEpoch: # be sure tickets always have the same ban epoch (default 0):
 			ticket.banEpoch = self.banEpoch
 		return 1
-
-	def _prolongBan(self, ticket):
-		# prevent to prolong ticket that was removed in-between,
-		# if it in ban list - ban time already prolonged (and it stays there):
-		if not self.__banManager._inBanList(ticket): return
-		# do actions :
-		aInfo = None
-		for name, action in self._actions.iteritems():
-			try:
-				if ticket.restored and getattr(action, 'norestored', False):
-					continue
-				if not action._prolongable:
-					continue
-				if aInfo is None:
-					aInfo = self._getActionInfo(ticket)
-				if not aInfo.immutable: aInfo.reset()
-				action.prolong(aInfo)
-			except Exception as e:
-				logSys.error(
-					"Failed to execute ban jail '%s' action '%s' "
-					"info '%r': %s",
-					self._jail.name, name, aInfo, e,
-					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
 	def __checkUnBan(self, maxCount=None):
 		"""Check for IP address to unban.
@@ -698,7 +650,7 @@ class Actions(JailThread, Mapping):
 		else:
 			unbactions = actions
 		ip = ticket.getIP()
-		aInfo = self._getActionInfo(ticket)
+		aInfo = self.__getActionInfo(ticket)
 		if log:
 			logSys.notice("[%s] Unban %s", self._jail.name, aInfo["ip"])
 		for name, action in unbactions.iteritems():
