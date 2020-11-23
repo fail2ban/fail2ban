@@ -10,6 +10,11 @@
 export DH_VERBOSE=1
 
 export PYBUILD_DISABLE_python2=1
+ifneq (,$(filter notest,$(DEB_BUILD_OPTIONS)))
+: # no test in package needed
+export PYBUILD_BUILD_ARGS=--without-tests
+export PYBUILD_INSTALL_ARGS=--without-tests
+endif
 
 %:
 	dh $@ --with python3,systemd --buildsystem pybuild
@@ -23,10 +28,20 @@ override_dh_clean:
 	dh_clean
 	: # auto generated
 	-rm -f bin/fail2ban-python
+ifneq (,$(filter notest,$(DEB_BUILD_OPTIONS)))
+	: # no test in package needed (2to3 ist faster):
+	-rm -f bin/fail2ban-testcases
+	-rm -rf fail2ban/tests
+endif
 
 override_dh_auto_configure:
 	LANG=C ./fail2ban-2to3
 	dh_auto_configure
+
+override_dh_auto_test:
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	LC_ALL=C.UTF-8 python3 bin/fail2ban-testcases --verbosity=2 --no-network
+endif
 
 override_dh_install:
 	rm -f $(DESTDIR)/usr/share/doc/fail2ban/README.Solaris
@@ -51,12 +66,6 @@ override_dh_install:
 	: # Install default jail enabler
 	install -m 644 debian/debian-files/jail.d_defaults-debian.conf $(DESTDIR)/etc/fail2ban/jail.d/defaults-debian.conf
 	dh_install
-
-override_dh_auto_test:
-ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-# fails for now (4 tests), accept it for now
-	FAIL2BAN_CONFIG_DIR="$(CURDIR)/config" LC_ALL=C.UTF-8 bin/fail2ban-testcases --verbosity=2 --no-network || true
-endif
 
 override_dh_installexamples:
 	dh_installexamples files/ipmasq-* files/nagios files/cacti
