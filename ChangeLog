@@ -55,6 +55,9 @@ ver. 0.10.6-dev (20??/??/??) - development edition
 * `action.d/bsd-ipfw.conf`: fixed selection of rule-no by large list or initial `lowest_rule_num` (gh-2836)
 * `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
   should be interpolated in definition section (inside the filter-config, gh-2650)
+* `filter.d/dovecot.conf`: 
+  - add managesieve and submission support (gh-2795);
+  - accept messages with more verbose logging (gh-2573);
 * `filter.d/courier-smtp.conf`: prefregex extended to consider port in log-message (gh-2697)
 * `filter.d/traefik-auth.conf`: filter extended with parameter mode (`normal`, `ddos`, `aggressive`) to handle 
   the match of username differently (gh-2693):
