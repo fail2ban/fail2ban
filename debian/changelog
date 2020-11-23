@@ -1,72 +1,9 @@
-fail2ban (0.11.1-4) UNRELEASED; urgency=medium
+fail2ban (0.10.6-1~upstream1) unstable; urgency=medium
 
-  * Use debhelper-compat instead of debian/compat.
-  * d/control: Update Maintainer field with new Debian Python Team
-    contact address.
-  * d/control: Update Vcs-* fields with new Debian Python Team Salsa
-    layout.
-  * d/watch: Use https protocol.
+  [ Sergey Brester ]
+  * upstream package for debian, https://github.com/fail2ban/fail2ban/releases/tag/0.10.6
 
- -- Ondřej Nový <onovy@debian.org>  Thu, 24 Sep 2020 08:42:58 +0200
-
-fail2ban (0.11.1-3) unstable; urgency=medium
-
-  * remove deprecated package dh-systemd from the build deps
-    (Closes: #958625)
-
- --
-
-fail2ban (0.11.1-2) unstable; urgency=medium
-
-  * Do not rotate log if empty. Thanks to Ron Varburg for the patch
-    (Closes: #956681)
-  * Add Environment="PYTHONNOUSERSITE=yes" to the service file to avoid
-    fail2ban to read /root/.local/. Thanks to Russell Coker for the
-    investigation (Closes: #956177)
-
- -- Sylvestre Ledru <sylvestre@debian.org>  Tue, 14 Apr 2020 11:44:23 +0200
-
-fail2ban (0.11.1-1) unstable; urgency=medium
-
-  * Upload to unstable
-
- -- Sylvestre Ledru <sylvestre@debian.org>  Mon, 02 Mar 2020 14:20:11 +0100
-
-fail2ban (0.11.1-1~exp3) experimental; urgency=medium
-
-  * Add myself to the list of uploaders
-  * nftables is now more important than iptables. Update of the priority
-    and doc (Closes: #946257)
-  * Trim trailing whitespace.
-  * Fix package-installs-into-obsolete-dir
-    Install bash_completion script in usr/share/bash-completion/completions
-  * Remove patches neurodebian-backport.series, neurodebian_use_python2,
-    saucy-dsc-patch, trusty-dsc-patch, utopic-dsc-patch, wheezy-dsc-
-    patch that are missing from debian/patches/series.
-  * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository,
-    Repository-Browse.
-
- -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 23 Jan 2020 10:42:11 +0100
-
-fail2ban (0.11.1-1~exp2) experimental; urgency=medium
-
-  * Run the testsuite for real
-
- -- Sylvestre Ledru <sylvestre@debian.org>  Mon, 13 Jan 2020 11:09:08 +0100
-
-fail2ban (0.11.1-1~exp1) experimental; urgency=medium
-
-  [ Sylvestre Ledru ]
-  * New upstream release (Closes: #922539)
-  * Import fail2ban in the Debian Python Umbrella (Closes: #947926)
-  * Remove the old dep to Python (Closes: #945670)
-  * Run ./fail2ban-2to3 as part of the build to be Python 3 ready
-  * Update to SV: 4.4.1
-
-  [ Jelmer Vernooĳ ]
-  * Use secure URI in Vcs control header.
-
- -- Sylvestre Ledru <sylvestre@debian.org>  Sun, 12 Jan 2020 23:13:31 +0100
+ -- Sergey G. Brester <serg.brester@sebres.de>  Mon, 23 Nov 2020 20:30:16 +0100
 
 fail2ban (0.10.2-2) unstable; urgency=medium
 
