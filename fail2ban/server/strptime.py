@@ -238,7 +238,7 @@ def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
 			z = val
 			if z in ("Z", "UTC", "GMT"):
 				tzoffset = 0
-			elif key == 'z':
+			else:
 				tzoffset = zone2offset(z, 0); # currently offset-based only
 
 	# Fail2Ban will assume it's this year
