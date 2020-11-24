@@ -1,9 +1,8 @@
 Source: fail2ban
 Section: net
 Priority: optional
-Maintainer: Debian Python Team <team+python@tracker.debian.org>
-Uploaders: Yaroslav Halchenko <debian@onerussian.com>,
- Sylvestre Ledru <sylvestre@debian.org>
+Maintainer: Sergey G. Brester <fail2ban@sebres.de>
+Uploaders: Sergey G. Brester <fail2ban@sebres.de>
 Build-Depends:
  debhelper-compat (= 9)
  , debhelper (>= 9.20160709)
@@ -14,8 +13,8 @@ Build-Depends:
  , sqlite3
  , 2to3
 Homepage: http://www.fail2ban.org
-Vcs-Git: https://salsa.debian.org/python-team/packages/fail2ban.git
-Vcs-Browser: https://salsa.debian.org/python-team/packages/fail2ban
+Vcs-Git: https://github.com/fail2ban/fail2ban.git
+Vcs-Browser: https://github.com/fail2ban/fail2ban
 Standards-Version: 4.4.1
 
 
