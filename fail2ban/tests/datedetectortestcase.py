@@ -516,6 +516,9 @@ class CustomDateFormatsTest(unittest.TestCase):
 			(1072746123.0 - 3600, "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %Z)?", "[2003-12-30 01:02:03] server ..."),
 			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %z)?", "[2003-12-30 01:02:03 UTC] server ..."),
 			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %Z)?", "[2003-12-30 01:02:03 UTC] server ..."),
+			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %z)?", "[2003-12-30 01:02:03 Z] server ..."),
+			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %z)?", "[2003-12-30 01:02:03 +0000] server ..."),
+			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %Z)?", "[2003-12-30 01:02:03 Z] server ..."),
 		):
 			logSys.debug('== test: %r', (matched, dp, line))
 			if dp is None:

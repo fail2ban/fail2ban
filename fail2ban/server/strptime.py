@@ -234,16 +234,12 @@ def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
 			week_of_year = int(val)
 			# U starts week on Sunday, W - on Monday
 			week_of_year_start = 6 if key == 'U' else 0
-		elif key == 'z':
+		elif key in ('z', 'Z'):
 			z = val
 			if z in ("Z", "UTC", "GMT"):
 				tzoffset = 0
-			else:
+			elif key == 'z':
 				tzoffset = zone2offset(z, 0); # currently offset-based only
-		elif key == 'Z':
-			z = val
-			if z in ("UTC", "GMT"):
-				tzoffset = 0
 
 	# Fail2Ban will assume it's this year
 	assume_year = False
