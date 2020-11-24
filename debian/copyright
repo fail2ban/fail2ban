@@ -1,12 +1,13 @@
 This package was originally debianized by Yaroslav Halchenko
 <debian@onerussian.com> on Mon Jul  4 14:41:34 HST 2005
 
-It was downloaded from http://www.sourceforge.net/projects/fail2ban
+It was downloaded from https://www.fail2ban.org
 
-Author: Cyril Jaquier: <cyril.jaquier@fail2ban.org>
-        http://fail2ban.sourceforge.net
+Original author: Cyril Jaquier: <cyril.jaquier@fail2ban.org>
+                 https://www.fail2ban.org
 
 Copyright: 2004-2009 Cyril Jaquier
+           many others since then
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -26,6 +27,5 @@ MA 02110-1301, USA.
 On Debian systems, the complete text of the GNU General Public
 License, version 2, can be found in /usr/share/common-licenses/GPL-2.
 
-The Debian packaging is (C) 2006-2011, Yaroslav Halchenko <debian@onerussian.com>
+The Debian packaging is (C) 2006-2018, Yaroslav Halchenko <debian@onerussian.com>
 and is licensed under the GPL, see above.
-

@@ -1,3 +1,10 @@
+fail2ban (0.11.1-4) unstable; urgency=medium
+
+  * Fix the copyright file (Closes: #975644)
+  * https for the Website field in Debian control
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Tue, 24 Nov 2020 17:13:04 +0100
+
 fail2ban (0.11.1-3) unstable; urgency=medium
 
   [ Ondřej Nový ]
