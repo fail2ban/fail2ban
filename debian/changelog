@@ -1,3 +1,10 @@
+fail2ban (0.11.2-1) unstable; urgency=medium
+
+  * New upstream release
+    Remove python-3.9.patch (merged upstream)
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 26 Nov 2020 13:47:53 +0100
+
 fail2ban (0.11.1-4) unstable; urgency=medium
 
   * Fix the copyright file (Closes: #975644)
