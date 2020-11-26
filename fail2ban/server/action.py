@@ -404,10 +404,13 @@ class CommandAction(ActionBase):
 	def _getOperation(self, tag, family):
 		# replace operation tag (interpolate all values), be sure family is enclosed as conditional value
 		# (as lambda in addrepl so only if not overwritten in action):
-		return self.replaceTag(tag, self._properties,
+		cmd = self.replaceTag(tag, self._properties,
 			conditional=('family='+family if family else ''),
-			addrepl=(lambda tag:family if tag == 'family' else None),
 			cache=self.__substCache)
+		if '<' not in cmd or not family: return cmd
+		# replace family as dynamic tags, important - don't cache, no recursion and auto-escape here:
+		cmd = self.replaceDynamicTags(cmd, {'family':family})
+		return cmd
 
 	def _operationExecuted(self, tag, family, *args):
 		""" Get, set or delete command of operation considering family.
@@ -452,7 +455,18 @@ class CommandAction(ActionBase):
 				ret = True
 				# avoid double execution of same command for both families:
 				if cmd and cmd not in self._operationExecuted(tag, lambda f: f != famoper):
-					ret = self.executeCmd(cmd, self.timeout)
+					realCmd = cmd
+					if self._jail:
+						# simulate action info with "empty" ticket:
+						aInfo = getattr(self._jail.actions, 'actionInfo', None)
+						if not aInfo:
+							aInfo = self._jail.actions._getActionInfo(None)
+							setattr(self._jail.actions, 'actionInfo', aInfo)
+						aInfo['time'] = MyTime.time()
+						aInfo['family'] = famoper
+						# replace dynamical tags, important - don't cache, no recursion and auto-escape here
+						realCmd = self.replaceDynamicTags(cmd, aInfo)
+					ret = self.executeCmd(realCmd, self.timeout)
 					res &= ret
 				if afterExec: afterExec(famoper, ret)
 				self._operationExecuted(tag, famoper, cmd if ret else None)
@@ -806,7 +820,7 @@ class CommandAction(ActionBase):
 	ESCAPE_VN_CRE = re.compile(r"\W")
 
 	@classmethod
-	def replaceDynamicTags(cls, realCmd, aInfo):
+	def replaceDynamicTags(cls, realCmd, aInfo, escapeVal=None):
 		"""Replaces dynamical tags in `query` with property values.
 
 		**Important**
@@ -831,16 +845,17 @@ class CommandAction(ActionBase):
 		# array for escaped vars:
 		varsDict = dict()
 
-		def escapeVal(tag, value):
-			# if the value should be escaped:
-			if cls.ESCAPE_CRE.search(value):
-				# That one needs to be escaped since its content is
-				# out of our control
-				tag = 'f2bV_%s' % cls.ESCAPE_VN_CRE.sub('_', tag)
-				varsDict[tag] = value # add variable
-				value = '$'+tag	# replacement as variable
-			# replacement for tag:
-			return value
+		if not escapeVal:
+			def escapeVal(tag, value):
+				# if the value should be escaped:
+				if cls.ESCAPE_CRE.search(value):
+					# That one needs to be escaped since its content is
+					# out of our control
+					tag = 'f2bV_%s' % cls.ESCAPE_VN_CRE.sub('_', tag)
+					varsDict[tag] = value # add variable
+					value = '$'+tag	# replacement as variable
+				# replacement for tag:
+				return value
 
 		# additional replacement as calling map:
 		ADD_REPL_TAGS_CM = CallingMap(ADD_REPL_TAGS)
@@ -864,7 +879,7 @@ class CommandAction(ActionBase):
 			tickData = aInfo.get("F-*")
 			if not tickData: tickData = {}
 			def substTag(m):
-				tag = mapTag2Opt(m.groups()[0])
+				tag = mapTag2Opt(m.group(1))
 				try:
 					value = uni_string(tickData[tag])
 				except KeyError:

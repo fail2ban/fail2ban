@@ -337,7 +337,7 @@ class IPAddr(object):
 		return repr(self.ntoa)
 
 	def __str__(self):
-		return self.ntoa
+		return self.ntoa if isinstance(self.ntoa, basestring) else str(self.ntoa)
 
 	def __reduce__(self):
 		"""IPAddr pickle-handler, that simply wraps IPAddr to the str
@@ -378,6 +378,12 @@ class IPAddr(object):
 		"""Either the object corresponds to a valid IP address
 		"""
 		return self._family != socket.AF_UNSPEC
+
+	@property
+	def isSingle(self):
+		"""Returns whether the object is a single IP address (not DNS and subnet)
+		"""
+		return self._plen == {socket.AF_INET: 32, socket.AF_INET6: 128}.get(self._family, -1000)
 
 	def __eq__(self, other):
 		if self._family == IPAddr.CIDR_RAW and not isinstance(other, IPAddr):
@@ -510,6 +516,11 @@ class IPAddr(object):
 			return False
 		
 		return (self.addr & mask) == net.addr
+
+	def contains(self, ip):
+		"""Return whether the object (as network) contains given IP
+		"""
+		return isinstance(ip, IPAddr) and (ip == self or ip.isInNet(self))
 
 	# Pre-calculated map: addr to maskplen
 	def __getMaskMap():

@@ -6,6 +6,7 @@ PartOf=iptables.service firewalld.service ip6tables.service ipset.service nftabl
 
 [Service]
 Type=simple
+Environment="PYTHONNOUSERSITE=1"
 ExecStartPre=/bin/mkdir -p /run/fail2ban
 ExecStart=@BINDIR@/fail2ban-server -xf start
 # if should be logged in systemd journal, use following line or set logtarget to sysout in fail2ban.local

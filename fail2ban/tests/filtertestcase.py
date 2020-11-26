@@ -43,7 +43,8 @@ from ..server.failmanager import FailManagerEmpty
 from ..server.ipdns import asip, getfqdn, DNSUtils, IPAddr
 from ..server.mytime import MyTime
 from ..server.utils import Utils, uni_decode
-from .utils import setUpMyTime, tearDownMyTime, mtimesleep, with_tmpdir, LogCaptureTestCase, \
+from .databasetestcase import getFail2BanDb
+from .utils import setUpMyTime, tearDownMyTime, mtimesleep, with_alt_time, with_tmpdir, LogCaptureTestCase, \
 	logSys as DefLogSys, CONFIG_DIR as STOCK_CONF_DIR
 from .dummyjail import DummyJail
 
@@ -62,10 +63,7 @@ def open(*args):
 	if len(args) == 2:
 		# ~50kB buffer should be sufficient for all tests here.
 		args = args + (50000,)
-	if sys.version_info >= (3,):
-		return fopen(*args, **{'encoding': 'utf-8', 'errors': 'ignore'})
-	else:
-		return fopen(*args)
+	return fopen(*args)
 
 
 def _killfile(f, name):
@@ -199,7 +197,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	# polling filter could detect the change
 	mtimesleep()
 	if isinstance(in_, str): # pragma: no branch - only used with str in test cases
-		fin = open(in_, 'r')
+		fin = open(in_, 'rb')
 	else:
 		fin = in_
 	# Skip
@@ -209,7 +207,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	i = 0
 	lines = []
 	while n is None or i < n:
-		l = fin.readline()
+		l = FileContainer.decode_line(in_, 'UTF-8', fin.readline()).rstrip('\r\n')
 		if terminal_line is not None and l == terminal_line:
 			break
 		lines.append(l)
@@ -217,7 +215,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	# Write: all at once and flush
 	if isinstance(fout, str):
 		fout = open(fout, mode)
-	fout.write('\n'.join(lines))
+	fout.write('\n'.join(lines)+'\n')
 	fout.flush()
 	if isinstance(in_, str): # pragma: no branch - only used with str in test cases
 		# Opened earlier, therefore must close it
@@ -237,7 +235,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 	Returns None
 	"""
 	if isinstance(in_, str): # pragma: no branch - only used with str in test cases
-		fin = open(in_, 'r')
+		fin = open(in_, 'rb')
 	else:
 		fin = in_
 	# Required for filtering
@@ -248,7 +246,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 	# Read/Write
 	i = 0
 	while n is None or i < n:
-		l = fin.readline()
+		l = FileContainer.decode_line(in_, 'UTF-8', fin.readline()).rstrip('\r\n')
 		if terminal_line is not None and l == terminal_line:
 			break
 		journal.send(MESSAGE=l.strip(), **fields)
@@ -396,11 +394,13 @@ class IgnoreIP(LogCaptureTestCase):
 		finally:
 			tearDownMyTime()
 
-	def testTimeJump(self):
+	def _testTimeJump(self, inOperation=False):
 		try:
 			self.filter.addFailRegex('^<HOST>')
 			self.filter.setDatePattern(r'{^LN-BEG}%Y-%m-%d %H:%M:%S(?:\s*%Z)?\s')
 			self.filter.setFindTime(10); # max 10 seconds back
+			self.filter.setMaxRetry(5); # don't ban here
+			self.filter.inOperation = inOperation
 			#
 			self.pruneLog('[phase 1] DST time jump')
 			# check local time jump (DST hole):
@@ -429,6 +429,47 @@ class IgnoreIP(LogCaptureTestCase):
 				'192.0.2.6:1', '192.0.2.6:2', '192.0.2.6:3', '192.0.2.6:4', 
 				"Total # of detected failures: 7.", all=True, wait=True)
 			self.assertNotLogged('Ignore line')
+		finally:
+			tearDownMyTime()
+	def testTimeJump(self):
+		self._testTimeJump(inOperation=False)
+	def testTimeJump_InOperation(self):
+		self._testTimeJump(inOperation=True)
+
+	def testWrongTimeZone(self):
+		try:
+			self.filter.addFailRegex('fail from <ADDR>$')
+			self.filter.setDatePattern(r'{^LN-BEG}%Y-%m-%d %H:%M:%S(?:\s*%Z)?\s')
+			self.filter.setMaxRetry(5); # don't ban here
+			self.filter.inOperation = True; # real processing (all messages are new)
+			# current time is 1h later than log-entries:
+			MyTime.setTime(1572138000+3600)
+			#
+			self.pruneLog("[phase 1] simulate wrong TZ")
+			for i in (1,2,3):
+				self.filter.processLineAndAdd('2019-10-27 02:00:00 fail from 192.0.2.15'); # +3 = 3
+			self.assertLogged(
+				"Simulate NOW in operation since found time has too large deviation",
+				"Please check jail has possibly a timezone issue.",
+				"192.0.2.15:1", "192.0.2.15:2", "192.0.2.15:3",
+				"Total # of detected failures: 3.", wait=True)
+			#
+			self.pruneLog("[phase 2] wrong TZ given in log")
+			for i in (1,2,3):
+				self.filter.processLineAndAdd('2019-10-27 04:00:00 GMT fail from 192.0.2.16'); # +3 = 6
+			self.assertLogged(
+				"192.0.2.16:1", "192.0.2.16:2", "192.0.2.16:3",
+				"Total # of detected failures: 6.", all=True, wait=True)
+			self.assertNotLogged("Found a match but no valid date/time found")
+			#
+			self.pruneLog("[phase 3] other timestamp (don't match datepattern), regex matches")
+			for i in range(3):
+				self.filter.processLineAndAdd('27.10.2019 04:00:00 fail from 192.0.2.17'); # +3 = 9
+			self.assertLogged(
+				"Found a match but no valid date/time found",
+				"Match without a timestamp:",
+				"192.0.2.17:1", "192.0.2.17:2", "192.0.2.17:3",
+				"Total # of detected failures: 9.", all=True, wait=True)
 		finally:
 			tearDownMyTime()
 
@@ -759,6 +800,7 @@ class LogFileMonitor(LogCaptureTestCase):
 		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
 		self.file = open(self.name, 'a')
 		self.filter = FilterPoll(DummyJail())
+		self.filter.banASAP = False # avoid immediate ban in this tests
 		self.filter.addLogPath(self.name, autoSeek=False)
 		self.filter.active = True
 		self.filter.addFailRegex(r"(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
@@ -878,7 +920,7 @@ class LogFileMonitor(LogCaptureTestCase):
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 		# and it should have not been enough
 
-		_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=5)
+		_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=12, n=3)
 		self.filter.getFailures(self.name)
 		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
 
@@ -897,7 +939,7 @@ class LogFileMonitor(LogCaptureTestCase):
 		# filter "marked" as the known beginning, otherwise it
 		# would not detect "rotation"
 		self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-											  skip=3, mode='w')
+											  skip=12, n=3, mode='w')
 		self.filter.getFailures(self.name)
 		#self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
@@ -916,7 +958,7 @@ class LogFileMonitor(LogCaptureTestCase):
 
 		# move aside, but leaving the handle still open...
 		os.rename(self.name, self.name + '.bak')
-		_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14).close()
+		_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14, n=1).close()
 		self.filter.getFailures(self.name)
 		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
 		self.assertEqual(self.filter.failManager.getFailTotal(), 3)
@@ -976,6 +1018,7 @@ def get_monitor_failures_testcase(Filter_):
 			self.file = open(self.name, 'a')
 			self.jail = DummyJail()
 			self.filter = Filter_(self.jail)
+			self.filter.banASAP = False # avoid immediate ban in this tests
 			self.filter.addLogPath(self.name, autoSeek=False)
 			# speedup search using exact date pattern:
 			self.filter.setDatePattern(r'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
@@ -1026,13 +1069,13 @@ def get_monitor_failures_testcase(Filter_):
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 			# Now let's feed it with entries from the file
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=5)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=12)
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 			# and our dummy jail is empty as well
 			self.assertFalse(len(self.jail))
 			# since it should have not been enough
 
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=5)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=12, n=3)
 			if idle:
 				self.waitForTicks(1)
 				self.assertTrue(self.isEmpty(1))
@@ -1051,7 +1094,7 @@ def get_monitor_failures_testcase(Filter_):
 			#return
 			# just for fun let's copy all of them again and see if that results
 			# in a new ban
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=12, n=3)
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 
 		def test_rewrite_file(self):
@@ -1065,7 +1108,7 @@ def get_monitor_failures_testcase(Filter_):
 			# filter "marked" as the known beginning, otherwise it
 			# would not detect "rotation"
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-												  skip=3, mode='w')
+												  skip=12, n=3, mode='w')
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 
 		def _wait4failures(self, count=2):
@@ -1086,13 +1129,13 @@ def get_monitor_failures_testcase(Filter_):
 
 			# move aside, but leaving the handle still open...
 			os.rename(self.name, self.name + '.bak')
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14).close()
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14, n=1).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
 
 			# now remove the moved file
 			_killfile(None, self.name + '.bak')
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100).close()
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=12, n=3).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
@@ -1168,8 +1211,7 @@ def get_monitor_failures_testcase(Filter_):
 
 		def _test_move_into_file(self, interim_kill=False):
 			# if we move a new file into the location of an old (monitored) file
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-									  n=100).close()
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name).close()
 			# make sure that it is monitored first
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
@@ -1180,14 +1222,14 @@ def get_monitor_failures_testcase(Filter_):
 
 			# now create a new one to override old one
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name + '.new',
-									  n=100).close()
+				skip=12, n=3).close()
 			os.rename(self.name + '.new', self.name)
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
 			# and to make sure that it now monitored for changes
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-									  n=100).close()
+				skip=12, n=3).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 9)
 
@@ -1206,7 +1248,7 @@ def get_monitor_failures_testcase(Filter_):
 
 			# create a bogus file in the same directory and see if that doesn't affect
 			open(self.name + '.bak2', 'w').close()
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100).close()
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=12, n=3).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 			_killfile(None, self.name + '.bak2')
@@ -1238,8 +1280,8 @@ def get_monitor_failures_testcase(Filter_):
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01, count=6) # was needed if we write twice above
 
 			# now copy and get even more
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
-      # check for 3 failures (not 9), because 6 already get above...
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=12, n=3)
+			# check for 3 failures (not 9), because 6 already get above...
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			# total count in this test:
 			self.assertEqual(self.filter.failManager.getFailTotal(), 12)
@@ -1274,6 +1316,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def _initFilter(self, **kwargs):
 			self._getRuntimeJournal() # check journal available
 			self.filter = Filter_(self.jail, **kwargs)
+			self.filter.banASAP = False # avoid immediate ban in this tests
 			self.filter.addJournalMatch([
 				"SYSLOG_IDENTIFIER=fail2ban-testcases",
 				"TEST_FIELD=1",
@@ -1397,6 +1440,52 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				self.test_file, self.journal_fields, skip=5, n=4)
 			self.assert_correct_ban("193.168.0.128", 3)
 
+		@with_alt_time
+		def test_grow_file_with_db(self):
+
+			def _gen_falure(ip):
+				# insert new failures ans check it is monitored:
+				fields = self.journal_fields
+				fields.update(TEST_JOURNAL_FIELDS)
+				journal.send(MESSAGE="error: PAM: Authentication failure for test from "+ip, **fields)
+				self.waitForTicks(1)
+				self.assert_correct_ban(ip, 1)
+
+			# coverage for update log:
+			self.jail.database = getFail2BanDb(':memory:')
+			self.jail.database.addJail(self.jail)
+			MyTime.setTime(time.time())
+			self._test_grow_file()
+			# stop:
+			self.filter.stop()
+			self.filter.join()
+			MyTime.setTime(time.time() + 2)
+			# update log manually (should cause a seek to end of log without wait for next second):
+			self.jail.database.updateJournal(self.jail, 'systemd-journal', MyTime.time(), 'TEST')
+			# check seek to last (simulated) position succeeds (without bans of previous copied tickets):
+			self._failTotal = 0
+			self._initFilter()
+			self.filter.setMaxRetry(1)
+			self.filter.start()
+			self.waitForTicks(1)
+			# check new IP but no old IPs found:
+			_gen_falure("192.0.2.5")
+			self.assertFalse(self.jail.getFailTicket())
+
+			# now the same with increased time (check now - findtime case):
+			self.filter.stop()
+			self.filter.join()
+			MyTime.setTime(time.time() + 10000)
+			self._failTotal = 0
+			self._initFilter()
+			self.filter.setMaxRetry(1)
+			self.filter.start()
+			self.waitForTicks(1)
+			MyTime.setTime(time.time() + 3)
+			# check new IP but no old IPs found:
+			_gen_falure("192.0.2.6")
+			self.assertFalse(self.jail.getFailTicket())
+
 		def test_delJournalMatch(self):
 			self._initFilter()
 			self.filter.start()
@@ -1481,6 +1570,7 @@ class GetFailures(LogCaptureTestCase):
 		setUpMyTime()
 		self.jail = DummyJail()
 		self.filter = FileFilter(self.jail)
+		self.filter.banASAP = False # avoid immediate ban in this tests
 		self.filter.active = True
 		# speedup search using exact date pattern:
 		self.filter.setDatePattern(r'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
@@ -1536,9 +1626,9 @@ class GetFailures(LogCaptureTestCase):
 		# We first adjust logfile/failures to end with CR+LF
 		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='crlf')
 		# poor man unix2dos:
-		fin, fout = open(GetFailures.FILENAME_01), open(fname, 'w')
-		for l in fin.readlines():
-			fout.write('%s\r\n' % l.rstrip('\n'))
+		fin, fout = open(GetFailures.FILENAME_01, 'rb'), open(fname, 'wb')
+		for l in fin.read().splitlines():
+			fout.write(l + b'\r\n')
 		fin.close()
 		fout.close()
 
@@ -1557,16 +1647,24 @@ class GetFailures(LogCaptureTestCase):
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailures03(self):
-		output = ('203.162.223.135', 7, 1124013544.0)
+		output = ('203.162.223.135', 6, 1124013600.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=0)
 		self.filter.addFailRegex(r"error,relay=<HOST>,.*550 User unknown")
 		self.filter.getFailures(GetFailures.FILENAME_03)
 		_assert_correct_last_attempt(self, self.filter, output)
 
+	def testGetFailures03_InOperation(self):
+		output = ('203.162.223.135', 9, 1124013600.0)
+
+		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=0)
+		self.filter.addFailRegex(r"error,relay=<HOST>,.*550 User unknown")
+		self.filter.getFailures(GetFailures.FILENAME_03, inOperation=True)
+		_assert_correct_last_attempt(self, self.filter, output)
+
 	def testGetFailures03_Seek1(self):
 		# same test as above but with seek to 'Aug 14 11:55:04' - so other output ...
-		output = ('203.162.223.135', 5, 1124013544.0)
+		output = ('203.162.223.135', 3, 1124013600.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=output[2] - 4*60)
 		self.filter.addFailRegex(r"error,relay=<HOST>,.*550 User unknown")
@@ -1575,7 +1673,7 @@ class GetFailures(LogCaptureTestCase):
 
 	def testGetFailures03_Seek2(self):
 		# same test as above but with seek to 'Aug 14 11:59:04' - so other output ...
-		output = ('203.162.223.135', 1, 1124013544.0)
+		output = ('203.162.223.135', 2, 1124013600.0)
 		self.filter.setMaxRetry(1)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=output[2])
@@ -1603,6 +1701,7 @@ class GetFailures(LogCaptureTestCase):
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailuresWrongChar(self):
+		self.filter.checkFindTime = False
 		# write wrong utf-8 char:
 		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='crlf')
 		fout = fopen(fname, 'wb')
@@ -1623,6 +1722,8 @@ class GetFailures(LogCaptureTestCase):
 			for enc in (None, 'utf-8', 'ascii'):
 				if enc is not None:
 					self.tearDown();self.setUp();
+					if DefLogSys.getEffectiveLevel() > 7: DefLogSys.setLevel(7); # ensure decode_line logs always
+					self.filter.checkFindTime = False;
 					self.filter.setLogEncoding(enc);
 				# speedup search using exact date pattern:
 				self.filter.setDatePattern(r'^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')
@@ -1670,6 +1771,7 @@ class GetFailures(LogCaptureTestCase):
 			self.pruneLog("[test-phase useDns=%s]" % useDns)
 			jail = DummyJail()
 			filter_ = FileFilter(jail, useDns=useDns)
+			filter_.banASAP = False # avoid immediate ban in this tests
 			filter_.active = True
 			filter_.failManager.setMaxRetry(1)	# we might have just few failures
 
@@ -1849,7 +1951,9 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		ip4 = IPAddr('192.0.2.1')
 		ip6 = IPAddr('2001:DB8::')
 		self.assertTrue(ip4.isIPv4)
+		self.assertTrue(ip4.isSingle)
 		self.assertTrue(ip6.isIPv6)
+		self.assertTrue(ip6.isSingle)
 		self.assertTrue(asip('192.0.2.1').isIPv4)
 		self.assertTrue(id(asip(ip4)) == id(ip4))
 
@@ -1858,6 +1962,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		r = IPAddr('xxx', IPAddr.CIDR_RAW)
 		self.assertFalse(r.isIPv4)
 		self.assertFalse(r.isIPv6)
+		self.assertFalse(r.isSingle)
 		self.assertTrue(r.isValid)
 		self.assertEqual(r, 'xxx')
 		self.assertEqual('xxx', str(r))
@@ -1866,6 +1971,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		r = IPAddr('1:2', IPAddr.CIDR_RAW)
 		self.assertFalse(r.isIPv4)
 		self.assertFalse(r.isIPv6)
+		self.assertFalse(r.isSingle)
 		self.assertTrue(r.isValid)
 		self.assertEqual(r, '1:2')
 		self.assertEqual('1:2', str(r))
@@ -1888,7 +1994,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 	def testUseDns(self):
 		res = DNSUtils.textToIp('www.example.com', 'no')
 		self.assertSortedEqual(res, [])
-		unittest.F2B.SkipIfNoNetwork()
+		#unittest.F2B.SkipIfNoNetwork()
 		res = DNSUtils.textToIp('www.example.com', 'warn')
 		# sort ipaddr, IPv4 is always smaller as IPv6
 		self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
@@ -1897,7 +2003,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
 
 	def testTextToIp(self):
-		unittest.F2B.SkipIfNoNetwork()
+		#unittest.F2B.SkipIfNoNetwork()
 		# Test hostnames
 		hostnames = [
 			'www.example.com',
@@ -1921,7 +2027,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 				self.assertTrue(isinstance(ip, IPAddr))
 
 	def testIpToName(self):
-		unittest.F2B.SkipIfNoNetwork()
+		#unittest.F2B.SkipIfNoNetwork()
 		res = DNSUtils.ipToName('8.8.4.4')
 		self.assertTrue(res.endswith(('.google', '.google.com')))
 		# same as above, but with IPAddr:
@@ -1943,8 +2049,10 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertEqual(res.addr, 167772160L)
 		res = IPAddr('10.0.0.1', cidr=32L)
 		self.assertEqual(res.addr, 167772161L)
+		self.assertTrue(res.isSingle)
 		res = IPAddr('10.0.0.1', cidr=31L)
 		self.assertEqual(res.addr, 167772160L)
+		self.assertFalse(res.isSingle)
 
 		self.assertEqual(IPAddr('10.0.0.0').hexdump, '0a000000')
 		self.assertEqual(IPAddr('1::2').hexdump, '00010000000000000000000000000002')
@@ -1969,6 +2077,8 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 	def testIPAddr_InInet(self):
 		ip4net = IPAddr('93.184.0.1/24')
 		ip6net = IPAddr('2606:2800:220:1:248:1893:25c8:0/120')
+		self.assertFalse(ip4net.isSingle)
+		self.assertFalse(ip6net.isSingle)
 		# ip4:
 		self.assertTrue(IPAddr('93.184.0.1').isInNet(ip4net))
 		self.assertTrue(IPAddr('93.184.0.255').isInNet(ip4net))
@@ -2064,6 +2174,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		)
 
 	def testIPAddr_CompareDNS(self):
+		#unittest.F2B.SkipIfNoNetwork()
 		ips = IPAddr('example.com')
 		self.assertTrue(IPAddr("93.184.216.34").isInNet(ips))
 		self.assertTrue(IPAddr("2606:2800:220:1:248:1893:25c8:1946").isInNet(ips))

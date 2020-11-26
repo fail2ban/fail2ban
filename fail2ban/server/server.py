@@ -58,6 +58,23 @@ except ImportError: # pragma: no cover
 def _thread_name():
 	return threading.current_thread().__class__.__name__
 
+try:
+	FileExistsError
+except NameError: # pragma: 3.x no cover
+	FileExistsError = OSError
+
+def _make_file_path(name):
+	"""Creates path of file (last level only) on demand"""
+	name = os.path.dirname(name)
+	# only if it is absolute (e. g. important for socket, so if unix path):
+	if os.path.isabs(name):
+		# be sure path exists (create last level of directory on demand):
+		try:
+			os.mkdir(name)
+		except (OSError, FileExistsError) as e:
+			if e.errno != 17: # pragma: no cover - not EEXIST is not covered
+				raise
+
 
 class Server:
 	
@@ -81,8 +98,6 @@ class Server:
 			'Linux': '/dev/log',
 		}
 		self.__prev_signals = {}
-		# replace real thread name with short process name (for top/ps/pstree or diagnostic):
-		prctl_set_th_name('f2b/server')
 
 	def __sigTERMhandler(self, signum, frame): # pragma: no cover - indirect tested
 		logSys.debug("Caught signal %d. Exiting", signum)
@@ -99,7 +114,7 @@ class Server:
 
 	def start(self, sock, pidfile, force=False, observer=True, conf={}):
 		# First set the mask to only allow access to owner
-		os.umask(0077)
+		os.umask(0o077)
 		# Second daemonize before logging etc, because it will close all handles:
 		if self.__daemon: # pragma: no cover
 			logSys.info("Starting in daemon mode")
@@ -113,6 +128,9 @@ class Server:
 				logSys.error(err)
 				raise ServerInitializationError(err)
 			# We are daemon.
+
+		# replace main thread (and process) name to identify server (for top/ps/pstree or diagnostic):
+		prctl_set_th_name(conf.get("pname", "fail2ban-server"))
 		
 		# Set all logging parameters (or use default if not specified):
 		self.__verbose = conf.get("verbose", None)
@@ -141,6 +159,7 @@ class Server:
 		# Creates a PID file.
 		try:
 			logSys.debug("Creating PID file %s", pidfile)
+			_make_file_path(pidfile)
 			pidFile = open(pidfile, 'w')
 			pidFile.write("%s\n" % os.getpid())
 			pidFile.close()
@@ -156,6 +175,7 @@ class Server:
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
+			_make_file_path(sock)
 			self.__asyncServer = AsyncServer(self.__transm)
 			self.__asyncServer.onstart = conf.get('onstart')
 			self.__asyncServer.start(sock, force)
@@ -193,11 +213,18 @@ class Server:
 				signal.signal(s, sh)
 
 		# Give observer a small chance to complete its work before exit
-		if Observers.Main is not None:
-			Observers.Main.stop()
+		obsMain = Observers.Main
+		if obsMain is not None:
+			if obsMain.stop(forceQuit=False):
+				obsMain = None
+			Observers.Main = None
 
 		# Now stop all the jails
 		self.stopAllJail()
+
+		# Stop observer ultimately
+		if obsMain is not None:
+			obsMain.stop()
 
 		# Explicit close database (server can leave in a thread, 
 		# so delayed GC can prevent commiting changes)
@@ -205,11 +232,7 @@ class Server:
 			self.__db.close()
 			self.__db = None
 
-		# Stop observer and exit
-		if Observers.Main is not None:
-			Observers.Main.stop()
-			Observers.Main = None
-		# Stop async
+		# Stop async and exit
 		if self.__asyncServer is not None:
 			self.__asyncServer.stop()
 			self.__asyncServer = None
@@ -517,6 +540,32 @@ class Server:
 			cnt += jail.actions.removeBannedIP(value, ifexists=ifexists)
 		return cnt
 		
+	def banned(self, name=None, ids=None):
+		if name is not None:
+			# single jail:
+			jails = [self.__jails[name]]
+		else:
+			# in all jails:
+			jails = self.__jails.values()
+		# check banned ids:
+		res = []
+		if name is None and ids:
+			for ip in ids:
+				ret = []
+				for jail in jails:
+					if jail.actions.getBanned([ip]):
+						ret.append(jail.name)
+				res.append(ret)
+		else:
+			for jail in jails:
+				ret = jail.actions.getBanned(ids)
+				if name is not None:
+					return ret
+					res.append(ret)
+				else:
+					res.append({jail.name: ret})
+		return res
+		
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
 
@@ -777,6 +826,7 @@ class Server:
 			self.__db = None
 		else:
 			if Fail2BanDb is not None:
+				_make_file_path(filename)
 				self.__db = Fail2BanDb(filename)
 				self.__db.delAllJails()
 			else: # pragma: no cover

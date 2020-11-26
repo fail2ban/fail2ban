@@ -48,7 +48,8 @@ class CSocket:
 	def send(self, msg, nonblocking=False, timeout=None):
 		# Convert every list member to string
 		obj = dumps(map(CSocket.convert, msg), HIGHEST_PROTOCOL)
-		self.__csock.send(obj + CSPROTO.END)
+		self.__csock.send(obj)
+		self.__csock.send(CSPROTO.END)
 		return self.receive(self.__csock, nonblocking, timeout)
 
 	def settimeout(self, timeout):
@@ -81,9 +82,12 @@ class CSocket:
 		msg = CSPROTO.EMPTY
 		if nonblocking: sock.setblocking(0)
 		if timeout: sock.settimeout(timeout)
-		while msg.rfind(CSPROTO.END) == -1:
-			chunk = sock.recv(512)
-			if chunk in ('', b''): # python 3.x may return b'' instead of ''
-				raise RuntimeError("socket connection broken")
+		bufsize = 1024
+		while msg.rfind(CSPROTO.END, -32) == -1:
+			chunk = sock.recv(bufsize)
+			if not len(chunk):
+				raise socket.error(104, 'Connection reset by peer')
+			if chunk == CSPROTO.END: break
 			msg = msg + chunk
+			if bufsize < 32768: bufsize <<= 1
 		return loads(msg)
