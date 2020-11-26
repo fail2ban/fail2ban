@@ -262,6 +262,15 @@ class DatabaseTest(LogCaptureTestCase):
 			self.db.addLog(self.jail, self.fileContainer), None)
 		os.remove(filename)
 
+	def testUpdateJournal(self):
+		self.testAddJail() # Jail required
+		# not yet updated:
+		self.assertEqual(self.db.getJournalPos(self.jail, 'systemd-journal'), None)
+		# update 3 times (insert and 2 updates) and check it was set (and overwritten):
+		for t in (1500000000, 1500000001, 1500000002):
+			self.db.updateJournal(self.jail, 'systemd-journal', t, 'TEST'+str(t))
+			self.assertEqual(self.db.getJournalPos(self.jail, 'systemd-journal'), t)
+
 	def testAddBan(self):
 		self.testAddJail()
 		ticket = FailTicket("127.0.0.1", 0, ["abc\n"])
@@ -534,6 +543,7 @@ class DatabaseTest(LogCaptureTestCase):
 		# test action together with database functionality
 		self.testAddJail() # Jail required
 		self.jail.database = self.db
+		self.db.addJail(self.jail)
 		actions = Actions(self.jail)
 		actions.add(
 			"action_checkainfo",

@@ -43,25 +43,19 @@ class FailManager:
 		self.__maxRetry = 3
 		self.__maxTime = 600
 		self.__failTotal = 0
-		self.maxMatches = 50
+		self.maxMatches = 5
 		self.__bgSvc = BgService()
 	
 	def setFailTotal(self, value):
-		with self.__lock:
-			self.__failTotal = value
+		self.__failTotal = value
 		
 	def getFailTotal(self):
-		with self.__lock:
-			return self.__failTotal
+		return self.__failTotal
 	
 	def getFailCount(self):
 		# may be slow on large list of failures, should be used for test purposes only...
 		with self.__lock:
 			return len(self.__failList), sum([f.getRetry() for f in self.__failList.values()])
-
-	def getFailTotal(self):
-		with self.__lock:
-			return self.__failTotal
 
 	def setMaxRetry(self, value):
 		self.__maxRetry = value
@@ -92,10 +86,7 @@ class FailManager:
 					if attempt <= 0:
 						attempt += 1
 				unixTime = ticket.getTime()
-				fData.setLastTime(unixTime)
-				if fData.getLastReset() < unixTime - self.__maxTime:
-					fData.setLastReset(unixTime)
-					fData.setRetry(0)
+				fData.adjustTime(unixTime, self.__maxTime)
 				fData.inc(matches, attempt, count)
 				# truncate to maxMatches:
 				if self.maxMatches:
@@ -133,13 +124,12 @@ class FailManager:
 		return attempts
 	
 	def size(self):
-		with self.__lock:
-			return len(self.__failList)
+		return len(self.__failList)
 	
 	def cleanup(self, time):
 		with self.__lock:
 			todelete = [fid for fid,item in self.__failList.iteritems() \
-				if item.getLastTime() + self.__maxTime <= time]
+				if item.getTime() + self.__maxTime <= time]
 			if len(todelete) == len(self.__failList):
 				# remove all:
 				self.__failList = dict()
@@ -153,7 +143,7 @@ class FailManager:
 			else:
 				# create new dictionary without items to be deleted:
 				self.__failList = dict((fid,item) for fid,item in self.__failList.iteritems() \
-					if item.getLastTime() + self.__maxTime > time)
+					if item.getTime() + self.__maxTime > time)
 		self.__bgSvc.service()
 	
 	def delFailure(self, fid):

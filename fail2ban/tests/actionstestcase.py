@@ -96,6 +96,8 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertLogged("stdout: %r" % 'ip flush', "stdout: %r" % 'ip stop')
 		self.assertEqual(self.__actions.status(),[("Currently banned", 0 ),
                ("Total banned", 0 ), ("Banned IP list", [] )])
+		self.assertEqual(self.__actions.status('short'),[("Currently banned", 0 ),
+               ("Total banned", 0 )])
 
 	def testAddActionPython(self):
 		self.__actions.add(

@@ -125,6 +125,10 @@ class Utils():
 			with self.__lock:
 				self._cache.pop(k, None)
 
+		def clear(self):
+			with self.__lock:
+				self._cache.clear()
+
 
 	@staticmethod
 	def setFBlockMode(fhandle, value):
@@ -260,7 +264,6 @@ class Utils():
 				if stdout is not None and stdout != '' and std_level >= logSys.getEffectiveLevel():
 					for l in stdout.splitlines():
 						logSys.log(std_level, "%x -- stdout: %r", realCmdId, uni_decode(l))
-				popen.stdout.close()
 			if popen.stderr:
 				try:
 					if retcode is None or retcode < 0:
@@ -271,7 +274,9 @@ class Utils():
 				if stderr is not None and stderr != '' and std_level >= logSys.getEffectiveLevel():
 					for l in stderr.splitlines():
 						logSys.log(std_level, "%x -- stderr: %r", realCmdId, uni_decode(l))
-				popen.stderr.close()
+
+		if popen.stdout: popen.stdout.close()
+		if popen.stderr: popen.stderr.close()
 
 		success = False
 		if retcode in success_codes:

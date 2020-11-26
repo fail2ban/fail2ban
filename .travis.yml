@@ -18,14 +18,14 @@ matrix:
   - python: 2.7
     name: 2.7 (xenial)
   - python: pypy
-    dist: trusty
   - python: 3.3
     dist: trusty
   - python:  3.4
   - python:  3.5
   - python:  3.6
   - python:  3.7
-  - python:  3.8-dev
+  - python:  3.8
+  - python:  3.9-dev
   - python:  pypy3.5
 before_install:
   - echo "running under $TRAVIS_PYTHON_VERSION"
@@ -69,8 +69,8 @@ script:
   - if [[ "$F2B_PY" = 3 ]]; then coverage run bin/fail2ban-testcases --verbosity=2; fi
   # Use $VENV_BIN (not python) or else sudo will always run the system's python (2.7)
   - sudo $VENV_BIN/pip install .
-  # Doc files should get installed on Travis under Linux (python >= 3.8 seem to use another path segment)
-  - if [[ $TRAVIS_PYTHON_VERSION < 3.8 ]]; then test -e /usr/share/doc/fail2ban/FILTERS; fi
+  # Doc files should get installed on Travis under Linux (some builds/python's seem to use another path segment)
+  - test -e /usr/share/doc/fail2ban/FILTERS && echo 'found' || echo 'not found'
   # Test initd script
   - shellcheck -s bash -e SC1090,SC1091 files/debian-initd
 after_success:

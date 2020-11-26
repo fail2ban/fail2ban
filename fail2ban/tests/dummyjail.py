@@ -40,7 +40,6 @@ class DummyJail(Jail):
 		self.lock = Lock()
 		self.queue = []
 		super(DummyJail, self).__init__(name=name, backend=backend)
-		self.__db = None
 		self.__actions = DummyActions(self)
 
 	def __len__(self):
@@ -54,6 +53,10 @@ class DummyJail(Jail):
 	def isFilled(self):
 		with self.lock:
 			return bool(self.queue)
+
+	@property
+	def hasFailTickets(self):
+		return bool(self.queue)
 
 	def putFailTicket(self, ticket):
 		with self.lock:
@@ -73,14 +76,6 @@ class DummyJail(Jail):
 	@idle.setter
 	def idle(self, value):
 		pass
-
-	@property
-	def database(self):
-		return self.__db;
-	
-	@database.setter
-	def database(self, value):
-		self.__db = value;
 
 	@property
 	def actions(self):
