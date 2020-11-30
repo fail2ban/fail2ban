@@ -1,9 +1,0 @@
-
-# failJSON: { "time": "2020-11-25T14:42:16", "match": true , "host": "142.93.180.14" }
-2020/11/25 14:42:16 [crit] 76952#76952: *2454307 SSL_do_handshake() failed (SSL: error:1408F0C6:SSL routines:ssl3_get_record:packet length too long) while SSL handshaking, client: 142.93.180.14, server: 0.0.0.0:443
-# failJSON: { "time": "2020-11-25T15:47:47", "match": true , "host": "80.191.166.166" }
-2020/11/25 15:47:47 [crit] 76952#76952: *5062354 SSL_do_handshake() failed (SSL: error:1408F0A0:SSL routines:ssl3_get_record:length too short) while SSL handshaking, client: 80.191.166.166, server: 0.0.0.0:443
-# failJSON: { "time": "2020-11-25T16:48:08", "match": true , "host": "5.126.32.148" }
-2020/11/25 16:48:08 [crit] 76952#76952: *7976400 SSL_do_handshake() failed (SSL: error:1408F096:SSL routines:ssl3_get_record:encrypted length too long) while SSL handshaking, client: 5.126.32.148, server: 0.0.0.0:443
-# failJSON: { "time": "2020-11-25T16:02:45", "match": false }
-2020/11/25 16:02:45 [error] 76952#76952: *5645766 connect() failed (111: Connection refused) while connecting to upstream, client: 5.126.32.148, server: www.google.de, request: "GET /admin/config HTTP/2.0", upstream: "http://127.0.0.1:3000/admin/config", host: "www.google.de"
