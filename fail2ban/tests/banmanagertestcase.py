@@ -27,6 +27,7 @@ __license__ = "GPL"
 import unittest
 
 from ..server.banmanager import BanManager
+from ..server.ipdns import DNSUtils
 from ..server.ticket import BanTicket
 
 class AddFailure(unittest.TestCase):
@@ -137,10 +138,10 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		"""Call before every test case."""
 		super(StatusExtendedCymruInfo, self).setUp()
 		unittest.F2B.SkipIfNoNetwork()
-		self.__ban_ip = "93.184.216.34"
-		self.__asn = "15133"
-		self.__country = "EU"
-		self.__rir = "ripencc"
+		self.__ban_ip = iter(DNSUtils.dnsToIp("resolver1.opendns.com")).next()
+		self.__asn = "36692"
+		self.__country = "US"
+		self.__rir = "arin"
 		ticket = BanTicket(self.__ban_ip, 1167605999.0)
 		self.__banManager = BanManager()
 		self.assertTrue(self.__banManager.addBanTicket(ticket))
