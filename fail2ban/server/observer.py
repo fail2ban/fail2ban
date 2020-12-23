@@ -232,7 +232,7 @@ class ObserverThread(JailThread):
 					if self._paused:
 						continue
 				else:
-					## notify event deleted (shutdown) - just sleep a litle bit (waiting for shutdown events, prevent high cpu usage)
+					## notify event deleted (shutdown) - just sleep a little bit (waiting for shutdown events, prevent high cpu usage)
 					time.sleep(ObserverThread.DEFAULT_SLEEP_INTERVAL)
 					## stop by shutdown and empty queue :
 					if not self.is_full:
