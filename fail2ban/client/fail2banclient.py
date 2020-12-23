@@ -230,7 +230,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 			logSys.log(5, '  client phase %s', phase)
 		if not stream:
 			return False
-		# wait a litle bit for phase "start-ready" before enter active waiting:
+		# wait a little bit for phase "start-ready" before enter active waiting:
 		if phase is not None:
 			Utils.wait_for(lambda: phase.get('start-ready', None) is not None, 0.5, 0.001)
 			phase['configure'] = (True if stream else False)
