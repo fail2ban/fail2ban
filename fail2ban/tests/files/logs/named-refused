@@ -26,3 +26,8 @@ Aug 27 16:58:31 vhost1-ua named[29206]: client 176.9.92.38#42592 (simmarket.com.
 
 # failJSON: { "time": "2004-08-27T16:59:00", "match": true , "host": "192.0.2.1", "desc": "new log format, 9.11.0 (#2406)" }
 Aug 27 16:59:00 host named[28098]: client @0x7f6450002ef0 192.0.2.1#23332 (example.com): bad zone transfer request: 'test.com/IN': non-authoritative zone (NOTAUTH)
+
+# filterOptions: {"logtype": "journal"}
+
+# failJSON: { "match": true , "host": "192.0.2.1", "desc": "systemd-journal entry" }
+atom named[1806]: client @0x7fb13400eec0 192.0.2.1#61977 (.): query (cache) './ANY/IN' denied
