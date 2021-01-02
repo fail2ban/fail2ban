@@ -21,6 +21,7 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 * `actioncheck` behavior is changed now (gh-488), so invariant check as well as restore or repair
    of sane environment (in case of recognized unsane state) would only occur on action errors (e. g.
    if ban or unban operations are exiting with other code as 0)
+* action.d/firewallcmd-*.conf - new parameter `table`, allows changing table from `filter` to `nat`, `mangle` or `raw`
 
 
 ver. 0.11.2 (2020/11/23) - heal-the-world-with-security-tools
