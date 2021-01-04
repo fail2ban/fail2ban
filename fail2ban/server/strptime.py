@@ -36,10 +36,30 @@ def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNo
 	Thereby respect possible run in the test-cases (alternate date used there)
 	"""
 	cent = lambda year, f=cent[0], t=cent[1]: str(year)[f:t]
+	def grp(exprset):
+		c = None
+		if len(exprset) > 1:
+			for i in exprset:
+				if c is None or i[0:-1] == c:
+					c = i[0:-1]
+				else:
+					c = None
+					break
+			if not c:
+				for i in exprset:
+					if c is None or i[0] == c:
+						c = i[0]
+					else:
+						c = None
+						break
+			if c:
+				return "%s%s" % (c, grp([i[len(c):] for i in exprset]))
+		return ("(?:%s)" % "|".join(exprset) if len(exprset[0]) > 1 else "[%s]" % "".join(exprset)) \
+			if len(exprset) > 1 else "".join(exprset)
 	exprset = set( cent(now[0].year + i) for i in (-1, distance) )
 	if len(now) and now[1]:
-		exprset |= set( cent(now[1].year + i) for i in (-1, distance) )
-	return "(?:%s)" % "|".join(exprset) if len(exprset) > 1 else "".join(exprset)
+		exprset |= set( cent(now[1].year + i) for i in xrange(-1, now[0].year-now[1].year+1, distance) )
+	return grp(sorted(list(exprset)))
 
 timeRE = TimeRE()
 
