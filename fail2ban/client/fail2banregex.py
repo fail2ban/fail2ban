@@ -39,7 +39,6 @@ import os
 import shlex
 import sys
 import time
-import time
 import urllib
 from optparse import OptionParser, Option
 
@@ -52,7 +51,7 @@ except ImportError:
 
 from ..version import version, normVersion
 from .filterreader import FilterReader
-from ..server.filter import Filter, FileContainer
+from ..server.filter import Filter, FileContainer, MyTime
 from ..server.failregex import Regex, RegexException
 
 from ..helpers import str2LogLevel, getVerbosityFormat, FormatterWithTraceBack, getLogger, \
@@ -269,15 +268,19 @@ class Fail2banRegex(object):
 			self.setJournalMatch(shlex.split(opts.journalmatch))
 		if opts.timezone:
 			self._filter.setLogTimeZone(opts.timezone)
+		self._filter.checkFindTime = False
+		if True: # not opts.out:
+			MyTime.setAlternateNow(0); # accept every date (years from 19xx up to end of current century, '%ExY' and 'Exy' patterns)
+			from ..server.strptime import _updateTimeRE
+			_updateTimeRE()
 		if opts.datepattern:
 			self.setDatePattern(opts.datepattern)
 		if opts.usedns:
 			self._filter.setUseDns(opts.usedns)
 		self._filter.returnRawHost = opts.raw
-		self._filter.checkFindTime = False
 		self._filter.checkAllRegex = opts.checkAllRegex and not opts.out
 		# ignore pending (without ID/IP), added to matches if it hits later (if ID/IP can be retreved)
-		self._filter.ignorePending = opts.out
+		self._filter.ignorePending = bool(opts.out)
 		# callback to increment ignored RE's by index (during process):
 		self._filter.onIgnoreRegex = self._onIgnoreRegex
 		self._backend = 'auto'
