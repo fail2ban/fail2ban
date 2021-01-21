@@ -94,6 +94,11 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			# be sure all journal types will be opened if files specified (don't set flags):
 			if 'files' not in args or not len(args['files']):
 				args['flags'] = 4
+				
+		try:
+			args['namespace'] = kwargs.pop('namespace')
+		except KeyError:
+			pass
 
 		return args
 

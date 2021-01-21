@@ -136,7 +136,7 @@ class DateTemplate(object):
 		# remove possible special pattern "**" in front and end of regex:
 		regex = RE_DEL_WRD_BOUNDS[0].sub(RE_DEL_WRD_BOUNDS[1], regex)
 		self._regex = regex
-		logSys.log(7, '  constructed regex %s', regex)
+		logSys.log(4, '  constructed regex %s', regex)
 		self._cRegex = None
 
 	regex = property(getRegex, setRegex, doc=
@@ -159,6 +159,7 @@ class DateTemplate(object):
 		"""
 		if not self._cRegex:
 			self._compileRegex()
+		logSys.log(4, "   search %s", self.regex)
 		dateMatch = self._cRegex.search(line, *args); # pos, endpos
 		if dateMatch:
 			self.hits += 1
