@@ -52,15 +52,23 @@ timeRE['z'] = r"(?P<z>Z|UTC|GMT|[+-][01]\d(?::?\d{2})?)"
 timeRE['ExZ'] = r"(?P<Z>%s)" % (TZ_ABBR_RE,)
 timeRE['Exz'] = r"(?P<z>(?:%s)?[+-][01]\d(?::?\d{2})?|%s)" % (TZ_ABBR_RE, TZ_ABBR_RE)
 
+# overwrite default patterns, since they can be non-optimal:
+timeRE['d'] = r"(?P<d>[1-2]\d|[0 ]?[1-9]|3[0-1])"
+timeRE['m'] = r"(?P<m>0?[1-9]|1[0-2])"
+timeRE['Y'] = r"(?P<Y>\d{4})"
+timeRE['H'] = r"(?P<H>[0-1]?\d|2[0-3])"
+timeRE['M'] = r"(?P<M>[0-5]?\d)"
+timeRE['S'] = r"(?P<S>[0-5]?\d|6[0-1])"
+
 # Extend build-in TimeRE with some exact patterns
 # exact two-digit patterns:
-timeRE['Exd'] = r"(?P<d>3[0-1]|[1-2]\d|0[1-9])"
-timeRE['Exm'] = r"(?P<m>1[0-2]|0[1-9])"
-timeRE['ExH'] = r"(?P<H>2[0-3]|[0-1]\d)"
-timeRE['Exk'] = r" ?(?P<H>2[0-3]|[0-1]\d|\d)"
+timeRE['Exd'] = r"(?P<d>[1-2]\d|0[1-9]|3[0-1])"
+timeRE['Exm'] = r"(?P<m>0[1-9]|1[0-2])"
+timeRE['ExH'] = r"(?P<H>[0-1]\d|2[0-3])"
+timeRE['Exk'] = r" ?(?P<H>[0-1]?\d|2[0-3])"
 timeRE['Exl'] = r" ?(?P<I>1[0-2]|\d)"
 timeRE['ExM'] = r"(?P<M>[0-5]\d)"
-timeRE['ExS'] = r"(?P<S>6[0-1]|[0-5]\d)"
+timeRE['ExS'] = r"(?P<S>[0-5]\d|6[0-1])"
 
 def _updateTimeRE():
 	def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNow)):
@@ -197,9 +205,9 @@ def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
 	"""
 
 	now = \
-	year = month = day = hour = minute = tzoffset = \
+	year = month = day = tzoffset = \
 	weekday = julian = week_of_year = None
-	second = fraction = 0
+	hour = minute = second = fraction = 0
 	for key, val in found_dict.iteritems():
 		if val is None: continue
 		# Directives not explicitly handled below:
