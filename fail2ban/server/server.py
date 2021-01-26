@@ -33,7 +33,7 @@ import stat
 import sys
 
 from .jails import Jails
-from .filter import FileFilter, JournalFilter
+from .filter import DNSUtils, FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
@@ -274,6 +274,11 @@ class Server:
 			for name in self.__jails.keys():
 				self.delJail(name, stop=False, join=True)
 
+	def clearCaches(self):
+		# we need to clear caches, to be able to recognize new IPs/families etc:
+		DNSUtils.CACHE_nameToIp.clear()
+		DNSUtils.CACHE_ipToName.clear()	
+
 	def reloadJails(self, name, opts, begin):
 		if begin:
 			# begin reload:
@@ -295,6 +300,8 @@ class Server:
 						if "--restart" in opts:
 							self.stopJail(name)
 				else:
+					# invalidate caches by reload
+					self.clearCaches()
 					# first unban all ips (will be not restored after (re)start):
 					if "--unban" in opts:
 						self.setUnbanIP()
