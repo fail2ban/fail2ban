@@ -770,6 +770,11 @@ class Server:
 				logSys.info("flush performed on %s" % self.__logTarget)
 			return "flushed"
 			
+	@staticmethod
+	def setIPv6IsAllowed(value):
+		value = _as_bool(value) if value != 'auto' else None
+		return DNSUtils.setIPv6IsAllowed(value)
+
 	def setThreadOptions(self, value):
 		for o, v in value.iteritems():
 			if o == 'stacksize':

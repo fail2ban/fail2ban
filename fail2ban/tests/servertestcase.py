@@ -35,7 +35,7 @@ import platform
 from ..server.failregex import Regex, FailRegex, RegexException
 from ..server import actions as _actions
 from ..server.server import Server
-from ..server.ipdns import IPAddr
+from ..server.ipdns import DNSUtils, IPAddr
 from ..server.jail import Jail
 from ..server.jailthread import JailThread
 from ..server.ticket import BanTicket
@@ -174,6 +174,19 @@ class Transmitter(TransmitterBase):
 
 	def testVersion(self):
 		self.assertEqual(self.transm.proceed(["version"]), (0, version.version))
+
+	def testSetIPv6(self):
+		try:
+			self.assertEqual(self.transm.proceed(["set", "allowipv6", 'yes']), (0, 'yes'))
+			self.assertTrue(DNSUtils.IPv6IsAllowed())
+			self.assertLogged("IPv6 is on"); self.pruneLog()
+			self.assertEqual(self.transm.proceed(["set", "allowipv6", 'no']), (0, 'no'))
+			self.assertFalse(DNSUtils.IPv6IsAllowed())
+			self.assertLogged("IPv6 is off"); self.pruneLog()
+		finally:
+			# restore back to auto:
+			self.assertEqual(self.transm.proceed(["set", "allowipv6", "auto"]), (0, "auto"))
+			self.assertLogged("IPv6 is auto"); self.pruneLog()
 
 	def testSleep(self):
 		if not unittest.F2B.fast:

@@ -975,6 +975,7 @@ class JailsReaderTest(LogCaptureTestCase):
 		  ['set', 'syslogsocket', 'auto'],
 		  ['set', 'loglevel', "INFO"],
 		  ['set', 'logtarget', '/var/log/fail2ban.log'],
+		  ['set', 'allowipv6', 'auto'],
 		  ['set', 'dbfile', '/var/lib/fail2ban/fail2ban.sqlite3'],
 		  ['set', 'dbmaxmatches', 10],
 		  ['set', 'dbpurgeage', '1d'],

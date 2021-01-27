@@ -169,27 +169,31 @@ class DNSUtils:
 		DNSUtils.CACHE_ipToName.set(key, name)
 		return name
 
+	# key find cached own hostnames (this tuple-key cannot be used elsewhere):
+	_getSelfNames_key = ('self','dns')
+
 	@staticmethod
 	def getSelfNames():
 		"""Get own host names of self"""
-		# try find cached own hostnames (this tuple-key cannot be used elsewhere):
-		key = ('self','dns')
-		names = DNSUtils.CACHE_ipToName.get(key)
+		# try find cached own hostnames:
+		names = DNSUtils.CACHE_ipToName.get(DNSUtils._getSelfNames_key)
 		# get it using different ways (a set with names of localhost, hostname, fully qualified):
 		if names is None:
 			names = set([
 				'localhost', DNSUtils.getHostname(False), DNSUtils.getHostname(True)
 			]) - set(['']) # getHostname can return ''
 		# cache and return :
-		DNSUtils.CACHE_ipToName.set(key, names)
+		DNSUtils.CACHE_ipToName.set(DNSUtils._getSelfNames_key, names)
 		return names
+
+	# key to find cached own IPs (this tuple-key cannot be used elsewhere):
+	_getSelfIPs_key = ('self','ips')
 
 	@staticmethod
 	def getSelfIPs():
 		"""Get own IP addresses of self"""
-		# try find cached own IPs (this tuple-key cannot be used elsewhere):
-		key = ('self','ips')
-		ips = DNSUtils.CACHE_nameToIp.get(key)
+		# to find cached own IPs:
+		ips = DNSUtils.CACHE_nameToIp.get(DNSUtils._getSelfIPs_key)
 		# get it using different ways (a set with IPs of localhost, hostname, fully qualified):
 		if ips is None:
 			ips = set()
@@ -199,13 +203,30 @@ class DNSUtils:
 				except Exception as e: # pragma: no cover
 					logSys.warning("Retrieving own IPs of %s failed: %s", hostname, e)
 		# cache and return :
-		DNSUtils.CACHE_nameToIp.set(key, ips)
+		DNSUtils.CACHE_nameToIp.set(DNSUtils._getSelfIPs_key, ips)
 		return ips
+
+	_IPv6IsAllowed = None
+
+	@staticmethod
+	def setIPv6IsAllowed(value):
+		DNSUtils._IPv6IsAllowed = value
+		logSys.debug("IPv6 is %s", ('on' if value else 'off') if value is not None else 'auto')
+		return value
+
+	# key to find cached value of IPv6 allowance (this tuple-key cannot be used elsewhere):
+	_IPv6IsAllowed_key = ('self','ipv6-allowed')
 
 	@staticmethod
 	def IPv6IsAllowed():
-		# return os.path.exists("/proc/net/if_inet6") || any((':' in ip) for ip in DNSUtils.getSelfIPs())
-		return any((':' in ip.ntoa) for ip in DNSUtils.getSelfIPs())
+		if DNSUtils._IPv6IsAllowed is not None:
+			return DNSUtils._IPv6IsAllowed
+		v = DNSUtils.CACHE_nameToIp.get(DNSUtils._IPv6IsAllowed_key)
+		if v is not None:
+			return v
+		v = any((':' in ip.ntoa) for ip in DNSUtils.getSelfIPs())
+		DNSUtils.CACHE_nameToIp.set(DNSUtils._IPv6IsAllowed_key, v)
+		return v
 
 
 ##
