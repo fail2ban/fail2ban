@@ -381,13 +381,16 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertEqual(('mail.who_is', {'a':'cat', 'b':'dog'}), extractOptions("mail.who_is[a=cat,b=dog]"))
 		self.assertEqual(('mail--ho_is', {}), extractOptions("mail--ho_is"))
 
-		self.assertEqual(('mail--ho_is', {}), extractOptions("mail--ho_is['s']"))
-		#print(self.getLog())
-		#self.assertLogged("Invalid argument ['s'] in ''s''")
-
 		self.assertEqual(('mail', {'a': ','}), extractOptions("mail[a=',']"))
+		self.assertEqual(('mail', {'a': 'b'}), extractOptions("mail[a=b, ]"))
 
-		#self.assertRaises(ValueError, extractOptions ,'mail-how[')
+		self.assertRaises(ValueError, extractOptions ,'mail-how[')
+
+		self.assertRaises(ValueError, extractOptions, """mail[a="test with interim (wrong) "" quotes"]""")
+		self.assertRaises(ValueError, extractOptions, """mail[a='test with interim (wrong) '' quotes']""")
+		self.assertRaises(ValueError, extractOptions, """mail[a='x, y, z', b=x, y, z]""")
+
+		self.assertRaises(ValueError, extractOptions, """mail['s']""")
 
 		# Empty option
 		option = "abc[]"
@@ -752,9 +755,9 @@ class JailsReaderTest(LogCaptureTestCase):
 		         ['add', 'tz_correct', 'auto'],
 			 ['start', 'tz_correct'],
 			 ['config-error',
-				"Jail 'brokenactiondef' skipped, because of wrong configuration: Invalid action definition 'joho[foo'"],
+				"Jail 'brokenactiondef' skipped, because of wrong configuration: Invalid action definition 'joho[foo': unexpected option syntax"],
 			 ['config-error',
-				"Jail 'brokenfilterdef' skipped, because of wrong configuration: Invalid filter definition 'flt[test'"],
+				"Jail 'brokenfilterdef' skipped, because of wrong configuration: Invalid filter definition 'flt[test': unexpected option syntax"],
 			 ['config-error',
 				"Jail 'missingaction' skipped, because of wrong configuration: Unable to read action 'noactionfileforthisaction'"],
 			 ['config-error',
@@ -975,6 +978,7 @@ class JailsReaderTest(LogCaptureTestCase):
 		  ['set', 'syslogsocket', 'auto'],
 		  ['set', 'loglevel', "INFO"],
 		  ['set', 'logtarget', '/var/log/fail2ban.log'],
+		  ['set', 'allowipv6', 'auto'],
 		  ['set', 'dbfile', '/var/lib/fail2ban/fail2ban.sqlite3'],
 		  ['set', 'dbmaxmatches', 10],
 		  ['set', 'dbpurgeage', '1d'],

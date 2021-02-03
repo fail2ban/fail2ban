@@ -10,6 +10,8 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Compatibility:
+* potential incompatibility by parsing of options of `backend`, `filter` and `action` parameters (if they
+  are partially incorrect), because fail2ban could throw an error now (doesn't silently bypass it anymore).
 * to v.0.11:
   - due to change of `actioncheck` behavior (gh-488), some actions can be incompatible as regards
     the invariant check, if `actionban` or `actionunban` would not throw an error (exit code 

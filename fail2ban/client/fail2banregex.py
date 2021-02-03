@@ -35,6 +35,7 @@ __license__ = "GPL"
 
 import getopt
 import logging
+import re
 import os
 import shlex
 import sys
@@ -329,26 +330,33 @@ class Fail2banRegex(object):
 		regex = regextype + 'regex'
 		# try to check - we've case filter?[options...]?:
 		basedir = self._opts.config
+		fltName = value
 		fltFile = None
 		fltOpt = {}
 		if regextype == 'fail':
-			fltName, fltOpt = extractOptions(value)
-			if fltName is not None:
-				if "." in fltName[~5:]:
-					tryNames = (fltName,)
-				else:
-					tryNames = (fltName, fltName + '.conf', fltName + '.local')
-				for fltFile in tryNames:
-					if not "/" in fltFile:
-						if os.path.basename(basedir) == 'filter.d':
-							fltFile = os.path.join(basedir, fltFile)
-						else:
-							fltFile = os.path.join(basedir, 'filter.d', fltFile)
+			if re.search(r'^/{0,3}[\w/_\-.]+(?:\[.*\])?$', value):
+				try:
+					fltName, fltOpt = extractOptions(value)
+					if "." in fltName[~5:]:
+						tryNames = (fltName,)
 					else:
-						basedir = os.path.dirname(fltFile)
-					if os.path.isfile(fltFile):
-						break
-					fltFile = None
+						tryNames = (fltName, fltName + '.conf', fltName + '.local')
+					for fltFile in tryNames:
+						if not "/" in fltFile:
+							if os.path.basename(basedir) == 'filter.d':
+								fltFile = os.path.join(basedir, fltFile)
+							else:
+								fltFile = os.path.join(basedir, 'filter.d', fltFile)
+						else:
+							basedir = os.path.dirname(fltFile)
+						if os.path.isfile(fltFile):
+							break
+						fltFile = None
+				except Exception as e:
+					output("ERROR: Wrong filter name or options: %s" % (str(e),))
+					output("       while parsing: %s" % (value,))
+					if self._verbose: raise(e)
+					return False
 		# if it is filter file:
 		if fltFile is not None:
 			if (basedir == self._opts.config

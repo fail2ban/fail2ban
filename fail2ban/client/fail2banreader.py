@@ -53,6 +53,7 @@ class Fail2banReader(ConfigReader):
 		opts = [["string", "loglevel", "INFO" ],
 				["string", "logtarget", "STDERR"],
 				["string", "syslogsocket", "auto"],
+				["string", "allowipv6", "auto"],
 				["string", "dbfile", "/var/lib/fail2ban/fail2ban.sqlite3"],
 				["int",    "dbmaxmatches", None],
 				["string", "dbpurgeage", "1d"]]
@@ -74,6 +75,7 @@ class Fail2banReader(ConfigReader):
 		# Also dbfile should be set before all other database options.
 		# So adding order indices into items, to be stripped after sorting, upon return
 		order = {"thread":0, "syslogsocket":11, "loglevel":12, "logtarget":13,
+			"allowipv6": 14,
 			"dbfile":50, "dbmaxmatches":51, "dbpurgeage":51}
 		stream = list()
 		for opt in self.__opts:

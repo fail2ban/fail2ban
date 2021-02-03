@@ -151,6 +151,11 @@ PID filename.  Default: /var/run/fail2ban/fail2ban.pid
 .br
 This is used to store the process ID of the fail2ban server.
 .TP
+.B allowipv6
+option to allow IPv6 interface - auto, yes (on, true, 1) or no (off, false, 0).  Default: auto
+.br
+This value can be used to declare fail2ban whether IPv6 is allowed or not.
+.TP
 .B dbfile
 Database filename. Default: /var/lib/fail2ban/fail2ban.sqlite3
 .br
