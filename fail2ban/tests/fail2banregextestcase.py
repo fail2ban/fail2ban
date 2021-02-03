@@ -141,6 +141,12 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		))
 		self.assertLogged("Unable to compile regular expression")
 
+	def testWrongFilterOptions(self):
+		self.assertFalse(_test_exec(
+			"test", "flt[a='x,y,z',b=z,y,x]"
+		))
+		self.assertLogged("Wrong filter name or options", "wrong syntax at 14: y,x", all=True)
+
 	def testDirectFound(self):
 		self.assertTrue(_test_exec(
 			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
