@@ -28,7 +28,10 @@ import logging
 import os
 import sys
 import time
-from collections import Mapping
+try:
+	from collections.abc import Mapping
+except ImportError:
+	from collections import Mapping
 try:
 	from collections import OrderedDict
 except ImportError:
