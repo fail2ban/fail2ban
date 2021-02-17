@@ -18,6 +18,7 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
     different from 0) in case of unsane environment.
 
 ### Fixes
+* `filter.d/drupal-auth.conf` more strict regex, extended to match "Login attempt failed from" (gh-2742)
 
 ### New Features and Enhancements
 * `actioncheck` behavior is changed now (gh-488), so invariant check as well as restore or repair
