@@ -1517,7 +1517,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				"SYSLOG_IDENTIFIER=fail2ban-testcases",
 				"TEST_FIELD=1",
 				"TEST_UUID=%s" % self.test_uuid])
-			self.assert_correct_ban("193.168.0.128", 4)
+			self.assert_correct_ban("193.168.0.128", 3)
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, n=6, skip=10)
 			# we should detect the failures
@@ -1531,7 +1531,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				self.test_file, self.journal_fields, skip=15, n=4)
 			self.waitForTicks(1)
 			self.assertTrue(self.isFilled(10))
-			self.assert_correct_ban("87.142.124.10", 4)
+			self.assert_correct_ban("87.142.124.10", 3)
 			# Add direct utf, unicode, blob:
 			for l in (
 		    "error: PAM: Authentication failure for \xe4\xf6\xfc\xdf from 192.0.2.1",
