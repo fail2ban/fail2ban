@@ -184,7 +184,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('Error decoding line');
 		self.assertLogged('Continuing to process line ignoring invalid characters')
 
-		self.assertLogged('Dez 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128')
+		self.assertLogged('Dez 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.168.0.128')
 		self.assertLogged('Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10')
 
 	def testDirectRE_1raw(self):

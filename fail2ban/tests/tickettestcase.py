@@ -38,8 +38,8 @@ class TicketTests(unittest.TestCase):
     matches3 = ['first', 'second', 'third']
 
     # Ticket
-    t = Ticket('193.168.0.128', tm, matches)
-    self.assertEqual(t.getIP(), '193.168.0.128')
+    t = Ticket('192.168.0.128', tm, matches)
+    self.assertEqual(t.getIP(), '192.168.0.128')
     self.assertEqual(t.getTime(), tm)
     self.assertEqual(t.getMatches(), matches2)
     t.setAttempt(2)
@@ -63,9 +63,9 @@ class TicketTests(unittest.TestCase):
     # BanTicket
     tm = MyTime.time()
     matches = ['first', 'second']
-    ft = FailTicket('193.168.0.128', tm, matches)
+    ft = FailTicket('192.168.0.128', tm, matches)
     ft.setBanTime(60*60)
-    self.assertEqual(ft.getIP(), '193.168.0.128')
+    self.assertEqual(ft.getIP(), '192.168.0.128')
     self.assertEqual(ft.getTime(), tm)
     self.assertEqual(ft.getMatches(), matches2)
     ft.setAttempt(2)
@@ -135,7 +135,7 @@ class TicketTests(unittest.TestCase):
       self.assertTrue(bool(getattr(ticket, f2)))
 
   def testTicketData(self):
-    t = BanTicket('193.168.0.128', None, ['first', 'second'])
+    t = BanTicket('192.168.0.128', None, ['first', 'second'])
     # expand data (no overwrites, matches are available) :
     t.setData('region', 'Hamburg', 'country', 'DE', 'city', 'Hamburg')
     self.assertEqual(

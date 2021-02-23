@@ -45,11 +45,11 @@ class AddFailure(unittest.TestCase):
 		super(AddFailure, self).tearDown()
 		
 	def _addDefItems(self):
-		self.__items = [[u'193.168.0.128', 1167605999.0],
-					    [u'193.168.0.128', 1167605999.0],
-					    [u'193.168.0.128', 1167605999.0],
-					    [u'193.168.0.128', 1167605999.0],
-					    [u'193.168.0.128', 1167605999.0],
+		self.__items = [[u'192.168.0.128', 1167605999.0],
+					    [u'192.168.0.128', 1167605999.0],
+					    [u'192.168.0.128', 1167605999.0],
+					    [u'192.168.0.128', 1167605999.0],
+					    [u'192.168.0.128', 1167605999.0],
 					    ['87.142.124.10', 1167605999.0],
 					    ['87.142.124.10', 1167605999.0],
 					    ['87.142.124.10', 1167605999.0],
@@ -128,7 +128,7 @@ class AddFailure(unittest.TestCase):
 
 	def testDel(self):
 		self._addDefItems()
-		self.__failManager.delFailure('193.168.0.128')
+		self.__failManager.delFailure('192.168.0.128')
 		self.__failManager.delFailure('111.111.1.111')
 		
 		self.assertEqual(self.__failManager.size(), 2)
@@ -148,9 +148,9 @@ class AddFailure(unittest.TestCase):
 	def testbanOK(self):
 		self._addDefItems()
 		self.__failManager.setMaxRetry(5)
-		#ticket = FailTicket('193.168.0.128', None)
+		#ticket = FailTicket('192.168.0.128', None)
 		ticket = self.__failManager.toBan()
-		self.assertEqual(ticket.getIP(), "193.168.0.128")
+		self.assertEqual(ticket.getIP(), "192.168.0.128")
 		self.assertTrue(isinstance(ticket.getIP(), (str, IPAddr)))
 
 		# finish with rudimentary tests of the ticket
@@ -159,10 +159,10 @@ class AddFailure(unittest.TestCase):
 		ticket_repr = repr(ticket)
 		self.assertEqual(
 			ticket_str,
-			'FailTicket: ip=193.168.0.128 time=1167605999.0 #attempts=5 matches=[]')
+			'FailTicket: ip=192.168.0.128 time=1167605999.0 #attempts=5 matches=[]')
 		self.assertEqual(
 			ticket_repr,
-			'FailTicket: ip=193.168.0.128 time=1167605999.0 #attempts=5 matches=[]')
+			'FailTicket: ip=192.168.0.128 time=1167605999.0 #attempts=5 matches=[]')
 		self.assertFalse(not ticket)
 		# and some get/set-ers otherwise not tested
 		ticket.setTime(1000002000.0)
@@ -170,7 +170,7 @@ class AddFailure(unittest.TestCase):
 		# and str() adjusted correspondingly
 		self.assertEqual(
 			str(ticket),
-			'FailTicket: ip=193.168.0.128 time=1000002000.0 #attempts=5 matches=[]')
+			'FailTicket: ip=192.168.0.128 time=1000002000.0 #attempts=5 matches=[]')
 	
 	def testbanNOK(self):
 		self._addDefItems()
