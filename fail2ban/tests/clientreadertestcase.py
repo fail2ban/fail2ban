@@ -458,8 +458,6 @@ class JailReaderTest(LogCaptureTestCase):
 			('sender', 'f2b-test@example.com'), ('blocklist_de_apikey', 'test-key'), 
 			('action', 
 				'%(action_blocklist_de)s\n'
-				'%(action_badips_report)s\n'
-				'%(action_badips)s\n'
 				'mynetwatchman[port=1234,protocol=udp,agent="%(fail2ban_agent)s"]'
 			),
 		))
@@ -473,16 +471,14 @@ class JailReaderTest(LogCaptureTestCase):
 			if len(cmd) <= 4:
 				continue
 			# differentiate between set and multi-set (wrop it here to single set):
-			if cmd[0] == 'set' and (cmd[4] == 'agent' or cmd[4].endswith('badips.py')):
+			if cmd[0] == 'set' and cmd[4] == 'agent':
 				act.append(cmd)
 			elif cmd[0] == 'multi-set':
 				act.extend([['set'] + cmd[1:4] + o for o in cmd[4] if o[0] == 'agent'])
 		useragent = 'Fail2Ban/%s' % version
-		self.assertEqual(len(act), 4)
+		self.assertEqual(len(act), 2)
 		self.assertEqual(act[0], ['set', 'blocklisttest', 'action', 'blocklist_de', 'agent', useragent])
-		self.assertEqual(act[1], ['set', 'blocklisttest', 'action', 'badips', 'agent', useragent])
-		self.assertEqual(eval(act[2][5]).get('agent', '<wrong>'), useragent)
-		self.assertEqual(act[3], ['set', 'blocklisttest', 'action', 'mynetwatchman', 'agent', useragent])
+		self.assertEqual(act[1], ['set', 'blocklisttest', 'action', 'mynetwatchman', 'agent', useragent])
 
 	@with_tmpdir
 	def testGlob(self, d):
