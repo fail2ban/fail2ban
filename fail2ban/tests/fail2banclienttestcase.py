@@ -1326,7 +1326,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			'backend = polling',
 			'usedns = no',
 			'logpath = %(tmp)s/blck-failures.log',
-			'action = nginx-block-map[blck_lst_reload="", blck_lst_file="%(tmp)s/blck-lst.map"]',
+			'action = nginx-block-map[srv_cmd="echo nginx", srv_pid="%(tmp)s/f2b.pid", blck_lst_file="%(tmp)s/blck-lst.map"]',
 			'         blocklist_de[actionban=\'curl() { echo "*** curl" "$*";}; <Definition/actionban>\', email="Fail2Ban <fail2ban@localhost>", '
 													  'apikey="TEST-API-KEY", agent="fail2ban-test-agent", service=<name>]',
 			'filter =',
@@ -1366,6 +1366,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertIn('\\125-000-004 1;\n', mp)
 		self.assertIn('\\125-000-005 1;\n', mp)
 
+		# check nginx reload is logged (pid of fail2ban is used to simulate success check nginx is running):
+		self.assertLogged("stdout: 'nginx -qt'", "stdout: 'nginx -s reload'", all=True)
 		# check blocklist_de substitution (e. g. new-line after <matches>):
 		self.assertLogged(
 			"stdout: '*** curl --fail --data-urlencode server=Fail2Ban <fail2ban@localhost>"

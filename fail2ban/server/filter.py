@@ -94,6 +94,8 @@ class Filter(JailThread):
 		## Store last time stamp, applicable for multi-line
 		self.__lastTimeText = ""
 		self.__lastDate = None
+		## Next service (cleanup) time
+		self.__nextSvcTime = -(1<<63)
 		## if set, treat log lines without explicit time zone to be in this time zone
 		self.__logtimezone = None
 		## Default or preferred encoding (to decode bytes from file or journal):
@@ -115,10 +117,10 @@ class Filter(JailThread):
 		self.checkFindTime = True
 		## shows that filter is in operation mode (processing new messages):
 		self.inOperation = True
-		## if true prevents against retarded banning in case of RC by too many failures (disabled only for test purposes):
-		self.banASAP = True
 		## Ticks counter
 		self.ticks = 0
+		## Processed lines counter
+		self.procLines = 0
 		## Thread name:
 		self.name="f2b/f."+self.jailName
 
@@ -442,12 +444,23 @@ class Filter(JailThread):
 
 	def performBan(self, ip=None):
 		"""Performs a ban for IPs (or given ip) that are reached maxretry of the jail."""
-		try: # pragma: no branch - exception is the only way out
-			while True:
+		while True:
+			try:
 				ticket = self.failManager.toBan(ip)
-				self.jail.putFailTicket(ticket)
-		except FailManagerEmpty:
-			self.failManager.cleanup(MyTime.time())
+			except FailManagerEmpty:
+				break
+			self.jail.putFailTicket(ticket)
+			if ip: break
+		self.performSvc()
+
+	def performSvc(self, force=False):
+		"""Performs a service tasks (clean failure list)."""
+		tm = MyTime.time()
+		# avoid too early clean up:
+		if force or tm >= self.__nextSvcTime:
+			self.__nextSvcTime = tm + 5
+			# clean up failure list:
+			self.failManager.cleanup(tm)
 
 	def addAttempt(self, ip, *matches):
 		"""Generate a failed attempt for ip"""
@@ -695,11 +708,15 @@ class Filter(JailThread):
 				attempts = self.failManager.addFailure(tick)
 				# avoid RC on busy filter (too many failures) - if attempts for IP/ID reached maxretry,
 				# we can speedup ban, so do it as soon as possible:
-				if self.banASAP and attempts >= self.failManager.getMaxRetry():
+				if attempts >= self.failManager.getMaxRetry():
 					self.performBan(ip)
 				# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
 				if Observers.Main is not None:
 					Observers.Main.add('failureFound', self.failManager, self.jail, tick)
+			self.procLines += 1
+			# every 100 lines check need to perform service tasks:
+			if self.procLines % 100 == 0:
+				self.performSvc()
 			# reset (halve) error counter (successfully processed line):
 			if self._errors:
 				self._errors //= 2
@@ -1068,6 +1085,7 @@ class FileFilter(Filter):
 	# is created and is added to the FailManager.
 
 	def getFailures(self, filename, inOperation=None):
+		if self.idle: return False
 		log = self.getLog(filename)
 		if log is None:
 			logSys.error("Unable to get failures in %s", filename)
