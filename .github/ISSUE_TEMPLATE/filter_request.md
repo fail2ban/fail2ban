@@ -1,6 +1,6 @@
 ---
-name: Filter Request
-about: Request a new jail or filter to be supported or existing filter extended with new failregex.
+name: Filter request
+about: Request a new jail or filter to be supported or existing filter extended with new failregex
 title: '[FR]: '
 labels: filter-request
 assignees: ''
