@@ -606,13 +606,14 @@ class IgnoreIPDNS(LogCaptureTestCase):
 		cmd = os.path.join(STOCK_CONF_DIR, "filter.d/ignorecommands/apache-fakegooglebot")
 		## below test direct as python module:
 		mod = Utils.load_python_module(cmd)
-		self.assertFalse(mod.is_googlebot(mod.process_args([cmd, "128.178.222.69"])))
-		self.assertFalse(mod.is_googlebot(mod.process_args([cmd, "192.0.2.1"])))
+		self.assertFalse(mod.is_googlebot(*mod.process_args([cmd, "128.178.222.69"])))
+		self.assertFalse(mod.is_googlebot(*mod.process_args([cmd, "192.0.2.1"])))
+		self.assertFalse(mod.is_googlebot(*mod.process_args([cmd, "192.0.2.1", 0.1])))
 		bot_ips = ['66.249.66.1']
 		for ip in bot_ips:
-			self.assertTrue(mod.is_googlebot(mod.process_args([cmd, str(ip)])), "test of googlebot ip %s failed" % ip)
-		self.assertRaises(ValueError, lambda: mod.is_googlebot(mod.process_args([cmd])))
-		self.assertRaises(ValueError, lambda: mod.is_googlebot(mod.process_args([cmd, "192.0"])))
+			self.assertTrue(mod.is_googlebot(*mod.process_args([cmd, str(ip)])), "test of googlebot ip %s failed" % ip)
+		self.assertRaises(ValueError, lambda: mod.is_googlebot(*mod.process_args([cmd])))
+		self.assertRaises(ValueError, lambda: mod.is_googlebot(*mod.process_args([cmd, "192.0"])))
 		## via command:
 		self.filter.ignoreCommand = cmd + " <ip>"
 		for ip in bot_ips:
@@ -624,7 +625,7 @@ class IgnoreIPDNS(LogCaptureTestCase):
 		self.pruneLog()
 		self.filter.ignoreCommand = cmd + " bad arguments <ip>"
 		self.assertFalse(self.filter.inIgnoreIPList("192.0"))
-		self.assertLogged('Please provide a single IP as an argument.')
+		self.assertLogged('Usage')
 
 
 
