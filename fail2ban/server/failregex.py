@@ -25,10 +25,12 @@ import re
 import sre_constants
 import sys
 
+from ..helpers import splitwords
 from .ipdns import IPAddr
 
 
 FTAG_CRE = re.compile(r'</?[\w\-]+/?>')
+RFLAG_CRE = re.compile(r'^{[^\}]+}')
 
 FCUSTNAME_CRE = re.compile(r'^(/?)F-([A-Z0-9_\-]+)$'); # currently uppercase only
 
@@ -106,12 +108,20 @@ COMPLNAME_PRE = (ALTNAME_PRE, TUPNAME_PRE)
 COMPLNAME_CRE = re.compile(r'^(' + '|'.join(COMPLNAME_PRE) + r')(.*?)(?:_\d+)?$')
 
 
+class ReFlags:
+	NO_RISE_UP = 0x08
+
 ##
 # Regular expression class.
 #
 # This class represents a regular expression with its compiled version.
 
 class Regex:
+
+	ReFlags = ReFlags
+
+	matchCount = 0
+	flags = 0
 
 	##
 	# Constructor.
@@ -122,6 +132,10 @@ class Regex:
 	
 	def __init__(self, regex, multiline=False, **kwargs):
 		self._matchCache = None
+		# original RE:
+		self._pattern = regex
+		# Consider flags specified by regex:
+		regex = self._resolveFlags(regex)
 		# Perform shortcuts expansions.
 		# Replace standard f2b-tags (like "<HOST>", etc) using default regular expressions:
 		regex = Regex._resolveHostTag(regex, **kwargs)
@@ -130,7 +144,6 @@ class Regex:
 			raise RegexException("Cannot add empty regex")
 		try:
 			self._regexObj = re.compile(regex, re.MULTILINE if multiline else 0)
-			self._regex = regex
 			self._altValues = []
 			self._tupleValues = []
 			for k in filter(
@@ -154,7 +167,19 @@ class Regex:
 		self.getGroups = self._getGroupsWithAlt if (self._altValues or self._tupleValues) else self._getGroups
 
 	def __str__(self):
-		return "%s(%r)" % (self.__class__.__name__, self._regex)
+		return "%s(%r)" % (self.__class__.__name__, self._pattern)
+
+	def _resolveFlags(self, regex):
+		m = RFLAG_CRE.search(regex)
+		if m:
+			regex = regex[0:m.start(0)] + regex[m.end(0)+1:]
+			for tn in splitwords(m.group()[1:-1]):
+				# disable rise up for this RE:
+				if tn == "NO-RISE-UP":
+					self.flags = ReFlags.NO_RISE_UP
+				else: # pragma: no cover
+					raise RegexException("Unknown flag %r in regex '%s'" % (tn, regex))
+		return regex
 
 	##
 	# Replaces "<HOST>", "<IP4>", "<IP6>", "<FID>" with default regular expression for host
@@ -218,7 +243,11 @@ class Regex:
 	# @return the regular expression
 	
 	def getRegex(self):
-		return self._regex
+		return self._regexObj.pattern
+
+	@property
+	def pattern(self):
+		return self._pattern
 	
 	##
 	# Returns string buffer using join of the tupleLines.
@@ -421,7 +450,7 @@ class FailRegex(Regex):
 			and (prefRegex is None or
 				not [grp for grp in FAILURE_ID_PRESENTS if grp in prefRegex._regexObj.groupindex])
 		):
-			raise RegexException("No failure-id group in '%s'" % self._regex)
+			raise RegexException("No failure-id group in '%s'" % self._pattern)
 	
 	##
 	# Returns the matched failure id.

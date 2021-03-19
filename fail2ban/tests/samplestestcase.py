@@ -131,7 +131,6 @@ class FilterSamplesRegex(unittest.TestCase):
 					"that is not hard-anchored at end or has not precise sub expression after <HOST>:\n%s" %
 					(fltName, str(fr).replace(RE_HOST, '<HOST>')))
 		# Cache within used filter combinations and return:
-		flt = [flt, set()]
 		self._filters[fltName] = flt
 		return flt
 
@@ -147,7 +146,6 @@ def testSampleRegexsFactory(name, basedir):
 			"No sample log file available for '%s' filter" % name)
 		
 		filenames = [name]
-		regexsUsedRe = set()
 
 		# process each test-file (note: array filenames can grow during processing):
 		commonOpts = {}
@@ -223,7 +221,6 @@ def testSampleRegexsFactory(name, basedir):
 					# Bypass if constraint (as expression) is not valid:
 					if faildata.get('constraint') and not eval(faildata['constraint']):
 						continue
-					flt, regexsUsedIdx = flt
 					regexList = flt.getFailRegex()
 					failregex = -1
 					try:
@@ -242,8 +239,6 @@ def testSampleRegexsFactory(name, basedir):
 								failregex, fid, fail2banTime, fail = ret
 								# bypass pending and nofail:
 								if fid is None or fail.get('nofail'):
-									regexsUsedIdx.add(failregex)
-									regexsUsedRe.add(regexList[failregex])
 									continue
 								found.append(ret)
 							ret = found
@@ -293,8 +288,6 @@ def testSampleRegexsFactory(name, basedir):
 									jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(jsonTime)),
 									fail2banTime - jsonTime) )
 
-							regexsUsedIdx.add(failregex)
-							regexsUsedRe.add(regexList[failregex])
 					except AssertionError as e: # pragma: no cover
 						import pprint
 						raise AssertionError("%s: %s on: %s:%i, line:\n  %s\nregex (%s):\n  %s\n"
@@ -305,14 +298,16 @@ def testSampleRegexsFactory(name, basedir):
 								'\n'.join(pprint.pformat(fail).splitlines())))
 
 		# check missing samples for regex using each filter-options combination:
+		counts = {}
 		for fltName, flt in self._filters.iteritems():
-			flt, regexsUsedIdx = flt
-			regexList = flt.getFailRegex()
-			for failRegexIndex, failRegex in enumerate(regexList):
+			for failRegex in flt.failRegex:
+				counts[failRegex.pattern] = counts.get(failRegex.pattern, 0) + failRegex.matchCount
+		for fltName, flt in self._filters.iteritems():
+			for failRegexIndex, failRegex in enumerate(flt.failRegex):
 				self.assertTrue(
-					failRegexIndex in regexsUsedIdx or failRegex in regexsUsedRe,
+					counts.get(failRegex.pattern, 0) > 0,
 					"%s: Regex has no samples: %i: %r" %
-						(fltName, failRegexIndex, failRegex))
+						(fltName, failRegexIndex, failRegex.pattern))
 
 	return testFilter
 

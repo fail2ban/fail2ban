@@ -209,6 +209,10 @@ class Filter(JailThread):
 	def getFailRegex(self):
 		return [regex.getRegex() for regex in self.__failRegex]
 
+	@property
+	def failRegex(self):
+		return self.__failRegex
+
 	##
 	# Add the regular expression which matches the failure.
 	#
@@ -242,10 +246,10 @@ class Filter(JailThread):
 	# @return the regular expression
 
 	def getIgnoreRegex(self):
-		ignoreRegex = list()
-		for regex in self.__ignoreRegex:
-			ignoreRegex.append(regex.getRegex())
-		return ignoreRegex
+		return [regex.getRegex() for regex in self.__ignoreRegex]
+	@property
+	def ignoreRegex(self):
+		return self.__ignoreRegex
 
 	##
 	# Set the Use DNS mode
@@ -736,6 +740,22 @@ class Filter(JailThread):
 			self._errors //= 2
 			self.idle = True
 
+	@staticmethod
+	def _riseUpRegex(reLst, reIdx, reToMove):
+		"""Move regex reToMove with index reIdx up in RE list reLst (in simplest way, bubble sort similar).
+		Used to reorder regex list by its occurrence in monitored log.
+		"""
+		# avoid reorder too often (e. g. always 2 regex each after other):
+		c = reToMove.matchCount + 2
+		# try index 0, half of distance and previous position:
+		for mi in set((0, reIdx/2, reIdx-1)):
+			if reLst[mi].matchCount < c:
+				if logSys.getEffectiveLevel() <= 5:
+					logSys.log(5, "    Rise-up RE: match counts %r > %r, move RE %r to %r",
+						reToMove.matchCount, reLst[mi].matchCount, reIdx, mi)
+				reLst[reIdx], reLst[mi] = reLst[mi], reToMove
+				break
+
 	def _ignoreLine(self, buf, orgBuffer, failRegex=None):
 		# if multi-line buffer - use matched only, otherwise (single line) - original buf:
 		if failRegex and self.__lineBufferSize > 1:
@@ -746,6 +766,7 @@ class Filter(JailThread):
 		for ignoreRegexIndex, ignoreRegex in enumerate(self.__ignoreRegex):
 			ignoreRegex.search(buf, orgBuffer)
 			if ignoreRegex.hasMatched():
+				ignoreRegex.matchCount += 1
 				fnd = ignoreRegexIndex
 				logSys.log(7, "  Matched ignoreregex %d and was ignored", fnd)
 				if self.onIgnoreRegex: self.onIgnoreRegex(fnd, ignoreRegex)
@@ -844,7 +865,9 @@ class Filter(JailThread):
 		buf = Regex._tupleLinesBuf(orgBuffer)
 
 		# Checks if we must ignore this line (only if fewer ignoreregex than failregex).
-		if self.__ignoreRegex and len(self.__ignoreRegex) < len(self.__failRegex) - 2:
+		ignRE = self.__ignoreRegex
+		if ignRE and len(ignRE) < len(self.__failRegex) - 2:
+			ignRE = None
 			if self._ignoreLine(buf, orgBuffer) is not None:
 				# The ignoreregex matched. Return.
 				return failList
@@ -857,6 +880,7 @@ class Filter(JailThread):
 			if not self.__prefRegex.hasMatched():
 				if ll <= 5: logSys.log(5, "  Prefregex not matched")
 				return failList
+			self.__prefRegex.matchCount += 1
 			preGroups = self.__prefRegex.getGroups()
 			if ll <= 7: logSys.log(7, "  Pre-filter matched %s", preGroups)
 			repl = preGroups.pop('content', None)
@@ -874,12 +898,18 @@ class Filter(JailThread):
 				failRegex.search(buf, orgBuffer)
 				if not failRegex.hasMatched():
 					continue
+				failRegex.matchCount += 1
 				# current failure data (matched group dict):
 				fail = failRegex.getGroups()
 				# The failregex matched.
 				if ll <= 7: logSys.log(7, "  Matched failregex %d: %s", failRegexIndex, fail)
+				# Move RE up in RE list (in simplest way, bubble sort similar):
+				if failRegexIndex and not failRegex.flags & Regex.ReFlags.NO_RISE_UP:
+					self._riseUpRegex(self.__failRegex, failRegexIndex, failRegex)
 				# Checks if we must ignore this match.
-				if self.__ignoreRegex and self._ignoreLine(buf, orgBuffer, failRegex) is not None:
+				if (self.__ignoreRegex and (ignRE or self.__lineBufferSize > 1) and
+						self._ignoreLine(buf, orgBuffer, failRegex) is not None
+				):
 					# The ignoreregex matched. Remove ignored match.
 					buf = None
 					if not self.checkAllRegex:
@@ -895,6 +925,7 @@ class Filter(JailThread):
 				# we should check all regex (bypass on multi-line, otherwise too complex):
 				if not self.checkAllRegex or self.__lineBufferSize > 1:
 					self.__lineBuffer, buf = failRegex.getUnmatchedTupleLines(), None
+					if ll <= 5 and self.checkAllRegex: logSys.log(5, "Looking further for match of %r", self.__lineBuffer)
 				# merge data if multi-line failure:
 				raw = returnRawHost
 				if preGroups:
