@@ -30,7 +30,7 @@ from .ipdns import IPAddr
 
 
 FTAG_CRE = re.compile(r'</?[\w\-]+/?>')
-RFLAG_CRE = re.compile(r'^{[^\}]+}')
+RFLAG_CRE = re.compile(r'^\{\^([^\}]+)\}'); # matching {^option, option ..., option} at start of RE
 
 FCUSTNAME_CRE = re.compile(r'^(/?)F-([A-Z0-9_\-]+)$'); # currently uppercase only
 
@@ -109,7 +109,11 @@ COMPLNAME_CRE = re.compile(r'^(' + '|'.join(COMPLNAME_PRE) + r')(.*?)(?:_\d+)?$'
 
 
 class ReFlags:
-	NO_RISE_UP = 0x08
+	NoReorder =	0x04; # reorder of all regex is not allowed
+	NoRiseUp =	0x08; # rise up of this regex is not allowed
+ReFlags._vars = dict(filter(lambda (k,v): k[0] != '_', vars(ReFlags).iteritems()))
+ReFlags._vars["NO-REORDER"] = ReFlags.NoReorder
+ReFlags._vars["NO-RISE-UP"] = ReFlags.NoRiseUp
 
 ##
 # Regular expression class.
@@ -173,12 +177,12 @@ class Regex:
 		m = RFLAG_CRE.search(regex)
 		if m:
 			regex = regex[0:m.start(0)] + regex[m.end(0)+1:]
-			for tn in splitwords(m.group()[1:-1]):
-				# disable rise up for this RE:
-				if tn == "NO-RISE-UP":
-					self.flags = ReFlags.NO_RISE_UP
-				else: # pragma: no cover
+			for tn in splitwords(m.group(1)):
+				# flags by its name:
+				f = ReFlags._vars.get(tn, 0)
+				if not f: # pragma: no cover
 					raise RegexException("Unknown flag %r in regex '%s'" % (tn, regex))
+				self.flags |= f
 		return regex
 
 	##
