@@ -1410,8 +1410,9 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		'jails': (
 			# default:
 			'''test_action = dummy[actionstart_on_demand=1, init="start: %(__name__)s", target="%(tmp)s/test.txt",
-      actionban='<known/actionban>;
-        echo "<matches>"; printf "=====\\n%%b\\n=====\\n\\n" "<matches>" >> <target>']''',
+      actionban='<known/actionban>; echo "found: <jail.found> / <jail.found_total>, banned: <jail.banned> / <jail.banned_total>"
+        echo "<matches>"; printf "=====\\n%%b\\n=====\\n\\n" "<matches>" >> <target>',
+      actionstop='<known/actionstop>; echo "stats <name> - found: <jail.found_total>, banned: <jail.banned_total>"']''',
 			# jail sendmail-auth:
 			'[sendmail-auth]',
 			'backend = polling',
@@ -1456,7 +1457,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		_write_file(lgfn, "w+", *smaut_msg)
 		# wait and check it caused banned (and dump in the test-file):
 		self.assertLogged(
-			"[sendmail-auth] Ban 192.0.2.1", "1 ticket(s) in 'sendmail-auth'", all=True, wait=MID_WAITTIME)
+			"[sendmail-auth] Ban 192.0.2.1",  "stdout: 'found: 0 / 3, banned: 1 / 1'",
+			"1 ticket(s) in 'sendmail-auth'", all=True, wait=MID_WAITTIME)
 		_out_file(tofn)
 		td = _read_file(tofn)
 		# check matches (maxmatches = 2, so only 2 & 3 available):
@@ -1470,7 +1472,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		_write_file(lgfn, "w+", *smrej_msg)
 		# wait and check it caused banned (and dump in the test-file):
 		self.assertLogged(
-			"[sendmail-reject] Ban 192.0.2.2", "1 ticket(s) in 'sendmail-reject'", all=True, wait=MID_WAITTIME)
+			"[sendmail-reject] Ban 192.0.2.2", "stdout: 'found: 0 / 3, banned: 1 / 1'",
+			"1 ticket(s) in 'sendmail-reject'", all=True, wait=MID_WAITTIME)
 		_out_file(tofn)
 		td = _read_file(tofn)
 		# check matches (no maxmatches, so all matched messages are available):
@@ -1484,6 +1487,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# wait a bit:
 		self.assertLogged(
 			"Reload finished.",
+			"stdout: 'stats sendmail-auth - found: 3, banned: 1'",
+			"stdout: 'stats sendmail-reject - found: 3, banned: 1'",
 			"[sendmail-auth] Restore Ban 192.0.2.1", "1 ticket(s) in 'sendmail-auth'", all=True, wait=MID_WAITTIME)
 		# check matches again - (dbmaxmatches = 1), so it should be only last match after restart:
 		td = _read_file(tofn)
