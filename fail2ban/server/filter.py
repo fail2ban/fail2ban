@@ -1131,14 +1131,14 @@ class FileFilter(Filter):
 				while not self.idle:
 					line = log.readline()
 					if not self.active: break; # jail has been stopped
-					if not line:
+					if line is None:
 						# The jail reached the bottom, simply set in operation for this log
 						# (since we are first time at end of file, growing is only possible after modifications):
 						log.inOperation = True
 						break
 					# acquire in operation from log and process:
 					self.inOperation = inOperation if inOperation is not None else log.inOperation
-					self.processLineAndAdd(line.rstrip('\r\n'))
+					self.processLineAndAdd(line)
 		finally:
 			log.close()
 		db = self.jail.database
@@ -1180,8 +1180,8 @@ class FileFilter(Filter):
 			dateTimeMatch = None
 			nextp = None
 			while True:
-				line = container.readline()
-				if not line:
+				line = container.readline(False)
+				if line is None:
 					break
 				(timeMatch, template) = self.dateDetector.matchTime(line)
 				if timeMatch:
@@ -1295,7 +1295,7 @@ class FileContainer:
 			if stats.st_size:
 				firstLine = handler.readline()
 				# first line available and contains new-line:
-				if firstLine != firstLine.rstrip('\r\n'):
+				if firstLine != firstLine.rstrip(b'\r\n'):
 					# Computes the MD5 of the first line.
 					self.__hash = md5sum(firstLine).hexdigest()
 				# if tail mode scroll to the end of file
@@ -1348,7 +1348,7 @@ class FileContainer:
 				myHash = ''
 				firstLine = h.readline()
 				# Computes the MD5 of the first line (if it is complete)
-				if firstLine != firstLine.rstrip('\r\n'):
+				if firstLine != firstLine.rstrip(b'\r\n'):
 					myHash = md5sum(firstLine).hexdigest()
 					self.__hashNextTime = time.time() + 30
 			elif stats.st_size == self.__pos:
@@ -1414,15 +1414,35 @@ class FileContainer:
 			line = line.decode(enc, 'replace')
 		return line
 
-	def readline(self):
+	def readline(self, complete=True):
+		"""Read line from file
+
+		In opposite to pythons readline it doesn't return new-line, 
+		so returns either the line if line is complete (and complete=True) or None
+		if line is not complete (and complete=True) or there is no content to read.
+		If line is complete (and complete is True), it also shift current known 
+		position to begin of next line.
+		"""
 		if self.__handler is None:
 			return ""
+		rl = self.__handler.readline()
+		if rl == b'':
+			return None
+		# trim new-line here and check the line was written complete (contains a new-line):
+		l = rl.rstrip(b'\r\n')
+		if self.inOperation and complete:
+			if l == rl:
+				# not fulfilled - seek back and return:
+				self.__handler.seek(self.__pos, 0)
+				return None
+			# shift position (to be able to seek back above):
+			self.__pos += len(rl)
 		return FileContainer.decode_line(
-			self.getFileName(), self.getEncoding(), self.__handler.readline())
+			self.getFileName(), self.getEncoding(), l)
 
 	def close(self):
 		if self.__handler is not None:
-			# Saves the last position.
+			# Saves the last real position.
 			self.__pos = self.__handler.tell()
 			# Closes the file.
 			self.__handler.close()
