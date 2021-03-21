@@ -195,7 +195,7 @@ def _assert_correct_last_attempt(utest, filter_, output, count=None):
 			_assert_equal_entries(utest, f, o)
 
 
-def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line=""):
+def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line="", lines=None):
 	"""Copy lines from one file to another (which might be already open)
 
 	Returns open fout
@@ -212,9 +212,9 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 		fin.readline()
 	# Read
 	i = 0
-	lines = []
+	if not lines: lines = []
 	while n is None or i < n:
-		l = FileContainer.decode_line(in_, 'UTF-8', fin.readline()).rstrip('\r\n')
+		l = fin.readline().decode('UTF-8', 'replace').rstrip('\r\n')
 		if terminal_line is not None and l == terminal_line:
 			break
 		lines.append(l)
@@ -222,6 +222,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	# Write: all at once and flush
 	if isinstance(fout, str):
 		fout = open(fout, mode)
+	DefLogSys.debug('  ++ write %d test lines', len(lines))
 	fout.write('\n'.join(lines)+'\n')
 	fout.flush()
 	if isinstance(in_, str): # pragma: no branch - only used with str in test cases
@@ -253,7 +254,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 	# Read/Write
 	i = 0
 	while n is None or i < n:
-		l = FileContainer.decode_line(in_, 'UTF-8', fin.readline()).rstrip('\r\n')
+		l = fin.readline().decode('UTF-8', 'replace').rstrip('\r\n')
 		if terminal_line is not None and l == terminal_line:
 			break
 		journal.send(MESSAGE=l.strip(), **fields)
@@ -1136,13 +1137,15 @@ def get_monitor_failures_testcase(Filter_):
 
 			# move aside, but leaving the handle still open...
 			os.rename(self.name, self.name + '.bak')
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14, n=1).close()
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14, n=1,
+				lines=["Aug 14 11:59:59 [logrotate] rotation 1"]).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
 
 			# now remove the moved file
 			_killfile(None, self.name + '.bak')
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=12, n=3).close()
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=12, n=3,
+				lines=["Aug 14 11:59:59 [logrotate] rotation 2"]).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
@@ -1196,7 +1199,7 @@ def get_monitor_failures_testcase(Filter_):
 			os.rename(tmpsub1, tmpsub2 + 'a')
 			os.mkdir(tmpsub1)
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-												  skip=12, n=1, mode='w')
+												  skip=12, n=1, mode='w', lines=["Aug 14 11:59:59 [logrotate] rotation 1"])
 			self.file.close()
 			self._wait4failures(2)
 
@@ -1207,7 +1210,7 @@ def get_monitor_failures_testcase(Filter_):
 			os.mkdir(tmpsub1)
 			self.waitForTicks(2)
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-												  skip=12, n=1, mode='w')
+												  skip=12, n=1, mode='w', lines=["Aug 14 11:59:59 [logrotate] rotation 2"])
 			self.file.close()
 			self._wait4failures(3)
 

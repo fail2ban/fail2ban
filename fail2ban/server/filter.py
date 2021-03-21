@@ -1155,6 +1155,8 @@ class FileFilter(Filter):
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
 			logSys.debug("Seek to find time %s (%s), file size %s", date, 
 				MyTime.time2str(date), fs)
+		if not fs:
+			return
 		minp = container.getPos()
 		maxp = fs
 		tryPos = minp
@@ -1281,20 +1283,25 @@ class FileContainer:
 		self.setEncoding(encoding)
 		self.__tail = tail
 		self.__handler = None
+		self.__pos = 0
+		self.__pos4hash = 0
+		self.__hash = ''
+		self.__hashNextTime = time.time() + 30
 		# Try to open the file. Raises an exception if an error occurred.
 		handler = open(filename, 'rb')
-		stats = os.fstat(handler.fileno())
-		self.__ino = stats.st_ino
 		try:
-			firstLine = handler.readline()
-			# Computes the MD5 of the first line.
-			self.__hash = md5sum(firstLine).hexdigest()
-			# Start at the beginning of file if tail mode is off.
-			if tail:
-				handler.seek(0, 2)
-				self.__pos = handler.tell()
-			else:
-				self.__pos = 0
+			stats = os.fstat(handler.fileno())
+			self.__ino = stats.st_ino
+			if stats.st_size:
+				firstLine = handler.readline()
+				# first line available and contains new-line:
+				if firstLine != firstLine.rstrip('\r\n'):
+					# Computes the MD5 of the first line.
+					self.__hash = md5sum(firstLine).hexdigest()
+				# if tail mode scroll to the end of file
+				if tail:
+					handler.seek(0, 2)
+					self.__pos = handler.tell()
 		finally:
 			handler.close()
 		## shows that log is in operation mode (expecting new messages only from here):
@@ -1304,6 +1311,10 @@ class FileContainer:
 		return self.__filename
 
 	def getFileSize(self):
+		h = self.__handler
+		if h is not None:
+			stats = os.fstat(h.fileno())
+			return stats.st_size
 		return os.path.getsize(self.__filename);
 
 	def setEncoding(self, encoding):
@@ -1322,38 +1333,54 @@ class FileContainer:
 	def setPos(self, value):
 		self.__pos = value
 
-	def open(self):
-		self.__handler = open(self.__filename, 'rb')
-		# Set the file descriptor to be FD_CLOEXEC
-		fd = self.__handler.fileno()
-		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
-		fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
-		# Stat the file before even attempting to read it
-		stats = os.fstat(self.__handler.fileno())
-		if not stats.st_size:
-			# yoh: so it is still an empty file -- nothing should be
-			#      read from it yet
-			# print "D: no content -- return"
-			return False
-		firstLine = self.__handler.readline()
-		# Computes the MD5 of the first line.
-		myHash = md5sum(firstLine).hexdigest()
-		## print "D: fn=%s hashes=%s/%s inos=%s/%s pos=%s rotate=%s" % (
-		## 	self.__filename, self.__hash, myHash, stats.st_ino, self.__ino, self.__pos,
-		## 	self.__hash != myHash or self.__ino != stats.st_ino)
-		## sys.stdout.flush()
-		# Compare hash and inode
-		if self.__hash != myHash or self.__ino != stats.st_ino:
-			logSys.log(logging.MSG, "Log rotation detected for %s", self.__filename)
-			self.__hash = myHash
-			self.__ino = stats.st_ino
-			self.__pos = 0
-		# Sets the file pointer to the last position.
-		self.__handler.seek(self.__pos)
+	def open(self, forcePos=None):
+		h = open(self.__filename, 'rb')
+		try:
+			# Set the file descriptor to be FD_CLOEXEC
+			fd = h.fileno()
+			flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+			fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
+			myHash = self.__hash
+			# Stat the file before even attempting to read it
+			stats = os.fstat(h.fileno())
+			rotflg = stats.st_size < self.__pos or stats.st_ino != self.__ino
+			if rotflg or not len(myHash) or time.time() > self.__hashNextTime:
+				myHash = ''
+				firstLine = h.readline()
+				# Computes the MD5 of the first line (if it is complete)
+				if firstLine != firstLine.rstrip('\r\n'):
+					myHash = md5sum(firstLine).hexdigest()
+					self.__hashNextTime = time.time() + 30
+			elif stats.st_size == self.__pos:
+				myHash = self.__hash
+			# Compare size, hash and inode
+			if rotflg or myHash != self.__hash:
+				if self.__hash != '':
+					logSys.log(logging.MSG, "Log rotation detected for %s, reason: %r", self.__filename,
+						(stats.st_size, self.__pos, stats.st_ino, self.__ino, myHash, self.__hash))
+					self.__ino = stats.st_ino
+					self.__pos = 0
+				self.__hash = myHash
+			# if nothing to read from file yet (empty or no new data):
+			if forcePos is not None:
+				self.__pos = forcePos
+			elif stats.st_size <= self.__pos:
+				return False
+			# Sets the file pointer to the last position.
+			h.seek(self.__pos)
+			# leave file open (to read content):
+			self.__handler = h; h = None
+		finally:
+			# close (no content or error only)
+			if h:
+				h.close(); h = None
 		return True
 
 	def seek(self, offs, endLine=True):
 		h = self.__handler
+		if h is None:
+			self.open(offs)
+			h = self.__handler
 		# seek to given position
 		h.seek(offs, 0)
 		# goto end of next line
@@ -1394,14 +1421,12 @@ class FileContainer:
 			self.getFileName(), self.getEncoding(), self.__handler.readline())
 
 	def close(self):
-		if not self.__handler is None:
+		if self.__handler is not None:
 			# Saves the last position.
 			self.__pos = self.__handler.tell()
 			# Closes the file.
 			self.__handler.close()
 			self.__handler = None
-		## print "D: Closed %s with pos %d" % (handler, self.__pos)
-		## sys.stdout.flush()
 
 _decode_line_warn = Utils.Cache(maxCount=1000, maxTime=24*60*60);
 

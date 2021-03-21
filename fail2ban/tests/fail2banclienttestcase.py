@@ -230,7 +230,7 @@ def _start_params(tmp, use_stock=False, use_stock_cfg=None,
 			os.symlink(os.path.abspath(pjoin(STOCK_CONF_DIR, n)), pjoin(cfg, n))
 	if create_before_start:
 		for n in create_before_start:
-			_write_file(n % {'tmp': tmp}, 'w', '')
+			_write_file(n % {'tmp': tmp}, 'w')
 	# parameters (sock/pid and config, increase verbosity, set log, etc.):
 	vvv, llev = (), "INFO"
 	if unittest.F2B.log_level < logging.INFO: # pragma: no cover
@@ -937,10 +937,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"Jail 'broken-jail' skipped, because of wrong configuration", all=True)
 		
 		# enable both jails, 3 logs for jail1, etc...
-		# truncate test-log - we should not find unban/ban again by reload:
 		self.pruneLog("[test-phase 1b]")
 		_write_jail_cfg(actions=[1,2])
-		_write_file(test1log, "w+")
 		if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
 			_out_file(test1log)
 		self.execCmd(SUCCESS, startparams, "reload")
@@ -1003,7 +1001,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		
 		self.pruneLog("[test-phase 2b]")
 		# write new failures:
-		_write_file(test2log, "w+", *(
+		_write_file(test2log, "a+", *(
 			(str(int(MyTime.time())) + "   error 403 from 192.0.2.2: test 2",) * 3 +
 		  (str(int(MyTime.time())) + "   error 403 from 192.0.2.3: test 2",) * 3 +
 		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.4: test 2",) * 3 +
@@ -1061,10 +1059,6 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			'get', 'test-jail1', 'banned', '192.0.2.9')[1],  0)
 		self.assertEqual(self.execCmdDirect(startparams,
 			'get', 'test-jail1', 'banned', '192.0.2.3', '192.0.2.9')[1],  [1, 0])
-
-		# rotate logs:
-		_write_file(test1log, "w+")
-		_write_file(test2log, "w+")
 
 		# restart jail without unban all:
 		self.pruneLog("[test-phase 2c]")
@@ -1183,7 +1177,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		# now write failures again and check already banned (jail1 was alive the whole time) and new bans occurred (jail1 was alive the whole time):
 		self.pruneLog("[test-phase 5]")
-		_write_file(test1log, "w+", *(
+		_write_file(test1log, "a+", *(
 			(str(int(MyTime.time())) + " failure 401 from 192.0.2.1: test 5",) * 3 + 
 			(str(int(MyTime.time())) + "   error 403 from 192.0.2.5: test 5",) * 3 +
 			(str(int(MyTime.time())) + " failure 401 from 192.0.2.6: test 5",) * 3
@@ -1469,7 +1463,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		self.pruneLog("[test-phase sendmail-reject]")
 		# write log:
-		_write_file(lgfn, "w+", *smrej_msg)
+		_write_file(lgfn, "a+", *smrej_msg)
 		# wait and check it caused banned (and dump in the test-file):
 		self.assertLogged(
 			"[sendmail-reject] Ban 192.0.2.2", "stdout: 'found: 0 / 3, banned: 1 / 1'",
@@ -1597,7 +1591,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		wakeObs = False
 		_observer_wait_before_incrban(lambda: wakeObs)
 		# write again (IP already bad):
-		_write_file(test1log, "w+", *(
+		_write_file(test1log, "a+", *(
 		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.11: I'm very bad \"hacker\" `` $(echo test)",) * 2
 		))
 		# wait for ban:

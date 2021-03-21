@@ -212,19 +212,20 @@ class DatabaseTest(LogCaptureTestCase):
 			self.jail.name in self.db.getJailNames(True),
 			"Jail not added to database")
 
-	def testAddLog(self):
+	def _testAddLog(self):
 		self.testAddJail() # Jail required
 
 		_, filename = tempfile.mkstemp(".log", "Fail2BanDb_")
 		self.fileContainer = FileContainer(filename, "utf-8")
 
-		self.db.addLog(self.jail, self.fileContainer)
+		pos = self.db.addLog(self.jail, self.fileContainer)
+		self.assertTrue(pos is None); # unknown previously
 
 		self.assertIn(filename, self.db.getLogPaths(self.jail))
 		os.remove(filename)
 
 	def testUpdateLog(self):
-		self.testAddLog() # Add log file
+		self._testAddLog() # Add log file
 
 		# Write some text
 		filename = self.fileContainer.getFileName()
