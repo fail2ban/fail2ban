@@ -188,6 +188,7 @@ def _assert_correct_last_attempt(utest, filter_, output, count=None):
 		utest.assertEqual(len(found), 1)
 		_assert_equal_entries(utest, found[0], output, count)
 	else:
+		utest.assertEqual(len(found), len(output))
 		# sort by string representation of ip (multiple failures with different ips):
 		found = sorted(found, key=lambda x: str(x))
 		output = sorted(output, key=lambda x: str(x))
