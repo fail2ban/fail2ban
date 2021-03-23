@@ -1398,6 +1398,9 @@ class FileContainer:
 		try:
 			return line.decode(enc, 'strict')
 		except (UnicodeDecodeError, UnicodeEncodeError) as e:
+			# avoid warning if got incomplete end of line (e. g. '\n' in "...[0A" followed by "00]..." for utf-16le:
+			if (e.end == len(line) and line[e.start] in b'\r\n'):
+				return line[0:e.start].decode(enc, 'replace')
 			global _decode_line_warn
 			lev = 7
 			if not _decode_line_warn.get(filename, 0):
@@ -1406,9 +1409,9 @@ class FileContainer:
 			logSys.log(lev,
 				"Error decoding line from '%s' with '%s'.", filename, enc)
 			if logSys.getEffectiveLevel() <= lev:
-				logSys.log(lev, "Consider setting logencoding=utf-8 (or another appropriate"
-					" encoding) for this jail. Continuing"
-					" to process line ignoring invalid characters: %r",
+				logSys.log(lev,
+					"Consider setting logencoding to appropriate encoding for this jail. "
+					"Continuing to process line ignoring invalid characters: %r",
 					line)
 			# decode with replacing error chars:
 			line = line.decode(enc, 'replace')
@@ -1422,23 +1425,51 @@ class FileContainer:
 		if line is not complete (and complete=True) or there is no content to read.
 		If line is complete (and complete is True), it also shift current known 
 		position to begin of next line.
+
+		Also it is safe against interim new-line bytes (e. g. part of multi-byte char)
+		in given encoding.
 		"""
 		if self.__handler is None:
 			return ""
-		rl = self.__handler.readline()
-		if rl == b'':
+		# read raw bytes up to \n char:
+		b = self.__handler.readline()
+		if not b:
 			return None
-		# trim new-line here and check the line was written complete (contains a new-line):
-		l = rl.rstrip(b'\r\n')
-		if self.inOperation and complete:
-			if l == rl:
+		bl = len(b)
+		# convert to log-encoding (new-line char could disappear if it is part of multi-byte sequence):
+		r = FileContainer.decode_line(
+			self.getFileName(), self.getEncoding(), b)
+		# trim new-line at end and check the line was written complete (contains a new-line):
+		l = r.rstrip('\r\n')
+		if complete:
+			if l == r:
+				# try to fill buffer in order to find line-end in log encoding:
+				fnd = 0
+				while 1:
+					r = self.__handler.readline()
+					if not r:
+						break
+					b += r
+					bl += len(r)
+					# convert to log-encoding:
+					r = FileContainer.decode_line(
+						self.getFileName(), self.getEncoding(), b)
+					# ensure new-line is not in the middle (buffered 2 strings, e. g. in utf-16le it is "...[0A"+"00]..."):
+					e = r.find('\n')
+					if e >= 0 and e != len(r)-1:
+						l, r = r[0:e], r[0:e+1]
+						# back to bytes and get offset to seek after NL:
+						r = r.encode(self.getEncoding(), 'replace')
+						self.__handler.seek(-bl+len(r), 1)
+						return l
+					# trim new-line at end and check the line was written complete (contains a new-line):
+					l = r.rstrip('\r\n')
+					if l != r:
+						return l
 				# not fulfilled - seek back and return:
-				self.__handler.seek(self.__pos, 0)
+				self.__handler.seek(-bl, 1)
 				return None
-			# shift position (to be able to seek back above):
-			self.__pos += len(rl)
-		return FileContainer.decode_line(
-			self.getFileName(), self.getEncoding(), l)
+		return l
 
 	def close(self):
 		if self.__handler is not None:
