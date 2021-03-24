@@ -1280,6 +1280,7 @@ class FileContainer:
 
 	def __init__(self, filename, encoding, tail=False, doOpen=False):
 		self.__filename = filename
+		self.waitForLineEnd = True
 		self.setEncoding(encoding)
 		self.__tail = tail
 		self.__handler = None
@@ -1469,9 +1470,10 @@ class FileContainer:
 					l = r.rstrip('\r\n')
 					if l != r:
 						return l
-				# not fulfilled - seek back and return:
-				self.__handler.seek(-bl, 1)
-				return None
+				if self.waitForLineEnd:
+					# not fulfilled - seek back and return:
+					self.__handler.seek(-bl, 1)
+					return None
 		return l
 
 	def close(self):
@@ -1481,6 +1483,15 @@ class FileContainer:
 			# Closes the file.
 			self.__handler.close()
 			self.__handler = None
+
+	def __iter__(self):
+		return self
+	def next(self):
+		line = self.readline()
+		if line is None:
+			self.close()
+			raise StopIteration
+		return line
 
 _decode_line_warn = Utils.Cache(maxCount=1000, maxTime=24*60*60);
 

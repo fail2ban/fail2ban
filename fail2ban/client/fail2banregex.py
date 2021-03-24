@@ -720,14 +720,6 @@ class Fail2banRegex(object):
 
 		return True
 
-	def file_lines_gen(self, hdlr):
-		while 1:
-			line = hdlr.readline()
-			if line is None:
-				break
-			yield line
-		hdlr.close()
-
 	def start(self, args):
 
 		cmd_log, cmd_regex = args[:2]
@@ -746,10 +738,10 @@ class Fail2banRegex(object):
 
 		if os.path.isfile(cmd_log):
 			try:
-				hdlr = FileContainer(cmd_log, self._encoding, doOpen=True)
+				test_lines = FileContainer(cmd_log, self._encoding, doOpen=True)
+
 				self.output( "Use         log file : %s" % cmd_log )
 				self.output( "Use         encoding : %s" % self._encoding )
-				test_lines = self.file_lines_gen(hdlr)
 			except IOError as e: # pragma: no cover
 				output( e )
 				return False
