@@ -1278,7 +1278,7 @@ except ImportError: # pragma: no cover
 
 class FileContainer:
 
-	def __init__(self, filename, encoding, tail=False):
+	def __init__(self, filename, encoding, tail=False, doOpen=False):
 		self.__filename = filename
 		self.setEncoding(encoding)
 		self.__tail = tail
@@ -1289,6 +1289,9 @@ class FileContainer:
 		self.__hashNextTime = time.time() + 30
 		# Try to open the file. Raises an exception if an error occurred.
 		handler = open(filename, 'rb')
+		if doOpen: # fail2ban-regex only (don't need to reopen it and check for rotation)
+			self.__handler = handler
+			return
 		try:
 			stats = os.fstat(handler.fileno())
 			self.__ino = stats.st_ino

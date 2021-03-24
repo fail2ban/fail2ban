@@ -1660,7 +1660,7 @@ class GetFailures(LogCaptureTestCase):
 			_killfile(fout, fname)
 
 	def testNLCharAsPartOfUniChar(self):
-		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='crlf')
+		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='uni')
 		# test two multi-byte encodings (both contains `\x0A` in either \x02\x0A or \x0A\x02):
 		for enc in ('utf-16be', 'utf-16le'):
 			self.pruneLog("[test-phase encoding=%s]" % enc)
