@@ -2252,6 +2252,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		ip1 = IPAddr('2606:2800:220:1:248:1893:25c8:1946'); ip2 = IPAddr('2606:2800:220:1:248:1893:25c8:1946'); self.assertEqual(id(ip1), id(ip2))
 
 	def testFQDN(self):
+		unittest.F2B.SkipIfNoNetwork()
 		sname = DNSUtils.getHostname(fqdn=False)
 		lname = DNSUtils.getHostname(fqdn=True)
 		# FQDN is not localhost if short hostname is not localhost too (or vice versa):
