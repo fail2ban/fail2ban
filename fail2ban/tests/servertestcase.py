@@ -66,9 +66,12 @@ class TestServer(Server):
 
 class TransmitterBase(LogCaptureTestCase):
 	
+	TEST_SRV_CLASS = TestServer
+
 	def setUp(self):
 		"""Call before every test case."""
 		super(TransmitterBase, self).setUp()
+		self.server = self.TEST_SRV_CLASS()
 		self.transm = self.server._Server__transm
 		# To test thransmitter we don't need to start server...
 		#self.server.start('/dev/null', '/dev/null', force=False)
@@ -156,10 +159,6 @@ class TransmitterBase(LogCaptureTestCase):
 
 
 class Transmitter(TransmitterBase):
-
-	def setUp(self):
-		self.server = TestServer()
-		super(Transmitter, self).setUp()
 
 	def testServerIsNotStarted(self):
 		# so far isStarted only tested but not used otherwise
@@ -937,8 +936,9 @@ class Transmitter(TransmitterBase):
 
 class TransmitterLogging(TransmitterBase):
 
+	TEST_SRV_CLASS = Server
+
 	def setUp(self):
-		self.server = Server()
 		super(TransmitterLogging, self).setUp()
 		self.server.setLogTarget("/dev/null")
 		self.server.setLogLevel("CRITICAL")

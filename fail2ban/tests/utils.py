@@ -47,7 +47,7 @@ from ..server import asyncserver
 from ..version import version
 
 
-logSys = getLogger(__name__)
+logSys = getLogger("fail2ban")
 
 TEST_NOW = 1124013600
 
@@ -126,9 +126,6 @@ def getOptParser(doc=""):
 
 def initProcess(opts):
 	# Logger:
-	global logSys
-	logSys = getLogger("fail2ban")
-
 	llev = None
 	if opts.log_level is not None: # pragma: no cover
 		# so we had explicit settings
@@ -782,8 +779,9 @@ class LogCaptureTestCase(unittest.TestCase):
 		"""Call after every test case."""
 		# print "O: >>%s<<" % self._log.getvalue()
 		self.pruneLog()
+		self._log.close()
 		logSys.handlers = self._old_handlers
-		logSys.level = self._old_level
+		logSys.setLevel(self._old_level)
 		super(LogCaptureTestCase, self).tearDown()
 
 	def _is_logged(self, *s, **kwargs):
