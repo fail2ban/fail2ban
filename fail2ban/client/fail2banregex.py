@@ -289,9 +289,6 @@ class Fail2banRegex(object):
 	def output(self, line):
 		if not self._opts.out: output(line)
 
-	def decode_line(self, line):
-		return FileContainer.decode_line('<LOG>', self._encoding, line)
-
 	def encode_line(self, line):
 		return line.encode(self._encoding, 'ignore')
 
@@ -723,10 +720,6 @@ class Fail2banRegex(object):
 
 		return True
 
-	def file_lines_gen(self, hdlr):
-		for line in hdlr:
-			yield self.decode_line(line)
-
 	def start(self, args):
 
 		cmd_log, cmd_regex = args[:2]
@@ -745,10 +738,10 @@ class Fail2banRegex(object):
 
 		if os.path.isfile(cmd_log):
 			try:
-				hdlr = open(cmd_log, 'rb')
+				test_lines = FileContainer(cmd_log, self._encoding, doOpen=True)
+
 				self.output( "Use         log file : %s" % cmd_log )
 				self.output( "Use         encoding : %s" % self._encoding )
-				test_lines = self.file_lines_gen(hdlr)
 			except IOError as e: # pragma: no cover
 				output( e )
 				return False

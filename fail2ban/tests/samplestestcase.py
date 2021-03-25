@@ -23,7 +23,6 @@ __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import datetime
-import fileinput
 import inspect
 import json
 import os
@@ -156,12 +155,15 @@ def testSampleRegexsFactory(name, basedir):
 		i = 0
 		while i < len(filenames):
 			filename = filenames[i]; i += 1;
-			logFile = fileinput.FileInput(os.path.join(TEST_FILES_DIR, "logs",
-				filename), mode='rb')
+			logFile = FileContainer(os.path.join(TEST_FILES_DIR, "logs",
+				filename), 'UTF-8', doOpen=True)
+			# avoid errors if no NL char at end of test log-file:
+			logFile.waitForLineEnd = False
 
 			ignoreBlock = False
+			lnnum = 0
 			for line in logFile:
-				line = FileContainer.decode_line(logFile.filename(), 'UTF-8', line)
+				lnnum += 1
 				jsonREMatch = re.match("^#+ ?(failJSON|(?:file|filter)Options|addFILE):(.+)$", line)
 				if jsonREMatch:
 					try:
@@ -201,9 +203,8 @@ def testSampleRegexsFactory(name, basedir):
 						# failJSON - faildata contains info of the failure to check it.
 					except ValueError as e: # pragma: no cover - we've valid json's
 						raise ValueError("%s: %s:%i" %
-							(e, logFile.filename(), logFile.filelineno()))
+							(e, logFile.getFileName(), lnnum))
 					line = next(logFile)
-					line = FileContainer.decode_line(logFile.filename(), 'UTF-8', line)
 				elif ignoreBlock or line.startswith("#") or not line.strip():
 					continue
 				else: # pragma: no cover - normally unreachable
@@ -298,7 +299,7 @@ def testSampleRegexsFactory(name, basedir):
 						import pprint
 						raise AssertionError("%s: %s on: %s:%i, line:\n  %s\nregex (%s):\n  %s\n"
 							"faildata: %s\nfail: %s" % (
-								fltName, e, logFile.filename(), logFile.filelineno(), 
+								fltName, e, logFile.getFileName(), lnnum, 
 								line, failregex, regexList[failregex] if failregex != -1 else None,
 								'\n'.join(pprint.pformat(faildata).splitlines()),
 								'\n'.join(pprint.pformat(fail).splitlines())))

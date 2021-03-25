@@ -195,7 +195,7 @@ def _assert_correct_last_attempt(utest, filter_, output, count=None):
 			_assert_equal_entries(utest, f, o)
 
 
-def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line=""):
+def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line="", lines=None):
 	"""Copy lines from one file to another (which might be already open)
 
 	Returns open fout
@@ -212,9 +212,9 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 		fin.readline()
 	# Read
 	i = 0
-	lines = []
+	if not lines: lines = []
 	while n is None or i < n:
-		l = FileContainer.decode_line(in_, 'UTF-8', fin.readline()).rstrip('\r\n')
+		l = fin.readline().decode('UTF-8', 'replace').rstrip('\r\n')
 		if terminal_line is not None and l == terminal_line:
 			break
 		lines.append(l)
@@ -222,6 +222,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	# Write: all at once and flush
 	if isinstance(fout, str):
 		fout = open(fout, mode)
+	DefLogSys.debug('  ++ write %d test lines', len(lines))
 	fout.write('\n'.join(lines)+'\n')
 	fout.flush()
 	if isinstance(in_, str): # pragma: no branch - only used with str in test cases
@@ -253,7 +254,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 	# Read/Write
 	i = 0
 	while n is None or i < n:
-		l = FileContainer.decode_line(in_, 'UTF-8', fin.readline()).rstrip('\r\n')
+		l = fin.readline().decode('UTF-8', 'replace').rstrip('\r\n')
 		if terminal_line is not None and l == terminal_line:
 			break
 		journal.send(MESSAGE=l.strip(), **fields)
@@ -642,6 +643,19 @@ class LogFile(LogCaptureTestCase):
 	def testMissingLogFiles(self):
 		self.filter = FilterPoll(None)
 		self.assertRaises(IOError, self.filter.addLogPath, LogFile.MISSING)
+
+	def testDecodeLineWarn(self):
+		# incomplete line (missing byte at end), warning is suppressed:
+		l = u"correct line\n"
+		r = l.encode('utf-16le')
+		self.assertEqual(FileContainer.decode_line('TESTFILE', 'utf-16le', r), l)
+		self.assertEqual(FileContainer.decode_line('TESTFILE', 'utf-16le', r[0:-1]), l[0:-1])
+		self.assertNotLogged('Error decoding line')
+		# complete line (incorrect surrogate in the middle), warning is there:
+		r = b"incorrect \xc8\x0a line\n"
+		l = r.decode('utf-8', 'replace')
+		self.assertEqual(FileContainer.decode_line('TESTFILE', 'utf-8', r), l)
+		self.assertLogged('Error decoding line')
 
 
 class LogFileFilterPoll(unittest.TestCase):
@@ -1136,13 +1150,15 @@ def get_monitor_failures_testcase(Filter_):
 
 			# move aside, but leaving the handle still open...
 			os.rename(self.name, self.name + '.bak')
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14, n=1).close()
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14, n=1,
+				lines=["Aug 14 11:59:59 [logrotate] rotation 1"]).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
 
 			# now remove the moved file
 			_killfile(None, self.name + '.bak')
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=12, n=3).close()
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=12, n=3,
+				lines=["Aug 14 11:59:59 [logrotate] rotation 2"]).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
@@ -1196,7 +1212,7 @@ def get_monitor_failures_testcase(Filter_):
 			os.rename(tmpsub1, tmpsub2 + 'a')
 			os.mkdir(tmpsub1)
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-												  skip=12, n=1, mode='w')
+												  skip=12, n=1, mode='w', lines=["Aug 14 11:59:59 [logrotate] rotation 1"])
 			self.file.close()
 			self._wait4failures(2)
 
@@ -1207,7 +1223,7 @@ def get_monitor_failures_testcase(Filter_):
 			os.mkdir(tmpsub1)
 			self.waitForTicks(2)
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-												  skip=12, n=1, mode='w')
+												  skip=12, n=1, mode='w', lines=["Aug 14 11:59:59 [logrotate] rotation 2"])
 			self.file.close()
 			self._wait4failures(3)
 
@@ -1630,16 +1646,49 @@ class GetFailures(LogCaptureTestCase):
 	def testCRLFFailures01(self):
 		# We first adjust logfile/failures to end with CR+LF
 		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='crlf')
-		# poor man unix2dos:
-		fin, fout = open(GetFailures.FILENAME_01, 'rb'), open(fname, 'wb')
-		for l in fin.read().splitlines():
-			fout.write(l + b'\r\n')
-		fin.close()
-		fout.close()
+		try:
+			# poor man unix2dos:
+			fin, fout = open(GetFailures.FILENAME_01, 'rb'), open(fname, 'wb')
+			for l in fin.read().splitlines():
+				fout.write(l + b'\r\n')
+			fin.close()
+			fout.close()
 
-		# now see if we should be getting the "same" failures
-		self.testGetFailures01(filename=fname)
-		_killfile(fout, fname)
+			# now see if we should be getting the "same" failures
+			self.testGetFailures01(filename=fname)
+		finally:
+			_killfile(fout, fname)
+
+	def testNLCharAsPartOfUniChar(self):
+		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='uni')
+		# test two multi-byte encodings (both contains `\x0A` in either \x02\x0A or \x0A\x02):
+		for enc in ('utf-16be', 'utf-16le'):
+			self.pruneLog("[test-phase encoding=%s]" % enc)
+			try:
+				fout = open(fname, 'wb')
+				tm = int(time.time())
+				# test on unicode string containing \x0A as part of uni-char,
+				# it must produce exactly 2 lines (both are failures):
+				for l in (
+					u'%s \u20AC Failed auth: invalid user Test\u020A from 192.0.2.1\n' % tm,
+					u'%s \u20AC Failed auth: invalid user TestI from 192.0.2.2\n' % tm
+				):
+					fout.write(l.encode(enc))
+				fout.close()
+
+				self.filter.setLogEncoding(enc)
+				self.filter.addLogPath(fname, autoSeek=0)
+				self.filter.setDatePattern((r'^EPOCH',))
+				self.filter.addFailRegex(r"Failed .* from <HOST>")
+				self.filter.getFailures(fname)
+				self.assertLogged(
+					"[DummyJail] Found 192.0.2.1",
+					"[DummyJail] Found 192.0.2.2", all=True, wait=True)
+			finally:
+				_killfile(fout, fname)
+				self.filter.delLogPath(fname)
+		# must find 4 failures and generate 2 tickets (2 IPs with each 2 failures):
+		self.assertEqual(self.filter.failManager.getFailCount(), (2, 4))
 
 	def testGetFailures02(self):
 		output = ('141.3.81.106', 4, 1124013539.0,
