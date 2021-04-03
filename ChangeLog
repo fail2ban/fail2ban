@@ -29,6 +29,8 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 * better recognition of log rotation, better performance by reopen: avoid unnecessary seek to begin of file
   (and hash calculation)
 * file filter reads only complete lines (ended with new-line) now, so waits for end of line (for its completion)
+* `filter.d/nginx-http-auth.conf` - extended with parameter mode, so additionally to `auth` (or `normal`) 
+   mode `fallback` (or combined as `aggressive`) can find SSL errors while SSL handshaking, gh-2881
 
 
 ver. 0.11.2 (2020/11/23) - heal-the-world-with-security-tools
