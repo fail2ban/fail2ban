@@ -35,10 +35,10 @@ __license__ = "GPL"
 
 import getopt
 import logging
+import re
 import os
 import shlex
 import sys
-import time
 import time
 import urllib
 from optparse import OptionParser, Option
@@ -52,7 +52,7 @@ except ImportError:
 
 from ..version import version, normVersion
 from .filterreader import FilterReader
-from ..server.filter import Filter, FileContainer
+from ..server.filter import Filter, FileContainer, MyTime
 from ..server.failregex import Regex, RegexException
 
 from ..helpers import str2LogLevel, getVerbosityFormat, FormatterWithTraceBack, getLogger, \
@@ -269,24 +269,25 @@ class Fail2banRegex(object):
 			self.setJournalMatch(shlex.split(opts.journalmatch))
 		if opts.timezone:
 			self._filter.setLogTimeZone(opts.timezone)
+		self._filter.checkFindTime = False
+		if True: # not opts.out:
+			MyTime.setAlternateNow(0); # accept every date (years from 19xx up to end of current century, '%ExY' and 'Exy' patterns)
+			from ..server.strptime import _updateTimeRE
+			_updateTimeRE()
 		if opts.datepattern:
 			self.setDatePattern(opts.datepattern)
 		if opts.usedns:
 			self._filter.setUseDns(opts.usedns)
 		self._filter.returnRawHost = opts.raw
-		self._filter.checkFindTime = False
 		self._filter.checkAllRegex = opts.checkAllRegex and not opts.out
 		# ignore pending (without ID/IP), added to matches if it hits later (if ID/IP can be retreved)
-		self._filter.ignorePending = opts.out
+		self._filter.ignorePending = bool(opts.out)
 		# callback to increment ignored RE's by index (during process):
 		self._filter.onIgnoreRegex = self._onIgnoreRegex
 		self._backend = 'auto'
 
 	def output(self, line):
 		if not self._opts.out: output(line)
-
-	def decode_line(self, line):
-		return FileContainer.decode_line('<LOG>', self._encoding, line)
 
 	def encode_line(self, line):
 		return line.encode(self._encoding, 'ignore')
@@ -326,26 +327,33 @@ class Fail2banRegex(object):
 		regex = regextype + 'regex'
 		# try to check - we've case filter?[options...]?:
 		basedir = self._opts.config
+		fltName = value
 		fltFile = None
 		fltOpt = {}
 		if regextype == 'fail':
-			fltName, fltOpt = extractOptions(value)
-			if fltName is not None:
-				if "." in fltName[~5:]:
-					tryNames = (fltName,)
-				else:
-					tryNames = (fltName, fltName + '.conf', fltName + '.local')
-				for fltFile in tryNames:
-					if not "/" in fltFile:
-						if os.path.basename(basedir) == 'filter.d':
-							fltFile = os.path.join(basedir, fltFile)
-						else:
-							fltFile = os.path.join(basedir, 'filter.d', fltFile)
+			if re.search(r'^/{0,3}[\w/_\-.]+(?:\[.*\])?$', value):
+				try:
+					fltName, fltOpt = extractOptions(value)
+					if "." in fltName[~5:]:
+						tryNames = (fltName,)
 					else:
-						basedir = os.path.dirname(fltFile)
-					if os.path.isfile(fltFile):
-						break
-					fltFile = None
+						tryNames = (fltName, fltName + '.conf', fltName + '.local')
+					for fltFile in tryNames:
+						if not "/" in fltFile:
+							if os.path.basename(basedir) == 'filter.d':
+								fltFile = os.path.join(basedir, fltFile)
+							else:
+								fltFile = os.path.join(basedir, 'filter.d', fltFile)
+						else:
+							basedir = os.path.dirname(fltFile)
+						if os.path.isfile(fltFile):
+							break
+						fltFile = None
+				except Exception as e:
+					output("ERROR: Wrong filter name or options: %s" % (str(e),))
+					output("       while parsing: %s" % (value,))
+					if self._verbose: raise(e)
+					return False
 		# if it is filter file:
 		if fltFile is not None:
 			if (basedir == self._opts.config
@@ -712,10 +720,6 @@ class Fail2banRegex(object):
 
 		return True
 
-	def file_lines_gen(self, hdlr):
-		for line in hdlr:
-			yield self.decode_line(line)
-
 	def start(self, args):
 
 		cmd_log, cmd_regex = args[:2]
@@ -734,10 +738,10 @@ class Fail2banRegex(object):
 
 		if os.path.isfile(cmd_log):
 			try:
-				hdlr = open(cmd_log, 'rb')
+				test_lines = FileContainer(cmd_log, self._encoding, doOpen=True)
+
 				self.output( "Use         log file : %s" % cmd_log )
 				self.output( "Use         encoding : %s" % self._encoding )
-				test_lines = self.file_lines_gen(hdlr)
 			except IOError as e: # pragma: no cover
 				output( e )
 				return False

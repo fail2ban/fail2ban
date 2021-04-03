@@ -29,7 +29,7 @@ import tempfile
 import sqlite3
 import shutil
 
-from ..server.filter import FileContainer
+from ..server.filter import FileContainer, Filter
 from ..server.mytime import MyTime
 from ..server.ticket import FailTicket
 from ..server.actions import Actions, Utils
@@ -212,19 +212,20 @@ class DatabaseTest(LogCaptureTestCase):
 			self.jail.name in self.db.getJailNames(True),
 			"Jail not added to database")
 
-	def testAddLog(self):
+	def _testAddLog(self):
 		self.testAddJail() # Jail required
 
 		_, filename = tempfile.mkstemp(".log", "Fail2BanDb_")
 		self.fileContainer = FileContainer(filename, "utf-8")
 
-		self.db.addLog(self.jail, self.fileContainer)
+		pos = self.db.addLog(self.jail, self.fileContainer)
+		self.assertTrue(pos is None); # unknown previously
 
 		self.assertIn(filename, self.db.getLogPaths(self.jail))
 		os.remove(filename)
 
 	def testUpdateLog(self):
-		self.testAddLog() # Add log file
+		self._testAddLog() # Add log file
 
 		# Write some text
 		filename = self.fileContainer.getFileName()
@@ -544,17 +545,21 @@ class DatabaseTest(LogCaptureTestCase):
 		self.testAddJail() # Jail required
 		self.jail.database = self.db
 		self.db.addJail(self.jail)
-		actions = Actions(self.jail)
+		actions = self.jail.actions
 		actions.add(
 			"action_checkainfo",
 			os.path.join(TEST_FILES_DIR, "action.d/action_checkainfo.py"),
 			{})
+		actions.banManager.setBanTotal(20)
+		self.jail._Jail__filter = flt = Filter(self.jail)
+		flt.failManager.setFailTotal(50)
 		ticket = FailTicket("1.2.3.4")
 		ticket.setAttempt(5)
 		ticket.setMatches(['test', 'test'])
 		self.jail.putFailTicket(ticket)
 		actions._Actions__checkBan()
 		self.assertLogged("ban ainfo %s, %s, %s, %s" % (True, True, True, True))
+		self.assertLogged("jail info %d, %d, %d, %d" % (1, 21, 0, 50))
 
 	def testDelAndAddJail(self):
 		self.testAddJail() # Add jail

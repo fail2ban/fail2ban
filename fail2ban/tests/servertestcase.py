@@ -35,7 +35,7 @@ import platform
 from ..server.failregex import Regex, FailRegex, RegexException
 from ..server import actions as _actions
 from ..server.server import Server
-from ..server.ipdns import IPAddr
+from ..server.ipdns import DNSUtils, IPAddr
 from ..server.jail import Jail
 from ..server.jailthread import JailThread
 from ..server.ticket import BanTicket
@@ -66,9 +66,12 @@ class TestServer(Server):
 
 class TransmitterBase(LogCaptureTestCase):
 	
+	TEST_SRV_CLASS = TestServer
+
 	def setUp(self):
 		"""Call before every test case."""
 		super(TransmitterBase, self).setUp()
+		self.server = self.TEST_SRV_CLASS()
 		self.transm = self.server._Server__transm
 		# To test thransmitter we don't need to start server...
 		#self.server.start('/dev/null', '/dev/null', force=False)
@@ -157,10 +160,6 @@ class TransmitterBase(LogCaptureTestCase):
 
 class Transmitter(TransmitterBase):
 
-	def setUp(self):
-		self.server = TestServer()
-		super(Transmitter, self).setUp()
-
 	def testServerIsNotStarted(self):
 		# so far isStarted only tested but not used otherwise
 		# and here we don't really .start server
@@ -174,6 +173,19 @@ class Transmitter(TransmitterBase):
 
 	def testVersion(self):
 		self.assertEqual(self.transm.proceed(["version"]), (0, version.version))
+
+	def testSetIPv6(self):
+		try:
+			self.assertEqual(self.transm.proceed(["set", "allowipv6", 'yes']), (0, 'yes'))
+			self.assertTrue(DNSUtils.IPv6IsAllowed())
+			self.assertLogged("IPv6 is on"); self.pruneLog()
+			self.assertEqual(self.transm.proceed(["set", "allowipv6", 'no']), (0, 'no'))
+			self.assertFalse(DNSUtils.IPv6IsAllowed())
+			self.assertLogged("IPv6 is off"); self.pruneLog()
+		finally:
+			# restore back to auto:
+			self.assertEqual(self.transm.proceed(["set", "allowipv6", "auto"]), (0, "auto"))
+			self.assertLogged("IPv6 is auto"); self.pruneLog()
 
 	def testSleep(self):
 		if not unittest.F2B.fast:
@@ -924,8 +936,9 @@ class Transmitter(TransmitterBase):
 
 class TransmitterLogging(TransmitterBase):
 
+	TEST_SRV_CLASS = Server
+
 	def setUp(self):
-		self.server = Server()
 		super(TransmitterLogging, self).setUp()
 		self.server.setLogTarget("/dev/null")
 		self.server.setLogLevel("CRITICAL")

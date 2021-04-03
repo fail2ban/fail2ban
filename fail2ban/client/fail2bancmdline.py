@@ -192,7 +192,7 @@ class Fail2banCmdLine():
 				cmdOpts = 'hc:s:p:xfbdtviqV'
 				cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'test', 'async',
 					'conf=', 'pidfile=', 'pname=', 'socket=',
-					'timeout=', 'str2sec=', 'help', 'version', 'dp', '--dump-pretty']
+					'timeout=', 'str2sec=', 'help', 'version', 'dp', 'dump-pretty']
 				optList, self._args = getopt.getopt(self._argv[1:], cmdOpts, cmdLongOpts)
 			except getopt.GetoptError:
 				self.dispUsage()

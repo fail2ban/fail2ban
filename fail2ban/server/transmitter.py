@@ -173,6 +173,11 @@ class Transmitter:
 				return self.__server.getSyslogSocket()
 			else:
 				raise Exception("Failed to change syslog socket")
+		elif name == "allowipv6":
+			value = command[1]
+			self.__server.setIPv6IsAllowed(value)
+			if self.__quiet: return
+			return value
 		#Thread
 		elif name == "thread":
 			value = command[1]

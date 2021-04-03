@@ -30,17 +30,6 @@ locale_time = LocaleTime()
 TZ_ABBR_RE = r"[A-Z](?:[A-Z]{2,4})?"
 FIXED_OFFSET_TZ_RE = re.compile(r"(%s)?([+-][01]\d(?::?\d{2})?)?$" % (TZ_ABBR_RE,))
 
-def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNow)):
-	""" Build century regex for last year and the next years (distance).
-		
-	Thereby respect possible run in the test-cases (alternate date used there)
-	"""
-	cent = lambda year, f=cent[0], t=cent[1]: str(year)[f:t]
-	exprset = set( cent(now[0].year + i) for i in (-1, distance) )
-	if len(now) and now[1]:
-		exprset |= set( cent(now[1].year + i) for i in (-1, distance) )
-	return "(?:%s)" % "|".join(exprset) if len(exprset) > 1 else "".join(exprset)
-
 timeRE = TimeRE()
 
 # %k - one- or two-digit number giving the hour of the day (0-23) on a 24-hour clock,
@@ -63,20 +52,68 @@ timeRE['z'] = r"(?P<z>Z|UTC|GMT|[+-][01]\d(?::?\d{2})?)"
 timeRE['ExZ'] = r"(?P<Z>%s)" % (TZ_ABBR_RE,)
 timeRE['Exz'] = r"(?P<z>(?:%s)?[+-][01]\d(?::?\d{2})?|%s)" % (TZ_ABBR_RE, TZ_ABBR_RE)
 
+# overwrite default patterns, since they can be non-optimal:
+timeRE['d'] = r"(?P<d>[1-2]\d|[0 ]?[1-9]|3[0-1])"
+timeRE['m'] = r"(?P<m>0?[1-9]|1[0-2])"
+timeRE['Y'] = r"(?P<Y>\d{4})"
+timeRE['H'] = r"(?P<H>[0-1]?\d|2[0-3])"
+timeRE['M'] = r"(?P<M>[0-5]?\d)"
+timeRE['S'] = r"(?P<S>[0-5]?\d|6[0-1])"
+
 # Extend build-in TimeRE with some exact patterns
 # exact two-digit patterns:
-timeRE['Exd'] = r"(?P<d>3[0-1]|[1-2]\d|0[1-9])"
-timeRE['Exm'] = r"(?P<m>1[0-2]|0[1-9])"
-timeRE['ExH'] = r"(?P<H>2[0-3]|[0-1]\d)"
-timeRE['Exk'] = r" ?(?P<H>2[0-3]|[0-1]\d|\d)"
+timeRE['Exd'] = r"(?P<d>[1-2]\d|0[1-9]|3[0-1])"
+timeRE['Exm'] = r"(?P<m>0[1-9]|1[0-2])"
+timeRE['ExH'] = r"(?P<H>[0-1]\d|2[0-3])"
+timeRE['Exk'] = r" ?(?P<H>[0-1]?\d|2[0-3])"
 timeRE['Exl'] = r" ?(?P<I>1[0-2]|\d)"
 timeRE['ExM'] = r"(?P<M>[0-5]\d)"
-timeRE['ExS'] = r"(?P<S>6[0-1]|[0-5]\d)"
-# more precise year patterns, within same century of last year and
-# the next 3 years (for possible long uptime of fail2ban); thereby
-# respect possible run in the test-cases (alternate date used there):
-timeRE['ExY'] = r"(?P<Y>%s\d)" % _getYearCentRE(cent=(0,3), distance=3)
-timeRE['Exy'] = r"(?P<y>%s\d)" % _getYearCentRE(cent=(2,3), distance=3)
+timeRE['ExS'] = r"(?P<S>[0-5]\d|6[0-1])"
+
+def _updateTimeRE():
+	def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNow)):
+		""" Build century regex for last year and the next years (distance).
+			
+		Thereby respect possible run in the test-cases (alternate date used there)
+		"""
+		cent = lambda year, f=cent[0], t=cent[1]: str(year)[f:t]
+		def grp(exprset):
+			c = None
+			if len(exprset) > 1:
+				for i in exprset:
+					if c is None or i[0:-1] == c:
+						c = i[0:-1]
+					else:
+						c = None
+						break
+				if not c:
+					for i in exprset:
+						if c is None or i[0] == c:
+							c = i[0]
+						else:
+							c = None
+							break
+				if c:
+					return "%s%s" % (c, grp([i[len(c):] for i in exprset]))
+			return ("(?:%s)" % "|".join(exprset) if len(exprset[0]) > 1 else "[%s]" % "".join(exprset)) \
+				if len(exprset) > 1 else "".join(exprset)
+		exprset = set( cent(now[0].year + i) for i in (-1, distance) )
+		if len(now) > 1 and now[1]:
+			exprset |= set( cent(now[1].year + i) for i in xrange(-1, now[0].year-now[1].year+1, distance) )
+		return grp(sorted(list(exprset)))
+
+	# more precise year patterns, within same century of last year and
+	# the next 3 years (for possible long uptime of fail2ban); thereby
+	# respect possible run in the test-cases (alternate date used there):
+	if MyTime.alternateNowTime != 0:
+		timeRE['ExY'] = r"(?P<Y>%s\d)" % _getYearCentRE(cent=(0,3), distance=3)
+		timeRE['Exy'] = r"(?P<y>%s\d)" % _getYearCentRE(cent=(2,3), distance=3)
+	else: # accept years: 19xx|2xxx up to current century
+		timeRE['ExY'] = r"(?P<Y>(?:19\d{2}|%s\d))" % _getYearCentRE(cent=(0,3), distance=3, 
+			now=(MyTime.now(), datetime.datetime.fromtimestamp(978393600)))
+		timeRE['Exy'] = r"(?P<y>\d{2})"
+
+_updateTimeRE()
 
 def getTimePatternRE():
 	keys = timeRE.keys()
@@ -168,9 +205,9 @@ def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
 	"""
 
 	now = \
-	year = month = day = hour = minute = tzoffset = \
+	year = month = day = tzoffset = \
 	weekday = julian = week_of_year = None
-	second = fraction = 0
+	hour = minute = second = fraction = 0
 	for key, val in found_dict.iteritems():
 		if val is None: continue
 		# Directives not explicitly handled below:

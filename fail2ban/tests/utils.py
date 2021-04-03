@@ -47,7 +47,7 @@ from ..server import asyncserver
 from ..version import version
 
 
-logSys = getLogger(__name__)
+logSys = getLogger("fail2ban")
 
 TEST_NOW = 1124013600
 
@@ -126,9 +126,6 @@ def getOptParser(doc=""):
 
 def initProcess(opts):
 	# Logger:
-	global logSys
-	logSys = getLogger("fail2ban")
-
 	llev = None
 	if opts.log_level is not None: # pragma: no cover
 		# so we had explicit settings
@@ -320,6 +317,7 @@ def initTests(opts):
 
 	# precache all invalid ip's (TEST-NET-1, ..., TEST-NET-3 according to RFC 5737):
 	c = DNSUtils.CACHE_ipToName
+	c.clear = lambda: logSys.warn('clear CACHE_ipToName is disabled in test suite')
 	# increase max count and max time (too many entries, long time testing):
 	c.setOptions(maxCount=10000, maxTime=5*60)
 	for i in xrange(256):
@@ -337,6 +335,7 @@ def initTests(opts):
 		c.set('8.8.4.4', 'dns.google')
 		# precache all dns to ip's used in test cases:
 		c = DNSUtils.CACHE_nameToIp
+		c.clear = lambda: logSys.warn('clear CACHE_nameToIp is disabled in test suite')
 		for i in (
 			('999.999.999.999', set()),
 			('abcdef.abcdef', set()),
@@ -780,8 +779,9 @@ class LogCaptureTestCase(unittest.TestCase):
 		"""Call after every test case."""
 		# print "O: >>%s<<" % self._log.getvalue()
 		self.pruneLog()
+		self._log.close()
 		logSys.handlers = self._old_handlers
-		logSys.level = self._old_level
+		logSys.setLevel(self._old_level)
 		super(LogCaptureTestCase, self).tearDown()
 
 	def _is_logged(self, *s, **kwargs):

@@ -94,6 +94,11 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			# be sure all journal types will be opened if files specified (don't set flags):
 			if 'files' not in args or not len(args['files']):
 				args['flags'] = 4
+				
+		try:
+			args['namespace'] = kwargs.pop('namespace')
+		except KeyError:
+			pass
 
 		return args
 
@@ -317,13 +322,12 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 							break
 					else:
 						break
-				if self.__modified:
-					if not self.banASAP: # pragma: no cover
-						self.performBan()
-					self.__modified = 0
-					# update position in log (time and iso string):
-					if self.jail.database is not None:
-						self.jail.database.updateJournal(self.jail, 'systemd-journal', line[1], line[0][1])
+				self.__modified = 0
+				if self.ticks % 10 == 0:
+					self.performSvc()
+				# update position in log (time and iso string):
+				if self.jail.database is not None:
+					self.jail.database.updateJournal(self.jail, 'systemd-journal', line[1], line[0][1])
 			except Exception as e: # pragma: no cover
 				if not self.active: # if not active - error by stop...
 					break
