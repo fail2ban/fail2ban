@@ -21,6 +21,9 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 * `actioncheck` behavior is changed now (gh-488), so invariant check as well as restore or repair
    of sane environment (in case of recognized unsane state) would only occur on action errors (e. g.
    if ban or unban operations are exiting with other code as 0)
+* `filter.d/nginx-http-auth.conf` - extended with parameter mode, so additionally to `auth` (or `normal`) 
+   mode `fallback` (or combined as `aggressive`) can find SSL errors while SSL handshaking, gh-2881
+
 
 ver. 0.11.2 (2020/11/23) - heal-the-world-with-security-tools
 -----------
