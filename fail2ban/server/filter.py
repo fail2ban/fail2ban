@@ -780,7 +780,7 @@ class Filter(JailThread):
 					self._riseUpRegex(self.__ignoreRegex, ignoreRegexIndex, ignoreRegex)
 				fnd = ignoreRegexIndex
 				logSys.log(7, "  Matched ignoreregex %d and was ignored", fnd)
-				if self.onIgnoreRegex: self.onIgnoreRegex(fnd, ignoreRegex)
+				if self.onIgnoreRegex: self.onIgnoreRegex(ignoreRegex)
 				# remove ignored match:
 				if not self.checkAllRegex or self.__lineBufferSize > 1:
 					# todo: check ignoreRegex.getUnmatchedTupleLines() would be better (fix testGetFailuresMultiLineIgnoreRegex):
@@ -999,7 +999,7 @@ class Filter(JailThread):
 					fail = fail.copy()
 				# append failure with match to the list:
 				for ip in ips:
-					failList.append([failRegexIndex, ip, date, fail])
+					failList.append([failRegex, ip, date, fail])
 				if not self.checkAllRegex:
 					break
 			except RegexException as e: # pragma: no cover - unsure if reachable

@@ -252,6 +252,15 @@ class Regex:
 	@property
 	def pattern(self):
 		return self._pattern
+
+	@property
+	def stats(self):
+		"""Automatically created statistics member.
+
+		Used for statistic purposes (e. g. in fail2ban-regex stores matches in verbose mode)."""
+		if not hasattr(self, '_stats'):
+			self._stats = dict()
+		return self._stats
 	
 	##
 	# Returns string buffer using join of the tupleLines.

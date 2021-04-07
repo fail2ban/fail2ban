@@ -192,33 +192,6 @@ def get_opt_parser():
 	return p
 
 
-class RegexStat(object):
-
-	def __init__(self, failregex):
-		self._stats = 0
-		self._failregex = failregex
-		self._ipList = list()
-
-	def __str__(self):
-		return "%s(%r) %d failed: %s" \
-		  % (self.__class__, self._failregex, self._stats, self._ipList)
-
-	def inc(self):
-		self._stats += 1
-
-	def getStats(self):
-		return self._stats
-
-	def getFailRegex(self):
-		return self._failregex
-
-	def appendIP(self, value):
-		self._ipList.append(value)
-
-	def getIPList(self):
-		return self._ipList
-
-
 class LineStats(object):
 	"""Just a convenience container for stats
 	"""
@@ -256,8 +229,6 @@ class Fail2banRegex(object):
 		self._filter = Filter(None)
 		self._prefREMatched = 0
 		self._prefREGroups = list()
-		self._ignoreregex = list()
-		self._failregex = list()
 		self._time_elapsed = None
 		self._line_stats = LineStats(opts)
 
@@ -398,7 +369,6 @@ class Fail2banRegex(object):
 			# to stream:
 			readercommands = reader.convert()
 
-			regex_values = {}
 			for opt in readercommands:
 				if opt[0] == 'multi-set':
 					optval = opt[3]
@@ -411,17 +381,11 @@ class Fail2banRegex(object):
 						for optval in optval:
 							self._filter.prefRegex = optval
 					elif opt[2] == "addfailregex":
-						stor = regex_values.get('fail')
-						if not stor: stor = regex_values['fail'] = list()
 						for optval in optval:
-							stor.append(RegexStat(optval))
-							#self._filter.addFailRegex(optval)
+							self._filter.addFailRegex(optval)
 					elif opt[2] == "addignoreregex":
-						stor = regex_values.get('ignore')
-						if not stor: stor = regex_values['ignore'] = list()
 						for optval in optval:
-							stor.append(RegexStat(optval))
-							#self._filter.addIgnoreRegex(optval)
+							self._filter.addIgnoreRegex(optval)
 					elif opt[2] == "maxlines":
 						for optval in optval:
 							self.setMaxLines(optval)
@@ -436,22 +400,14 @@ class Fail2banRegex(object):
 						  "read from %s: %s" % (opt[2], optval, value, e) )
 					return False
 
-		else:
+		else: # direct failregex or ignoreregex:
 			self.output( "Use %11s line : %s" % (regex, shortstr(value)) )
-			regex_values = {regextype: [RegexStat(value)]}
+			getattr(self._filter, 'add%sRegex' % regextype.title())(value)
 
-		for regextype, regex_values in regex_values.iteritems():
-			regex = regextype + 'regex'
-			setattr(self, "_" + regex, regex_values)
-			for regex in regex_values:
-				getattr(
-					self._filter,
-					'add%sRegex' % regextype.title())(regex.getFailRegex())
 		return True
 
-	def _onIgnoreRegex(self, idx, ignoreRegex):
+	def _onIgnoreRegex(self, ignoreRegex):
 		self._lineIgnored = True
-		self._ignoreregex[idx].inc()
 
 	def testRegex(self, line, date=None):
 		orgLineBuffer = self._filter._Filter__lineBuffer
@@ -469,9 +425,10 @@ class Fail2banRegex(object):
 					# Append True/False flag depending if line was matched by
 					# more than one regex
 					match.append(len(ret)>1)
-					regex = self._failregex[match[0]]
-					regex.inc()
-					regex.appendIP(match)
+					if self._verbose:
+						regex = match[0]
+						if not regex.stats.get('matchList'): regex.stats['matchList'] = list()
+						regex.stats['matchList'].append(match[1:])
 				if not match[3].get('nofail'):
 					ret.append(match)
 				else:
@@ -627,16 +584,16 @@ class Fail2banRegex(object):
 			header = "%s line(s):" % (ltype.capitalize(),)
 			if self._debuggex:
 				if ltype == 'missed' or ltype == 'matched':
-					regexlist = self._failregex
+					regexlist = self._filter.failRegex
 				else:
-					regexlist = self._ignoreregex
+					regexlist = self._filter.ignoreRegex
 				l = lstats[ltype + '_lines_timeextracted']
 				if lines < self._maxlines or getattr(self, '_print_all_' + ltype):
 					ans = [[]]
 					for arg in [l, regexlist]:
 						ans = [ x + [y] for x in ans for y in arg ]
-					b = map(lambda a: a[0] +  ' | ' + a[1].getFailRegex() + ' |  ' + 
-						debuggexURL(self.encode_line(a[0]), a[1].getFailRegex(), 
+					b = map(lambda a: a[0] +  ' | ' + a[1].getRegex() + ' |  ' + 
+						debuggexURL(self.encode_line(a[0]), a[1].getRegex(), 
 							multiline, self._opts.usedns), ans)
 					pprint_list([x.rstrip() for x in b], header)
 				else:
@@ -654,27 +611,26 @@ class Fail2banRegex(object):
 		output( "Results" )
 		output( "=======" )
 
-		def print_failregexes(title, failregexes):
+		def _printRegexes(title, failregexes):
 			# Print title
 			total, out = 0, []
 			for cnt, failregex in enumerate(failregexes):
-				match = failregex.getStats()
-				total += match
-				if (match or self._verbose):
-					out.append("%2d) [%d] %s" % (cnt+1, match, failregex.getFailRegex()))
+				total += failregex.matchCount
+				if (failregex.matchCount or self._verbose):
+					out.append("[%d] %s" % (failregex.matchCount, failregex.getRegex()))
 
-				if self._verbose and len(failregex.getIPList()):
-					for ip in failregex.getIPList():
-						timeTuple = time.localtime(ip[2])
+				if self._verbose and failregex.stats.get('matchList'):
+					for ip in failregex.stats['matchList']:
+						timeTuple = time.localtime(ip[1])
 						timeString = time.strftime("%a %b %d %H:%M:%S %Y", timeTuple)
 						out.append(
 							"    %s  %s%s" % (
-								ip[1],
+								ip[0],
 								timeString,
 								ip[-1] and " (multiple regex matched)" or ""))
 
 			output( "\n%s: %d total" % (title, total) )
-			pprint_list(out, " #) [# of hits] regular expression")
+			pprint_list(out, "[# of hits] regular expression")
 			return total
 
 		# Print prefregex:
@@ -689,8 +645,8 @@ class Fail2banRegex(object):
 			pprint_list(out)
 
 		# Print regex's:
-		total = print_failregexes("Failregex", self._failregex)
-		_ = print_failregexes("Ignoreregex", self._ignoreregex)
+		total = _printRegexes("Failregex", self._filter.failRegex)
+		_ = _printRegexes("Ignoreregex", self._filter.ignoreRegex)
 
 
 		if self._filter.dateDetector is not None:
