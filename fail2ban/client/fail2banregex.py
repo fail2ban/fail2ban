@@ -167,6 +167,8 @@ def get_opt_parser():
 			   help="Set numerical level of verbosity (0..4)"),
 		Option("--verbose-date", "--VD", action='store_true',
 			   help="Verbose date patterns/regex in output"),
+		Option("--verbose-regex", "--VR", action='store_true',
+			   help="Verbose regex in output"),
 		Option("-D", "--debuggex", action='store_true',
 			   help="Produce debuggex.com urls for debugging there"),
 		Option("--no-check-all", action="store_false", dest="checkAllRegex", default=True,
@@ -227,7 +229,6 @@ class Fail2banRegex(object):
 
 		self.share_config=dict()
 		self._filter = Filter(None)
-		self._prefREMatched = 0
 		self._prefREGroups = list()
 		self._time_elapsed = None
 		self._line_stats = LineStats(opts)
@@ -439,7 +440,6 @@ class Fail2banRegex(object):
 			if self._filter.prefRegex:
 				pre = self._filter.prefRegex
 				if pre.hasMatched():
-					self._prefREMatched += 1
 					if self._verbose:
 						if len(self._prefREGroups) < self._maxlines:
 							self._prefREGroups.append(pre.getGroups())
@@ -614,34 +614,37 @@ class Fail2banRegex(object):
 		def _printRegexes(title, failregexes):
 			# Print title
 			total, out = 0, []
-			for cnt, failregex in enumerate(failregexes):
+			for failregex in failregexes:
 				total += failregex.matchCount
 				if (failregex.matchCount or self._verbose):
-					out.append("[%d] %s" % (failregex.matchCount, failregex.getRegex()))
-
+					out.append("[%d] %s" % (failregex.matchCount, failregex.pattern))
+					ofs = len(str(failregex.matchCount))+2
+					if self._verbose_regex or self._verbose and failregex.pattern != failregex.getRegex():
+						out.append("%*s %s" % (ofs, "`=", failregex.getRegex(),))
 				if self._verbose and failregex.stats.get('matchList'):
 					for ip in failregex.stats['matchList']:
 						timeTuple = time.localtime(ip[1])
 						timeString = time.strftime("%a %b %d %H:%M:%S %Y", timeTuple)
 						out.append(
-							"    %s  %s%s" % (
-								ip[0],
-								timeString,
+							"%*s %s  %s%s" % (ofs, "", ip[0], timeString,
 								ip[-1] and " (multiple regex matched)" or ""))
 
 			output( "\n%s: %d total" % (title, total) )
-			pprint_list(out, "[# of hits] regular expression")
+			pprint_list(out, "[# of hits] pattern")
 			return total
 
 		# Print prefregex:
 		if self._filter.prefRegex:
 			#self._filter.prefRegex.hasMatched()
 			pre = self._filter.prefRegex 
-			out = [pre.getRegex()]
+			out = ["[%d] %s" % (pre.matchCount, pre.pattern)]
+			ofs = len(str(pre.matchCount))+2
+			if self._verbose_regex or self._verbose and pre.pattern != pre.getRegex():
+				out.append("%*s %s" % (ofs, "`=", pre.getRegex()))
 			if self._verbose:
 				for grp in self._prefREGroups:
-					out.append("    %s" % (grp,))
-			output( "\n%s: %d total" % ("Prefregex", self._prefREMatched) )
+					out.append("%*s %s" % (ofs, "", grp))
+			output( "\n%s: %d total" % ("Prefregex", pre.matchCount) )
 			pprint_list(out)
 
 		# Print regex's:
@@ -724,9 +727,10 @@ class Fail2banRegex(object):
 				test_lines = [ cmd_log ]
 			else: # multi line parsing (with and without buffering)
 				test_lines = cmd_log.split("\n")
+				if test_lines[-1] == '': del test_lines[-1]
 				self.output( "Use      multi line : %s line(s)" % len(test_lines) )
 				for i, l in enumerate(test_lines):
-					if i >= 5:
+					if i >= 5 and l != "":
 						self.output( "| ..." ); break
 					self.output( "| %2.2s: %s" % (i+1, shortstr(l)) )
 				self.output( "`-" )
