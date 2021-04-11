@@ -3,6 +3,7 @@ bin/fail2ban-regex
 bin/fail2ban-server
 bin/fail2ban-testcases
 ChangeLog
+config/action.d/apprise.conf
 config/action.d/abuseipdb.conf
 config/action.d/apf.conf
 config/action.d/blocklist_de.conf
