@@ -29,6 +29,18 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 * better recognition of log rotation, better performance by reopen: avoid unnecessary seek to begin of file
   (and hash calculation)
 * file filter reads only complete lines (ended with new-line) now, so waits for end of line (for its completion)
+* regex of multiple `failregex` (and `ignoreregex`) can rise up in filter depending on numer of matched lines,
+  (most used expressions go to the begin of list so will be applied first) what can provide better performance by
+  match search; two new option allow to switch this behavior for single or any expression:
+  - `NO-RISE-UP` or `NoRiseUp` - disable rising up for the regex for which this option is set
+  - `NO-REORDER` or `NoReorder` - disable reordering of `failregex` or `ignoreregex` list completely
+* `fail2ban-regex` extended:
+  - `prefregex`, `failregex` and `ignoreregex` are showing as original pattern now and PCRE expression
+    only in verbose mode (and all patterns are reordered by number of matches now);
+  - new option `--verbose-regex` or `--VR` which show substituted PCRE expression of `prefregex`,
+    matched `failregex` and `ignoreregex` additionally to pattern (without the need to enable more verbose mode)
+* `fail2ban-regex` and test suite e. g. sample regexs factory are adjusted to use more common functionality
+  of filter module (fewer special tweaks inside the modules)
 
 
 ver. 0.11.2 (2020/11/23) - heal-the-world-with-security-tools
