@@ -75,7 +75,6 @@ class FilterPyinotify(FileFilter):
 
 	def __init__(self, jail):
 		FileFilter.__init__(self, jail)
-		self.__modified = False
 		# Pyinotify watch manager
 		self.__monitor = pyinotify.WatchManager()
 		self.__notifier = None
@@ -140,9 +139,6 @@ class FilterPyinotify(FileFilter):
 		"""
 		if not self.idle:
 			self.getFailures(path)
-			if not self.banASAP: # pragma: no cover
-				self.performBan()
-			self.__modified = False
 
 	def _addPending(self, path, reason, isDir=False):
 		if path not in self.__pending:
@@ -352,9 +348,14 @@ class FilterPyinotify(FileFilter):
 					if not self.active: break
 					self.__notifier.read_events()
 
+				self.ticks += 1
+
 				# check pending files/dirs (logrotate ready):
-				if not self.idle:
-					self._checkPending()
+				if self.idle:
+					continue
+				self._checkPending()
+				if self.ticks % 10 == 0:
+					self.performSvc()
 
 			except Exception as e: # pragma: no cover
 				if not self.active: # if not active - error by stop...
@@ -364,8 +365,6 @@ class FilterPyinotify(FileFilter):
 				# incr common error counter:
 				self.commonError()
 			
-			self.ticks += 1
-
 		logSys.debug("[%s] filter exited (pyinotifier)", self.jailName)
 		self.__notifier = None
 

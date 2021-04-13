@@ -87,6 +87,21 @@ option = %s
 		self.assertTrue(self.c.read(f))	# we got some now
 		return self.c.getOptions('section', [("int", 'option')])['option']
 
+	def testConvert(self):
+		self.c.add_section("Definition")
+		self.c.set("Definition", "a", "1")
+		self.c.set("Definition", "b", "1")
+		self.c.set("Definition", "c", "test")
+		opts = self.c.getOptions("Definition", 
+			(('int', 'a', 0), ('bool', 'b', 0), ('int', 'c', 0)))
+		self.assertSortedEqual(opts, {'a': 1, 'b': True, 'c': 0})
+		opts = self.c.getOptions("Definition", 
+			(('int', 'a'), ('bool', 'b'), ('int', 'c')))
+		self.assertSortedEqual(opts, {'a': 1, 'b': True, 'c': None})
+		opts = self.c.getOptions("Definition", 
+			{'a': ('int', 0), 'b': ('bool', 0), 'c': ('int', 0)})
+		self.assertSortedEqual(opts, {'a': 1, 'b': True, 'c': 0})
+
 	def testInaccessibleFile(self):
 		f = os.path.join(self.d, "d.conf")  # inaccessible file
 		self._write('d.conf', 0)
@@ -249,6 +264,17 @@ class JailReaderTest(LogCaptureTestCase):
 	def __init__(self, *args, **kwargs):
 		super(JailReaderTest, self).__init__(*args, **kwargs)
 
+	def testSplitWithOptions(self):
+		# covering all separators - new-line and spaces:
+		for sep in ('\n', '\t', ' '):
+			self.assertEqual(splitWithOptions('a%sb' % (sep,)),           ['a',           'b'])
+			self.assertEqual(splitWithOptions('a[x=y]%sb' % (sep,)),      ['a[x=y]',      'b'])
+			self.assertEqual(splitWithOptions('a[x=y][z=z]%sb' % (sep,)), ['a[x=y][z=z]', 'b'])
+			self.assertEqual(splitWithOptions('a[x="y][z"]%sb' % (sep,)), ['a[x="y][z"]', 'b'])
+			self.assertEqual(splitWithOptions('a[x="y z"]%sb' % (sep,)),  ['a[x="y z"]',  'b'])
+			self.assertEqual(splitWithOptions('a[x="y\tz"]%sb' % (sep,)), ['a[x="y\tz"]', 'b'])
+			self.assertEqual(splitWithOptions('a[x="y\nz"]%sb' % (sep,)), ['a[x="y\nz"]', 'b'])
+
 	def testIncorrectJail(self):
 		jail = JailReader('XXXABSENTXXX', basedir=CONFIG_DIR, share_config=CONFIG_DIR_SHARE_CFG)
 		self.assertRaises(ValueError, jail.read)
@@ -355,13 +381,16 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertEqual(('mail.who_is', {'a':'cat', 'b':'dog'}), extractOptions("mail.who_is[a=cat,b=dog]"))
 		self.assertEqual(('mail--ho_is', {}), extractOptions("mail--ho_is"))
 
-		self.assertEqual(('mail--ho_is', {}), extractOptions("mail--ho_is['s']"))
-		#print(self.getLog())
-		#self.assertLogged("Invalid argument ['s'] in ''s''")
-
 		self.assertEqual(('mail', {'a': ','}), extractOptions("mail[a=',']"))
+		self.assertEqual(('mail', {'a': 'b'}), extractOptions("mail[a=b, ]"))
 
-		#self.assertRaises(ValueError, extractOptions ,'mail-how[')
+		self.assertRaises(ValueError, extractOptions ,'mail-how[')
+
+		self.assertRaises(ValueError, extractOptions, """mail[a="test with interim (wrong) "" quotes"]""")
+		self.assertRaises(ValueError, extractOptions, """mail[a='test with interim (wrong) '' quotes']""")
+		self.assertRaises(ValueError, extractOptions, """mail[a='x, y, z', b=x, y, z]""")
+
+		self.assertRaises(ValueError, extractOptions, """mail['s']""")
 
 		# Empty option
 		option = "abc[]"
@@ -429,8 +458,6 @@ class JailReaderTest(LogCaptureTestCase):
 			('sender', 'f2b-test@example.com'), ('blocklist_de_apikey', 'test-key'), 
 			('action', 
 				'%(action_blocklist_de)s\n'
-				'%(action_badips_report)s\n'
-				'%(action_badips)s\n'
 				'mynetwatchman[port=1234,protocol=udp,agent="%(fail2ban_agent)s"]'
 			),
 		))
@@ -444,16 +471,14 @@ class JailReaderTest(LogCaptureTestCase):
 			if len(cmd) <= 4:
 				continue
 			# differentiate between set and multi-set (wrop it here to single set):
-			if cmd[0] == 'set' and (cmd[4] == 'agent' or cmd[4].endswith('badips.py')):
+			if cmd[0] == 'set' and cmd[4] == 'agent':
 				act.append(cmd)
 			elif cmd[0] == 'multi-set':
 				act.extend([['set'] + cmd[1:4] + o for o in cmd[4] if o[0] == 'agent'])
 		useragent = 'Fail2Ban/%s' % version
-		self.assertEqual(len(act), 4)
+		self.assertEqual(len(act), 2)
 		self.assertEqual(act[0], ['set', 'blocklisttest', 'action', 'blocklist_de', 'agent', useragent])
-		self.assertEqual(act[1], ['set', 'blocklisttest', 'action', 'badips', 'agent', useragent])
-		self.assertEqual(eval(act[2][5]).get('agent', '<wrong>'), useragent)
-		self.assertEqual(act[3], ['set', 'blocklisttest', 'action', 'mynetwatchman', 'agent', useragent])
+		self.assertEqual(act[1], ['set', 'blocklisttest', 'action', 'mynetwatchman', 'agent', useragent])
 
 	@with_tmpdir
 	def testGlob(self, d):
@@ -483,14 +508,12 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertRaises(NoSectionError, c.getOptions, 'test', {})
 
 
-class FilterReaderTest(unittest.TestCase):
-
-	def __init__(self, *args, **kwargs):
-		super(FilterReaderTest, self).__init__(*args, **kwargs)
-		self.__share_cfg = {}
+class FilterReaderTest(LogCaptureTestCase):
 
 	def testConvert(self):
-		output = [['multi-set', 'testcase01', 'addfailregex', [
+		output = [
+			['set', 'testcase01', 'maxlines', 1],
+			['multi-set', 'testcase01', 'addfailregex', [
 			"^\\s*(?:\\S+ )?(?:kernel: \\[\\d+\\.\\d+\\] )?(?:@vserver_\\S+ )"
 			"?(?:(?:\\[\\d+\\])?:\\s+[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?|"
 			"[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?(?:\\[\\d+\\])?:)?\\s*(?:"
@@ -512,7 +535,6 @@ class FilterReaderTest(unittest.TestCase):
 			['set', 'testcase01', 'addjournalmatch',
 				"FIELD= with spaces ", "+", "AFIELD= with + char and spaces"],
 			['set', 'testcase01', 'datepattern', "%Y %m %d %H:%M:%S"],
-			['set', 'testcase01', 'maxlines', 1], # Last for overide test
 		]
 		filterReader = FilterReader("testcase01", "testcase01", {})
 		filterReader.setBaseDir(TEST_FILES_DIR)
@@ -529,8 +551,17 @@ class FilterReaderTest(unittest.TestCase):
 		filterReader.read()
 		#filterReader.getOptions(["failregex", "ignoreregex"])
 		filterReader.getOptions(None)
-		output[-1][-1] = "5"
+		output[0][-1] = 5; # maxlines = 5
 		self.assertSortedEqual(filterReader.convert(), output)
+
+	def testConvertOptions(self):
+		filterReader = FilterReader("testcase01", "testcase01", {'maxlines': '<test>', 'test': 'X'},
+		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
+		filterReader.read()
+		filterReader.getOptions(None)
+		opts = filterReader.getCombined();
+		self.assertNotEqual(opts['maxlines'], 'X'); # wrong int value 'X' for 'maxlines'
+		self.assertLogged("Wrong int value 'X' for 'maxlines'. Using default one:")
 
 	def testFilterReaderSubstitionDefault(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sweet@example.com fromip=<IP>']]
@@ -541,6 +572,17 @@ class FilterReaderTest(unittest.TestCase):
 		c = filterReader.convert()
 		self.assertSortedEqual(c, output)
 
+	def testFilterReaderSubstKnown(self):
+		# testcase02.conf + testcase02.local, test covering that known/option is not overridden
+		# with unmodified (not available) value of option from .local config file, so wouldn't
+		# cause self-recursion if option already has a reference to known/option in .conf file.
+		filterReader = FilterReader('testcase02', "jailname", {},
+		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
+		filterReader.read()
+		filterReader.getOptions(None)
+		opts = filterReader.getCombined()
+		self.assertTrue('sshd' in opts['failregex'])
+		
 	def testFilterReaderSubstitionSet(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sour@example.com fromip=<IP>']]
 		filterReader = FilterReader('substition', "jailname", {'honeypot': 'sour@example.com'},
@@ -709,9 +751,9 @@ class JailsReaderTest(LogCaptureTestCase):
 		         ['add', 'tz_correct', 'auto'],
 			 ['start', 'tz_correct'],
 			 ['config-error',
-				"Jail 'brokenactiondef' skipped, because of wrong configuration: Invalid action definition 'joho[foo'"],
+				"Jail 'brokenactiondef' skipped, because of wrong configuration: Invalid action definition 'joho[foo': unexpected option syntax"],
 			 ['config-error',
-				"Jail 'brokenfilterdef' skipped, because of wrong configuration: Invalid filter definition 'flt[test'"],
+				"Jail 'brokenfilterdef' skipped, because of wrong configuration: Invalid filter definition 'flt[test': unexpected option syntax"],
 			 ['config-error',
 				"Jail 'missingaction' skipped, because of wrong configuration: Unable to read action 'noactionfileforthisaction'"],
 			 ['config-error',
@@ -932,6 +974,7 @@ class JailsReaderTest(LogCaptureTestCase):
 		  ['set', 'syslogsocket', 'auto'],
 		  ['set', 'loglevel', "INFO"],
 		  ['set', 'logtarget', '/var/log/fail2ban.log'],
+		  ['set', 'allowipv6', 'auto'],
 		  ['set', 'dbfile', '/var/lib/fail2ban/fail2ban.sqlite3'],
 		  ['set', 'dbmaxmatches', 10],
 		  ['set', 'dbpurgeage', '1d'],

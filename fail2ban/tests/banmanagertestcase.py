@@ -29,6 +29,7 @@ import unittest
 from .utils import setUpMyTime, tearDownMyTime
 
 from ..server.banmanager import BanManager
+from ..server.ipdns import DNSUtils
 from ..server.ticket import BanTicket
 
 class AddFailure(unittest.TestCase):
@@ -154,6 +155,21 @@ class AddFailure(unittest.TestCase):
 		finally:
 			self.__banManager.setBanTime(btime)
 
+	def testBanList(self):
+		tickets = [
+			BanTicket('192.0.2.1', 1167605999.0),
+			BanTicket('192.0.2.2', 1167605999.0),
+		]
+		tickets[1].setBanTime(-1)
+		for t in tickets:
+			self.__banManager.addBanTicket(t)
+		self.assertSortedEqual(self.__banManager.getBanList(ordered=True, withTime=True),
+			[
+			  '192.0.2.1 \t2006-12-31 23:59:59 + 600 = 2007-01-01 00:09:59',
+			  '192.0.2.2 \t2006-12-31 23:59:59 + -1 = 9999-12-31 23:59:59'
+			]
+		)
+
 
 class StatusExtendedCymruInfo(unittest.TestCase):
 	def setUp(self):
@@ -161,10 +177,10 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		super(StatusExtendedCymruInfo, self).setUp()
 		unittest.F2B.SkipIfNoNetwork()
 		setUpMyTime()
-		self.__ban_ip = "93.184.216.34"
-		self.__asn = "15133"
-		self.__country = "EU"
-		self.__rir = "ripencc"
+		self.__ban_ip = iter(DNSUtils.dnsToIp("resolver1.opendns.com")).next()
+		self.__asn = "36692"
+		self.__country = "US"
+		self.__rir = "arin"
 		ticket = BanTicket(self.__ban_ip, 1167605999.0)
 		self.__banManager = BanManager()
 		self.assertTrue(self.__banManager.addBanTicket(ticket))

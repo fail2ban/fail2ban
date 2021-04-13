@@ -296,6 +296,9 @@ Nov 24 23:46:43 host sshd[32686]: fatal: Read from socket failed: Connection res
 # failJSON: { "time": "2005-03-15T09:20:57", "match": true , "host": "192.0.2.39", "desc": "Singleline for connection reset by" }
 Mar 15 09:20:57 host sshd[28972]: Connection reset by 192.0.2.39 port 14282 [preauth]
 
+# failJSON: { "time": "2005-03-16T09:29:50", "match": true , "host": "192.0.2.20", "desc": "connection reset by user (gh-2662)" }
+Mar 16 09:29:50 host sshd[19131]: Connection reset by authenticating user root 192.0.2.20 port 1558 [preauth]
+
 # failJSON: { "time": "2005-07-17T23:03:05", "match": true , "host": "192.0.2.10", "user": "root", "desc": "user name additionally, gh-2185" }
 Jul 17 23:03:05 srv sshd[1296]: Connection closed by authenticating user root 192.0.2.10 port 46038 [preauth]
 # failJSON: { "time": "2005-07-17T23:04:00", "match": true , "host": "192.0.2.11", "user": "test 127.0.0.1", "desc": "check inject on username, gh-2185" }
@@ -309,6 +312,8 @@ Jul 17 23:04:01 srv sshd[1300]: Connection closed by authenticating user test 12
 Feb 17 17:40:17 sshd[19725]: Connection from 192.0.2.10 port 62004 on 192.0.2.10 port 22
 # failJSON: { "time": "2005-02-17T17:40:17", "match": true , "host": "192.0.2.10", "desc": "ddos: port scanner (invalid protocol identifier)" }
 Feb 17 17:40:17 sshd[19725]: error: kex_exchange_identification: client sent invalid protocol identifier ""
+# failJSON: { "time": "2005-02-17T17:40:18", "match": true , "host": "192.0.2.10", "desc": "ddos: flood attack vector, gh-2850" }
+Feb 17 17:40:18 sshd[19725]: error: kex_exchange_identification: Connection closed by remote host
 
 # failJSON: { "time": "2005-03-15T09:21:01", "match": true , "host": "192.0.2.212", "desc": "DDOS mode causes failure on close within preauth stage" }
 Mar 15 09:21:01 host sshd[2717]: Connection closed by 192.0.2.212 [preauth]
@@ -317,6 +322,11 @@ Mar 15 09:21:02 host sshd[2717]: Connection closed by 192.0.2.212 [preauth]
 
 # failJSON: { "time": "2005-07-18T17:19:11", "match": true , "host": "192.0.2.4", "desc": "ddos: disconnect on preauth phase, gh-2115" }
 Jul 18 17:19:11 srv sshd[2101]: Disconnected from 192.0.2.4 port 36985 [preauth]
+
+# failJSON: { "time": "2005-06-06T04:17:04", "match": true , "host": "192.0.2.68", "dns": null, "user": "", "desc": "empty user, gh-2749" }
+Jun  6 04:17:04 host sshd[1189074]: Invalid user  from 192.0.2.68 port 34916
+# failJSON: { "time": "2005-06-06T04:17:09", "match": true , "host": "192.0.2.68", "dns": null, "user": "", "desc": "empty user, gh-2749" }
+Jun  6 04:17:09 host sshd[1189074]: Connection closed by invalid user  192.0.2.68 port 34916 [preauth]
 
 # filterOptions: [{"mode": "extra"}, {"mode": "aggressive"}]
 
@@ -327,6 +337,8 @@ Nov 25 01:34:12 srv sshd[123]: Received disconnect from 127.0.0.1: 14: No suppor
 Nov 25 01:35:13 srv sshd[123]: error: Received disconnect from 127.0.0.1: 14: No supported authentication methods available [preauth]
 # failJSON: { "time": "2004-11-25T01:35:14", "match": true , "host": "192.168.2.92", "desc": "Optional space after port" }
 Nov 25 01:35:14 srv sshd[3625]: error: Received disconnect from 192.168.2.92 port 1684:14: No supported authentication methods available [preauth]
+# failJSON: { "time": "2004-11-25T01:35:15", "match": true , "host": "192.168.2.93", "desc": "No authentication methods available (supported is optional, gh-2682)" }
+Nov 25 01:35:15 srv sshd[3626]: error: Received disconnect from 192.168.2.93 port 1883:14: No authentication methods available [preauth]
 
 # gh-1545:
 # failJSON: { "time": "2004-11-26T13:03:29", "match": true , "host": "192.0.2.1", "desc": "No matching cipher" }

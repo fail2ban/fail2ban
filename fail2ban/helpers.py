@@ -224,9 +224,10 @@ def __stopOnIOError(logSys=None, logHndlr=None): # pragma: no cover
 		sys.exit(0)
 
 try:
-    BrokenPipeError
+	BrokenPipeError = BrokenPipeError
 except NameError: # pragma: 3.x no cover
-    BrokenPipeError = IOError
+	BrokenPipeError = IOError
+
 __origLog = logging.Logger._log
 def __safeLog(self, level, msg, args, **kwargs):
 	"""Safe log inject to avoid possible errors by unsafe log-handlers, 
@@ -302,7 +303,7 @@ def getVerbosityFormat(verbosity, fmt=' %(message)s', addtime=True, padding=True
 			if addtime:
 				fmt = ' %(asctime)-15s' + fmt
 	else: # default (not verbose):
-		fmt = "%(name)-23.23s [%(process)d]: %(levelname)-7s" + fmt
+		fmt = "%(name)-24s[%(process)d]: %(levelname)-7s" + fmt
 		if addtime:
 			fmt = "%(asctime)s " + fmt
 	# remove padding if not needed:
@@ -370,21 +371,27 @@ OPTION_CRE = re.compile(r"^([^\[]+)(?:\[(.*)\])?\s*$", re.DOTALL)
 # since v0.10 separator extended with `]\s*[` for support of multiple option groups, syntax 
 # `action = act[p1=...][p2=...]`
 OPTION_EXTRACT_CRE = re.compile(
-	r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$)', re.DOTALL)
+	r'\s*([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$|(?P<wrngA>.+))|,?\s*$|(?P<wrngB>.+)', re.DOTALL)
 # split by new-line considering possible new-lines within options [...]:
 OPTION_SPLIT_CRE = re.compile(
-	r'(?:[^\[\n]+(?:\s*\[\s*(?:[\w\-_\.]+=(?:"[^"]*"|\'[^\']*\'|[^,\]]*)\s*(?:,|\]\s*\[)?\s*)*\])?\s*|[^\n]+)(?=\n\s*|$)', re.DOTALL)
+	r'(?:[^\[\s]+(?:\s*\[\s*(?:[\w\-_\.]+=(?:"[^"]*"|\'[^\']*\'|[^,\]]*)\s*(?:,|\]\s*\[)?\s*)*\])?\s*|\S+)(?=\n\s*|\s+|$)', re.DOTALL)
 
 def extractOptions(option):
 	match = OPTION_CRE.match(option)
 	if not match:
-		# TODO proper error handling
-		return None, None
+		raise ValueError("unexpected option syntax")
 	option_name, optstr = match.groups()
 	option_opts = dict()
 	if optstr:
 		for optmatch in OPTION_EXTRACT_CRE.finditer(optstr):
+			if optmatch.group("wrngA"):
+				raise ValueError("unexpected syntax at %d after option %r: %s" % (
+					optmatch.start("wrngA"), optmatch.group(1), optmatch.group("wrngA")[0:25]))
+			if optmatch.group("wrngB"):
+				raise ValueError("expected option, wrong syntax at %d: %s" % (
+					optmatch.start("wrngB"), optmatch.group("wrngB")[0:25]))
 			opt = optmatch.group(1)
+			if not opt: continue
 			value = [
 				val for val in optmatch.group(2,3,4) if val is not None][0]
 			option_opts[opt.strip()] = value.strip()
@@ -398,8 +405,8 @@ def splitWithOptions(option):
 # tags (<tag>) in tagged options.
 #
 
-# max tag replacement count:
-MAX_TAG_REPLACE_COUNT = 10
+# max tag replacement count (considering tag X in tag Y repeat):
+MAX_TAG_REPLACE_COUNT = 25
 
 # compiled RE for tag name (replacement name) 
 TAG_CRE = re.compile(r'<([^ <>]+)>')
@@ -433,6 +440,7 @@ def substituteRecursiveTags(inptags, conditional='',
 	done = set()
 	noRecRepl = hasattr(tags, "getRawItem")
 	# repeat substitution while embedded-recursive (repFlag is True)
+	repCounts = {}
 	while True:
 		repFlag = False
 		# substitute each value:
@@ -444,7 +452,7 @@ def substituteRecursiveTags(inptags, conditional='',
 			value = orgval = uni_string(tags[tag])
 			# search and replace all tags within value, that can be interpolated using other tags:
 			m = tre_search(value)
-			refCounts = {}
+			rplc = repCounts.get(tag, {})
 			#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
 			while m:
 				# found replacement tag:
@@ -454,13 +462,13 @@ def substituteRecursiveTags(inptags, conditional='',
 					m = tre_search(value, m.end())
 					continue
 				#logSys.log(5, 'found: %s' % rtag)
-				if rtag == tag or refCounts.get(rtag, 1) > MAX_TAG_REPLACE_COUNT:
+				if rtag == tag or rplc.get(rtag, 1) > MAX_TAG_REPLACE_COUNT:
 					# recursive definitions are bad
 					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 					raise ValueError(
 						"properties contain self referencing definitions "
 						"and cannot be resolved, fail tag: %s, found: %s in %s, value: %s" % 
-						(tag, rtag, refCounts, value))
+						(tag, rtag, rplc, value))
 				repl = None
 				if conditional:
 					repl = tags.get(rtag + '?' + conditional)
@@ -480,7 +488,7 @@ def substituteRecursiveTags(inptags, conditional='',
 				value = value.replace('<%s>' % rtag, repl)
 				#logSys.log(5, 'value now: %s' % value)
 				# increment reference count:
-				refCounts[rtag] = refCounts.get(rtag, 0) + 1
+				rplc[rtag] = rplc.get(rtag, 0) + 1
 				# the next match for replace:
 				m = tre_search(value, m.start())
 			#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
@@ -488,6 +496,7 @@ def substituteRecursiveTags(inptags, conditional='',
 			if orgval != value:
 				# check still contains any tag - should be repeated (possible embedded-recursive substitution):
 				if tre_search(value):
+					repCounts[tag] = rplc
 					repFlag = True
 				# copy return tags dict to prevent modifying of inptags:
 				if id(tags) == id(inptags):

@@ -35,7 +35,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
-logLevel = 6
+logLevel = 5
 
 RE_DATE_PREMATCH = re.compile(r"(?<!\\)\{DATE\}", re.IGNORECASE)
 DD_patternCache = Utils.Cache(maxCount=1000, maxTime=60*60)
@@ -282,6 +282,8 @@ class DateDetector(object):
 				elif "{DATE}" in key:
 					self.addDefaultTemplate(preMatch=pattern, allDefaults=False)
 					return
+				elif key == "{NONE}":
+					template = _getPatternTemplate('{UNB}^', key)
 				else:
 					template = _getPatternTemplate(pattern, key)
 

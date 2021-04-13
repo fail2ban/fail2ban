@@ -3,10 +3,9 @@ bin/fail2ban-regex
 bin/fail2ban-server
 bin/fail2ban-testcases
 ChangeLog
+config/action.d/apprise.conf
 config/action.d/abuseipdb.conf
 config/action.d/apf.conf
-config/action.d/badips.conf
-config/action.d/badips.py
 config/action.d/blocklist_de.conf
 config/action.d/bsd-ipfw.conf
 config/action.d/cloudflare.conf
@@ -100,6 +99,8 @@ config/filter.d/exim.conf
 config/filter.d/exim-spam.conf
 config/filter.d/freeswitch.conf
 config/filter.d/froxlor-auth.conf
+config/filter.d/gitlab.conf
+config/filter.d/grafana.conf
 config/filter.d/groupoffice.conf
 config/filter.d/gssftpd.conf
 config/filter.d/guacamole.conf
@@ -139,6 +140,7 @@ config/filter.d/sendmail-auth.conf
 config/filter.d/sendmail-reject.conf
 config/filter.d/sieve.conf
 config/filter.d/slapd.conf
+config/filter.d/softethervpn.conf
 config/filter.d/sogo-auth.conf
 config/filter.d/solid-pop3d.conf
 config/filter.d/squid.conf
@@ -217,7 +219,6 @@ fail2ban/setup.py
 fail2ban-testcases-all
 fail2ban-testcases-all-python3
 fail2ban/tests/action_d/__init__.py
-fail2ban/tests/action_d/test_badips.py
 fail2ban/tests/action_d/test_smtp.py
 fail2ban/tests/actionstestcase.py
 fail2ban/tests/actiontestcase.py
@@ -267,6 +268,8 @@ fail2ban/tests/files/database_v1.db
 fail2ban/tests/files/database_v2.db
 fail2ban/tests/files/filter.d/substition.conf
 fail2ban/tests/files/filter.d/testcase01.conf
+fail2ban/tests/files/filter.d/testcase02.conf
+fail2ban/tests/files/filter.d/testcase02.local
 fail2ban/tests/files/filter.d/testcase-common.conf
 fail2ban/tests/files/ignorecommand.py
 fail2ban/tests/files/logs/3proxy
@@ -301,6 +304,8 @@ fail2ban/tests/files/logs/exim
 fail2ban/tests/files/logs/exim-spam
 fail2ban/tests/files/logs/freeswitch
 fail2ban/tests/files/logs/froxlor-auth
+fail2ban/tests/files/logs/gitlab
+fail2ban/tests/files/logs/grafana
 fail2ban/tests/files/logs/groupoffice
 fail2ban/tests/files/logs/gssftpd
 fail2ban/tests/files/logs/guacamole
@@ -338,6 +343,7 @@ fail2ban/tests/files/logs/sendmail-auth
 fail2ban/tests/files/logs/sendmail-reject
 fail2ban/tests/files/logs/sieve
 fail2ban/tests/files/logs/slapd
+fail2ban/tests/files/logs/softethervpn
 fail2ban/tests/files/logs/sogo-auth
 fail2ban/tests/files/logs/solid-pop3d
 fail2ban/tests/files/logs/squid

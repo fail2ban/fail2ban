@@ -27,9 +27,7 @@ __license__ = "GPL"
 import os
 import time
 
-from .failmanager import FailManagerEmpty
 from .filter import FileFilter
-from .mytime import MyTime
 from .utils import Utils
 from ..helpers import getLogger, logging
 
@@ -55,7 +53,6 @@ class FilterPoll(FileFilter):
 
 	def __init__(self, jail):
 		FileFilter.__init__(self, jail)
-		self.__modified = False
 		## The time of the last modification of the file.
 		self.__prevStats = dict()
 		self.__file404Cnt = dict()
@@ -111,15 +108,14 @@ class FilterPoll(FileFilter):
 				modlst = []
 				Utils.wait_for(lambda: not self.active or self.getModified(modlst),
 					self.sleeptime)
+				if not self.active: # pragma: no cover - timing
+					break
 				for filename in modlst:
 					self.getFailures(filename)
-					self.__modified = True
 
 				self.ticks += 1
-				if self.__modified:
-					if not self.banASAP: # pragma: no cover
-						self.performBan()
-					self.__modified = False
+				if self.ticks % 10 == 0:
+					self.performSvc()
 			except Exception as e: # pragma: no cover
 				if not self.active: # if not active - error by stop...
 					break
@@ -140,7 +136,7 @@ class FilterPoll(FileFilter):
 		try:
 			logStats = os.stat(filename)
 			stats = logStats.st_mtime, logStats.st_ino, logStats.st_size
-			pstats = self.__prevStats.get(filename, (0))
+			pstats = self.__prevStats.get(filename, (0,))
 			if logSys.getEffectiveLevel() <= 4:
 				# we do not want to waste time on strftime etc if not necessary
 				dt = logStats.st_mtime - pstats[0]

@@ -1,0 +1,66 @@
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    paths-ignore:
+    - 'doc/**'
+    - 'files/**'
+    - 'man/**'
+  pull_request:
+    paths-ignore:
+    - 'doc/**'
+    - 'files/**'
+    - 'man/**'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9, '3.10.0-alpha.5', pypy2, pypy3]
+      fail-fast: false
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Python version
+        run: |
+          F2B_PY=$(python -c "import sys; print(sys.version)")
+          echo "Python: ${{ matrix.python-version }} -- $F2B_PY"
+          F2B_PY=${F2B_PY:0:1}
+          echo "Set F2B_PY=$F2B_PY"
+          echo "F2B_PY=$F2B_PY" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [[ "$F2B_PY" = 3 ]] && ! command -v 2to3x -v 2to3 > /dev/null; then
+            pip install 2to3
+          fi
+          pip install systemd-python || echo 'systemd not available'
+          pip install pyinotify || echo 'inotify not available'
+
+      - name: Before scripts
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          # Manually execute 2to3 for now
+          if [[ "$F2B_PY" = 3 ]]; then echo "2to3 ..." && ./fail2ban-2to3; fi
+          # (debug) output current preferred encoding:
+          python -c 'import locale, sys; from fail2ban.helpers import PREFER_ENC; print(PREFER_ENC, locale.getpreferredencoding(), (sys.stdout and sys.stdout.encoding))'
+      
+      - name: Test suite
+        run: if [[ "$F2B_PY" = 2 ]]; then python setup.py test; else python bin/fail2ban-testcases --verbosity=2; fi
+        
+      #- name: Test initd scripts
+      #  run: shellcheck -s bash -e SC1090,SC1091 files/debian-initd

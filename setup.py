@@ -63,6 +63,8 @@ source_dir = os.path.realpath(os.path.dirname(
 	sys.argv[0] if os.path.basename(sys.argv[0]) == 'setup.py' else __file__
 ))
 
+with_tests = True
+
 # Wrapper to install python binding (to current python version):
 class install_scripts_f2b(install_scripts):
 
@@ -123,7 +125,7 @@ class install_command_f2b(install):
 	]
 	def initialize_options(self):
 		self.disable_2to3 = None
-		self.without_tests = None
+		self.without_tests = not with_tests
 		install.initialize_options(self)
 	def finalize_options(self):
 		global _2to3
@@ -167,6 +169,12 @@ if setuptools and "test" in sys.argv:
 elif "test" in sys.argv:
 	print("python distribute required to execute fail2ban tests")
 	print("")
+
+# if build without tests:
+if "build" in sys.argv:
+	if "--without-tests" in sys.argv:
+		with_tests = False
+		sys.argv.remove("--without-tests")
 
 longdesc = '''
 Fail2Ban scans log files like /var/log/pwdfail or
@@ -224,16 +232,18 @@ setup(
 		'bin/fail2ban-client',
 		'bin/fail2ban-server',
 		'bin/fail2ban-regex',
-		'bin/fail2ban-testcases',
 		# 'bin/fail2ban-python', -- link (binary), will be installed via install_scripts_f2b wrapper
-	],
+	] + [
+		'bin/fail2ban-testcases',
+	] if with_tests else [],
 	packages = [
 		'fail2ban',
 		'fail2ban.client',
 		'fail2ban.server',
+	] + [
 		'fail2ban.tests',
 		'fail2ban.tests.action_d',
-	],
+	]  if with_tests else [],
 	package_data = {
 		'fail2ban.tests':
 			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
@@ -245,7 +255,7 @@ setup(
 			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
 				for w in os.walk('fail2ban/tests/action_d')
 				for f in w[2]]
-	},
+	} if with_tests else {},
 	data_files = [
 		('/etc/fail2ban',
 			glob("config/*.conf")

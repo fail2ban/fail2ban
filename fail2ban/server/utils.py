@@ -125,6 +125,10 @@ class Utils():
 			with self.__lock:
 				self._cache.pop(k, None)
 
+		def clear(self):
+			with self.__lock:
+				self._cache.clear()
+
 
 	@staticmethod
 	def setFBlockMode(fhandle, value):
@@ -328,11 +332,9 @@ class Utils():
 					timeout_expr = lambda: time.time() > time0
 				else:
 					timeout_expr = timeout
-				if not interval:
-					interval = Utils.DEFAULT_SLEEP_INTERVAL
 			if timeout_expr():
 				break
-			stm = min(stm + interval, Utils.DEFAULT_SLEEP_TIME)
+			stm = min(stm + (interval or Utils.DEFAULT_SLEEP_INTERVAL), Utils.DEFAULT_SLEEP_TIME)
 			time.sleep(stm)
 		return ret
 

@@ -151,6 +151,11 @@ Feb 18 09:48:04 xxx postfix/smtpd[23]: lost connection after AUTH from unknown[1
 # failJSON: { "time": "2005-02-18T09:48:04", "match": true , "host": "192.0.2.23" }
 Feb 18 09:48:04 xxx postfix/smtpd[23]: lost connection after AUTH from unknown[192.0.2.23]
 
+# failJSON: { "time": "2004-12-23T19:39:13", "match": true , "host": "192.0.2.2" }
+Dec 23 19:39:13 xxx postfix/postscreen[21057]: PREGREET 14 after 0.08 from [192.0.2.2]:59415: EHLO ylmf-pc\r\n
+# failJSON: { "time": "2004-12-24T00:54:36", "match": true , "host": "192.0.2.3" }
+Dec 24 00:54:36 xxx postfix/postscreen[22515]: HANGUP after 16 from [192.0.2.3]:48119 in tests after SMTP handshake
+
 # filterOptions: [{}, {"mode": "ddos"}, {"mode": "aggressive"}]
 # failJSON: { "match": false, "desc": "don't affect lawful data (sporadical connection aborts within DATA-phase, see gh-1813 for discussion)" }
 Feb 18 09:50:05 xxx postfix/smtpd[42]: lost connection after DATA from good-host.example.com[192.0.2.10]

@@ -10,33 +10,30 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Compatibility:
+* potential incompatibility by parsing of options of `backend`, `filter` and `action` parameters (if they
+  are partially incorrect), because fail2ban could throw an error now (doesn't silently bypass it anymore).
 * to v.0.11:
   - due to change of `actioncheck` behavior (gh-488), some actions can be incompatible as regards
     the invariant check, if `actionban` or `actionunban` would not throw an error (exit code 
     different from 0) in case of unsane environment.
 
 ### Fixes
-* [stability] prevent race condition - no ban if filter (backend) is continuously busy if
-  too many messages will be found in log, e. g. initial scan of large log-file or journal (gh-2660)
-* pyinotify-backend sporadically avoided initial scanning of log-file by start
-* python 3.9 compatibility (and Travis CI support)
-* restoring a large number (500+ depending on files ulimit) of current bans when using PyPy fixed
-* manual ban is written to database, so can be restored by restart (gh-2647)
-* `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
-  should be interpolated in definition section (inside the filter-config, gh-2650)
+* readline fixed to consider interim new-line character as part of code point in multi-byte logs
+  (e. g. unicode encoding like utf-16be, utf-16le);
+* `filter.d/drupal-auth.conf` more strict regex, extended to match "Login attempt failed from" (gh-2742)
 
-### New Features
-
-### Enhancements
-* introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;
-* datetemplate: improved anchor detection for capturing groups `(^...)`;
-* performance optimization of `datepattern` (better search algorithm in datedetector, especially for single template);
+### New Features and Enhancements
 * `actioncheck` behavior is changed now (gh-488), so invariant check as well as restore or repair
    of sane environment (in case of recognized unsane state) would only occur on action errors (e. g.
    if ban or unban operations are exiting with other code as 0)
+* better recognition of log rotation, better performance by reopen: avoid unnecessary seek to begin of file
+  (and hash calculation)
+* file filter reads only complete lines (ended with new-line) now, so waits for end of line (for its completion)
+* `filter.d/nginx-http-auth.conf` - extended with parameter mode, so additionally to `auth` (or `normal`) 
+   mode `fallback` (or combined as `aggressive`) can find SSL errors while SSL handshaking, gh-2881
 
 
-ver. 0.11.1 (2020/01/11) - this-is-the-way
+ver. 0.11.2 (2020/11/23) - heal-the-world-with-security-tools
 -----------
 
 ### Compatibility:
@@ -66,6 +63,73 @@ ver. 0.11.1 (2020/01/11) - this-is-the-way
 
   - Since v0.10 fail2ban supports the matching of IPv6 addresses, but not all ban actions are
     IPv6-capable now.
+
+### Fixes
+* [stability] prevent race condition - no ban if filter (backend) is continuously busy if
+  too many messages will be found in log, e. g. initial scan of large log-file or journal (gh-2660)
+* pyinotify-backend sporadically avoided initial scanning of log-file by start
+* python 3.9 compatibility (and Travis CI support)
+* restoring a large number (500+ depending on files ulimit) of current bans when using PyPy fixed
+* manual ban is written to database, so can be restored by restart (gh-2647)
+* `jail.conf`: don't specify `action` directly in jails (use `action_` or `banaction` instead)
+* no mails-action added per default anymore (e. g. to allow that `action = %(action_mw)s` should be specified
+  per jail or in default section in jail.local), closes gh-2357
+* ensure we've unique action name per jail (also if parameter `actname` is not set but name deviates from standard name, gh-2686)
+* don't use `%(banaction)s` interpolation because it can be complex value (containing `[...]` and/or quotes), 
+  so would bother the action interpolation
+* fixed type conversion in config readers (take place after all interpolations get ready), that allows to 
+  specify typed parameters variable (as substitutions) as well as to supply it in other sections or as init parameters.
+* `action.d/*-ipset*.conf`: several ipset actions fixed (no timeout per default anymore), so no discrepancy
+  between ipset and fail2ban (removal from ipset will be managed by fail2ban only, gh-2703)
+* `action.d/cloudflare.conf`: fixed `actionunban` (considering new-line chars and optionally real json-parsing
+   with `jq`, gh-2140, gh-2656)
+* `action.d/nftables.conf` (type=multiport only): fixed port range selector, replacing `:` with `-` (gh-2763)
+* `action.d/firewallcmd-*.conf` (multiport only): fixed port range selector, replacing `:` with `-` (gh-2821)
+* `action.d/bsd-ipfw.conf`: fixed selection of rule-no by large list or initial `lowest_rule_num` (gh-2836)
+* `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
+  should be interpolated in definition section (inside the filter-config, gh-2650)
+* `filter.d/dovecot.conf`: 
+  - add managesieve and submission support (gh-2795);
+  - accept messages with more verbose logging (gh-2573);
+* `filter.d/courier-smtp.conf`: prefregex extended to consider port in log-message (gh-2697)
+* `filter.d/traefik-auth.conf`: filter extended with parameter mode (`normal`, `ddos`, `aggressive`) to handle 
+  the match of username differently (gh-2693):
+  - `normal`: matches 401 with supplied username only
+  - `ddos`: matches 401 without supplied username only
+  - `aggressive`: matches 401 and any variant (with and without username)
+* `filter.d/sshd.conf`: normalizing of user pattern in all RE's, allowing empty user (gh-2749)
+
+### New Features and Enhancements
+* fail2ban-regex:
+  - speedup formatted output (bypass unneeded stats creation)
+  - extended with prefregex statistic
+  - more informative output for `datepattern` (e. g. set from filter) - pattern : description
+* parsing of action in jail-configs considers space between action-names as separator also
+  (previously only new-line was allowed), for example `action = a b` would specify 2 actions `a` and `b`
+* new filter and jail for GitLab recognizing failed application logins (gh-2689)
+* new filter and jail for Grafana recognizing failed application logins (gh-2855)
+* new filter and jail for SoftEtherVPN recognizing failed application logins (gh-2723)
+* `filter.d/guacamole.conf` extended with `logging` parameter to follow webapp-logging if it's configured (gh-2631)
+* `filter.d/bitwarden.conf` enhanced to support syslog (gh-2778)
+* introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;
+* datetemplate: improved anchor detection for capturing groups `(^...)`;
+* datepattern: improved handling with wrong recognized timestamps (timezones, no datepattern, etc)
+  as well as some warnings signaling user about invalid pattern or zone (gh-2814):
+  - filter gets mode in-operation, which gets activated if filter starts processing of new messages;
+    in this mode a timestamp read from log-line that appeared recently (not an old line), deviating too much
+    from now (up too 24h), will be considered as now (assuming a timezone issue), so could avoid unexpected 
+    bypass of failure (previously exceeding `findtime`);
+  - better interaction with non-matching optional datepattern or invalid timestamps;
+  - implements special datepattern `{NONE}` - allow to find failures totally without date-time in log messages,
+    whereas filter will use now as timestamp (gh-2802)
+* performance optimization of `datepattern` (better search algorithm in datedetector, especially for single template);
+* fail2ban-client: extended to unban IP range(s) by subnet (CIDR/mask) or hostname (DNS), gh-2791;
+* extended capturing of alternate tags in filter, allowing combine of multiple groups to single tuple token with new tag
+  prefix `<F-TUPLE_`, that would combine value of `<F-V>` with all value of `<F-TUPLE_V?_n?>` tags (gh-2755)
+
+
+ver. 0.11.1 (2020/01/11) - this-is-the-way
+-----------
 
 ### Fixes
 * purge database will be executed now (within observer).

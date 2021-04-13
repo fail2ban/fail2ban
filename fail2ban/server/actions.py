@@ -28,7 +28,10 @@ import logging
 import os
 import sys
 import time
-from collections import Mapping
+try:
+	from collections.abc import Mapping
+except ImportError:
+	from collections import Mapping
 try:
 	from collections import OrderedDict
 except ImportError:
@@ -81,7 +84,7 @@ class Actions(JailThread, Mapping):
 		self._jail = jail
 		self._actions = OrderedDict()
 		## The ban manager.
-		self.__banManager = BanManager()
+		self.banManager = BanManager()
 		self.banEpoch = 0
 		self.__lastConsistencyCheckTM = 0
 		## Precedence of ban (over unban), so max number of tickets banned (to call an unban check):
@@ -200,7 +203,7 @@ class Actions(JailThread, Mapping):
 	
 	def setBanTime(self, value):
 		value = MyTime.str2seconds(value)
-		self.__banManager.setBanTime(value)
+		self.banManager.setBanTime(value)
 		logSys.info("  banTime: %s" % value)
 	
 	##
@@ -209,7 +212,15 @@ class Actions(JailThread, Mapping):
 	# @return the time
 	
 	def getBanTime(self):
-		return self.__banManager.getBanTime()
+		return self.banManager.getBanTime()
+
+	def getBanned(self, ids):
+		lst = self.banManager.getBanList()
+		if not ids:
+			return lst
+		if len(ids) == 1:
+			return 1 if ids[0] in lst else 0
+		return map(lambda ip: 1 if ip in lst else 0, ids)
 
 	def getBanList(self, withTime=False):
 		"""Returns the list of banned IP addresses.
@@ -219,7 +230,7 @@ class Actions(JailThread, Mapping):
 		list
 			The list of banned IP addresses.
 		"""
-		return self.__banManager.getBanList(ordered=True, withTime=withTime)
+		return self.banManager.getBanList(ordered=True, withTime=withTime)
 
 	def addBannedIP(self, ip):
 		"""Ban an IP or list of IPs."""
@@ -254,7 +265,7 @@ class Actions(JailThread, Mapping):
 		if ip is None:
 			return self.__flushBan(db)
 		# Multiple IPs:
-		if isinstance(ip, list):
+		if isinstance(ip, (list, tuple)):
 			missed = []
 			cnt = 0
 			for i in ip:
@@ -271,11 +282,19 @@ class Actions(JailThread, Mapping):
 		if db and self._jail.database is not None:
 			self._jail.database.delBan(self._jail, ip)
 		# Find the ticket with the IP.
-		ticket = self.__banManager.getTicketByID(ip)
+		ticket = self.banManager.getTicketByID(ip)
 		if ticket is not None:
 			# Unban the IP.
 			self.__unBan(ticket)
 		else:
+			# Multiple IPs by subnet or dns:
+			if not isinstance(ip, IPAddr):
+				ipa = IPAddr(ip)
+				if not ipa.isSingle: # subnet (mask/cidr) or raw (may be dns/hostname):
+					ips = filter(ipa.contains, self.banManager.getBanList())
+					if ips:
+						return self.removeBannedIP(ips, db, ifexists)
+			# not found:
 			msg = "%s is not banned" % ip
 			logSys.log(logging.MSG, msg)
 			if ifexists:
@@ -322,25 +341,33 @@ class Actions(JailThread, Mapping):
 					self._jail.name, name, e,
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 		while self.active:
-			if self.idle:
-				logSys.debug("Actions: enter idle mode")
-				Utils.wait_for(lambda: not self.active or not self.idle,
-					lambda: False, self.sleeptime)
-				logSys.debug("Actions: leave idle mode")
-				continue
-			# wait for ban (stop if gets inactive):
-			bancnt = 0
-			if Utils.wait_for(lambda: not self.active or self._jail.hasFailTickets, self.sleeptime):
-				bancnt = self.__checkBan()
-				cnt += bancnt
-			# unban if nothing is banned not later than banned tickets >= banPrecedence
-			if not bancnt or cnt >= self.banPrecedence:
-				if self.active:
-					# let shrink the ban list faster
-					bancnt *= 2
-					self.__checkUnBan(bancnt if bancnt and bancnt < self.unbanMaxCount else self.unbanMaxCount)
-				cnt = 0
-		
+			try:
+				if self.idle:
+					logSys.debug("Actions: enter idle mode")
+					Utils.wait_for(lambda: not self.active or not self.idle,
+						lambda: False, self.sleeptime)
+					logSys.debug("Actions: leave idle mode")
+					continue
+				# wait for ban (stop if gets inactive, pending ban or unban):
+				bancnt = 0
+				wt = min(self.sleeptime, self.banManager._nextUnbanTime - MyTime.time())
+				logSys.log(5, "Actions: wait for pending tickets %s (default %s)", wt, self.sleeptime)
+				if Utils.wait_for(lambda: not self.active or self._jail.hasFailTickets, wt):
+					bancnt = self.__checkBan()
+					cnt += bancnt
+				# unban if nothing is banned not later than banned tickets >= banPrecedence
+				if not bancnt or cnt >= self.banPrecedence:
+					if self.active:
+						# let shrink the ban list faster
+						bancnt *= 2
+						logSys.log(5, "Actions: check-unban %s, bancnt %s, max: %s", bancnt if bancnt and bancnt < self.unbanMaxCount else self.unbanMaxCount, bancnt, self.unbanMaxCount)
+						self.__checkUnBan(bancnt if bancnt and bancnt < self.unbanMaxCount else self.unbanMaxCount)
+					cnt = 0
+			except Exception as e: # pragma: no cover
+				logSys.error("[%s] unhandled error in actions thread: %s",
+					self._jail.name, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+
 		self.__flushBan(stop=True)
 		self.stopActions()
 		return True
@@ -370,7 +397,12 @@ class Actions(JailThread, Mapping):
 			"ipfailures":			lambda self: self._mi4ip(True).getAttempt(),
 			"ipjailfailures":	lambda self: self._mi4ip().getAttempt(),
 			# raw ticket info:
-			"raw-ticket":			lambda self: repr(self.__ticket)
+			"raw-ticket":			lambda self: repr(self.__ticket),
+			# jail info:
+			"jail.banned":       lambda self: self.__jail.actions.banManager.size(),
+			"jail.banned_total": lambda self: self.__jail.actions.banManager.getBanTotal(),
+			"jail.found":        lambda self: self.__jail.filter.failManager.size(),
+			"jail.found_total":  lambda self: self.__jail.filter.failManager.getFailTotal()
 		}
 
 		__slots__ = CallingMap.__slots__ + ('__ticket', '__jail', '__mi4ip')
@@ -433,7 +465,9 @@ class Actions(JailThread, Mapping):
 			return mi[idx] if mi[idx] is not None else self.__ticket
 
 
-	def __getActionInfo(self, ticket):
+	def _getActionInfo(self, ticket):
+		if not ticket:
+			ticket = BanTicket("", MyTime.time())
 		aInfo = Actions.ActionInfo(ticket, self._jail)
 		return aInfo
 
@@ -465,11 +499,11 @@ class Actions(JailThread, Mapping):
 		for ticket in tickets:
 
 			bTicket = BanTicket.wrap(ticket)
-			btime = ticket.getBanTime(self.__banManager.getBanTime())
+			btime = ticket.getBanTime(self.banManager.getBanTime())
 			ip = bTicket.getIP()
-			aInfo = self.__getActionInfo(bTicket)
+			aInfo = self._getActionInfo(bTicket)
 			reason = {}
-			if self.__banManager.addBanTicket(bTicket, reason=reason):
+			if self.banManager.addBanTicket(bTicket, reason=reason):
 				cnt += 1
 				# report ticket to observer, to check time should be increased and hereafter observer writes ban to database (asynchronous)
 				if Observers.Main is not None and not bTicket.restored:
@@ -528,7 +562,7 @@ class Actions(JailThread, Mapping):
 			# and increase ticket time if "bantime.increment" set)
 		if cnt:
 			logSys.debug("Banned %s / %s, %s ticket(s) in %r", cnt, 
-				self.__banManager.getBanTotal(), self.__banManager.size(), self._jail.name)
+				self.banManager.getBanTotal(), self.banManager.size(), self._jail.name)
 		return cnt
 
 	def __reBan(self, ticket, actions=None, log=True):
@@ -544,7 +578,7 @@ class Actions(JailThread, Mapping):
 		"""
 		actions = actions or self._actions
 		ip = ticket.getIP()
-		aInfo = self.__getActionInfo(ticket)
+		aInfo = self._getActionInfo(ticket)
 		if log:
 			logSys.notice("[%s] Reban %s%s", self._jail.name, aInfo["ip"], (', action %r' % actions.keys()[0] if len(actions) == 1 else ''))
 		for name, action in actions.iteritems():
@@ -568,7 +602,7 @@ class Actions(JailThread, Mapping):
 	def _prolongBan(self, ticket):
 		# prevent to prolong ticket that was removed in-between,
 		# if it in ban list - ban time already prolonged (and it stays there):
-		if not self.__banManager._inBanList(ticket): return
+		if not self.banManager._inBanList(ticket): return
 		# do actions :
 		aInfo = None
 		for name, action in self._actions.iteritems():
@@ -578,7 +612,7 @@ class Actions(JailThread, Mapping):
 				if not action._prolongable:
 					continue
 				if aInfo is None:
-					aInfo = self.__getActionInfo(ticket)
+					aInfo = self._getActionInfo(ticket)
 				if not aInfo.immutable: aInfo.reset()
 				action.prolong(aInfo)
 			except Exception as e:
@@ -593,13 +627,13 @@ class Actions(JailThread, Mapping):
 
 		Unban IP addresses which are outdated.
 		"""
-		lst = self.__banManager.unBanList(MyTime.time(), maxCount)
+		lst = self.banManager.unBanList(MyTime.time(), maxCount)
 		for ticket in lst:
 			self.__unBan(ticket)
 		cnt = len(lst)
 		if cnt:
 			logSys.debug("Unbanned %s, %s ticket(s) in %r", 
-				cnt, self.__banManager.size(), self._jail.name)
+				cnt, self.banManager.size(), self._jail.name)
 		return cnt
 
 	def __flushBan(self, db=False, actions=None, stop=False):
@@ -613,10 +647,10 @@ class Actions(JailThread, Mapping):
 		log = True
 		if actions is None:
 			logSys.debug("  Flush ban list")
-			lst = self.__banManager.flushBanList()
+			lst = self.banManager.flushBanList()
 		else:
 			log = False # don't log "[jail] Unban ..." if removing actions only.
-			lst = iter(self.__banManager)
+			lst = iter(self.banManager)
 		cnt = 0
 		# first we'll execute flush for actions supporting this operation:
 		unbactions = {}
@@ -653,7 +687,7 @@ class Actions(JailThread, Mapping):
 			self.__unBan(ticket, actions=actions, log=log)
 			cnt += 1
 		logSys.debug("  Unbanned %s, %s ticket(s) in %r", 
-			cnt, self.__banManager.size(), self._jail.name)
+			cnt, self.banManager.size(), self._jail.name)
 		return cnt
 
 	def __unBan(self, ticket, actions=None, log=True):
@@ -672,7 +706,7 @@ class Actions(JailThread, Mapping):
 		else:
 			unbactions = actions
 		ip = ticket.getIP()
-		aInfo = self.__getActionInfo(ticket)
+		aInfo = self._getActionInfo(ticket)
 		if log:
 			logSys.notice("[%s] Unban %s", self._jail.name, aInfo["ip"])
 		for name, action in unbactions.iteritems():
@@ -691,17 +725,23 @@ class Actions(JailThread, Mapping):
 		"""Status of current and total ban counts and current banned IP list.
 		"""
 		# TODO: Allow this list to be printed as 'status' output
-		supported_flavors = ["basic", "cymru"]
+		supported_flavors = ["short", "basic", "cymru"]
 		if flavor is None or flavor not in supported_flavors:
 			logSys.warning("Unsupported extended jail status flavor %r. Supported: %s" % (flavor, supported_flavors))
 		# Always print this information (basic)
-		ret = [("Currently banned", self.__banManager.size()),
-			   ("Total banned", self.__banManager.getBanTotal()),
-			   ("Banned IP list", self.__banManager.getBanList())]
+		if flavor != "short":
+			banned = self.banManager.getBanList()
+			cnt = len(banned)
+		else:
+			cnt = self.banManager.size()
+		ret = [("Currently banned", cnt),
+			   ("Total banned", self.banManager.getBanTotal())]
+		if flavor != "short":
+			ret += [("Banned IP list", banned)]
 		if flavor == "cymru":
-			cymru_info = self.__banManager.getBanListExtendedCymruInfo()
+			cymru_info = self.banManager.getBanListExtendedCymruInfo()
 			ret += \
-				[("Banned ASN list", self.__banManager.geBanListExtendedASN(cymru_info)),
-				 ("Banned Country list", self.__banManager.geBanListExtendedCountry(cymru_info)),
-				 ("Banned RIR list", self.__banManager.geBanListExtendedRIR(cymru_info))]
+				[("Banned ASN list", self.banManager.geBanListExtendedASN(cymru_info)),
+				 ("Banned Country list", self.banManager.geBanListExtendedCountry(cymru_info)),
+				 ("Banned RIR list", self.banManager.geBanListExtendedRIR(cymru_info))]
 		return ret
