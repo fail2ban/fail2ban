@@ -1,0 +1,10 @@
+Wed Apr 14 08:11:01 2021 - OK - [127.0.0.1] "GET /monitorix-cgi/monitorix.cgi - Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0"
+Wed Apr 14 08:11:01 2021 - OK - [127.0.0.1] "GET /monitorix/css/black.css - Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0"
+Wed Apr 14 08:11:01 2021 - OK - [127.0.0.1] "GET /monitorix/imgs/fs01.1day.png - Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0"
+Wed Apr 14 08:11:02 2021 - OK - [127.0.0.1] "GET /monitorix/imgs/fs03.1day.png - Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0"
+Wed Apr 14 08:11:02 2021 - OK - [127.0.0.1] "GET /monitorix/imgs/fs04.1day.png - Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0"
+Wed Apr 14 08:11:02 2021 - OK - [127.0.0.1] "GET /monitorix/imgs/fs02.1day.png - Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0"
+Wed Apr 14 08:54:22 2021 - NOTEXIST - [127.0.0.1] File does not exist: /manager/html
+Wed Apr 14 11:24:31 2021 - NOTALLOWED - [127.0.0.1] Access not allowed: /monitorix/
+Wed Apr 14 11:26:08 2021 - AUTHERR - [127.0.0.1] Authentication error: /monitorix/
+Wed Apr 14 11:26:09 2021 - AUTHERR - [127.0.0.1] Authentication error: /monitorix/
