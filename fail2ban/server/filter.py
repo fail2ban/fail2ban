@@ -756,7 +756,7 @@ class Filter(JailThread):
 		# avoid reorder too often (e. g. always 2 regex each after other):
 		c = reToMove.matchCount + 2
 		# try index 0, half of distance and previous position:
-		for mi in set((0, reIdx/2, reIdx-1)):
+		for mi in set((0, reIdx//2, reIdx-1)):
 			if reLst[mi].matchCount < c:
 				if logSys.getEffectiveLevel() <= 5:
 					logSys.log(5, "    Rise-up RE: match counts %r > %r, move RE %r to %r",
