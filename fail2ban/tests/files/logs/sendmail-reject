@@ -40,6 +40,9 @@ Feb 27 15:49:07 batman sm-mta[88390]: ruleset=check_relay, arg1=189-30-205-74.pa
 # failJSON: { "time": "2005-02-19T18:01:50", "match": true , "host": "196.213.73.146" }
 Feb 19 18:01:50 batman sm-mta[78152]: ruleset=check_relay, arg1=[196.213.73.146], arg2=196.213.73.146, relay=[196.213.73.146], reject=421 4.3.2 Connection rate limit exceeded.
 
+# failJSON: { "time": "2005-02-19T20:17:12", "match": true , "host": "192.0.2.123" }
+Feb 19 20:17:12 server sm-mta[201892]: ruleset=check_relay, arg1=[192.0.2.123], arg2=192.0.2.123, relay=host.example.com [192.0.2.123] (may be forged), reject=421 4.3.2 Connection rate limit exceeded.
+
 # failJSON: { "time": "2005-02-27T10:53:06", "match": true , "host": "209.15.212.253" }
 Feb 27 10:53:06 batman sm-mta[44307]: s1R9r60D044307: rejecting commands from  [209.15.212.253] due to pre-greeting traffic after 0 seconds
 # failJSON: { "time": "2005-02-27T10:53:07", "match": true , "host": "1.2.3.4" }
