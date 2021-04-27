@@ -10,16 +10,8 @@ dist: xenial
 matrix:
   fast_finish: true
   include:
-  - python: 2.6
-    dist: trusty   # required for Python 2.6
   - python: 2.7
-    dist: trusty   # required for packages like gamin
-    name: 2.7 (trusty)
-  - python: 2.7
-    name: 2.7 (xenial)
-  - python: pypy
-  - python: 3.3
-    dist: trusty
+  #- python: pypy
   - python:  3.4
   - python:  3.5
   - python:  3.6
