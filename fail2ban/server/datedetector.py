@@ -365,10 +365,10 @@ class DateDetector(object):
 				# with space or some special char), otherwise possible collision/pattern switch:
 				if ((
 					line[distance-1:distance] == self.__lastPos[1] or
-						(line[distance] == self.__lastPos[2] and not self.__lastPos[2].isalnum())
+						(line[distance:distance+1] == self.__lastPos[2] and not self.__lastPos[2].isalnum())
 					) and (
 					line[endpos:endpos+1] == self.__lastEndPos[2] or
-						(line[endpos-1] == self.__lastEndPos[1] and not self.__lastEndPos[1].isalnum())
+						(line[endpos-1:endpos] == self.__lastEndPos[1] and not self.__lastEndPos[1].isalnum())
 				)):
 					# search in line part only:
 					log(logLevel-1, "  boundaries are correct, search in part %r", line[distance:endpos])

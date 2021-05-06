@@ -104,14 +104,14 @@ def _updateTimeRE():
 
 	# more precise year patterns, within same century of last year and
 	# the next 3 years (for possible long uptime of fail2ban); thereby
-	# respect possible run in the test-cases (alternate date used there):
-	if MyTime.alternateNowTime != 0:
-		timeRE['ExY'] = r"(?P<Y>%s\d)" % _getYearCentRE(cent=(0,3), distance=3)
-		timeRE['Exy'] = r"(?P<y>%s\d)" % _getYearCentRE(cent=(2,3), distance=3)
-	else: # accept years: 19xx|2xxx up to current century
-		timeRE['ExY'] = r"(?P<Y>(?:19\d{2}|%s\d))" % _getYearCentRE(cent=(0,3), distance=3, 
-			now=(MyTime.now(), datetime.datetime.fromtimestamp(978393600)))
-		timeRE['Exy'] = r"(?P<y>\d{2})"
+	# consider possible run in the test-cases (alternate date used there),
+	# so accept years: 20xx (from test-date or 2001 up to current century)
+	timeRE['ExY'] = r"(?P<Y>%s\d)" % _getYearCentRE(cent=(0,3), distance=3, 
+		now=(datetime.datetime.now(), datetime.datetime.fromtimestamp(
+					min(MyTime.alternateNowTime or 978393600, 978393600))
+				)
+		)
+	timeRE['Exy'] = r"(?P<y>\d{2})"
 
 _updateTimeRE()
 

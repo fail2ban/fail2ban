@@ -401,7 +401,17 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"Found a match but no valid date/time found",
 			"Match without a timestamp:", all=True)
 
-		self.pruneLog()
+	def testIncompleteDateTime(self):
+		# datepattern in followed lines doesn't match previously known pattern + line is too short
+		# (logging break-off, no flush, etc):
+		self.assertTrue(_test_exec(
+			'-o', 'Found-ADDR:<ip>',
+			'192.0.2.1 - - [02/May/2021:18:40:55 +0100] "GET / HTTP/1.1" 302 328 "-" "Mozilla/5.0" "-"\n'
+			'192.0.2.2 - - [02/May/2021:18:40:55 +0100\n'
+			'192.0.2.3 - - [02/May/2021:18:40:55',
+			'^<ADDR>'))
+		self.assertLogged(
+			"Found-ADDR:192.0.2.1", "Found-ADDR:192.0.2.2", "Found-ADDR:192.0.2.3", all=True)	
 
 	def testFrmtOutputWrapML(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
