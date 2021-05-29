@@ -34,6 +34,9 @@ Jul 02 13:49:32 hostname dovecot[442]: dovecot: auth(default): pam(account@MYSER
 # failJSON: { "time": "2005-01-29T05:32:50", "match": true , "host": "1.2.3.4" }
 Jan 29 05:32:50 mail dovecot: auth-worker(304): pam(username,1.2.3.4): pam_authenticate() failed: Authentication failure (password mismatch?)
 
+# failJSON: { "time": "2005-01-29T18:55:55", "match": true , "host": "192.0.2.4", "desc": "Password mismatch (title case, gh-2880)" }
+Jan 29 18:55:55 mail dovecot: auth-worker(12182): pam(user,192.0.2.4): pam_authenticate() failed: Authentication failure (Password mismatch?)
+
 # failJSON: { "time": "2005-01-29T05:13:40", "match": true , "host": "1.2.3.4" }
 Jan 29 05:13:40 mail dovecot: auth-worker(31326): pam(username,1.2.3.4): unknown user
 
@@ -51,6 +54,11 @@ Jun 11 13:57:17 main dovecot: auth: sql(admin@example.ru,192.168.144.226,<6rXunF
 
 #failJSON: { "time": "2005-06-11T13:57:17", "match": true, "host": "192.168.178.25", "desc": "allow more verbose logging, gh-2573"  }
 Jun 11 13:57:17 main dovecot: auth: ldap(user@server.org,192.168.178.25,<LZmGp6mZaMrAqLIZ>): Password mismatch (for LDAP bind) (SHA1 of given password: f638ff)
+
+# failJSON: { "time": "2005-06-12T11:48:12", "match": true , "host": "192.0.2.6" }
+Jun 12 11:48:12 auth-worker(80180): Info: conn unix:auth-worker (uid=143): auth-worker<13247>: sql(support,192.0.2.6): unknown user
+# failJSON: { "time": "2005-06-12T23:06:05", "match": true , "host": "192.0.2.7" }
+Jun 12 23:06:05 auth-worker(57065): Info: conn unix:auth-worker (uid=143): auth-worker<225622>: sql(user@domain.com,192.0.2.7,<Yx7+W8+Io>): Password mismatch
 
 # failJSON: { "time": "2005-01-29T14:38:51", "match": true , "host": "192.0.2.6", "desc": "PAM Permission denied (gh-1897)" }
 Jan 29 14:38:51 example.com dovecot[24941]: auth-worker(30165): pam(user@example.com,192.0.2.6,<PNHQq8pZhqIKAQGd>): pam_authenticate() failed: Permission denied
