@@ -35,6 +35,11 @@ Nov 22 22:33:44 xxx postfix/smtpd[11111]: NOQUEUE: reject: RCPT from 1-2-3-4.exa
 # failJSON: { "time": "2005-01-31T13:55:24", "match": true , "host": "78.107.251.238" }
 Jan 31 13:55:24 xxx postfix/smtpd[3462]: NOQUEUE: reject: EHLO from s271272.static.corbina.ru[78.107.251.238]: 504 5.5.2 <User>: Helo command rejected: need fully-qualified hostname; proto=SMTP helo=<User>
 
+# failJSON: { "time": "2005-03-7T02:09:33", "match": true , "host": "192.0.2.151", "desc": "reject: DATA from, gh-2927" }
+Mar 7 02:09:33 server postfix/smtpd[27246]: 1D8CC1CA0A7F: milter-reject: DATA from 66-220-155-151.mail-mail.facebook.com[192.0.2.151]: 550 5.7.1 Command rejected; from=<security@mail.example.com> to=<hostmaster@example.com> proto=ESMTP helo=<192-0-2-151.mail-mail.example.com>
+# failJSON: { "time": "2005-03-11T23:27:54", "match": true , "host": "192.0.2.109", "desc": "reject: BDAT from, gh-2927" }
+Mar 11 23:27:54 server postfix-smo/submission/smtpd[22427]: 44JCRG5tYPzCqt2: reject: BDAT from signing-milter.example.com[192.0.2.109]: 550 5.5.3 <DATA>: Data command rejected: Multi-recipient bounce; from=<> to=<some@example.com> proto=ESMTP helo=<domain.tld>
+
 # failJSON: { "time": "2005-04-06T13:05:01", "match": true , "host": "192.0.2.116", "desc": "RCPT from unknown, gh-2995" }
 Apr  6 13:05:01 server postfix/smtpd[20589]: NOQUEUE: reject: RCPT from unknown[192.0.2.116]: 504 5.5.2 <WIN-6A0KEE6QVP5>: Helo command rejected: need fully-qualified hostname; from=<spameri@example.com> to=<spameri@example.com> proto=ESMTP helo=<WIN-6A0KEE6QVP5>
 # failJSON: { "time": "2005-04-07T03:10:56", "match": true , "host": "192.0.2.246", "desc": "550 5.7.25 Client host rejected, gh-2996" }
