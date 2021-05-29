@@ -43,6 +43,9 @@
 # failJSON: { "time": "2014-01-12T02:07:48", "match": true , "host": "85.214.85.40" }
 2014-01-12 02:07:48 dovecot_login authenticator failed for h1832461.stratoserver.net (User) [85.214.85.40]: 535 Incorrect authentication data (set_id=scanner)
 
+# failJSON: { "time": "2019-10-22T03:39:17", "match": true , "host": "192.0.2.37", "desc": "pid-prefix in form of 'mx1 exim[...]:', gh-2553" }
+2019-10-22 03:39:17 mx1 exim[29786]: dovecot_login authenticator failed for (User) [192.0.2.37]: 535 Incorrect authentication data (set_id=test@domain.com)
+
 # failJSON: { "time": "2014-12-02T03:00:23", "match": true , "host": "193.254.202.35" }
 2014-12-02 03:00:23 auth_plain authenticator failed for (rom182) [193.254.202.35]:41556 I=[10.0.0.1]:25: 535 Incorrect authentication data (set_id=webmaster)
 
