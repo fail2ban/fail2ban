@@ -1396,7 +1396,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				# check one at at time until the first hit
 				for systemd_var in 'system-runtime-logs', 'system-state-logs':
 					tmp = Utils.executeCmd(
-						'find "$(systemd-path %s)" -name system.journal' % systemd_var,
+						'find "$(systemd-path %s)/journal" -name system.journal -readable' % systemd_var,
 						timeout=10, shell=True, output=True
 					)
 					self.assertTrue(tmp)
