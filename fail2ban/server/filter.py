@@ -662,9 +662,10 @@ class Filter(JailThread):
 				if (date is None or date < MyTime.time() - 60 or date > MyTime.time() + 60):
 					# log time zone issue as warning once per day:
 					self._logWarnOnce("_next_simByTimeWarn",
-						("Simulate NOW in operation since found time has too large deviation %s ~ %s +/- %s",
-							date, MyTime.time(), 60),
-						("Please check jail has possibly a timezone issue. Line with odd timestamp: %s", 
+						("Found at least one log entry with a timestamp more" +
+						 " than a minute from the current time. This is rarely a problem."),
+						("Please check this jail and associated logs as" +
+						 " there is potentially a timezone or latency problem: %s",
 							line))
 					# simulate now as date:
 					date = MyTime.time()
@@ -674,9 +675,11 @@ class Filter(JailThread):
 				if date is not None and date < MyTime.time() - self.getFindTime():
 					# log time zone issue as warning once per day:
 					self._logWarnOnce("_next_ignByTimeWarn",
-						("Ignore line since time %s < %s - %s",
-							date, MyTime.time(), self.getFindTime()),
-						("Please check jail has possibly a timezone issue. Line with odd timestamp: %s", 
+						("Ignoring all log entries older than %s; these are probably" +
+						 " messages generated while fail2ban was not running.",
+							self.getFindTime()),
+						("Please check this jail and associated logs as" +
+						 " there is potentially a timezone or latency problem: %s",
 							line))
 					# ignore - too old (obsolete) entry:
 					return []
