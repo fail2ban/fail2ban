@@ -457,8 +457,6 @@ class IgnoreIP(LogCaptureTestCase):
 			for i in (1,2,3):
 				self.filter.processLineAndAdd('2019-10-27 02:00:00 fail from 192.0.2.15'); # +3 = 3
 			self.assertLogged(
-				"Simulate NOW in operation since found time has too large deviation",
-				"Please check jail has possibly a timezone issue.",
 				"192.0.2.15:1", "192.0.2.15:2", "192.0.2.15:3",
 				"Total # of detected failures: 3.", wait=True)
 			#
