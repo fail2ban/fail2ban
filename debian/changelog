@@ -1,3 +1,9 @@
+fail2ban (0.11.2-2) unstable; urgency=high
+
+  * Fix a problem with mail
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Mon, 12 Jul 2021 06:52:40 +0200
+
 fail2ban (0.11.2-1) unstable; urgency=medium
 
   * New upstream release
