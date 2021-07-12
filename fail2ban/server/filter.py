@@ -659,14 +659,19 @@ class Filter(JailThread):
 			# if in operation (modifications have been really found):
 			if self.inOperation:
 				# if weird date - we'd simulate now for timeing issue (too large deviation from now):
-				if (date is None or date < MyTime.time() - 60 or date > MyTime.time() + 60):
+				delta = date - MyTime.time()
+				if (date is None or abs(delta) > 60):
+					latency = "This could indicate a latency problem."
+					timezone = "This looks like a timezone problem."
 					# log time zone issue as warning once per day:
 					self._logWarnOnce("_next_simByTimeWarn",
-						("Found at least one log entry with a timestamp more" +
-						 " than a minute from the current time. This is rarely a problem."),
-						("Please check this jail and associated logs as" +
-						 " there is potentially a timezone or latency problem: %s",
-							line))
+						("Found a log entry with a timestamp %ss %s the current time. %s",
+						 abs(delta),
+						 "before" if delta <= 0 else "after",
+						 latency if -15*60 <= delta <= 0 else timezone),
+						("Please check this jail and associated logs as there" +
+						 " is potentially a timezone or latency problem: %s",
+						 line))
 					# simulate now as date:
 					date = MyTime.time()
 					self.__lastDate = date
