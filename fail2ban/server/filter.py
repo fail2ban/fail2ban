@@ -662,13 +662,22 @@ class Filter(JailThread):
 				delta = date - MyTime.time()
 				if (date is None or abs(delta) > 60):
 					latency = "This could indicate a latency problem."
+					synchronization = "This could be a clock synchronization" + \
+						" problem; are you sure that NTP is set up?"
 					timezone = "This looks like a timezone problem."
+					msg = ""
+					if -15*60 <= delta <= 0:
+						msg = latency
+					elif 0 < delta <= 15*60:
+						msg = synchronization
+					else:
+						msg = timezone
 					# log time zone issue as warning once per day:
 					self._logWarnOnce("_next_simByTimeWarn",
 						("Found a log entry with a timestamp %ss %s the current time. %s",
 						 abs(delta),
 						 "before" if delta <= 0 else "after",
-						 latency if -15*60 <= delta <= 0 else timezone),
+						 msg),
 						("Please check this jail and associated logs as there" +
 						 " is potentially a timezone or latency problem: %s",
 						 line))

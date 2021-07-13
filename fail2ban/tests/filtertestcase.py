@@ -479,6 +479,36 @@ class IgnoreIP(LogCaptureTestCase):
 		finally:
 			tearDownMyTime()
 
+	def testWrongTimeDelta(self):
+		try:
+			self.filter.addFailRegex('fail from <ADDR>$')
+			self.filter.setDatePattern(r'{^LN-BEG}%Y-%m-%d %H:%M:%S(?:\s*%Z)?\s')
+			self.filter.setMaxRetry(5); # don't ban here
+			self.filter.inOperation = True; # real processing (all messages are new)
+			expectable_messages = ["timezone problem.", "clock synchronization problem;", "latency problem."]
+			cases = [(-90*60, 0),
+				 (-10*60, 1),
+				 (-30, None),
+				 (30, None),
+				 (10*60, 2),
+				 (90*60, 0)]
+			for idx, (delta, expect) in enumerate(cases):
+				MyTime.setTime(1572138000+delta)
+				setattr(self.filter, "_next_simByTimeWarn", -1)
+				self.pruneLog('[phase {phase}] log entries offset by {delta}s'.format(phase=idx+1, delta=delta))
+				for i in (1,2,3):
+					self.filter.processLineAndAdd('2019-10-27 02:00:00 fail from 192.0.2.15');
+				for (idx, msg) in enumerate(expectable_messages):
+					if idx == expect:
+						self.assertLogged(expectable_messages[idx])
+					else:
+						self.assertNotLogged(expectable_messages[idx])
+				self.assertLogged(
+					"192.0.2.15:1", "192.0.2.15:2", "192.0.2.15:3",
+					"Total # of detected failures: 3.", wait=True)
+		finally:
+			tearDownMyTime()
+
 	def testAddAttempt(self):
 		self.filter.setMaxRetry(3)
 		for i in xrange(1, 1+3):
