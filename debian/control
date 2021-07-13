@@ -6,7 +6,7 @@ Uploaders: Yaroslav Halchenko <debian@onerussian.com>,
  Sylvestre Ledru <sylvestre@debian.org>
 Build-Depends:
  debhelper-compat (= 12)
- , debhelper (>= 9.20160709)
+ , debhelper
  , dh-python
  , python3
  , python3-setuptools
