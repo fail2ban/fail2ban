@@ -34,6 +34,7 @@ this case, you should use that instead.**
 
 Required:
 - [Python2 >= 2.6 or Python >= 3.2](https://www.python.org) or [PyPy](https://pypy.org)
+- python3-setuptools or python-setuptools for run installer.
 
 Optional:
 - [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify), may require:
