@@ -5,7 +5,7 @@ Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>,
  Sylvestre Ledru <sylvestre@debian.org>
 Build-Depends:
- debhelper-compat (= 12)
+ debhelper-compat (= 13)
  , debhelper
  , dh-python
  , python3

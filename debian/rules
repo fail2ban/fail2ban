@@ -55,10 +55,8 @@ override_dh_install:
 	dh_install
 
 override_dh_auto_test:
-ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 # fails for now (4 tests), accept it for now
 	FAIL2BAN_CONFIG_DIR="$(CURDIR)/config" LC_ALL=C.UTF-8 bin/fail2ban-testcases --verbosity=2 --no-network || true
-endif
 
 override_dh_installexamples:
 	dh_installexamples files/ipmasq-* files/nagios files/cacti
