@@ -61,6 +61,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		# Initialise systemd-journal connection
 		self.__journal = journal.Reader(**jrnlargs)
 		self.__matches = []
+		self.__nextUpdateTM = 0
 		self.setDatePattern(None)
 		logSys.debug("Created FilterSystemd")
 
@@ -285,6 +286,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		except OSError:
 			pass # Reading failure, so safe to ignore
 
+		line = None
 		while self.active:
 			# wait for records (or for timeout in sleeptime seconds):
 			try:
@@ -326,15 +328,22 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				if self.ticks % 10 == 0:
 					self.performSvc()
 				# update position in log (time and iso string):
-				if self.jail.database is not None:
+				if (line and self.jail.database and (
+				    self.ticks % 10 == 0
+				    or MyTime.time() >= self.__nextUpdateTM
+				    or not self.active
+				  )
+				):
 					self.jail.database.updateJournal(self.jail, 'systemd-journal', line[1], line[0][1])
+					self.__nextUpdateTM = MyTime.time() + Utils.DEFAULT_SLEEP_TIME * 5
+					line = None
 			except Exception as e: # pragma: no cover
 				if not self.active: # if not active - error by stop...
 					break
 				logSys.error("Caught unhandled exception in main cycle: %r", e,
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 				# incr common error counter:
-				self.commonError()
+				self.commonError("unhandled", e)
 
 		logSys.debug("[%s] filter terminated", self.jailName)
 

@@ -722,7 +722,7 @@ class Filter(JailThread):
 			# incr common error counter:
 			self.commonError()
 
-	def commonError(self):
+	def commonError(self, reason="common", exc=None):
 		# incr error counter, stop processing (going idle) after 100th error :
 		self._errors += 1
 		# sleep a little bit (to get around time-related errors):
