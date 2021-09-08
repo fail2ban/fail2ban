@@ -363,7 +363,7 @@ class FilterPyinotify(FileFilter):
 				logSys.error("Caught unhandled exception in main cycle: %r", e,
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 				# incr common error counter:
-				self.commonError()
+				self.commonError("unhandled", e)
 			
 		logSys.debug("[%s] filter exited (pyinotifier)", self.jailName)
 		self.__notifier = None
