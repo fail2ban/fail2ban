@@ -188,7 +188,7 @@ class FilterPyinotify(FileFilter):
 				self._refreshWatcher(path, isDir=isDir)
 			if isDir:
 				# check all files belong to this dir:
-				for logpath in self.__watchFiles:
+				for logpath in list(self.__watchFiles):
 					if logpath.startswith(path + pathsep):
 						# if still no file - add to pending, otherwise refresh and process:
 						if not os.path.isfile(logpath):
@@ -285,7 +285,7 @@ class FilterPyinotify(FileFilter):
 			logSys.error("Failed to remove watch on path: %s", path)
 
 		path_dir = dirname(path)
-		for k in self.__watchFiles:
+		for k in list(self.__watchFiles):
 			if k.startswith(path_dir + pathsep):
 				path_dir = None
 				break
