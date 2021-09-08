@@ -993,6 +993,10 @@ class CommonMonitorTestCase(unittest.TestCase):
 		super(CommonMonitorTestCase, self).setUp()
 		self._failTotal = 0
 
+	def tearDown(self):
+		super(CommonMonitorTestCase, self).tearDown()
+		self.assertFalse(hasattr(self, "_unexpectedError"))
+
 	def waitFailTotal(self, count, delay=1):
 		"""Wait up to `delay` sec to assure that expected failure `count` reached
 		"""
@@ -1018,6 +1022,16 @@ class CommonMonitorTestCase(unittest.TestCase):
 		last_ticks = self.filter.ticks
 		return Utils.wait_for(lambda: self.filter.ticks >= last_ticks + ticks, _maxWaitTime(delay))
 
+	def commonFltError(self, reason="common", exc=None):
+		""" Mock-up for default common error handler to find catched unhandled exceptions
+		could occur in filters
+		"""
+		self._commonFltError(reason, exc)
+		if reason == "unhandled":
+			DefLogSys.critical("Caught unhandled exception in main cycle of %r : %r", self.filter, exc, exc_info=True)
+			self._unexpectedError = True
+		# self.assertNotEqual(reason, "unhandled")
+
 
 def get_monitor_failures_testcase(Filter_):
 	"""Generator of TestCase's for different filters/backends
@@ -1040,6 +1054,8 @@ def get_monitor_failures_testcase(Filter_):
 			self.file = open(self.name, 'a')
 			self.jail = DummyJail()
 			self.filter = Filter_(self.jail)
+			# mock-up common error to find catched unhandled exceptions:
+			self._commonFltError, self.filter.commonError = self.filter.commonError, self.commonFltError
 			self.filter.addLogPath(self.name, autoSeek=False)
 			# speedup search using exact date pattern:
 			self.filter.setDatePattern(r'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
@@ -1340,6 +1356,8 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def _initFilter(self, **kwargs):
 			self._getRuntimeJournal() # check journal available
 			self.filter = Filter_(self.jail, **kwargs)
+			# mock-up common error to find catched unhandled exceptions:
+			self._commonFltError, self.filter.commonError = self.filter.commonError, self.commonFltError
 			self.filter.addJournalMatch([
 				"SYSLOG_IDENTIFIER=fail2ban-testcases",
 				"TEST_FIELD=1",
