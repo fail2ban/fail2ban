@@ -655,46 +655,35 @@ class Filter(JailThread):
 					tupleLine = ("", self.__lastTimeText, line)
 					date = self.__lastDate
 		
-		if self.checkFindTime:
+		if self.checkFindTime and date is not None:
 			# if in operation (modifications have been really found):
 			if self.inOperation:
 				# if weird date - we'd simulate now for timeing issue (too large deviation from now):
-				delta = date - MyTime.time()
-				if (date is None or abs(delta) > 60):
-					latency = "This could indicate a latency problem."
-					synchronization = "This could be a clock synchronization" + \
-						" problem; are you sure that NTP is set up?"
-					timezone = "This looks like a timezone problem."
-					msg = ""
-					if -15*60 <= delta <= 0:
-						msg = latency
-					elif 0 < delta <= 15*60:
-						msg = synchronization
-					else:
-						msg = timezone
-					# log time zone issue as warning once per day:
+				delta = int(date - MyTime.time())
+				if abs(delta) > 60:
+					delta /= 60
+					# log timing issue as warning once per day:
 					self._logWarnOnce("_next_simByTimeWarn",
-						("Found a log entry with a timestamp %ss %s the current time. %s",
-						 abs(delta),
-						 "before" if delta <= 0 else "after",
-						 msg),
-						("Please check this jail and associated logs as there" +
-						 " is potentially a timezone or latency problem: %s",
+						("Detected a log entry %sm %s the current time in operation mode. "
+						 "This looks like a %s problem. Treating such entries as if they just happened.",
+						 abs(delta), "before" if delta < 0 else "after",
+						 "latency" if -55 <= delta < 0 else "timezone"
+						 ),
+						("Please check a jail for a timing issue. Line with odd timestamp: %s",
 						 line))
 					# simulate now as date:
 					date = MyTime.time()
 					self.__lastDate = date
 			else:
 				# in initialization (restore) phase, if too old - ignore:
-				if date is not None and date < MyTime.time() - self.getFindTime():
+				if date < MyTime.time() - self.getFindTime():
 					# log time zone issue as warning once per day:
 					self._logWarnOnce("_next_ignByTimeWarn",
-						("Ignoring all log entries older than %s; these are probably" +
+						("Ignoring all log entries older than %ss; these are probably" +
 						 " messages generated while fail2ban was not running.",
 							self.getFindTime()),
-						("Please check this jail and associated logs as" +
-						 " there is potentially a timezone or latency problem: %s",
-							line))
+						("Please check a jail for a timing issue. Line with odd timestamp: %s",
+						 line))
 					# ignore - too old (obsolete) entry:
 					return []
 
