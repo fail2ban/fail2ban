@@ -39,14 +39,6 @@ from distutils.command.build_scripts import build_scripts
 if setuptools is None:
 	from distutils.command.install import install
 	from distutils.command.install_scripts import install_scripts
-try:
-	# python 3.x
-	from distutils.command.build_py import build_py_2to3
-	from distutils.command.build_scripts import build_scripts_2to3
-	_2to3 = True
-except ImportError:
-	# python 2.x
-	_2to3 = False
 
 import os
 from os.path import isfile, join, isdir, realpath
