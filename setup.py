@@ -48,7 +48,7 @@ import warnings
 from glob import glob
 
 from fail2ban.setup import updatePyExec
-
+from fail2ban.version import version
 
 source_dir = os.path.realpath(os.path.dirname(
 	# __file__ seems to be overwritten sometimes on some python versions (e.g. bug of 2.6 by running under cProfile, etc.):
@@ -112,22 +112,12 @@ class install_scripts_f2b(install_scripts):
 # Wrapper to specify fail2ban own options:
 class install_command_f2b(install):
 	user_options = install.user_options + [
-		('disable-2to3', None, 'Specify to deactivate 2to3, e.g. if the install runs from fail2ban test-cases.'),
 		('without-tests', None, 'without tests files installation'),
 	]
 	def initialize_options(self):
-		self.disable_2to3 = None
 		self.without_tests = not with_tests
 		install.initialize_options(self)
 	def finalize_options(self):
-		global _2to3
-		## in the test cases 2to3 should be already done (fail2ban-2to3):
-		if self.disable_2to3:
-			_2to3 = False
-		if _2to3:
-			cmdclass = self.distribution.cmdclass
-			cmdclass['build_py'] = build_py_2to3
-			cmdclass['build_scripts'] = build_scripts_2to3
 		if self.without_tests:
 			self.distribution.scripts.remove('bin/fail2ban-testcases')
 
@@ -178,7 +168,6 @@ commands.'''
 if setuptools:
 	setup_extra = {
 		'test_suite': "fail2ban.tests.utils.gatherTests",
-		'use_2to3': True,
 	}
 else:
 	setup_extra = {}
@@ -202,9 +191,6 @@ if platform_system in ('linux', 'solaris', 'sunos') or platform_system.startswit
 		('/usr/share/doc/fail2ban', doc_files)
 	)
 
-# Get version number, avoiding importing fail2ban.
-# This is due to tests not functioning for python3 as 2to3 takes place later
-exec(open(join("fail2ban", "version.py")).read())
 
 setup(
 	name = "fail2ban",
