@@ -111,7 +111,7 @@ class SetupTest(unittest.TestCase):
 		supdbgout = ' >/dev/null 2>&1' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
 		try:
 			# try dry-run:
-			os.system("%s %s --dry-run install --disable-2to3 --root=%s%s"
+			os.system("%s %s --dry-run install --root=%s%s"
 					  % (sys.executable, self.setup , tmp, supdbgout))
 			# check nothing was created:
 			self.assertTrue(not os.listdir(tmp))
@@ -127,7 +127,7 @@ class SetupTest(unittest.TestCase):
 		# suppress stdout (and stderr) if not heavydebug
 		supdbgout = ' >/dev/null' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
 		try:
-			self.assertEqual(os.system("%s %s install --disable-2to3 --root=%s%s"
+			self.assertEqual(os.system("%s %s install --root=%s%s"
 					  % (sys.executable, self.setup, tmp, supdbgout)), 0)
 
 			def strippath(l):
