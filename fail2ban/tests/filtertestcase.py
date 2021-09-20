@@ -1537,6 +1537,29 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			_gen_falure("192.0.2.6")
 			self.assertFalse(self.jail.getFailTicket())
 
+			# now reset DB, so we'd find all messages before filter entering in operation mode:
+			self.filter.stop()
+			self.filter.join()
+			self.jail.database.updateJournal(self.jail, 'systemd-journal', MyTime.time()-10000, 'TEST')
+			self._initFilter()
+			self.filter.setMaxRetry(1)
+			states = []
+			def _state(*args):
+				self.assertNotIn("** in operation", states)
+				self.assertFalse(self.filter.inOperation)
+				states.append("** process line: %r" % (args,))
+			self.filter.processLineAndAdd = _state
+			def _inoper():
+				self.assertNotIn("** in operation", states)
+				self.assertEqual(len(states), 11)
+				states.append("** in operation")
+				self.filter.__class__.inOperationMode(self.filter)
+			self.filter.inOperationMode = _inoper
+			self.filter.start()
+			self.waitForTicks(12)
+			self.assertTrue(Utils.wait_for(lambda: len(states) == 12, _maxWaitTime(10)))
+			self.assertEqual(states[-1], "** in operation")
+
 		def test_delJournalMatch(self):
 			self._initFilter()
 			self.filter.start()
