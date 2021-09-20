@@ -618,6 +618,7 @@ class Filter(JailThread):
 		noDate = False
 		if date:
 			tupleLine = line
+			line = "".join(line)
 			self.__lastTimeText = tupleLine[1]
 			self.__lastDate = date
 		else:
@@ -654,6 +655,8 @@ class Filter(JailThread):
 				if self.__lastDate and self.__lastDate > MyTime.time() - 60:
 					tupleLine = ("", self.__lastTimeText, line)
 					date = self.__lastDate
+				elif self.checkFindTime and self.inOperation:
+					date = MyTime.time()
 		
 		if self.checkFindTime and date is not None:
 			# if in operation (modifications have been really found):
