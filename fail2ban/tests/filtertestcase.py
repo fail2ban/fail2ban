@@ -457,13 +457,18 @@ class IgnoreIP(LogCaptureTestCase):
 			for i in (1,2,3):
 				self.filter.processLineAndAdd('2019-10-27 02:00:00 fail from 192.0.2.15'); # +3 = 3
 			self.assertLogged(
+				"Detected a log entry 60m before the current time in operation mode. This looks like a timezone problem.",
+				"Please check a jail for a timing issue.",
 				"192.0.2.15:1", "192.0.2.15:2", "192.0.2.15:3",
-				"Total # of detected failures: 3.", wait=True)
+				"Total # of detected failures: 3.", all=True, wait=True)
 			#
+			setattr(self.filter, "_next_simByTimeWarn", -1)
 			self.pruneLog("[phase 2] wrong TZ given in log")
 			for i in (1,2,3):
 				self.filter.processLineAndAdd('2019-10-27 04:00:00 GMT fail from 192.0.2.16'); # +3 = 6
 			self.assertLogged(
+				"Detected a log entry 120m after the current time in operation mode. This looks like a timezone problem.",
+				"Please check a jail for a timing issue.",
 				"192.0.2.16:1", "192.0.2.16:2", "192.0.2.16:3",
 				"Total # of detected failures: 6.", all=True, wait=True)
 			self.assertNotLogged("Found a match but no valid date/time found")
@@ -496,7 +501,7 @@ class IgnoreIP(LogCaptureTestCase):
 				self.assertLogged("Found 192.0.2.15", wait=True)
 				if expect:
 					self.assertLogged(("timezone problem", "latency problem")[int(expect == "latency")], all=True)
-					self.assertNotLogged(("timezone problem", "latency problem")[int(expect != "latency")])
+					self.assertNotLogged(("timezone problem", "latency problem")[int(expect != "latency")], all=True)
 				else:
 					self.assertNotLogged("timezone problem", "latency problem", all=True)
 		finally:
