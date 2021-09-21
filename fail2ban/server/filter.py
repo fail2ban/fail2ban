@@ -664,13 +664,12 @@ class Filter(JailThread):
 				# if weird date - we'd simulate now for timeing issue (too large deviation from now):
 				delta = int(date - MyTime.time())
 				if abs(delta) > 60:
-					delta //= 60
 					# log timing issue as warning once per day:
 					self._logWarnOnce("_next_simByTimeWarn",
-						("Detected a log entry %sm %s the current time in operation mode. "
+						("Detected a log entry %s %s the current time in operation mode. "
 						 "This looks like a %s problem. Treating such entries as if they just happened.",
-						 abs(delta), "before" if delta < 0 else "after",
-						 "latency" if -55 <= delta < 0 else "timezone"
+						 MyTime.seconds2str(abs(delta)), "before" if delta < 0 else "after",
+						 "latency" if -3300 <= delta < 0 else "timezone"
 						 ),
 						("Please check a jail for a timing issue. Line with odd timestamp: %s",
 						 line))

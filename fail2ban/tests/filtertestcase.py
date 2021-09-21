@@ -457,7 +457,7 @@ class IgnoreIP(LogCaptureTestCase):
 			for i in (1,2,3):
 				self.filter.processLineAndAdd('2019-10-27 02:00:00 fail from 192.0.2.15'); # +3 = 3
 			self.assertLogged(
-				"Detected a log entry 60m before the current time in operation mode. This looks like a timezone problem.",
+				"Detected a log entry 1h before the current time in operation mode. This looks like a timezone problem.",
 				"Please check a jail for a timing issue.",
 				"192.0.2.15:1", "192.0.2.15:2", "192.0.2.15:3",
 				"Total # of detected failures: 3.", all=True, wait=True)
@@ -467,7 +467,7 @@ class IgnoreIP(LogCaptureTestCase):
 			for i in (1,2,3):
 				self.filter.processLineAndAdd('2019-10-27 04:00:00 GMT fail from 192.0.2.16'); # +3 = 6
 			self.assertLogged(
-				"Detected a log entry 120m after the current time in operation mode. This looks like a timezone problem.",
+				"Detected a log entry 2h after the current time in operation mode. This looks like a timezone problem.",
 				"Please check a jail for a timing issue.",
 				"192.0.2.16:1", "192.0.2.16:2", "192.0.2.16:3",
 				"Total # of detected failures: 6.", all=True, wait=True)
@@ -1458,7 +1458,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			if idle:
 				self.filter.sleeptime /= 100.0
 				self.filter.idle = True
-				self.waitForTicks(1)
+			self.waitForTicks(1)
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 			# Now let's feed it with entries from the file
@@ -1540,6 +1540,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def test_delJournalMatch(self):
 			self._initFilter()
 			self.filter.start()
+			self.waitForTicks(1); # wait for start
 			# Smoke test for removing of match
 
 			# basic full test
@@ -1572,6 +1573,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def test_WrongChar(self):
 			self._initFilter()
 			self.filter.start()
+			self.waitForTicks(1); # wait for start
 			# Now let's feed it with entries from the file
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, skip=15, n=4)
