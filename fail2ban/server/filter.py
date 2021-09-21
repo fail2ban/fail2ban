@@ -664,7 +664,7 @@ class Filter(JailThread):
 				# if weird date - we'd simulate now for timeing issue (too large deviation from now):
 				delta = int(date - MyTime.time())
 				if abs(delta) > 60:
-					delta /= 60
+					delta //= 60
 					# log timing issue as warning once per day:
 					self._logWarnOnce("_next_simByTimeWarn",
 						("Detected a log entry %sm %s the current time in operation mode. "
