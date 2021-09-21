@@ -618,6 +618,7 @@ class Filter(JailThread):
 		noDate = False
 		if date:
 			tupleLine = line
+			line = "".join(line)
 			self.__lastTimeText = tupleLine[1]
 			self.__lastDate = date
 		else:
@@ -654,30 +655,38 @@ class Filter(JailThread):
 				if self.__lastDate and self.__lastDate > MyTime.time() - 60:
 					tupleLine = ("", self.__lastTimeText, line)
 					date = self.__lastDate
+				elif self.checkFindTime and self.inOperation:
+					date = MyTime.time()
 		
-		if self.checkFindTime:
+		if self.checkFindTime and date is not None:
 			# if in operation (modifications have been really found):
 			if self.inOperation:
 				# if weird date - we'd simulate now for timeing issue (too large deviation from now):
-				if (date is None or date < MyTime.time() - 60 or date > MyTime.time() + 60):
-					# log time zone issue as warning once per day:
+				delta = int(date - MyTime.time())
+				if abs(delta) > 60:
+					delta //= 60
+					# log timing issue as warning once per day:
 					self._logWarnOnce("_next_simByTimeWarn",
-						("Simulate NOW in operation since found time has too large deviation %s ~ %s +/- %s",
-							date, MyTime.time(), 60),
-						("Please check jail has possibly a timezone issue. Line with odd timestamp: %s", 
-							line))
+						("Detected a log entry %sm %s the current time in operation mode. "
+						 "This looks like a %s problem. Treating such entries as if they just happened.",
+						 abs(delta), "before" if delta < 0 else "after",
+						 "latency" if -55 <= delta < 0 else "timezone"
+						 ),
+						("Please check a jail for a timing issue. Line with odd timestamp: %s",
+						 line))
 					# simulate now as date:
 					date = MyTime.time()
 					self.__lastDate = date
 			else:
 				# in initialization (restore) phase, if too old - ignore:
-				if date is not None and date < MyTime.time() - self.getFindTime():
+				if date < MyTime.time() - self.getFindTime():
 					# log time zone issue as warning once per day:
 					self._logWarnOnce("_next_ignByTimeWarn",
-						("Ignore line since time %s < %s - %s",
-							date, MyTime.time(), self.getFindTime()),
-						("Please check jail has possibly a timezone issue. Line with odd timestamp: %s", 
-							line))
+						("Ignoring all log entries older than %ss; these are probably" +
+						 " messages generated while fail2ban was not running.",
+							self.getFindTime()),
+						("Please check a jail for a timing issue. Line with odd timestamp: %s",
+						 line))
 					# ignore - too old (obsolete) entry:
 					return []
 

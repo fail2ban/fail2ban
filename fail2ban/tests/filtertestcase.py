@@ -444,11 +444,11 @@ class IgnoreIP(LogCaptureTestCase):
 	def testTimeJump_InOperation(self):
 		self._testTimeJump(inOperation=True)
 
-	def testWrongTimeZone(self):
+	def testWrongTimeOrTZ(self):
 		try:
 			self.filter.addFailRegex('fail from <ADDR>$')
 			self.filter.setDatePattern(r'{^LN-BEG}%Y-%m-%d %H:%M:%S(?:\s*%Z)?\s')
-			self.filter.setMaxRetry(5); # don't ban here
+			self.filter.setMaxRetry(50); # don't ban here
 			self.filter.inOperation = True; # real processing (all messages are new)
 			# current time is 1h later than log-entries:
 			MyTime.setTime(1572138000+3600)
@@ -457,15 +457,18 @@ class IgnoreIP(LogCaptureTestCase):
 			for i in (1,2,3):
 				self.filter.processLineAndAdd('2019-10-27 02:00:00 fail from 192.0.2.15'); # +3 = 3
 			self.assertLogged(
-				"Simulate NOW in operation since found time has too large deviation",
-				"Please check jail has possibly a timezone issue.",
+				"Detected a log entry 60m before the current time in operation mode. This looks like a timezone problem.",
+				"Please check a jail for a timing issue.",
 				"192.0.2.15:1", "192.0.2.15:2", "192.0.2.15:3",
-				"Total # of detected failures: 3.", wait=True)
+				"Total # of detected failures: 3.", all=True, wait=True)
 			#
+			setattr(self.filter, "_next_simByTimeWarn", -1)
 			self.pruneLog("[phase 2] wrong TZ given in log")
 			for i in (1,2,3):
 				self.filter.processLineAndAdd('2019-10-27 04:00:00 GMT fail from 192.0.2.16'); # +3 = 6
 			self.assertLogged(
+				"Detected a log entry 120m after the current time in operation mode. This looks like a timezone problem.",
+				"Please check a jail for a timing issue.",
 				"192.0.2.16:1", "192.0.2.16:2", "192.0.2.16:3",
 				"Total # of detected failures: 6.", all=True, wait=True)
 			self.assertNotLogged("Found a match but no valid date/time found")
@@ -478,6 +481,29 @@ class IgnoreIP(LogCaptureTestCase):
 				"Match without a timestamp:",
 				"192.0.2.17:1", "192.0.2.17:2", "192.0.2.17:3",
 				"Total # of detected failures: 9.", all=True, wait=True)
+			#
+			phase = 3
+			for delta, expect in (
+				(-90*60, "timezone"), #90 minutes after
+				(-60*60, "timezone"), #60 minutes after
+				(-10*60, "timezone"), #10 minutes after
+				(-59,    None),       #59 seconds after
+				(59,     None),       #59 seconds before
+				(61,     "latency"),  #>1 minute before
+				(55*60,  "latency"),  #55 minutes before
+				(90*60,  "timezone")  #90 minutes before
+			):
+				phase += 1
+				MyTime.setTime(1572138000+delta)
+				setattr(self.filter, "_next_simByTimeWarn", -1)
+				self.pruneLog('[phase {phase}] log entries offset by {delta}s'.format(phase=phase, delta=delta))
+				self.filter.processLineAndAdd('2019-10-27 02:00:00 fail from 192.0.2.15');
+				self.assertLogged("Found 192.0.2.15", wait=True)
+				if expect:
+					self.assertLogged(("timezone problem", "latency problem")[int(expect == "latency")], all=True)
+					self.assertNotLogged(("timezone problem", "latency problem")[int(expect != "latency")], all=True)
+				else:
+					self.assertNotLogged("timezone problem", "latency problem", all=True)
 		finally:
 			tearDownMyTime()
 
