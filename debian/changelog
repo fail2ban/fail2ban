@@ -4,6 +4,8 @@ fail2ban (0.11.2-3) UNRELEASED; urgency=medium
     + Build-Depends: Drop versioned constraint on debhelper.
   * Bump debhelper from old 12 to 13.
   * Update standards version to 4.5.1, no changes needed.
+  * Remove constraints unnecessary since buster:
+    + fail2ban: Drop versioned constraint on lsb-base in Depends.
 
  -- Debian Janitor <janitor@jelmer.uk>  Tue, 13 Jul 2021 19:39:48 -0000
 

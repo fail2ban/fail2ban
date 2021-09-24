@@ -20,7 +20,7 @@ Standards-Version: 4.5.1
 
 Package: fail2ban
 Architecture: all
-Depends: ${python3:Depends}, ${misc:Depends}, lsb-base (>=2.0-7)
+Depends: ${python3:Depends}, ${misc:Depends}, lsb-base
 Recommends: nftables | iptables, whois, python3-pyinotify, python3-systemd
 Suggests: mailx, system-log-daemon, monit, sqlite3
 Description: ban hosts that cause multiple authentication errors
