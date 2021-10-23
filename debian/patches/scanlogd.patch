@@ -1,0 +1,59 @@
+From f15ed356198728c18470794ce6d88fb786571dc4 Mon Sep 17 00:00:00 2001
+From: Mike Gabriel <mike.gabriel@das-netzwerkteam.de>
+Date: Thu, 25 Feb 2021 20:13:18 +0100
+Subject: [PATCH 1/5] config/: Add support for filtering out detected port
+ scans via scanlogd.
+
+---
+ config/filter.d/scanlogd.conf | 17 +++++++++++++++++
+ config/jail.conf              |  3 +++
+ 2 files changed, 20 insertions(+)
+ create mode 100644 config/filter.d/scanlogd.conf
+
+Index: fail2ban/config/filter.d/scanlogd.conf
+===================================================================
+--- /dev/null
++++ fail2ban/config/filter.d/scanlogd.conf
+@@ -0,0 +1,17 @@
++# Fail2Ban filter for port scans detected by scanlogd
++
++[INCLUDES]
++
++# Read common prefixes. If any customizations available -- read them from
++# common.local
++before = common.conf
++
++[Definition]
++
++_daemon = scanlogd
++
++failregex =  ^%(__prefix_line)s<ADDR>(?::<F-PORT/>)? to \S+ ports\b
++
++ignoreregex =
++
++# Author: Mike Gabriel <mike.gabriel@das-netzwerkteam.de>
+Index: fail2ban/config/jail.conf
+===================================================================
+--- fail2ban.orig/config/jail.conf
++++ fail2ban/config/jail.conf
+@@ -962,3 +962,7 @@ logpath = %(apache_error_log)s
+ # see `filter.d/traefik-auth.conf` for details and service example.
+ port    = http,https
+ logpath = /var/log/traefik/access.log
++
++[scanlogd]
++logpath = %(syslog_local0)s
++banaction = %(banaction_allports)s
+Index: fail2ban/fail2ban/tests/files/logs/scanlogd
+===================================================================
+--- /dev/null
++++ fail2ban/fail2ban/tests/files/logs/scanlogd
+@@ -0,0 +1,8 @@
++# failJSON: { "time": "2005-03-05T21:44:43", "match": true , "host": "192.0.2.123" } 
++Mar  5 21:44:43 srv scanlogd: 192.0.2.123 to 192.0.2.1 ports 80, 81, 83, 88, 99, 443, 1080, 3128, ..., f????uxy, TOS 00, TTL 49 @20:44:43
++# failJSON: { "time": "2005-03-05T21:44:44", "match": true , "host": "192.0.2.123" } 
++Mar  5 21:44:44 srv scanlogd: 192.0.2.123 to 192.0.2.1 ports 497, 515, 544, 543, 464, 513, ..., fSrpauxy, TOS 00 @09:04:25
++# failJSON: { "time": "2005-03-05T21:44:45", "match": true , "host": "192.0.2.123" } 
++Mar  5 21:44:45 srv scanlogd: 192.0.2.123 to 192.0.2.1 ports 593, 548, 636, 646, 625, 631, ..., fSrpauxy, TOS 00, TTL 239 @17:34:00
++# failJSON: { "time": "2005-03-05T21:44:46", "match": true , "host": "192.0.2.123" } 
++Mar  5 21:44:46 srv scanlogd: 192.0.2.123 to 192.0.2.1 ports 22, 26, 37, 80, 25, 79, ..., fSrpauxy, TOS 00 @22:38:37
