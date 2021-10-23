@@ -19,6 +19,7 @@ fail2ban (0.11.2-3) unstable; urgency=medium
     Thanks to Gabriel Filion for the patch
   * Add support for scanlogd (taken from upstream)
     (Closes: #983399)
+  * Standards-Version => 4.6.0
 
  -- Sylvestre Ledru <sylvestre@debian.org>  Sat, 23 Oct 2021 16:09:47 +0200
 
