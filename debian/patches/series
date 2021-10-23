@@ -7,3 +7,4 @@ python3-test-suite.diff
 no-python-user.diff
 roundcube.diff
 fix-mail.patch
+debian_roundcube.diff
