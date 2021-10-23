@@ -13,6 +13,8 @@ fail2ban (0.11.2-3) unstable; urgency=medium
   * Fix the roundcube debian custom path (Closes: #988323)
     Thanks to Kurt Fitzner for the patch
   * Do not fail the postinst if chown/chmod are failing (Closes: #926237)
+  * Adjust the systemd path from /var/run => /run
+    (Closes: #902413)
 
  -- Sylvestre Ledru <sylvestre@debian.org>  Sat, 23 Oct 2021 16:09:47 +0200
 

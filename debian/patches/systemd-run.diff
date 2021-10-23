@@ -1,0 +1,49 @@
+
+Index: fail2ban/files/fail2ban.service.in
+===================================================================
+--- fail2ban.orig/files/fail2ban.service.in
++++ fail2ban/files/fail2ban.service.in
+@@ -7,12 +7,12 @@ PartOf=firewalld.service
+ [Service]
+ Type=simple
+ Environment="PYTHONNOUSERSITE=1"
+-ExecStartPre=/bin/mkdir -p /run/fail2ban
+ ExecStart=@BINDIR@/fail2ban-server -xf start
+ # if should be logged in systemd journal, use following line or set logtarget to sysout in fail2ban.local
+ # ExecStart=@BINDIR@/fail2ban-server -xf --logtarget=sysout start
+ ExecStop=@BINDIR@/fail2ban-client stop
+ ExecReload=@BINDIR@/fail2ban-client reload
++RuntimeDirectory=fail2ban
+ PIDFile=/run/fail2ban/fail2ban.pid
+ Restart=on-failure
+ RestartPreventExitStatus=0 255
+Index: fail2ban/files/debian-initd
+===================================================================
+--- fail2ban.orig/files/debian-initd
++++ fail2ban/files/debian-initd
+@@ -34,7 +34,7 @@ SCRIPTNAME="/etc/init.d/$NAME"
+ # Ad-hoc way to parse out socket file name
+ SOCKFILE="$(grep -h '^[^#]*socket *=' "/etc/$NAME/$NAME.conf" "/etc/$NAME/$NAME.local" 2>/dev/null \
+ 	| tail -n 1 | sed -e 's/.*socket *= *//g' -e 's/ *$//g')"
+-[ -z "$SOCKFILE" ] && SOCKFILE="/var/run/fail2ban.sock"
++[ -z "$SOCKFILE" ] && SOCKFILE="/run/fail2ban.sock"
+ 
+ # Exit if the package is not installed
+ [ -x "$DAEMON" ] || exit 0
+@@ -110,13 +110,13 @@ do_start()
+ 		DAEMON_ARGS="$DAEMON_ARGS -x"
+ 	fi
+ 
+-	# Assure that /var/run/fail2ban exists
+-	[ -d /var/run/fail2ban ] || mkdir -p /var/run/fail2ban
++	# Assure that /run/fail2ban exists
++	[ -d /run/fail2ban ] || mkdir -p /run/fail2ban
+ 
+ 	if [ "$FAIL2BAN_USER" != root ]; then
+ 		# Make the socket directory, IP lists and fail2ban log
+ 		# files writable by fail2ban
+-		chown "$FAIL2BAN_USER" /var/run/fail2ban
++		chown "$FAIL2BAN_USER" /run/fail2ban
+ 		# Create the logfile if it doesn't exist
+ 		touch /var/log/fail2ban.log
+ 		chown "$FAIL2BAN_USER" /var/log/fail2ban.log
