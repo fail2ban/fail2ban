@@ -27,19 +27,19 @@ case "$1" in
        touch $LOG
        chown root:adm ${LOG}*
        chmod 640 ${LOG}*
-        
+
        # Note regarding changed configuration file
        # Note regarding changed configuration file
 		if [ ! -z $preversion ]; then
 			if dpkg --compare-versions $preversion lt 0.7.1-1; then
 			cat <<EOF
 WARNING!
-  
+
   Fail2ban 0.7 is a complete rewrite of the 0.6 version, and if you
   customized any of provided configuration or startup files
   (/etc/default/fail2ban, /etc/fail2ban.conf, /etc/init.d/fail2ban), please
   read relevant entry in /usr/share/doc/fail2ban/NEWS.Debian.gz.
-  
+
 EOF
 			fi
 			if dpkg --compare-versions $preversion lt 0.5.4-5.14; then
@@ -94,5 +94,3 @@ fi
 #DEBHELPER#
 
 exit 0
-
-
