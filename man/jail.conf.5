@@ -487,7 +487,7 @@ is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. T
 .IP
 \fI<CIDR>\fR - helper regex to match CIDR (simple integer form of net-mask).
 .IP
-\fI<SUBNET>\fR - regex to match sub-net adresses (in form of IP/CIDR, also single IP is matched, so part /CIDR is optional).
+\fI<SUBNET>\fR - regex to match sub-net addresses (in form of IP/CIDR, also single IP is matched, so part /CIDR is optional).
 .IP
 \fI<F-ID>...</F-ID>\fR - free regex capturing group targeting identifier used for ban (instead of IP address or hostname).
 .IP
@@ -540,7 +540,7 @@ There are several prefixes and words with special meaning that could be specifie
 .IP
 \fI{UNB}\fR - prefix to disable automatic word boundaries in regex.
 .IP
-\fI{NONE}\fR - value would allow to find failures totally without date-time in log message. Filter will use now as a timestamp (or last known timestamp from previous line with timestamp).
+\fI{NONE}\fR - value would allow one to find failures totally without date-time in log message. Filter will use now as a timestamp (or last known timestamp from previous line with timestamp).
 .RE
 .TP
 \fBjournalmatch\fR
