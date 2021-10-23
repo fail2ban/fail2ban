@@ -10,6 +10,8 @@ fail2ban (0.11.2-3) unstable; urgency=medium
 
   [ Sylvestre Ledru ]
   * Fix the watch file
+  * Fix systemd-service-in-odd-location
+    lib/systemd/system/fail2ban.service => /usr/lib/systemd/system/fail2ban.service
   * Fix the roundcube debian custom path (Closes: #988323)
     Thanks to Kurt Fitzner for the patch
   * Do not fail the postinst if chown/chmod are failing (Closes: #926237)
