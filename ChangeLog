@@ -222,7 +222,7 @@ Yes, Hrrrm...
 ### New Features
 * new replacement tags for failregex to match subnets in form of IP-addresses with CIDR mask (gh-2559):
   - `<CIDR>` - helper regex to match CIDR (simple integer form of net-mask);
-  - `<SUBNET>` - regex to match sub-net adresses (in form of IP/CIDR, also single IP is matched, so part /CIDR is optional);
+  - `<SUBNET>` - regex to match sub-net addresses (in form of IP/CIDR, also single IP is matched, so part /CIDR is optional);
 * grouped tags (`<ADDR>`, `<HOST>`, `<SUBNET>`) recognize IP addresses enclosed in square brackets
 * new failregex-flag tag `<F-MLFGAINED>` for failregex, signaled that the access to service was gained
   (ATM used similar to tag `<F-NOFAIL>`, but it does not add the log-line to matches, gh-2279)
