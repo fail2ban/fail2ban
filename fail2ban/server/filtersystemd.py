@@ -61,7 +61,6 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		# Initialise systemd-journal connection
 		self.__journal = journal.Reader(**jrnlargs)
 		self.__matches = []
-		self.__nextUpdateTM = 0
 		self.setDatePattern(None)
 		logSys.debug("Created FilterSystemd")
 
@@ -321,9 +320,10 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				#self.__journal.wait(self.sleeptime) != journal.NOP
 				## 
 				## wait for entries without sleep in intervals, because "sleeping" in journal.wait:
-				Utils.wait_for(lambda: not self.active or \
-					self.__journal.wait(Utils.DEFAULT_SLEEP_INTERVAL) != journal.NOP,
-					self.sleeptime, 0.00001)
+				if not logentry:
+					Utils.wait_for(lambda: not self.active or \
+						self.__journal.wait(Utils.DEFAULT_SLEEP_INTERVAL) != journal.NOP,
+						self.sleeptime, 0.00001)
 				if self.idle:
 					# because journal.wait will returns immediatelly if we have records in journal,
 					# just wait a little bit here for not idle, to prevent hi-load:
@@ -368,15 +368,17 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				if self.ticks % 10 == 0:
 					self.performSvc()
 				# update position in log (time and iso string):
-				if (line and self.jail.database and (
-				    self.ticks % 10 == 0
-				    or MyTime.time() >= self.__nextUpdateTM
+				if self.jail.database:
+					if line:
+						self._pendDBUpdates['systemd-journal'] = (tm, line[1])
+						line = None
+					if self._pendDBUpdates and (
+				    self.ticks % 100 == 0
+				    or MyTime.time() >= self._nextUpdateTM
 				    or not self.active
-				  )
-				):
-					self.jail.database.updateJournal(self.jail, 'systemd-journal', tm, line[1])
-					self.__nextUpdateTM = MyTime.time() + Utils.DEFAULT_SLEEP_TIME * 5
-					line = None
+				  ):
+						self._updateDBPending()
+						self._nextUpdateTM = MyTime.time() + Utils.DEFAULT_SLEEP_TIME * 5
 			except Exception as e: # pragma: no cover
 				if not self.active: # if not active - error by stop...
 					break
@@ -403,3 +405,22 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		ret.append(("Journal matches",
 			[" + ".join(" ".join(match) for match in self.__matches)]))
 		return ret
+
+	def _updateDBPending(self):
+		"""Apply pending updates (jornal position) to database.
+		"""
+		db = self.jail.database
+		while True:
+			try:
+				log, args = self._pendDBUpdates.popitem()
+			except KeyError:
+				break
+			db.updateJournal(self.jail, log, *args)
+
+	def onStop(self):
+		"""Stop monitoring of journal. Invoked after run method.
+		"""
+		# ensure positions of pending logs are up-to-date:
+		if self._pendDBUpdates and self.jail.database:
+			self._updateDBPending()
+
