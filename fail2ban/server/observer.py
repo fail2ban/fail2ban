@@ -462,7 +462,7 @@ class ObserverThread(JailThread):
 					if ticket.getTime() > timeOfBan:
 						logSys.info('[%s] IP %s is bad: %s # last %s - incr %s to %s' % (jail.name, ip, banCount, 
 							MyTime.time2str(timeOfBan), 
-							datetime.timedelta(seconds=int(orgBanTime)), datetime.timedelta(seconds=int(banTime))));
+							MyTime.seconds2str(orgBanTime), MyTime.seconds2str(banTime)))
 					else:
 						ticket.restored = True
 					break
@@ -491,8 +491,7 @@ class ObserverThread(JailThread):
 			# if not permanent
 			if btime != -1:
 				bendtime = ticket.getTime() + btime
-				logtime = (datetime.timedelta(seconds=int(btime)),
-					MyTime.time2str(bendtime))
+				logtime = (MyTime.seconds2str(btime), MyTime.time2str(bendtime))
 				# check ban is not too old :
 				if bendtime < MyTime.time():
 					logSys.debug('Ignore old bantime %s', logtime[1])
