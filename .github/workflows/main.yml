@@ -33,7 +33,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      
+
+      - name: Grant systemd-journal access
+        run: sudo usermod -a -G systemd-journal "$USER" || echo 'no systemd-journal access'
+
       - name: Python version
         run: |
           F2B_PY=$(python -c "import sys; print(sys.version)")

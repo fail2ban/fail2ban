@@ -104,6 +104,10 @@ class Filter(JailThread):
 		## Error counter (protected, so can be used in filter implementations)
 		## if it reached 100 (at once), run-cycle will go idle
 		self._errors = 0
+		## Next time to update log or journal position in database:
+		self._nextUpdateTM = 0
+		## Pending updates (must be executed at next update time or during stop):
+		self._pendDBUpdates = {}
 		## return raw host (host is not dns):
 		self.returnRawHost = False
 		## check each regex (used for test purposes):
@@ -664,13 +668,12 @@ class Filter(JailThread):
 				# if weird date - we'd simulate now for timeing issue (too large deviation from now):
 				delta = int(date - MyTime.time())
 				if abs(delta) > 60:
-					delta //= 60
 					# log timing issue as warning once per day:
 					self._logWarnOnce("_next_simByTimeWarn",
-						("Detected a log entry %sm %s the current time in operation mode. "
+						("Detected a log entry %s %s the current time in operation mode. "
 						 "This looks like a %s problem. Treating such entries as if they just happened.",
-						 abs(delta), "before" if delta < 0 else "after",
-						 "latency" if -55 <= delta < 0 else "timezone"
+						 MyTime.seconds2str(abs(delta)), "before" if delta < 0 else "after",
+						 "latency" if -3300 <= delta < 0 else "timezone"
 						 ),
 						("Please check a jail for a timing issue. Line with odd timestamp: %s",
 						 line))
@@ -1024,9 +1027,6 @@ class FileFilter(Filter):
 			log = self.__logs.pop(path)
 		except KeyError:
 			return
-		db = self.jail.database
-		if db is not None:
-			db.updateLog(self.jail, log)
 		logSys.info("Removed logfile: %r", path)
 		self._delLogPath(path)
 		return
@@ -1146,9 +1146,15 @@ class FileFilter(Filter):
 					self.processLineAndAdd(line.rstrip('\r\n'))
 		finally:
 			log.close()
-		db = self.jail.database
-		if db is not None:
-			db.updateLog(self.jail, log)
+		if self.jail.database is not None:
+			self._pendDBUpdates[log] = 1
+			if (
+				self.ticks % 100 == 0
+				or MyTime.time() >= self._nextUpdateTM
+				or not self.active
+			):
+				self._updateDBPending()
+				self._nextUpdateTM = MyTime.time() + Utils.DEFAULT_SLEEP_TIME * 5
 		return True
 
 	##
@@ -1248,12 +1254,33 @@ class FileFilter(Filter):
 		ret.append(("File list", path))
 		return ret
 
-	def stop(self):
-		"""Stop monitoring of log-file(s)
+	def _updateDBPending(self):
+		"""Apply pending updates (log position) to database.
 		"""
+		db = self.jail.database
+		while True:
+			try:
+				log, args = self._pendDBUpdates.popitem()
+			except KeyError:
+				break
+			db.updateLog(self.jail, log)
+			
+	def onStop(self):
+		"""Stop monitoring of log-file(s). Invoked after run method.
+		"""
+		# ensure positions of pending logs are up-to-date:
+		if self._pendDBUpdates and self.jail.database:
+			self._updateDBPending()
 		# stop files monitoring:
 		for path in self.__logs.keys():
 			self.delLogPath(path)
+
+	def stop(self):
+		"""Stop filter
+		"""
+		# normally onStop will be called automatically in thread after its run ends, 
+		# but for backwards compatibilities we'll invoke it in caller of stop method.
+		self.onStop()
 		# stop thread:
 		super(Filter, self).stop()
 
@@ -1304,6 +1331,15 @@ class FileContainer:
 			handler.close()
 		## shows that log is in operation mode (expecting new messages only from here):
 		self.inOperation = tail
+
+	def __hash__(self):
+		return hash(self.__filename)
+	def __eq__(self, other):
+		return (id(self) == id(other) or
+			self.__filename == (other.__filename if isinstance(other, FileContainer) else other)
+		)
+	def __repr__(self):
+		return 'file-log:'+self.__filename
 
 	def getFileName(self):
 		return self.__filename
