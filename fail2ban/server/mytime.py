@@ -174,3 +174,51 @@ class MyTime:
 			val = rexp.sub(rpl, val)
 		val = MyTime._str2sec_fini.sub(r"\1+\2", val)
 		return eval(val)
+
+	class seconds2str():
+		"""Converts seconds to string on demand (if string representation needed).
+		Ex: seconds2str(86400*390)            = 1y 3w 4d
+		    seconds2str(86400*368)            = 1y 3d
+		    seconds2str(86400*365.5)          = 1y
+		    seconds2str(86400*2+3600*7+60*15) = 2d 7h 15m
+		    seconds2str(86400*2+3599)         = 2d 1h
+		    seconds2str(3600-5)               = 1h
+		    seconds2str(3600-10)              = 59m 50s
+		    seconds2str(59)                   = 59s
+		"""
+		def __init__(self, sec):
+			self.sec = sec
+		def __str__(self):
+			# s = str(datetime.timedelta(seconds=int(self.sec)))
+			# return s if s[-3:] != ":00" else s[:-3]
+			s = self.sec; r = ""; c = 3
+			# automatic accuracy: round by large values (upto 1 minute, or 1 day by year):
+			if s >= 3570:
+				if s >= 31536000:
+					s = int(round(float(s)/86400)*86400)
+				elif s >= 86400:
+					s = int(round(float(s)/60)*60)
+				else:
+					s = int(round(float(s)/10)*10)
+			for n, m in (
+				('y', 31536000), # a year as 365*24*60*60 (don't need to consider leap year by this accuracy)
+				('w',   604800), # a week as 24*60*60*7
+				('d',    86400), # a day as 24*60*60
+				('h',     3600), # a hour as 60*60
+				('m',       60), # a minute
+				('s',        1)  # a second
+			):
+				if s >= m:
+					c -= 1
+					r += ' ' + str(s//m) + n
+					s %= m
+					# stop if no remaining part or no repeat needed (too small granularity):
+					if not s or not c: break
+				elif c < 3:
+					# avoid too small granularity:
+					c -= 1
+					if not c: break
+			#
+			return r[1:]
+		def __repr__(self):
+			return self.__str__()
