@@ -457,3 +457,15 @@ class MyTimeTest(unittest.TestCase):
 		self.assertEqual(float(str2sec("1 month")) / 60 / 60 / 24, 30.4375)
 		self.assertEqual(float(str2sec("1 year")) / 60 / 60 / 24, 365.25)
 
+	def testSec2Str(self):
+		sec2str = lambda s: str(MyTime.seconds2str(s))
+		self.assertEqual(sec2str(86400*390),            '1y 3w 4d')
+		self.assertEqual(sec2str(86400*368),            '1y 3d')
+		self.assertEqual(sec2str(86400*365.49),         '1y')
+		self.assertEqual(sec2str(86400*15),             '2w 1d')
+		self.assertEqual(sec2str(86400*14-10),          '2w')
+		self.assertEqual(sec2str(86400*2+3600*7+60*15), '2d 7h 15m')
+		self.assertEqual(sec2str(86400*2+3599),         '2d 1h')
+		self.assertEqual(sec2str(3600-5),               '1h')
+		self.assertEqual(sec2str(3600-10),              '59m 50s')
+		self.assertEqual(sec2str(59),                   '59s')
