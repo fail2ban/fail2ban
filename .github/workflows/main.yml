@@ -44,6 +44,8 @@ jobs:
           F2B_PY=${F2B_PY:0:1}
           echo "Set F2B_PY=$F2B_PY"
           echo "F2B_PY=$F2B_PY" >> $GITHUB_ENV
+          # for GHA we need to monitor all journals, since it cannot be found using SYSTEM_ONLY(4):
+          echo "F2B_SYSTEMD_DEFAULT_FLAGS=0" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
@@ -71,13 +73,13 @@ jobs:
           _debug '- systemd:' python -c 'from fail2ban.server.filtersystemd import FilterSystemd'
           #_debug '- systemd (root): ' sudo python -c 'from fail2ban.server.filtersystemd import FilterSystemd'
           _debug '- pyinotify:' python -c 'from fail2ban.server.filterpyinotify import FilterPyinotify'
-      
-      # - name: Test suite
-      #   run: if [[ "$F2B_PY" = 2 ]]; then python setup.py test; else python bin/fail2ban-testcases --verbosity=2; fi
 
-      - name: Test suite (debug some systemd tests only)
-        # run: python bin/fail2ban-testcases --verbosity=2 "[sS]ystemd|[jJ]ournal"
-        run: python bin/fail2ban-testcases --verbosity=2 -l 5 "test_WrongChar"
+      - name: Test suite
+        run: if [[ "$F2B_PY" = 2 ]]; then python setup.py test; else python bin/fail2ban-testcases --verbosity=2; fi
+
+      #- name: Test suite (debug some systemd tests only)
+         #run: python bin/fail2ban-testcases --verbosity=2 "[sS]ystemd|[jJ]ournal"
+         #run: python bin/fail2ban-testcases --verbosity=2 -l 5 "test_WrongChar"
 
       - name: Build
         run: python setup.py build
