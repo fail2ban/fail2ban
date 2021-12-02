@@ -191,34 +191,45 @@ class MyTime:
 		def __str__(self):
 			# s = str(datetime.timedelta(seconds=int(self.sec)))
 			# return s if s[-3:] != ":00" else s[:-3]
-			s = self.sec; r = ""; c = 3
-			# automatic accuracy: round by large values (upto 1 minute, or 1 day by year):
-			if s >= 3570:
-				if s >= 31536000:
-					s = int(round(float(s)/86400)*86400)
-				elif s >= 86400:
-					s = int(round(float(s)/60)*60)
-				else:
-					s = int(round(float(s)/10)*10)
-			for n, m in (
-				('y', 31536000), # a year as 365*24*60*60 (don't need to consider leap year by this accuracy)
-				('w',   604800), # a week as 24*60*60*7
-				('d',    86400), # a day as 24*60*60
-				('h',     3600), # a hour as 60*60
-				('m',       60), # a minute
-				('s',        1)  # a second
-			):
-				if s >= m:
-					c -= 1
-					r += ' ' + str(s//m) + n
-					s %= m
-					# stop if no remaining part or no repeat needed (too small granularity):
-					if not s or not c: break
-				elif c < 3:
-					# avoid too small granularity:
-					c -= 1
-					if not c: break
-			#
-			return r[1:]
+			s = self.sec; c = 3
+			# automatic accuracy: round by large values (and maximally 3 groups)
+			if s >= 31536000: # a year as 365*24*60*60 (don't need to consider leap year by this accuracy)
+				s = int(round(float(s)/86400)) # round by a day
+				r = str(s//365) + 'y '; s %= 365
+				if s >= 7:
+					r += str(s//7) + 'w '; s %= 7
+				if s:
+					r += str(s) + 'd '
+				return r[:-1]
+			if s >= 604800: # a week as 24*60*60*7
+				s = int(round(float(s)/3600)) # round by a hour
+				r = str(s//168) + 'w '; s %= 168
+				if s >= 24:
+					r += str(s//24) + 'd '; s %= 24
+				if s:
+					r += str(s) + 'h '
+				return r[:-1]
+			if s >= 86400: # a day as 24*60*60
+				s = int(round(float(s)/60)) # round by a minute
+				r = str(s//1440) + 'd '; s %= 1440
+				if s >= 60:
+					r += str(s//60) + 'h '; s %= 60
+				if s:
+					r += str(s) + 'm '
+				return r[:-1]
+			if s >= 3595: # a hour as 60*60 (- 5 seconds)
+				s = int(round(float(s)/10)) # round by 10 seconds
+				r = str(s//360) + 'h '; s %= 360
+				if s >= 6: # a minute
+					r += str(s//6) + 'm '; s %= 6
+				return r[:-1]
+			r = ''
+			if s >= 60: # a minute
+				r += str(s//60) + 'm '; s %= 60
+			if s: # remaining seconds
+				r += str(s) + 's '
+			elif not self.sec: # 0s
+				r = '0 '
+			return r[:-1]
 		def __repr__(self):
 			return self.__str__()
