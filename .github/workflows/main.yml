@@ -41,9 +41,11 @@ jobs:
         run: |
           F2B_PY=$(python -c "import sys; print(sys.version)")
           echo "Python: ${{ matrix.python-version }} -- ${F2B_PY/$'\n'/ }"
+          F2B_PYV=$(echo "${F2B_PY}" | grep -oP '^\d+(?:\.\d+)')
           F2B_PY=${F2B_PY:0:1}
-          echo "Set F2B_PY=$F2B_PY"
+          echo "Set F2B_PY=$F2B_PY, F2B_PYV=$F2B_PYV"
           echo "F2B_PY=$F2B_PY" >> $GITHUB_ENV
+          echo "F2B_PYV=$F2B_PYV" >> $GITHUB_ENV
           # for GHA we need to monitor all journals, since it cannot be found using SYSTEM_ONLY(4):
           echo "F2B_SYSTEMD_DEFAULT_FLAGS=0" >> $GITHUB_ENV
 
@@ -75,7 +77,15 @@ jobs:
           _debug '- pyinotify:' python -c 'from fail2ban.server.filterpyinotify import FilterPyinotify'
 
       - name: Test suite
-        run: if [[ "$F2B_PY" = 2 ]]; then python setup.py test; else python bin/fail2ban-testcases --verbosity=2; fi
+        run: |
+          if [[ "$F2B_PY" = 2 ]]; then
+            python setup.py test
+          elif dpkg --compare-versions "$F2B_PYV" lt 3.10; then 
+            python bin/fail2ban-testcases --verbosity=2
+          else
+            echo "Skip systemd backend since systemd-python module must be fixed for python >= v.3.10 in GHA ..."
+            python bin/fail2ban-testcases --verbosity=2 -i "[sS]ystemd|[jJ]ournal"
+          fi
 
       #- name: Test suite (debug some systemd tests only)
          #run: python bin/fail2ban-testcases --verbosity=2 "[sS]ystemd|[jJ]ournal"
