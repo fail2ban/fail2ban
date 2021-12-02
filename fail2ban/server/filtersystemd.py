@@ -23,6 +23,7 @@ __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import datetime
+import os
 import time
 from distutils.version import LooseVersion
 
@@ -93,7 +94,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		except KeyError:
 			# be sure all journal types will be opened if files/path specified (don't set flags):
 			if ('files' not in args or not len(args['files'])) and ('path' not in args or not args['path']):
-				args['flags'] = 4
+				args['flags'] = int(os.getenv("F2B_SYSTEMD_DEFAULT_FLAGS", 4))
 				
 		try:
 			args['namespace'] = kwargs.pop('namespace')
