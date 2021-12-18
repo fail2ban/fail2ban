@@ -2066,25 +2066,38 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				action.ban(aInfos['ipv4'])
 				if tests.get('ip4-start'): self.assertLogged(*tests.get('*-start', ())+tests['ip4-start'], all=True)
 				if tests.get('ip6-start'): self.assertNotLogged(*tests['ip6-start'], all=True)
-				self.assertLogged(*tests.get('ip4-check',())+tests['ip4-ban'], all=True)
+				self.assertLogged(*tests['ip4-ban'], all=True)
 				self.assertNotLogged(*tests['ip6'], all=True)
 				# test unban ip4 :
 				self.pruneLog('# === unban ipv4 ===')
 				action.unban(aInfos['ipv4'])
-				self.assertLogged(*tests.get('ip4-check',())+tests['ip4-unban'], all=True)
+				self.assertLogged(*tests['ip4-unban'], all=True)
 				self.assertNotLogged(*tests['ip6'], all=True)
 				# test ban ip6 :
 				self.pruneLog('# === ban ipv6 ===')
 				action.ban(aInfos['ipv6'])
 				if tests.get('ip6-start'): self.assertLogged(*tests.get('*-start', ())+tests['ip6-start'], all=True)
 				if tests.get('ip4-start'): self.assertNotLogged(*tests['ip4-start'], all=True)
-				self.assertLogged(*tests.get('ip6-check',())+tests['ip6-ban'], all=True)
+				self.assertLogged(*tests['ip6-ban'], all=True)
 				self.assertNotLogged(*tests['ip4'], all=True)
 				# test unban ip6 :
 				self.pruneLog('# === unban ipv6 ===')
 				action.unban(aInfos['ipv6'])
-				self.assertLogged(*tests.get('ip6-check',())+tests['ip6-unban'], all=True)
+				self.assertLogged(*tests['ip6-unban'], all=True)
 				self.assertNotLogged(*tests['ip4'], all=True)
+				# test invariant check (normally on demand in error case only):
+				if tests.get('ip4-check'):
+					self.pruneLog('# === check ipv4 ===')
+					action._invariantCheck(aInfos['ipv4']['family'])
+					self.assertLogged(*tests['ip4-check'], all=True)
+					if tests.get('ip6-check') and tests['ip6-check'] != tests['ip4-check']:
+						self.assertNotLogged(*tests['ip6-check'], all=True)
+				if tests.get('ip6-check'):
+					self.pruneLog('# === check ipv6 ===')
+					action._invariantCheck(aInfos['ipv6']['family'])
+					self.assertLogged(*tests['ip6-check'], all=True)
+					if tests.get('ip4-check') and tests['ip4-check'] != tests['ip6-check']:
+						self.assertNotLogged(*tests['ip4-check'], all=True)
 				# test flush for actions should supported this:
 				if tests.get('flush'):
 					self.pruneLog('# === flush ===')

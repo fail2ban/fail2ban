@@ -305,8 +305,8 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertEqual(self.__action.actionstart, "touch '%s'" % tmp)
 		self.__action.actionstop = "rm -f '%s'" % tmp
 		self.assertEqual(self.__action.actionstop, "rm -f '%s'" % tmp)
-		self.__action.actionban = "echo -n"
-		self.assertEqual(self.__action.actionban, 'echo -n')
+		self.__action.actionban = "<actioncheck> && echo -n"
+		self.assertEqual(self.__action.actionban, "<actioncheck> && echo -n")
 		self.__action.actioncheck = "[ -e '%s' ]" % tmp
 		self.assertEqual(self.__action.actioncheck, "[ -e '%s' ]" % tmp)
 		self.__action.actionunban = "true"
@@ -316,6 +316,7 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertNotLogged('returned')
 		# no action was actually executed yet
 
+		# start on demand is false, so it should cause failure on first attempt of ban:
 		self.__action.ban({'ip': None})
 		self.assertLogged('Invariant check failed')
 		self.assertLogged('returned successfully')
@@ -365,11 +366,50 @@ class CommandActionTest(LogCaptureTestCase):
 		self.pruneLog('[phase 2]')
 		self.__action.actionstart = "touch '%s'" % tmp
 		self.__action.actionstop = "rm '%s'" % tmp
-		self.__action.actionban = """printf "%%%%b\n" <ip> >> '%s'""" % tmp
+		self.__action.actionban = """<actioncheck> && printf "%%%%b\n" <ip> >> '%s'""" % tmp
 		self.__action.actioncheck = "[ -e '%s' ]" % tmp
 		self.__action.ban({'ip': None})
 		self.assertLogged('Invariant check failed')
 		self.assertNotLogged('Unable to restore environment')
+
+	@with_tmpdir
+	def testExecuteActionCheckOnBanFailure(self, tmp):
+		tmp += '/fail2ban.test'
+		self.__action.actionstart = "touch '%s'; echo 'started ...'" % tmp
+		self.__action.actionstop = "rm -f '%s'" % tmp
+		self.__action.actionban = "[ -e '%s' ] && echo 'banned '<ip>" % tmp
+		self.__action.actioncheck = "[ -e '%s' ] && echo 'check ok' || { echo 'check failed'; exit 1; }" % tmp
+		self.__action.actionrepair = "echo 'repair ...'; touch '%s'" % tmp
+		self.__action.actionstart_on_demand = False
+		self.__action.start()
+		# phase 1: with repair;
+		# phase 2: without repair (start/stop), not on demand;
+		# phase 3: without repair (start/stop), start on demand.
+		for i in (1, 2, 3):
+			self.pruneLog('[phase %s]' % i)
+			# 1st time with success ban:
+			self.__action.ban({'ip': '192.0.2.1'})
+			self.assertLogged(
+				"stdout: %r" % 'banned 192.0.2.1', all=True)
+			self.assertNotLogged("Invariant check failed. Trying", 
+				"stdout: %r" % 'check failed',
+				"stdout: %r" % ('repair ...' if self.__action.actionrepair else 'started ...'),
+				"stdout: %r" % 'check ok', all=True)
+			# force error in ban:
+			os.remove(tmp)
+			self.pruneLog()
+			# 2nd time with fail recognition, success repair, check and ban:
+			self.__action.ban({'ip': '192.0.2.2'})
+			self.assertLogged("Invariant check failed. Trying",
+				"stdout: %r" % 'check failed',
+				"stdout: %r" % ('repair ...' if self.__action.actionrepair else 'started ...'),
+				"stdout: %r" % 'check ok', 
+				"stdout: %r" % 'banned 192.0.2.2', all=True)
+			# repeat without repair (stop/start), herafter enable on demand:
+			if self.__action.actionrepair:
+				self.__action.actionrepair = ""
+			elif not self.__action.actionstart_on_demand:
+				self.__action.actionstart_on_demand = True
 
 	@with_tmpdir
 	def testExecuteActionCheckRepairEnvironment(self, tmp):
