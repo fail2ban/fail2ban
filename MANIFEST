@@ -3,10 +3,9 @@ bin/fail2ban-regex
 bin/fail2ban-server
 bin/fail2ban-testcases
 ChangeLog
+config/action.d/apprise.conf
 config/action.d/abuseipdb.conf
 config/action.d/apf.conf
-config/action.d/badips.conf
-config/action.d/badips.py
 config/action.d/blocklist_de.conf
 config/action.d/bsd-ipfw.conf
 config/action.d/cloudflare.conf
@@ -220,7 +219,6 @@ fail2ban/setup.py
 fail2ban-testcases-all
 fail2ban-testcases-all-python3
 fail2ban/tests/action_d/__init__.py
-fail2ban/tests/action_d/test_badips.py
 fail2ban/tests/action_d/test_smtp.py
 fail2ban/tests/actionstestcase.py
 fail2ban/tests/actiontestcase.py

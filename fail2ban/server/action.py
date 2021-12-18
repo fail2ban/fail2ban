@@ -30,7 +30,10 @@ import tempfile
 import threading
 import time
 from abc import ABCMeta
-from collections import MutableMapping
+try:
+	from collections.abc import MutableMapping
+except ImportError:
+	from collections import MutableMapping
 
 from .failregex import mapTag2Opt
 from .ipdns import DNSUtils

@@ -140,9 +140,10 @@ class JailReader(ConfigReader):
 			# Read filter
 			flt = self.__opts["filter"]
 			if flt:
-				filterName, filterOpt = extractOptions(flt)
-				if not filterName:
-					raise JailDefError("Invalid filter definition %r" % flt)
+				try:
+					filterName, filterOpt = extractOptions(flt)
+				except ValueError as e:
+					raise JailDefError("Invalid filter definition %r: %s" % (flt, e))
 				self.__filter = FilterReader(
 					filterName, self.__name, filterOpt, 
 					share_config=self.share_config, basedir=self.getBaseDir())
@@ -174,10 +175,10 @@ class JailReader(ConfigReader):
 					if not act:			  # skip empty actions
 						continue
 					# join with previous line if needed (consider possible new-line):
-					actName, actOpt = extractOptions(act)
-					prevln = ''
-					if not actName:
-						raise JailDefError("Invalid action definition %r" % act)
+					try:
+						actName, actOpt = extractOptions(act)
+					except ValueError as e:
+						raise JailDefError("Invalid action definition %r: %s" % (act, e))
 					if actName.endswith(".py"):
 						self.__actions.append([
 							"set",

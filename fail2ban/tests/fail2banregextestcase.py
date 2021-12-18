@@ -25,6 +25,7 @@ __license__ = "GPL"
 
 import os
 import sys
+import tempfile
 import unittest
 
 from ..client import fail2banregex
@@ -80,6 +81,11 @@ def _test_exec_command_line(*args):
 		sys.stderr = _org['stderr']
 	return _exit_code
 
+def _reset():
+	# reset global warn-counter:
+	from ..server.filter import _decode_line_warn
+	_decode_line_warn.clear()
+
 STR_00 = "Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.0.2.0"
 STR_00_NODT = "[sshd] error: PAM: Authentication failure for kevin from 192.0.2.0"
 
@@ -122,6 +128,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		"""Call before every test case."""
 		LogCaptureTestCase.setUp(self)
 		setUpMyTime()
+		_reset()
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -140,6 +147,12 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"test", r".*? from <HOST>$", r".**"
 		))
 		self.assertLogged("Unable to compile regular expression")
+
+	def testWrongFilterOptions(self):
+		self.assertFalse(_test_exec(
+			"test", "flt[a='x,y,z',b=z,y,x]"
+		))
+		self.assertLogged("Wrong filter name or options", "wrong syntax at 14: y,x", all=True)
 
 	def testDirectFound(self):
 		self.assertTrue(_test_exec(
@@ -395,7 +408,17 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"Found a match but no valid date/time found",
 			"Match without a timestamp:", all=True)
 
-		self.pruneLog()
+	def testIncompleteDateTime(self):
+		# datepattern in followed lines doesn't match previously known pattern + line is too short
+		# (logging break-off, no flush, etc):
+		self.assertTrue(_test_exec(
+			'-o', 'Found-ADDR:<ip>',
+			'192.0.2.1 - - [02/May/2021:18:40:55 +0100] "GET / HTTP/1.1" 302 328 "-" "Mozilla/5.0" "-"\n'
+			'192.0.2.2 - - [02/May/2021:18:40:55 +0100\n'
+			'192.0.2.3 - - [02/May/2021:18:40:55',
+			'^<ADDR>'))
+		self.assertLogged(
+			"Found-ADDR:192.0.2.1", "Found-ADDR:192.0.2.2", "Found-ADDR:192.0.2.3", all=True)	
 
 	def testFrmtOutputWrapML(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
@@ -448,14 +471,8 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			FILENAME_ZZZ_GEN, FILENAME_ZZZ_GEN
 		))
 
-	def _reset(self):
-		# reset global warn-counter:
-		from ..server.filter import _decode_line_warn
-		_decode_line_warn.clear()
-
 	def testWronChar(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
-		self._reset()
 		self.assertTrue(_test_exec(
 		"-l", "notice", # put down log-level, because of too many debug-messages
 			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
@@ -471,7 +488,6 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testWronCharDebuggex(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
-		self._reset()
 		self.assertTrue(_test_exec(
 		"-l", "notice", # put down log-level, because of too many debug-messages
 			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
@@ -483,6 +499,36 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('Lines: 4 lines, 1 ignored, 2 matched, 1 missed')
 
 		self.assertLogged('https://')
+
+	def testNLCharAsPartOfUniChar(self):
+		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='uni')
+		# test two multi-byte encodings (both contains `\x0A` in either \x02\x0A or \x0A\x02):
+		for enc in ('utf-16be', 'utf-16le'):
+			self.pruneLog("[test-phase encoding=%s]" % enc)
+			try:
+				fout = open(fname, 'wb')
+				# test on unicode string containing \x0A as part of uni-char,
+				# it must produce exactly 2 lines (both are failures):
+				for l in (
+					u'1490349000 \u20AC Failed auth: invalid user Test\u020A from 192.0.2.1\n',
+					u'1490349000 \u20AC Failed auth: invalid user TestI from 192.0.2.2\n'
+				):
+					fout.write(l.encode(enc))
+				fout.close()
+
+				self.assertTrue(_test_exec(
+				"-l", "notice", # put down log-level, because of too many debug-messages
+					"--encoding", enc,
+					"--datepattern", r"^EPOCH",
+					fname, r"Failed .* from <HOST>",
+				))
+
+				self.assertLogged(" encoding : %s" % enc,
+					"Lines: 2 lines, 0 ignored, 2 matched, 0 missed", all=True)
+				self.assertNotLogged("Missed line(s)")
+			finally:
+				fout.close()
+				os.unlink(fname)
 
 	def testExecCmdLine_Usage(self):
 		self.assertNotEqual(_test_exec_command_line(), 0)

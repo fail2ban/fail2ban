@@ -278,6 +278,7 @@ to tune it.  fail2ban-regex -D ...  will present Debuggex URLs for the regexs
 and sample log files that you pass into it.
 
 In general use when using regex debuggers for generating fail2ban filters:
+
 * use regex from the ./fail2ban-regex output (to ensure all substitutions are
 done)
 * replace <HOST> with (?&.ipv4)

@@ -502,7 +502,7 @@ class Fail2BanDb(object):
 		except TypeError:
 			firstLineMD5 = None
 
-		if not firstLineMD5 and (pos or md5):
+		if firstLineMD5 is None and (pos or md5 is not None):
 			cur.execute(
 					"INSERT OR REPLACE INTO logs(jail, path, firstlinemd5, lastfilepos) "
 						"VALUES(?, ?, ?, ?)", (jail.name, name, md5, pos))

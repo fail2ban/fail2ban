@@ -35,7 +35,7 @@ import platform
 from ..server.failregex import Regex, FailRegex, RegexException
 from ..server import actions as _actions
 from ..server.server import Server
-from ..server.ipdns import IPAddr
+from ..server.ipdns import DNSUtils, IPAddr
 from ..server.jail import Jail
 from ..server.jailthread import JailThread
 from ..server.ticket import BanTicket
@@ -66,9 +66,12 @@ class TestServer(Server):
 
 class TransmitterBase(LogCaptureTestCase):
 	
+	TEST_SRV_CLASS = TestServer
+
 	def setUp(self):
 		"""Call before every test case."""
 		super(TransmitterBase, self).setUp()
+		self.server = self.TEST_SRV_CLASS()
 		self.transm = self.server._Server__transm
 		# To test thransmitter we don't need to start server...
 		#self.server.start('/dev/null', '/dev/null', force=False)
@@ -157,10 +160,6 @@ class TransmitterBase(LogCaptureTestCase):
 
 class Transmitter(TransmitterBase):
 
-	def setUp(self):
-		self.server = TestServer()
-		super(Transmitter, self).setUp()
-
 	def testServerIsNotStarted(self):
 		# so far isStarted only tested but not used otherwise
 		# and here we don't really .start server
@@ -174,6 +173,19 @@ class Transmitter(TransmitterBase):
 
 	def testVersion(self):
 		self.assertEqual(self.transm.proceed(["version"]), (0, version.version))
+
+	def testSetIPv6(self):
+		try:
+			self.assertEqual(self.transm.proceed(["set", "allowipv6", 'yes']), (0, 'yes'))
+			self.assertTrue(DNSUtils.IPv6IsAllowed())
+			self.assertLogged("IPv6 is on"); self.pruneLog()
+			self.assertEqual(self.transm.proceed(["set", "allowipv6", 'no']), (0, 'no'))
+			self.assertFalse(DNSUtils.IPv6IsAllowed())
+			self.assertLogged("IPv6 is off"); self.pruneLog()
+		finally:
+			# restore back to auto:
+			self.assertEqual(self.transm.proceed(["set", "allowipv6", "auto"]), (0, "auto"))
+			self.assertLogged("IPv6 is auto"); self.pruneLog()
 
 	def testSleep(self):
 		if not unittest.F2B.fast:
@@ -924,8 +936,9 @@ class Transmitter(TransmitterBase):
 
 class TransmitterLogging(TransmitterBase):
 
+	TEST_SRV_CLASS = Server
+
 	def setUp(self):
-		self.server = Server()
 		super(TransmitterLogging, self).setUp()
 		self.server.setLogTarget("/dev/null")
 		self.server.setLogLevel("CRITICAL")
@@ -1846,18 +1859,18 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'ip4-start': (
 					"`firewall-cmd --direct --add-chain ipv4 filter f2b-j-w-fwcmd-mp`",
 					"`firewall-cmd --direct --add-rule ipv4 filter f2b-j-w-fwcmd-mp 1000 -j RETURN`",
-					"""`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports "$(echo 'http,https' | sed s/:/-/g)" -j f2b-j-w-fwcmd-mp`""",
+					"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
 				), 
 				'ip6-start': (
 					"`firewall-cmd --direct --add-chain ipv6 filter f2b-j-w-fwcmd-mp`",
 					"`firewall-cmd --direct --add-rule ipv6 filter f2b-j-w-fwcmd-mp 1000 -j RETURN`",
-					"""`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports "$(echo 'http,https' | sed s/:/-/g)" -j f2b-j-w-fwcmd-mp`""",
+					"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
 				),
 				'stop': (
-					"""`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports "$(echo 'http,https' | sed s/:/-/g)" -j f2b-j-w-fwcmd-mp`""",
+					"`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
 					"`firewall-cmd --direct --remove-rules ipv4 filter f2b-j-w-fwcmd-mp`",
 					"`firewall-cmd --direct --remove-chain ipv4 filter f2b-j-w-fwcmd-mp`",
-					"""`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports "$(echo 'http,https' | sed s/:/-/g)" -j f2b-j-w-fwcmd-mp`""",
+					"`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
 					"`firewall-cmd --direct --remove-rules ipv6 filter f2b-j-w-fwcmd-mp`",
 					"`firewall-cmd --direct --remove-chain ipv6 filter f2b-j-w-fwcmd-mp`",
 				),
@@ -1925,21 +1938,21 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'ip4': (' f2b-j-w-fwcmd-ipset ',), 'ip6': (' f2b-j-w-fwcmd-ipset6 ',),
 				'ip4-start': (
 					"`ipset create f2b-j-w-fwcmd-ipset hash:ip timeout 0 `",
-					"""`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports "$(echo 'http' | sed s/:/-/g)" -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`""",
+					"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 				), 
 				'ip6-start': (
 					"`ipset create f2b-j-w-fwcmd-ipset6 hash:ip timeout 0 family inet6`",
-					"""`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports "$(echo 'http' | sed s/:/-/g)" -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`""",
+					"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 				),
 				'flush': (
 					"`ipset flush f2b-j-w-fwcmd-ipset`",
 					"`ipset flush f2b-j-w-fwcmd-ipset6`",
 				),
 				'stop': (
-					"""`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports "$(echo 'http' | sed s/:/-/g)" -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`""",
+					"`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 					"`ipset flush f2b-j-w-fwcmd-ipset`",
 					"`ipset destroy f2b-j-w-fwcmd-ipset`",
-					"""`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports "$(echo 'http' | sed s/:/-/g)" -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`""",
+					"`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					"`ipset flush f2b-j-w-fwcmd-ipset6`",
 					"`ipset destroy f2b-j-w-fwcmd-ipset6`",
 				),
@@ -1996,32 +2009,32 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			('j-fwcmd-rr', 'firewallcmd-rich-rules[port="22:24", protocol="tcp"]', {
 				'ip4': ("family='ipv4'", "icmp-port-unreachable",), 'ip6': ("family='ipv6'", 'icmp6-port-unreachable',),
 				'ip4-ban': (
-					"""`ports="$(echo '22:24' | sed s/:/-/g)"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' reject type='icmp-port-unreachable'"; done`""",
+					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' reject type='icmp-port-unreachable'"; done`""",
 				),
 				'ip4-unban': (
-					"""`ports="$(echo '22:24' | sed s/:/-/g)"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' reject type='icmp-port-unreachable'"; done`""",
+					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' reject type='icmp-port-unreachable'"; done`""",
 				),
 				'ip6-ban': (
-					""" `ports="$(echo '22:24' | sed s/:/-/g)"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' reject type='icmp6-port-unreachable'"; done`""",
+					""" `ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' reject type='icmp6-port-unreachable'"; done`""",
 				),
 				'ip6-unban': (
-					"""`ports="$(echo '22:24' | sed s/:/-/g)"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' reject type='icmp6-port-unreachable'"; done`""",
+					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' reject type='icmp6-port-unreachable'"; done`""",
 				),					
 			}),
 			# firewallcmd-rich-logging --
 			('j-fwcmd-rl', 'firewallcmd-rich-logging[port="22:24", protocol="tcp"]', {
 				'ip4': ("family='ipv4'", "icmp-port-unreachable",), 'ip6': ("family='ipv6'", 'icmp6-port-unreachable',),
 				'ip4-ban': (
-					"""`ports="$(echo '22:24' | sed s/:/-/g)"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp-port-unreachable'"; done`""",
+					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp-port-unreachable'"; done`""",
 				),
 				'ip4-unban': (
-					"""`ports="$(echo '22:24' | sed s/:/-/g)"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp-port-unreachable'"; done`""",
+					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp-port-unreachable'"; done`""",
 				),
 				'ip6-ban': (
-					""" `ports="$(echo '22:24' | sed s/:/-/g)"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp6-port-unreachable'"; done`""",
+					""" `ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp6-port-unreachable'"; done`""",
 				),
 				'ip6-unban': (
-					"""`ports="$(echo '22:24' | sed s/:/-/g)"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp6-port-unreachable'"; done`""",
+					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp6-port-unreachable'"; done`""",
 				),					
 			}),
 		)
