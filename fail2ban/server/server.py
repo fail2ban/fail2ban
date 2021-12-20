@@ -372,7 +372,7 @@ class Server:
 		if isinstance(filter_, FileFilter):
 			return filter_.getLogPaths()
 		else: # pragma: systemd no cover
-			logSys.info("Jail %s is not a FileFilter instance" % name)
+			logSys.debug("Jail %s is not a FileFilter instance" % name)
 			return []
 	
 	def addJournalMatch(self, name, match): # pragma: systemd no cover
@@ -390,7 +390,7 @@ class Server:
 		if isinstance(filter_, JournalFilter):
 			return filter_.getJournalMatch()
 		else:
-			logSys.info("Jail %s is not a JournalFilter instance" % name)
+			logSys.debug("Jail %s is not a JournalFilter instance" % name)
 			return []
 	
 	def setLogEncoding(self, name, encoding):
