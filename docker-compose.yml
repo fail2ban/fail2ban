@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  fail2ban:
+    image: fail2ban
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - /var/run/fail2ban/fail2ban.sock # use fail2ban-client outside the container
+      - /var/log/auth.log:/var/log/auth.log
+      - ./config:/etc/fail2ban/config
+    stdin_open: true
+    tty: true
