@@ -1,3 +1,12 @@
+fail2ban (0.11.2-4) unstable; urgency=medium
+
+  * Cherry pick 5ac303df8a171f748330d4c645ccbf1c2c7f3497
+    to address the 2to3 issue.
+    Thanks to Paul Wise for digging
+    (Closes: #997601)
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Tue, 11 Jan 2022 09:12:57 +0100
+
 fail2ban (0.11.2-3) unstable; urgency=medium
 
   [ Debian Janitor ]
