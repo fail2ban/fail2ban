@@ -1,3 +1,10 @@
+fail2ban (0.11.2-5) unstable; urgency=medium
+
+  * Revert the CVE-2021-32749 fix (Closes: #991449)
+    Debian bookworm has the mailutils version with the proper fix
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 20 Jan 2022 23:21:44 +0100
+
 fail2ban (0.11.2-4) unstable; urgency=medium
 
   * Cherry pick 5ac303df8a171f748330d4c645ccbf1c2c7f3497
