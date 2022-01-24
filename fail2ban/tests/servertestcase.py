@@ -1594,11 +1594,11 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': (' f2b-j-w-iptables-ipset ',), 'ip6': (' f2b-j-w-iptables-ipset6 ',),
 				'ip4-start': (
-					"`ipset create f2b-j-w-iptables-ipset hash:ip timeout 0 `",
+					"`ipset -exist create f2b-j-w-iptables-ipset hash:ip timeout 0 `",
 					"`iptables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 				), 
 				'ip6-start': (
-					"`ipset create f2b-j-w-iptables-ipset6 hash:ip timeout 0 family inet6`",
+					"`ipset -exist create f2b-j-w-iptables-ipset6 hash:ip timeout 0 family inet6`",
 					"`ip6tables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 				),
 				'flush': (
@@ -1620,27 +1620,27 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					r"""`ip6tables -w -C INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`""",
 				),
 				'ip4-ban': (
-					r"`ipset add f2b-j-w-iptables-ipset 192.0.2.1 timeout 0 -exist`",
+					r"`ipset -exist add f2b-j-w-iptables-ipset 192.0.2.1 timeout 0`",
 				),
 				'ip4-unban': (
-					r"`ipset del f2b-j-w-iptables-ipset 192.0.2.1 -exist`",
+					r"`ipset -exist del f2b-j-w-iptables-ipset 192.0.2.1`",
 				),
 				'ip6-ban': (
-					r"`ipset add f2b-j-w-iptables-ipset6 2001:db8:: timeout 0 -exist`",
+					r"`ipset -exist add f2b-j-w-iptables-ipset6 2001:db8:: timeout 0`",
 				),
 				'ip6-unban': (
-					r"`ipset del f2b-j-w-iptables-ipset6 2001:db8:: -exist`",
+					r"`ipset -exist del f2b-j-w-iptables-ipset6 2001:db8::`",
 				),					
 			}),
 			# iptables-ipset-proto6-allports --
 			('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, chain="<known/chain>"]', {
 				'ip4': (' f2b-j-w-iptables-ipset-ap ',), 'ip6': (' f2b-j-w-iptables-ipset-ap6 ',),
 				'ip4-start': (
-					"`ipset create f2b-j-w-iptables-ipset-ap hash:ip timeout 0 `",
+					"`ipset -exist create f2b-j-w-iptables-ipset-ap hash:ip timeout 0 `",
 					"`iptables -w -I INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
 				), 
 				'ip6-start': (
-					"`ipset create f2b-j-w-iptables-ipset-ap6 hash:ip timeout 0 family inet6`",
+					"`ipset -exist create f2b-j-w-iptables-ipset-ap6 hash:ip timeout 0 family inet6`",
 					"`ip6tables -w -I INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
 				),
 				'flush': (
@@ -1662,16 +1662,16 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					r"""`ip6tables -w -C INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`""",
 				),
 				'ip4-ban': (
-					r"`ipset add f2b-j-w-iptables-ipset-ap 192.0.2.1 timeout 0 -exist`",
+					r"`ipset -exist add f2b-j-w-iptables-ipset-ap 192.0.2.1 timeout 0`",
 				),
 				'ip4-unban': (
-					r"`ipset del f2b-j-w-iptables-ipset-ap 192.0.2.1 -exist`",
+					r"`ipset -exist del f2b-j-w-iptables-ipset-ap 192.0.2.1`",
 				),
 				'ip6-ban': (
-					r"`ipset add f2b-j-w-iptables-ipset-ap6 2001:db8:: timeout 0 -exist`",
+					r"`ipset -exist add f2b-j-w-iptables-ipset-ap6 2001:db8:: timeout 0`",
 				),
 				'ip6-unban': (
-					r"`ipset del f2b-j-w-iptables-ipset-ap6 2001:db8:: -exist`",
+					r"`ipset -exist del f2b-j-w-iptables-ipset-ap6 2001:db8::`",
 				),					
 			}),
 			# iptables (oneport) --
@@ -1949,11 +1949,11 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': (' f2b-j-w-fwcmd-ipset ',), 'ip6': (' f2b-j-w-fwcmd-ipset6 ',),
 				'ip4-start': (
-					"`ipset create f2b-j-w-fwcmd-ipset hash:ip timeout 0 `",
+					"`ipset -exist create f2b-j-w-fwcmd-ipset hash:ip timeout 0 `",
 					"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 				), 
 				'ip6-start': (
-					"`ipset create f2b-j-w-fwcmd-ipset6 hash:ip timeout 0 family inet6`",
+					"`ipset -exist create f2b-j-w-fwcmd-ipset6 hash:ip timeout 0 family inet6`",
 					"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 				),
 				'flush': (
@@ -1969,27 +1969,27 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`ipset destroy f2b-j-w-fwcmd-ipset6`",
 				),
 				'ip4-ban': (
-					r"`ipset add f2b-j-w-fwcmd-ipset 192.0.2.1 timeout 0 -exist`",
+					r"`ipset -exist add f2b-j-w-fwcmd-ipset 192.0.2.1 timeout 0`",
 				),
 				'ip4-unban': (
-					r"`ipset del f2b-j-w-fwcmd-ipset 192.0.2.1 -exist`",
+					r"`ipset -exist del f2b-j-w-fwcmd-ipset 192.0.2.1`",
 				),
 				'ip6-ban': (
-					r"`ipset add f2b-j-w-fwcmd-ipset6 2001:db8:: timeout 0 -exist`",
+					r"`ipset -exist add f2b-j-w-fwcmd-ipset6 2001:db8:: timeout 0`",
 				),
 				'ip6-unban': (
-					r"`ipset del f2b-j-w-fwcmd-ipset6 2001:db8:: -exist`",
+					r"`ipset -exist del f2b-j-w-fwcmd-ipset6 2001:db8::`",
 				),					
 			}),
 			# firewallcmd-ipset (allports) --
 			('j-w-fwcmd-ipset-ap', 'firewallcmd-ipset[name=%(__name__)s, actiontype=<allports>, protocol="tcp", chain="<known/chain>"]', {
 				'ip4': (' f2b-j-w-fwcmd-ipset-ap ',), 'ip6': (' f2b-j-w-fwcmd-ipset-ap6 ',),
 				'ip4-start': (
-					"`ipset create f2b-j-w-fwcmd-ipset-ap hash:ip timeout 0 `",
+					"`ipset -exist create f2b-j-w-fwcmd-ipset-ap hash:ip timeout 0 `",
 					"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -p tcp -m set --match-set f2b-j-w-fwcmd-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
 				), 
 				'ip6-start': (
-					"`ipset create f2b-j-w-fwcmd-ipset-ap6 hash:ip timeout 0 family inet6`",
+					"`ipset -exist create f2b-j-w-fwcmd-ipset-ap6 hash:ip timeout 0 family inet6`",
 					"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -p tcp -m set --match-set f2b-j-w-fwcmd-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
 				),
 				'flush': (
@@ -2005,16 +2005,16 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`ipset destroy f2b-j-w-fwcmd-ipset-ap6`",
 				),
 				'ip4-ban': (
-					r"`ipset add f2b-j-w-fwcmd-ipset-ap 192.0.2.1 timeout 0 -exist`",
+					r"`ipset -exist add f2b-j-w-fwcmd-ipset-ap 192.0.2.1 timeout 0`",
 				),
 				'ip4-unban': (
-					r"`ipset del f2b-j-w-fwcmd-ipset-ap 192.0.2.1 -exist`",
+					r"`ipset -exist del f2b-j-w-fwcmd-ipset-ap 192.0.2.1`",
 				),
 				'ip6-ban': (
-					r"`ipset add f2b-j-w-fwcmd-ipset-ap6 2001:db8:: timeout 0 -exist`",
+					r"`ipset -exist add f2b-j-w-fwcmd-ipset-ap6 2001:db8:: timeout 0`",
 				),
 				'ip6-unban': (
-					r"`ipset del f2b-j-w-fwcmd-ipset-ap6 2001:db8:: -exist`",
+					r"`ipset -exist del f2b-j-w-fwcmd-ipset-ap6 2001:db8::`",
 				),					
 			}),
 			# firewallcmd-rich-rules --
