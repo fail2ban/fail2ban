@@ -1506,14 +1506,16 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			('j-w-iptables-mp', 'iptables-multiport[name=%(__name__)s, bantime="10m", port="http,https", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 				'ip4-start': (
-					"`iptables -w -N f2b-j-w-iptables-mp`",
-					"`iptables -w -A f2b-j-w-iptables-mp -j RETURN`",
-					"`iptables -w -I INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
+					"`{ iptables -w -C f2b-j-w-iptables-mp -j RETURN >/dev/null 2>&1; } || "
+					 "{ iptables -w -N f2b-j-w-iptables-mp || true; iptables -w -A f2b-j-w-iptables-mp -j RETURN; }`",
+					"`{ iptables -w -C INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp; }`",
 				), 
 				'ip6-start': (
-					"`ip6tables -w -N f2b-j-w-iptables-mp`",
-					"`ip6tables -w -A f2b-j-w-iptables-mp -j RETURN`",
-					"`ip6tables -w -I INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
+					"`{ ip6tables -w -C f2b-j-w-iptables-mp -j RETURN >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -N f2b-j-w-iptables-mp || true; ip6tables -w -A f2b-j-w-iptables-mp -j RETURN; }`",
+					"`{ ip6tables -w -C INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp >/dev/null 2>&1; } || ",
+					 "{ ip6tables -w -I INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp; }`",
 				),
 				'flush': (
 					"`iptables -w -F f2b-j-w-iptables-mp`",
@@ -1550,14 +1552,16 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			('j-w-iptables-ap', 'iptables-allports[name=%(__name__)s, bantime="10m", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 				'ip4-start': (
-					"`iptables -w -N f2b-j-w-iptables-ap`",
-					"`iptables -w -A f2b-j-w-iptables-ap -j RETURN`",
-					"`iptables -w -I INPUT -p tcp -j f2b-j-w-iptables-ap`",
+					"`{ iptables -w -C f2b-j-w-iptables-ap -j RETURN >/dev/null 2>&1; } || "
+					 "{ iptables -w -N f2b-j-w-iptables-ap || true; iptables -w -A f2b-j-w-iptables-ap -j RETURN; }`",
+					"`{ iptables -w -C INPUT -p tcp -j f2b-j-w-iptables-ap >/dev/null 2>&1; } || ",
+					 "{ iptables -w -I INPUT -p tcp -j f2b-j-w-iptables-ap; }`",
 				), 
 				'ip6-start': (
-					"`ip6tables -w -N f2b-j-w-iptables-ap`",
-					"`ip6tables -w -A f2b-j-w-iptables-ap -j RETURN`",
-					"`ip6tables -w -I INPUT -p tcp -j f2b-j-w-iptables-ap`",
+					"`{ ip6tables -w -C f2b-j-w-iptables-ap -j RETURN >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -N f2b-j-w-iptables-ap || true; ip6tables -w -A f2b-j-w-iptables-ap -j RETURN; }`",
+					"`{ ip6tables -w -C INPUT -p tcp -j f2b-j-w-iptables-ap >/dev/null 2>&1; } || ",
+					 "{ ip6tables -w -I INPUT -p tcp -j f2b-j-w-iptables-ap; }`",
 				),
 				'flush': (
 					"`iptables -w -F f2b-j-w-iptables-ap`",
@@ -1595,11 +1599,13 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'ip4': (' f2b-j-w-iptables-ipset ',), 'ip6': (' f2b-j-w-iptables-ipset6 ',),
 				'ip4-start': (
 					"`ipset -exist create f2b-j-w-iptables-ipset hash:ip timeout 0 `",
-					"`iptables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`",
+					"`{ iptables -w -C INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable; }`",
 				), 
 				'ip6-start': (
 					"`ipset -exist create f2b-j-w-iptables-ipset6 hash:ip timeout 0 family inet6`",
-					"`ip6tables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
+					"`{ ip6tables -w -C INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable; }`",
 				),
 				'flush': (
 					"`ipset flush f2b-j-w-iptables-ipset`",
@@ -1637,11 +1643,13 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'ip4': (' f2b-j-w-iptables-ipset-ap ',), 'ip6': (' f2b-j-w-iptables-ipset-ap6 ',),
 				'ip4-start': (
 					"`ipset -exist create f2b-j-w-iptables-ipset-ap hash:ip timeout 0 `",
-					"`iptables -w -I INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
+					"`{ iptables -w -C INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable; }",
 				), 
 				'ip6-start': (
 					"`ipset -exist create f2b-j-w-iptables-ipset-ap6 hash:ip timeout 0 family inet6`",
-					"`ip6tables -w -I INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
+					"`{ ip6tables -w -C INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable; }",
 				),
 				'flush': (
 					"`ipset flush f2b-j-w-iptables-ipset-ap`",
@@ -1678,14 +1686,16 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			('j-w-iptables', 'iptables[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 				'ip4-start': (
-					"`iptables -w -N f2b-j-w-iptables`",
-					"`iptables -w -A f2b-j-w-iptables -j RETURN`",
-					"`iptables -w -I INPUT -p tcp --dport http -j f2b-j-w-iptables`",
+					"`{ iptables -w -C f2b-j-w-iptables -j RETURN >/dev/null 2>&1; } || "
+					 "{ iptables -w -N f2b-j-w-iptables || true; iptables -w -A f2b-j-w-iptables -j RETURN; }",
+					"`{ iptables -w -C INPUT -p tcp --dport http -j f2b-j-w-iptables >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -p tcp --dport http -j f2b-j-w-iptables; }`",
 				), 
 				'ip6-start': (
-					"`ip6tables -w -N f2b-j-w-iptables`",
-					"`ip6tables -w -A f2b-j-w-iptables -j RETURN`",
-					"`ip6tables -w -I INPUT -p tcp --dport http -j f2b-j-w-iptables`",
+					"`{ ip6tables -w -C f2b-j-w-iptables -j RETURN >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -N f2b-j-w-iptables || true; ip6tables -w -A f2b-j-w-iptables -j RETURN; }",
+					"`{ ip6tables -w -C INPUT -p tcp --dport http -j f2b-j-w-iptables >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I INPUT -p tcp --dport http -j f2b-j-w-iptables; }`",
 				),
 				'flush': (
 					"`iptables -w -F f2b-j-w-iptables`",
@@ -1722,14 +1732,16 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			('j-w-iptables-new', 'iptables-new[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 				'ip4-start': (
-					"`iptables -w -N f2b-j-w-iptables-new`",
-					"`iptables -w -A f2b-j-w-iptables-new -j RETURN`",
-					"`iptables -w -I INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
+					"`{ iptables -w -C f2b-j-w-iptables-new -j RETURN >/dev/null 2>&1; } || "
+					 "{ iptables -w -N f2b-j-w-iptables-new || true; iptables -w -A f2b-j-w-iptables-new -j RETURN; }`",
+					"`{ iptables -w -C INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new; }`",
 				), 
 				'ip6-start': (
-					"`ip6tables -w -N f2b-j-w-iptables-new`",
-					"`ip6tables -w -A f2b-j-w-iptables-new -j RETURN`",
-					"`ip6tables -w -I INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
+					"`{ ip6tables -w -C f2b-j-w-iptables-new -j RETURN >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -N f2b-j-w-iptables-new || true; ip6tables -w -A f2b-j-w-iptables-new -j RETURN; }`",
+					"`{ ip6tables -w -C INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new; }`",
 				),
 				'flush': (
 					"`iptables -w -F f2b-j-w-iptables-new`",
