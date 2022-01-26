@@ -1503,37 +1503,42 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),					
 			}),
 			# iptables-multiport --
-			('j-w-iptables-mp', 'iptables-multiport[name=%(__name__)s, bantime="10m", port="http,https", protocol="tcp", chain="<known/chain>"]', {
+			('j-w-iptables-mp', 'iptables-multiport[name=%(__name__)s, bantime="10m", port="http,https", protocol="tcp,udp,sctp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					r"`for proto in $(echo 'tcp,udp,sctp' | sed 's/,/ /g'); do`",
+					r"`done`",
+				),
 				'ip4-start': (
 					"`{ iptables -w -C f2b-j-w-iptables-mp -j RETURN >/dev/null 2>&1; } || "
 					 "{ iptables -w -N f2b-j-w-iptables-mp || true; iptables -w -A f2b-j-w-iptables-mp -j RETURN; }`",
-					"`{ iptables -w -C INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp >/dev/null 2>&1; } || "
-					 "{ iptables -w -I INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp; }`",
+					"`{ iptables -w -C INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp; }`",
 				), 
 				'ip6-start': (
 					"`{ ip6tables -w -C f2b-j-w-iptables-mp -j RETURN >/dev/null 2>&1; } || "
 					 "{ ip6tables -w -N f2b-j-w-iptables-mp || true; ip6tables -w -A f2b-j-w-iptables-mp -j RETURN; }`",
-					"`{ ip6tables -w -C INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp >/dev/null 2>&1; } || ",
-					 "{ ip6tables -w -I INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp; }`",
+					"`{ ip6tables -w -C INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp >/dev/null 2>&1; } || ",
+					 "{ ip6tables -w -I INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp; }`",
 				),
 				'flush': (
 					"`iptables -w -F f2b-j-w-iptables-mp`",
 					"`ip6tables -w -F f2b-j-w-iptables-mp`",
 				),
 				'stop': (
-					"`iptables -w -D INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
+					"`iptables -w -D INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
 					"`iptables -w -F f2b-j-w-iptables-mp`",
 					"`iptables -w -X f2b-j-w-iptables-mp`",
-					"`ip6tables -w -D INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
+					"`ip6tables -w -D INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
 					"`ip6tables -w -F f2b-j-w-iptables-mp`",
 					"`ip6tables -w -X f2b-j-w-iptables-mp`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -C INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`""",
+					r"""`iptables -w -C INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -C INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`""",
+					r"""`ip6tables -w -C INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp`""",
 				),
 				'ip4-ban': (
 					r"`iptables -w -I f2b-j-w-iptables-mp 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
@@ -1549,37 +1554,42 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),					
 			}),
 			# iptables-allports --
-			('j-w-iptables-ap', 'iptables-allports[name=%(__name__)s, bantime="10m", protocol="tcp", chain="<known/chain>"]', {
+			('j-w-iptables-ap', 'iptables-allports[name=%(__name__)s, bantime="10m", protocol="tcp,udp,sctp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					r"`for proto in $(echo 'tcp,udp,sctp' | sed 's/,/ /g'); do`",
+					r"`done`",
+				),
 				'ip4-start': (
 					"`{ iptables -w -C f2b-j-w-iptables-ap -j RETURN >/dev/null 2>&1; } || "
 					 "{ iptables -w -N f2b-j-w-iptables-ap || true; iptables -w -A f2b-j-w-iptables-ap -j RETURN; }`",
-					"`{ iptables -w -C INPUT -p tcp -j f2b-j-w-iptables-ap >/dev/null 2>&1; } || ",
-					 "{ iptables -w -I INPUT -p tcp -j f2b-j-w-iptables-ap; }`",
+					"`{ iptables -w -C INPUT -p $proto -j f2b-j-w-iptables-ap >/dev/null 2>&1; } || ",
+					 "{ iptables -w -I INPUT -p $proto -j f2b-j-w-iptables-ap; }`",
 				), 
 				'ip6-start': (
 					"`{ ip6tables -w -C f2b-j-w-iptables-ap -j RETURN >/dev/null 2>&1; } || "
 					 "{ ip6tables -w -N f2b-j-w-iptables-ap || true; ip6tables -w -A f2b-j-w-iptables-ap -j RETURN; }`",
-					"`{ ip6tables -w -C INPUT -p tcp -j f2b-j-w-iptables-ap >/dev/null 2>&1; } || ",
-					 "{ ip6tables -w -I INPUT -p tcp -j f2b-j-w-iptables-ap; }`",
+					"`{ ip6tables -w -C INPUT -p $proto -j f2b-j-w-iptables-ap >/dev/null 2>&1; } || ",
+					 "{ ip6tables -w -I INPUT -p $proto -j f2b-j-w-iptables-ap; }`",
 				),
 				'flush': (
 					"`iptables -w -F f2b-j-w-iptables-ap`",
 					"`ip6tables -w -F f2b-j-w-iptables-ap`",
 				),
 				'stop': (
-					"`iptables -w -D INPUT -p tcp -j f2b-j-w-iptables-ap`",
+					"`iptables -w -D INPUT -p $proto -j f2b-j-w-iptables-ap`",
 					"`iptables -w -F f2b-j-w-iptables-ap`",
 					"`iptables -w -X f2b-j-w-iptables-ap`",
-					"`ip6tables -w -D INPUT -p tcp -j f2b-j-w-iptables-ap`",
+					"`ip6tables -w -D INPUT -p $proto -j f2b-j-w-iptables-ap`",
 					"`ip6tables -w -F f2b-j-w-iptables-ap`",
 					"`ip6tables -w -X f2b-j-w-iptables-ap`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -C INPUT -p tcp -j f2b-j-w-iptables-ap`""",
+					r"""`iptables -w -C INPUT -p $proto -j f2b-j-w-iptables-ap`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -C INPUT -p tcp -j f2b-j-w-iptables-ap`""",
+					r"""`ip6tables -w -C INPUT -p $proto -j f2b-j-w-iptables-ap`""",
 				),
 				'ip4-ban': (
 					r"`iptables -w -I f2b-j-w-iptables-ap 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
@@ -1597,33 +1607,38 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			# iptables-ipset-proto6 --
 			('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': (' f2b-j-w-iptables-ipset ',), 'ip6': (' f2b-j-w-iptables-ipset6 ',),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					"`for proto in $(echo 'tcp' | sed 's/,/ /g'); do`",
+					"`done`",
+				),
 				'ip4-start': (
 					"`ipset -exist create f2b-j-w-iptables-ipset hash:ip timeout 0 `",
-					"`{ iptables -w -C INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable >/dev/null 2>&1; } || "
-					 "{ iptables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable; }`",
+					"`{ iptables -w -C INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable; }`",
 				), 
 				'ip6-start': (
 					"`ipset -exist create f2b-j-w-iptables-ipset6 hash:ip timeout 0 family inet6`",
-					"`{ ip6tables -w -C INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable >/dev/null 2>&1; } || "
-					 "{ ip6tables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable; }`",
+					"`{ ip6tables -w -C INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable; }`",
 				),
 				'flush': (
 					"`ipset flush f2b-j-w-iptables-ipset`",
 					"`ipset flush f2b-j-w-iptables-ipset6`",
 				),
 				'stop': (
-					"`iptables -w -D INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`",
+					"`iptables -w -D INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset`",
 					"`ipset destroy f2b-j-w-iptables-ipset`",
-					"`ip6tables -w -D INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
+					"`ip6tables -w -D INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset6`",
 					"`ipset destroy f2b-j-w-iptables-ipset6`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -C INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`""",
+					r"""`iptables -w -C INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -C INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`""",
+					r"""`ip6tables -w -C INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`""",
 				),
 				'ip4-ban': (
 					r"`ipset -exist add f2b-j-w-iptables-ipset 192.0.2.1 timeout 0`",
@@ -1641,33 +1656,38 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			# iptables-ipset-proto6-allports --
 			('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, chain="<known/chain>"]', {
 				'ip4': (' f2b-j-w-iptables-ipset-ap ',), 'ip6': (' f2b-j-w-iptables-ipset-ap6 ',),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					"`for proto in $(echo 'tcp' | sed 's/,/ /g'); do`",
+					"`done`",
+				),
 				'ip4-start': (
 					"`ipset -exist create f2b-j-w-iptables-ipset-ap hash:ip timeout 0 `",
-					"`{ iptables -w -C INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable >/dev/null 2>&1; } || "
-					 "{ iptables -w -I INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable; }",
+					"`{ iptables -w -C INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable; }",
 				), 
 				'ip6-start': (
 					"`ipset -exist create f2b-j-w-iptables-ipset-ap6 hash:ip timeout 0 family inet6`",
-					"`{ ip6tables -w -C INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable >/dev/null 2>&1; } || "
-					 "{ ip6tables -w -I INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable; }",
+					"`{ ip6tables -w -C INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable; }",
 				),
 				'flush': (
 					"`ipset flush f2b-j-w-iptables-ipset-ap`",
 					"`ipset flush f2b-j-w-iptables-ipset-ap6`",
 				),
 				'stop': (
-					"`iptables -w -D INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
+					"`iptables -w -D INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset-ap`",
 					"`ipset destroy f2b-j-w-iptables-ipset-ap`",
-					"`ip6tables -w -D INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
+					"`ip6tables -w -D INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset-ap6`",
 					"`ipset destroy f2b-j-w-iptables-ipset-ap6`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -C INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`""",
+					r"""`iptables -w -C INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -C INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`""",
+					r"""`ip6tables -w -C INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`""",
 				),
 				'ip4-ban': (
 					r"`ipset -exist add f2b-j-w-iptables-ipset-ap 192.0.2.1 timeout 0`",
@@ -1685,35 +1705,40 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			# iptables (oneport) --
 			('j-w-iptables', 'iptables[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					"`for proto in $(echo 'tcp' | sed 's/,/ /g'); do`",
+					"`done`",
+				),
 				'ip4-start': (
 					"`{ iptables -w -C f2b-j-w-iptables -j RETURN >/dev/null 2>&1; } || "
 					 "{ iptables -w -N f2b-j-w-iptables || true; iptables -w -A f2b-j-w-iptables -j RETURN; }",
-					"`{ iptables -w -C INPUT -p tcp --dport http -j f2b-j-w-iptables >/dev/null 2>&1; } || "
-					 "{ iptables -w -I INPUT -p tcp --dport http -j f2b-j-w-iptables; }`",
+					"`{ iptables -w -C INPUT -p $proto --dport http -j f2b-j-w-iptables >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -p $proto --dport http -j f2b-j-w-iptables; }`",
 				), 
 				'ip6-start': (
 					"`{ ip6tables -w -C f2b-j-w-iptables -j RETURN >/dev/null 2>&1; } || "
 					 "{ ip6tables -w -N f2b-j-w-iptables || true; ip6tables -w -A f2b-j-w-iptables -j RETURN; }",
-					"`{ ip6tables -w -C INPUT -p tcp --dport http -j f2b-j-w-iptables >/dev/null 2>&1; } || "
-					 "{ ip6tables -w -I INPUT -p tcp --dport http -j f2b-j-w-iptables; }`",
+					"`{ ip6tables -w -C INPUT -p $proto --dport http -j f2b-j-w-iptables >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I INPUT -p $proto --dport http -j f2b-j-w-iptables; }`",
 				),
 				'flush': (
 					"`iptables -w -F f2b-j-w-iptables`",
 					"`ip6tables -w -F f2b-j-w-iptables`",
 				),
 				'stop': (
-					"`iptables -w -D INPUT -p tcp --dport http -j f2b-j-w-iptables`",
+					"`iptables -w -D INPUT -p $proto --dport http -j f2b-j-w-iptables`",
 					"`iptables -w -F f2b-j-w-iptables`",
 					"`iptables -w -X f2b-j-w-iptables`",
-					"`ip6tables -w -D INPUT -p tcp --dport http -j f2b-j-w-iptables`",
+					"`ip6tables -w -D INPUT -p $proto --dport http -j f2b-j-w-iptables`",
 					"`ip6tables -w -F f2b-j-w-iptables`",
 					"`ip6tables -w -X f2b-j-w-iptables`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -C INPUT -p tcp --dport http -j f2b-j-w-iptables`""",
+					r"""`iptables -w -C INPUT -p $proto --dport http -j f2b-j-w-iptables`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -C INPUT -p tcp --dport http -j f2b-j-w-iptables`""",
+					r"""`ip6tables -w -C INPUT -p $proto --dport http -j f2b-j-w-iptables`""",
 				),
 				'ip4-ban': (
 					r"`iptables -w -I f2b-j-w-iptables 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
@@ -1731,35 +1756,40 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			# iptables-new --
 			('j-w-iptables-new', 'iptables-new[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					"`for proto in $(echo 'tcp' | sed 's/,/ /g'); do`",
+					"`done`",
+				),
 				'ip4-start': (
 					"`{ iptables -w -C f2b-j-w-iptables-new -j RETURN >/dev/null 2>&1; } || "
 					 "{ iptables -w -N f2b-j-w-iptables-new || true; iptables -w -A f2b-j-w-iptables-new -j RETURN; }`",
-					"`{ iptables -w -C INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new >/dev/null 2>&1; } || "
-					 "{ iptables -w -I INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new; }`",
+					"`{ iptables -w -C INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new; }`",
 				), 
 				'ip6-start': (
 					"`{ ip6tables -w -C f2b-j-w-iptables-new -j RETURN >/dev/null 2>&1; } || "
 					 "{ ip6tables -w -N f2b-j-w-iptables-new || true; ip6tables -w -A f2b-j-w-iptables-new -j RETURN; }`",
-					"`{ ip6tables -w -C INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new >/dev/null 2>&1; } || "
-					 "{ ip6tables -w -I INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new; }`",
+					"`{ ip6tables -w -C INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new; }`",
 				),
 				'flush': (
 					"`iptables -w -F f2b-j-w-iptables-new`",
 					"`ip6tables -w -F f2b-j-w-iptables-new`",
 				),
 				'stop': (
-					"`iptables -w -D INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
+					"`iptables -w -D INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new`",
 					"`iptables -w -F f2b-j-w-iptables-new`",
 					"`iptables -w -X f2b-j-w-iptables-new`",
-					"`ip6tables -w -D INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
+					"`ip6tables -w -D INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new`",
 					"`ip6tables -w -F f2b-j-w-iptables-new`",
 					"`ip6tables -w -X f2b-j-w-iptables-new`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -C INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`""",
+					r"""`iptables -w -C INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -C INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`""",
+					r"""`ip6tables -w -C INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new`""",
 				),
 				'ip4-ban': (
 					r"`iptables -w -I f2b-j-w-iptables-new 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
@@ -1778,22 +1808,26 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			('j-w-iptables-xtre', 'iptables-xt_recent-echo[name=%(__name__)s, bantime="10m", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', '/f2b-j-w-iptables-xtre`'), 'ip6': ('`ip6tables ', '/f2b-j-w-iptables-xtre6`'),
 				'ip4-start': (
-					"`if [ `id -u` -eq 0 ];then iptables -w -I INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable;fi`",
+					"`{ iptables -w -C INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable >/dev/null 2>&1; } || { iptables -w -I INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable; }`",
 				), 
 				'ip6-start': (
-					"`if [ `id -u` -eq 0 ];then ip6tables -w -I INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable;fi`",
+					"`{ ip6tables -w -C INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable >/dev/null 2>&1; } || { ip6tables -w -I INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable; }`",
 				),
 				'stop': (
 					"`echo / > /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
-					"`if [ `id -u` -eq 0 ];then iptables -w -D INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable;fi`",
+					"`if [ `id -u` -eq 0 ];then`",
+					"`iptables -w -D INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable;`",
+					"`fi`",
 					"`echo / > /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
-					"`if [ `id -u` -eq 0 ];then ip6tables -w -D INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable;fi`",
+					"`if [ `id -u` -eq 0 ];then`",
+					"`ip6tables -w -D INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable;`",
+					"`fi`",
 				),
 				'ip4-check': (
-					r"`{ iptables -w -C INPUT -p tcp --dport ssh -j f2b-j-w-iptables-xtre; } && test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
+					r"`{ iptables -w -C INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable; } && test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
 				),
 				'ip6-check': (
-					r"`{ ip6tables -w -C INPUT -p tcp --dport ssh -j f2b-j-w-iptables-xtre; } && test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
+					r"`{ ip6tables -w -C INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable; } && test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
 				),
 				'ip4-ban': (
 					r"`echo +192.0.2.1 > /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
@@ -2101,7 +2135,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				# test ban ip4 :
 				self.pruneLog('# === ban-ipv4 ===')
 				action.ban(aInfos['ipv4'])
-				if tests.get('ip4-start'): self.assertLogged(*tests.get('*-start', ())+tests['ip4-start'], all=True)
+				if tests.get('ip4-start'): self.assertLogged(*tests.get('*-start', tests.get('*-start-stop-check', ()))+tests['ip4-start'], all=True)
 				if tests.get('ip6-start'): self.assertNotLogged(*tests['ip6-start'], all=True)
 				self.assertLogged(*tests['ip4-ban'], all=True)
 				self.assertNotLogged(*tests['ip6'], all=True)
@@ -2113,7 +2147,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				# test ban ip6 :
 				self.pruneLog('# === ban ipv6 ===')
 				action.ban(aInfos['ipv6'])
-				if tests.get('ip6-start'): self.assertLogged(*tests.get('*-start', ())+tests['ip6-start'], all=True)
+				if tests.get('ip6-start'): self.assertLogged(*tests.get('*-start', tests.get('*-start-stop-check', ()))+tests['ip6-start'], all=True)
 				if tests.get('ip4-start'): self.assertNotLogged(*tests['ip4-start'], all=True)
 				self.assertLogged(*tests['ip6-ban'], all=True)
 				self.assertNotLogged(*tests['ip4'], all=True)
@@ -2126,13 +2160,13 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				if tests.get('ip4-check'):
 					self.pruneLog('# === check ipv4 ===')
 					action._invariantCheck(aInfos['ipv4']['family'])
-					self.assertLogged(*tests['ip4-check'], all=True)
+					self.assertLogged(*tests.get('*-check', tests.get('*-start-stop-check', ()))+tests['ip4-check'], all=True)
 					if tests.get('ip6-check') and tests['ip6-check'] != tests['ip4-check']:
 						self.assertNotLogged(*tests['ip6-check'], all=True)
 				if tests.get('ip6-check'):
 					self.pruneLog('# === check ipv6 ===')
 					action._invariantCheck(aInfos['ipv6']['family'])
-					self.assertLogged(*tests['ip6-check'], all=True)
+					self.assertLogged(*tests.get('*-check', tests.get('*-start-stop-check', ()))+tests['ip6-check'], all=True)
 					if tests.get('ip4-check') and tests['ip4-check'] != tests['ip6-check']:
 						self.assertNotLogged(*tests['ip4-check'], all=True)
 				# test flush for actions should supported this:
@@ -2143,7 +2177,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				# test stop :
 				self.pruneLog('# === stop ===')
 				action.stop()
-				if tests.get('stop'): self.assertLogged(*tests['stop'], all=True)
+				if tests.get('stop'): self.assertLogged(*tests.get('*-start-stop-check', ())+tests['stop'], all=True)
 
 	def _executeMailCmd(self, realCmd, timeout=60):
 		# replace pipe to mail with pipe to cat:
