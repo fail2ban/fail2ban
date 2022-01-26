@@ -724,7 +724,7 @@ class Filter(JailThread):
 					self.performBan(ip)
 				# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
 				if Observers.Main is not None:
-					Observers.Main.add('failureFound', self.failManager, self.jail, tick)
+					Observers.Main.add('failureFound', self.jail, tick)
 			self.procLines += 1
 			# every 100 lines check need to perform service tasks:
 			if self.procLines % 100 == 0:
