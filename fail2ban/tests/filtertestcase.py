@@ -1352,7 +1352,6 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def setUp(self):
 			"""Call before every test case."""
 			super(MonitorJournalFailures, self).setUp()
-			self._runtimeJournal = None
 			self.test_file = os.path.join(TEST_FILES_DIR, "testcase-journal.log")
 			self.jail = DummyJail()
 			self.filter = None
@@ -1390,7 +1389,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			If not found, SkipTest exception will be raised.
 			"""
 			# we can cache it:
-			if self._runtimeJournal is None:
+			if not hasattr(MonitorJournalFailures, "_runtimeJournal"):
 				# Depending on the system, it could be found under /run or /var/log (e.g. Debian)
 				# which are pointed by different systemd-path variables.  We will
 				# check one at at time until the first hit
@@ -1402,9 +1401,14 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 					self.assertTrue(tmp)
 					out = str(tmp[1].decode('utf-8')).split('\n')[0]
 					if out: break
-				self._runtimeJournal = out
-			if self._runtimeJournal:
-				return self._runtimeJournal
+				# additional check appropriate default settings (if not root/sudoer and not already set):
+				if os.geteuid() != 0 and os.getenv("F2B_SYSTEMD_DEFAULT_FLAGS", None) is None:
+					# filter default SYSTEM_ONLY(4) is hardly usable for not root/sudoer tester,
+					# so back to default LOCAL_ONLY(1):
+					os.environ["F2B_SYSTEMD_DEFAULT_FLAGS"] = "0"; # or "1", what will be similar to journalflags=0 or ...=1
+				MonitorJournalFailures._runtimeJournal = out
+			if MonitorJournalFailures._runtimeJournal:
+				return MonitorJournalFailures._runtimeJournal
 			raise unittest.SkipTest('systemd journal seems to be not available (e. g. no rights to read)')
 		
 		def testJournalFilesArg(self):
@@ -1510,7 +1514,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			# stop:
 			self.filter.stop()
 			self.filter.join()
-			MyTime.setTime(time.time() + 2)
+			MyTime.setTime(time.time() + 10)
 			# update log manually (should cause a seek to end of log without wait for next second):
 			self.jail.database.updateJournal(self.jail, 'systemd-journal', MyTime.time(), 'TEST')
 			# check seek to last (simulated) position succeeds (without bans of previous copied tickets):
@@ -1518,7 +1522,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self._initFilter()
 			self.filter.setMaxRetry(1)
 			self.filter.start()
-			self.waitForTicks(1)
+			self.waitForTicks(2)
 			# check new IP but no old IPs found:
 			_gen_falure("192.0.2.5")
 			self.assertFalse(self.jail.getFailTicket())
@@ -1531,8 +1535,8 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self._initFilter()
 			self.filter.setMaxRetry(1)
 			self.filter.start()
-			self.waitForTicks(1)
-			MyTime.setTime(time.time() + 3)
+			self.waitForTicks(2)
+			MyTime.setTime(time.time() + 20)
 			# check new IP but no old IPs found:
 			_gen_falure("192.0.2.6")
 			self.assertFalse(self.jail.getFailTicket())
@@ -1545,15 +1549,23 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.filter.setMaxRetry(1)
 			states = []
 			def _state(*args):
-				self.assertNotIn("** in operation", states)
-				self.assertFalse(self.filter.inOperation)
-				states.append("** process line: %r" % (args,))
+				try:
+					self.assertNotIn("** in operation", states)
+					self.assertFalse(self.filter.inOperation)
+					states.append("** process line: %r" % (args,))
+				except Exception as e:
+					states.append("** failed: %r" % (e,))
+					raise
 			self.filter.processLineAndAdd = _state
 			def _inoper():
-				self.assertNotIn("** in operation", states)
-				self.assertEqual(len(states), 11)
-				states.append("** in operation")
-				self.filter.__class__.inOperationMode(self.filter)
+				try:
+					self.assertNotIn("** in operation", states)
+					self.assertEqual(len(states), 11)
+					states.append("** in operation")
+					self.filter.__class__.inOperationMode(self.filter)
+				except Exception as e:
+					states.append("** failed: %r" % (e,))
+					raise
 			self.filter.inOperationMode = _inoper
 			self.filter.start()
 			self.waitForTicks(12)

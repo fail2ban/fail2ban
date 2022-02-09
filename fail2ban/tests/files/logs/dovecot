@@ -60,6 +60,11 @@ Jun 12 11:48:12 auth-worker(80180): Info: conn unix:auth-worker (uid=143): auth-
 # failJSON: { "time": "2005-06-12T23:06:05", "match": true , "host": "192.0.2.7" }
 Jun 12 23:06:05 auth-worker(57065): Info: conn unix:auth-worker (uid=143): auth-worker<225622>: sql(user@domain.com,192.0.2.7,<Yx7+W8+Io>): Password mismatch
 
+# failJSON: { "time": "2005-06-15T11:28:21", "match": true , "host": "192.0.2.7" }
+Jun 15 11:28:21 hostname dovecot: auth-worker(5787): conn unix:auth-worker (pid=27359,uid=97): auth-worker<55>: pam(webapps,192.0.2.7): unknown user
+# failJSON: { "time": "2005-06-15T13:57:41", "match": true , "host": "192.0.2.7" }
+Jun 15 13:57:41 hostname dovecot: auth-worker(3270): conn unix:auth-worker (pid=27359,uid=97): auth-worker<128>: pam(webapps,192.0.2.7): pam_authenticate() failed: Authentication failure (Password mismatch?)
+
 # failJSON: { "time": "2005-01-29T14:38:51", "match": true , "host": "192.0.2.6", "desc": "PAM Permission denied (gh-1897)" }
 Jan 29 14:38:51 example.com dovecot[24941]: auth-worker(30165): pam(user@example.com,192.0.2.6,<PNHQq8pZhqIKAQGd>): pam_authenticate() failed: Permission denied
 
@@ -107,6 +112,8 @@ Jul 26 11:12:19 hostname dovecot: imap-login: Disconnected: Too many invalid com
 
 # failJSON: { "time": "2004-08-28T06:38:51", "match": true , "host": "192.0.2.3" }
 Aug 28 06:38:51 s166-62-100-187 dovecot: imap-login: Disconnected (auth failed, 1 attempts in 9 secs): user=<administrator@example.com>, method=PLAIN, rip=192.0.2.3, lip=192.168.1.2, TLS: Disconnected, TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits)
+# failJSON: { "time": "2004-08-28T06:38:52", "match": true , "host": "192.0.2.4", "desc": "open parenthesis in optional part between Disconnected and (auth failed ...), gh-3210" }
+Aug 28 06:38:52 s166-62-100-187 dovecot: imap-login: Disconnected: Connection closed: read(size=1003) failed: Connection reset by peer (auth failed, 1 attempts in 0 secs): user=<test@example.com>, rip=192.0.2.4, lip=127.0.0.19, session=<Lsz0Oo7WXti3b7xe>
 
 # failJSON: { "time": "2004-08-29T03:17:18", "match": true , "host": "192.0.2.133" }
 Aug 29 03:17:18 server dovecot: submission-login: Client has quit the connection (auth failed, 1 attempts in 2 secs): user=<user1>, method=LOGIN, rip=192.0.2.133, lip=0.0.0.0

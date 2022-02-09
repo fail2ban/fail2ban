@@ -22,7 +22,6 @@ __author__ = "Steven Hiscocks"
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import datetime
 import os
 import time
 from distutils.version import LooseVersion
@@ -254,8 +253,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		return ((logline[:0], date[0], logline.replace('\n', '\\n')), date[1])
 
 	def seekToTime(self, date):
-		if not isinstance(date, datetime.datetime):
-			date = datetime.datetime.fromtimestamp(date)
+		if isinstance(date, (int, long)):
+			date = float(date)
 		self.__journal.seek_realtime(date)
 
 	def inOperationMode(self):
@@ -281,7 +280,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		try:
 			self.__journal.seek_tail()
 			logentry = self.__journal.get_previous()
-			self.__journal.get_next()
+			if logentry:
+				self.__journal.get_next()
 		except OSError:
 			logentry = None # Reading failure, so safe to ignore
 		if logentry:
@@ -296,12 +296,6 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			self.inOperation = False
 			# Save current time in order to check time to switch "in operation" mode
 			startTime = (1, MyTime.time(), logentry.get('__CURSOR'))
-			# Move back one entry to ensure do not end up in dead space
-			# if start time beyond end of journal
-			try:
-				self.__journal.get_previous()
-			except OSError:
-				pass # Reading failure, so safe to ignore
 		else:
 			# empty journal or no entries for current filter:
 			self.inOperationMode()
@@ -310,6 +304,13 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			self.seekToTime(startTime)
 			# for possible future switches of in-operation mode:
 			startTime = (0, startTime)
+
+		# Move back one entry to ensure do not end up in dead space
+		# if start time beyond end of journal
+		try:
+			self.__journal.get_previous()
+		except OSError:
+			pass # Reading failure, so safe to ignore
 
 		line = None
 		while self.active:
