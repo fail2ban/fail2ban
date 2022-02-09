@@ -547,9 +547,10 @@ class Actions(JailThread, Mapping):
 					if bTicket.banEpoch == self.banEpoch and diftm > 3:
 						# avoid too often checks:
 						if not rebanacts and MyTime.time() > self.__lastConsistencyCheckTM + 3:
-							for action in self._actions.itervalues():
-								action.consistencyCheck()
 							self.__lastConsistencyCheckTM = MyTime.time()
+							for action in self._actions.itervalues():
+								if hasattr(action, 'consistencyCheck'):
+									action.consistencyCheck()
 					# check epoch in order to reban it:
 					if bTicket.banEpoch < self.banEpoch:
 						if not rebanacts: rebanacts = dict(
