@@ -181,7 +181,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		super(BanTimeIncrDB, self).setUp()
-		if Fail2BanDb is None and sys.version_info >= (2,7): # pragma: no cover
+		if Fail2BanDb is None: # pragma: no cover
 			raise unittest.SkipTest(
 				"Unable to import fail2ban database module as sqlite is not "
 				"available.")

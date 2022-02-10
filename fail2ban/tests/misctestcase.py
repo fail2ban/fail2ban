@@ -70,16 +70,10 @@ class HelpersTest(unittest.TestCase):
 		self.assertEqual(splitwords(u' 1\n  2, 3'), ['1', '2', '3'])
 
 
-if sys.version_info >= (2,7):
-	def _sh_call(cmd):
-		import subprocess
-		ret = subprocess.check_output(cmd, shell=True)
-		return uni_decode(ret).rstrip()
-else:
-	def _sh_call(cmd):
-		import subprocess
-		ret = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
-		return uni_decode(ret).rstrip()
+def _sh_call(cmd):
+	import subprocess
+	ret = subprocess.check_output(cmd, shell=True)
+	return uni_decode(ret).rstrip()
 
 def _getSysPythonVersion():
 	return _sh_call("fail2ban-python -c 'import sys; print(tuple(sys.version_info))'")
@@ -92,7 +86,7 @@ class SetupTest(unittest.TestCase):
 		unittest.F2B.SkipIfFast()
 		setup = os.path.join(os.path.dirname(__file__), '..', '..', 'setup.py')
 		self.setup = os.path.exists(setup) and setup or None
-		if not self.setup and sys.version_info >= (2,7): # pragma: no cover - running not out of the source
+		if not self.setup: # pragma: no cover - running not out of the source
 			raise unittest.SkipTest(
 				"Seems to be running not out of source distribution"
 				" -- cannot locate setup.py")

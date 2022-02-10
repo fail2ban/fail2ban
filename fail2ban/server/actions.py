@@ -32,10 +32,7 @@ try:
 	from collections.abc import Mapping
 except ImportError:
 	from collections import Mapping
-try:
-	from collections import OrderedDict
-except ImportError:
-	OrderedDict = dict
+from collections import OrderedDict
 
 from .banmanager import BanManager, BanTicket
 from .ipdns import IPAddr

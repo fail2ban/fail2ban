@@ -33,7 +33,8 @@ install:
   #   coverage
   - travis_retry pip install coverage
   #   coveralls (note coveralls doesn't support 2.6 now):
-  - if [[ $TRAVIS_PYTHON_VERSION != 2.6* ]]; then F2B_COV=1; else F2B_COV=0; fi
+  #- if [[ $TRAVIS_PYTHON_VERSION != 2.6* ]]; then F2B_COV=1; else F2B_COV=0; fi
+  - F2B_COV=1
   - if [[ "$F2B_COV" = 1 ]]; then travis_retry pip install coveralls; fi
   #   codecov:
   - travis_retry pip install codecov

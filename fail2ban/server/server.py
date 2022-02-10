@@ -728,9 +728,7 @@ class Server:
 				except (ValueError, KeyError): # pragma: no cover
 					# Is known to be thrown after logging was shutdown once
 					# with older Pythons -- seems to be safe to ignore there
-					# At least it was still failing on 2.6.2-0ubuntu1 (jaunty)
-					if (2, 6, 3) <= sys.version_info < (3,) or \
-							(3, 2) <= sys.version_info:
+					if sys.version_info < (3,) or sys.version_info >= (3, 2):
 						raise
 			# detailed format by deep log levels (as DEBUG=10):
 			if logger.getEffectiveLevel() <= logging.DEBUG: # pragma: no cover
