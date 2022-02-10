@@ -315,6 +315,11 @@ Feb 17 17:40:17 sshd[19725]: error: kex_exchange_identification: client sent inv
 # failJSON: { "time": "2005-02-17T17:40:18", "match": true , "host": "192.0.2.10", "desc": "ddos: flood attack vector, gh-2850" }
 Feb 17 17:40:18 sshd[19725]: error: kex_exchange_identification: Connection closed by remote host
 
+# failJSON: { "match": false }
+Mar  1 18:59:33 hostname sshd[1189575]: error: kex_exchange_identification: banner line too long
+# failJSON: { "time": "2005-03-01T18:59:33", "match": true , "host": "192.0.2.12", "desc": "ddos: port scanner, https payload on ssh port (banner exchange: invalid format, gh-3169)" }
+Mar  1 18:59:33 hostname sshd[1189575]: banner exchange: Connection from 192.0.2.12 port 44105: invalid format
+
 # failJSON: { "time": "2005-03-15T09:21:01", "match": true , "host": "192.0.2.212", "desc": "DDOS mode causes failure on close within preauth stage" }
 Mar 15 09:21:01 host sshd[2717]: Connection closed by 192.0.2.212 [preauth]
 # failJSON: { "time": "2005-03-15T09:21:02", "match": true , "host": "192.0.2.212", "desc": "DDOS mode causes failure on close within preauth stage" }
@@ -327,6 +332,18 @@ Jul 18 17:19:11 srv sshd[2101]: Disconnected from 192.0.2.4 port 36985 [preauth]
 Jun  6 04:17:04 host sshd[1189074]: Invalid user  from 192.0.2.68 port 34916
 # failJSON: { "time": "2005-06-06T04:17:09", "match": true , "host": "192.0.2.68", "dns": null, "user": "", "desc": "empty user, gh-2749" }
 Jun  6 04:17:09 host sshd[1189074]: Connection closed by invalid user  192.0.2.68 port 34916 [preauth]
+
+# failJSON: { "match": false, "desc": "ddos-failure without IP, retarded, must be triggered with next (closed) message, gh-3086"}
+Jun  7 04:10:35 host sshd[424228]: error: kex_exchange_identification: Connection closed by remote host
+# failJSON: { "time": "2005-06-07T04:10:35", "match": true , "host": "192.0.2.15", "desc": "kex_exchange_identification: Connection closed, gh-3086" }
+Jun  7 04:10:35 host sshd[424228]: Connection closed by 192.0.2.15 port 35352
+
+# failJSON: { "match": false }
+Jun  7 04:29:10 host sshd[649921]: Connection from 192.0.2.16 port 51280 on 192.0.2.16 port 22 rdomain ""
+# failJSON: { "time": "2005-06-07T04:29:10", "match": true, "host": "192.0.2.16", "desc": "ddos-failure without IP, must be triggered here because it became known above, gh-3086"}
+Jun  7 04:29:10 host sshd[649921]: error: kex_exchange_identification: read: Connection reset by peer
+# failJSON: { "match": false, "desc": "Connection reset already triggered above (known IP, no-fail helper unused here)" }
+Jun  7 04:29:10 host sshd[649921]: Connection reset by 192.0.2.16 port 51280
 
 # filterOptions: [{"mode": "extra"}, {"mode": "aggressive"}]
 

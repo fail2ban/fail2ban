@@ -10,6 +10,8 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Compatibility:
+* the minimum supported python version is now 2.7, if you have previous python version
+  you can use the 0.11 version of fail2ban or upgrade python (or even build it from source).
 * potential incompatibility by parsing of options of `backend`, `filter` and `action` parameters (if they
   are partially incorrect), because fail2ban could throw an error now (doesn't silently bypass it anymore).
 * to v.0.11:
@@ -20,6 +22,9 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 ### Fixes
 * readline fixed to consider interim new-line character as part of code point in multi-byte logs
   (e. g. unicode encoding like utf-16be, utf-16le);
+* `action.d/ufw.conf`:
+  - fixed handling on IPv6 (using prepend, gh-2331, gh-3018)
+  - application names containing spaces can be used now (gh-656, gh-1532, gh-3018)
 * `filter.d/drupal-auth.conf` more strict regex, extended to match "Login attempt failed from" (gh-2742)
 
 ### New Features and Enhancements
@@ -41,6 +46,11 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
     matched `failregex` and `ignoreregex` additionally to pattern (without the need to enable more verbose mode)
 * `fail2ban-regex` and test suite e. g. sample regexs factory are adjusted to use more common functionality
   of filter module (fewer special tweaks inside the modules)
+* `action.d/ufw.conf` (gh-3018):
+  - new option `add` (default `prepend`), can be supplied as `insert 1` for ufw versions before v.0.36 (gh-2331, gh-3018)
+  - new options `kill-mode` and `kill` to drop established connections of intruder (see action for details, gh-3018)
+* `filter.d/nginx-http-auth.conf` - extended with parameter mode, so additionally to `auth` (or `normal`) 
+   mode `fallback` (or combined as `aggressive`) can find SSL errors while SSL handshaking, gh-2881
 
 
 ver. 0.11.2 (2020/11/23) - heal-the-world-with-security-tools
@@ -226,7 +236,7 @@ Yes, Hrrrm...
 ### New Features
 * new replacement tags for failregex to match subnets in form of IP-addresses with CIDR mask (gh-2559):
   - `<CIDR>` - helper regex to match CIDR (simple integer form of net-mask);
-  - `<SUBNET>` - regex to match sub-net adresses (in form of IP/CIDR, also single IP is matched, so part /CIDR is optional);
+  - `<SUBNET>` - regex to match sub-net addresses (in form of IP/CIDR, also single IP is matched, so part /CIDR is optional);
 * grouped tags (`<ADDR>`, `<HOST>`, `<SUBNET>`) recognize IP addresses enclosed in square brackets
 * new failregex-flag tag `<F-MLFGAINED>` for failregex, signaled that the access to service was gained
   (ATM used similar to tag `<F-NOFAIL>`, but it does not add the log-line to matches, gh-2279)

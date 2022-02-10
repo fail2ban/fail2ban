@@ -30,11 +30,7 @@ import sys
 from	 threading import Lock
 import time
 from ..helpers import getLogger, _merge_dicts, uni_decode
-
-try:
-	from collections import OrderedDict
-except ImportError: # pragma: 3.x no cover
-	OrderedDict = dict
+from collections import OrderedDict
 
 if sys.version_info >= (3, 3):
 	import importlib.machinery
@@ -100,24 +96,12 @@ class Utils():
 			with self.__lock:
 				# clean cache if max count reached:
 				if len(cache) >= self.maxCount:
-					if OrderedDict is not dict:
-						# ordered (so remove some from ahead, FIFO)
-						while cache:
-							(ck, cv) = cache.popitem(last=False)
-							# if not yet expired (but has free slot for new entry):
-							if cv[1] > t and len(cache) < self.maxCount:
-								break
-					else: # pragma: 3.x no cover (dict is in 2.6 only)
-						remlst = []
-						for (ck, cv) in cache.iteritems():
-							# if expired:
-							if cv[1] <= t:
-								remlst.append(ck)
-						for ck in remlst:
-							self._cache.pop(ck, None)
-						# if still max count - remove any one:
-						while cache and len(cache) >= self.maxCount:
-							cache.popitem()
+					# ordered (so remove some from ahead, FIFO)
+					while cache:
+						(ck, cv) = cache.popitem(last=False)
+						# if not yet expired (but has free slot for new entry):
+						if cv[1] > t and len(cache) < self.maxCount:
+							break
 				# set now:
 				cache[k] = (v, t + self.maxTime)
 

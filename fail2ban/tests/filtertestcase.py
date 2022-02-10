@@ -445,11 +445,11 @@ class IgnoreIP(LogCaptureTestCase):
 	def testTimeJump_InOperation(self):
 		self._testTimeJump(inOperation=True)
 
-	def testWrongTimeZone(self):
+	def testWrongTimeOrTZ(self):
 		try:
 			self.filter.addFailRegex('fail from <ADDR>$')
 			self.filter.setDatePattern(r'{^LN-BEG}%Y-%m-%d %H:%M:%S(?:\s*%Z)?\s')
-			self.filter.setMaxRetry(5); # don't ban here
+			self.filter.setMaxRetry(50); # don't ban here
 			self.filter.inOperation = True; # real processing (all messages are new)
 			# current time is 1h later than log-entries:
 			MyTime.setTime(1572138000+3600)
@@ -458,15 +458,18 @@ class IgnoreIP(LogCaptureTestCase):
 			for i in (1,2,3):
 				self.filter.processLineAndAdd('2019-10-27 02:00:00 fail from 192.0.2.15'); # +3 = 3
 			self.assertLogged(
-				"Simulate NOW in operation since found time has too large deviation",
-				"Please check jail has possibly a timezone issue.",
+				"Detected a log entry 1h before the current time in operation mode. This looks like a timezone problem.",
+				"Please check a jail for a timing issue.",
 				"192.0.2.15:1", "192.0.2.15:2", "192.0.2.15:3",
-				"Total # of detected failures: 3.", wait=True)
+				"Total # of detected failures: 3.", all=True, wait=True)
 			#
+			setattr(self.filter, "_next_simByTimeWarn", -1)
 			self.pruneLog("[phase 2] wrong TZ given in log")
 			for i in (1,2,3):
 				self.filter.processLineAndAdd('2019-10-27 04:00:00 GMT fail from 192.0.2.16'); # +3 = 6
 			self.assertLogged(
+				"Detected a log entry 2h after the current time in operation mode. This looks like a timezone problem.",
+				"Please check a jail for a timing issue.",
 				"192.0.2.16:1", "192.0.2.16:2", "192.0.2.16:3",
 				"Total # of detected failures: 6.", all=True, wait=True)
 			self.assertNotLogged("Found a match but no valid date/time found")
@@ -479,6 +482,29 @@ class IgnoreIP(LogCaptureTestCase):
 				"Match without a timestamp:",
 				"192.0.2.17:1", "192.0.2.17:2", "192.0.2.17:3",
 				"Total # of detected failures: 9.", all=True, wait=True)
+			#
+			phase = 3
+			for delta, expect in (
+				(-90*60, "timezone"), #90 minutes after
+				(-60*60, "timezone"), #60 minutes after
+				(-10*60, "timezone"), #10 minutes after
+				(-59,    None),       #59 seconds after
+				(59,     None),       #59 seconds before
+				(61,     "latency"),  #>1 minute before
+				(55*60,  "latency"),  #55 minutes before
+				(90*60,  "timezone")  #90 minutes before
+			):
+				phase += 1
+				MyTime.setTime(1572138000+delta)
+				setattr(self.filter, "_next_simByTimeWarn", -1)
+				self.pruneLog('[phase {phase}] log entries offset by {delta}s'.format(phase=phase, delta=delta))
+				self.filter.processLineAndAdd('2019-10-27 02:00:00 fail from 192.0.2.15');
+				self.assertLogged("Found 192.0.2.15", wait=True)
+				if expect:
+					self.assertLogged(("timezone problem", "latency problem")[int(expect == "latency")], all=True)
+					self.assertNotLogged(("timezone problem", "latency problem")[int(expect != "latency")], all=True)
+				else:
+					self.assertNotLogged("timezone problem", "latency problem", all=True)
 		finally:
 			tearDownMyTime()
 
@@ -993,6 +1019,10 @@ class CommonMonitorTestCase(unittest.TestCase):
 		super(CommonMonitorTestCase, self).setUp()
 		self._failTotal = 0
 
+	def tearDown(self):
+		super(CommonMonitorTestCase, self).tearDown()
+		self.assertFalse(hasattr(self, "_unexpectedError"))
+
 	def waitFailTotal(self, count, delay=1):
 		"""Wait up to `delay` sec to assure that expected failure `count` reached
 		"""
@@ -1018,6 +1048,16 @@ class CommonMonitorTestCase(unittest.TestCase):
 		last_ticks = self.filter.ticks
 		return Utils.wait_for(lambda: self.filter.ticks >= last_ticks + ticks, _maxWaitTime(delay))
 
+	def commonFltError(self, reason="common", exc=None):
+		""" Mock-up for default common error handler to find catched unhandled exceptions
+		could occur in filters
+		"""
+		self._commonFltError(reason, exc)
+		if reason == "unhandled":
+			DefLogSys.critical("Caught unhandled exception in main cycle of %r : %r", self.filter, exc, exc_info=True)
+			self._unexpectedError = True
+		# self.assertNotEqual(reason, "unhandled")
+
 
 def get_monitor_failures_testcase(Filter_):
 	"""Generator of TestCase's for different filters/backends
@@ -1040,6 +1080,8 @@ def get_monitor_failures_testcase(Filter_):
 			self.file = open(self.name, 'a')
 			self.jail = DummyJail()
 			self.filter = Filter_(self.jail)
+			# mock-up common error to find catched unhandled exceptions:
+			self._commonFltError, self.filter.commonError = self.filter.commonError, self.commonFltError
 			self.filter.addLogPath(self.name, autoSeek=False)
 			# speedup search using exact date pattern:
 			self.filter.setDatePattern(r'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
@@ -1326,7 +1368,6 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def setUp(self):
 			"""Call before every test case."""
 			super(MonitorJournalFailures, self).setUp()
-			self._runtimeJournal = None
 			self.test_file = os.path.join(TEST_FILES_DIR, "testcase-journal.log")
 			self.jail = DummyJail()
 			self.filter = None
@@ -1340,6 +1381,8 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def _initFilter(self, **kwargs):
 			self._getRuntimeJournal() # check journal available
 			self.filter = Filter_(self.jail, **kwargs)
+			# mock-up common error to find catched unhandled exceptions:
+			self._commonFltError, self.filter.commonError = self.filter.commonError, self.commonFltError
 			self.filter.addJournalMatch([
 				"SYSLOG_IDENTIFIER=fail2ban-testcases",
 				"TEST_FIELD=1",
@@ -1362,21 +1405,26 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			If not found, SkipTest exception will be raised.
 			"""
 			# we can cache it:
-			if self._runtimeJournal is None:
+			if not hasattr(MonitorJournalFailures, "_runtimeJournal"):
 				# Depending on the system, it could be found under /run or /var/log (e.g. Debian)
 				# which are pointed by different systemd-path variables.  We will
 				# check one at at time until the first hit
 				for systemd_var in 'system-runtime-logs', 'system-state-logs':
 					tmp = Utils.executeCmd(
-						'find "$(systemd-path %s)" -name system.journal' % systemd_var,
+						'find "$(systemd-path %s)/journal" -name system.journal -readable' % systemd_var,
 						timeout=10, shell=True, output=True
 					)
 					self.assertTrue(tmp)
 					out = str(tmp[1].decode('utf-8')).split('\n')[0]
 					if out: break
-				self._runtimeJournal = out
-			if self._runtimeJournal:
-				return self._runtimeJournal
+				# additional check appropriate default settings (if not root/sudoer and not already set):
+				if os.geteuid() != 0 and os.getenv("F2B_SYSTEMD_DEFAULT_FLAGS", None) is None:
+					# filter default SYSTEM_ONLY(4) is hardly usable for not root/sudoer tester,
+					# so back to default LOCAL_ONLY(1):
+					os.environ["F2B_SYSTEMD_DEFAULT_FLAGS"] = "0"; # or "1", what will be similar to journalflags=0 or ...=1
+				MonitorJournalFailures._runtimeJournal = out
+			if MonitorJournalFailures._runtimeJournal:
+				return MonitorJournalFailures._runtimeJournal
 			raise unittest.SkipTest('systemd journal seems to be not available (e. g. no rights to read)')
 		
 		def testJournalFilesArg(self):
@@ -1430,7 +1478,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			if idle:
 				self.filter.sleeptime /= 100.0
 				self.filter.idle = True
-				self.waitForTicks(1)
+			self.waitForTicks(1)
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 			# Now let's feed it with entries from the file
@@ -1482,7 +1530,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			# stop:
 			self.filter.stop()
 			self.filter.join()
-			MyTime.setTime(time.time() + 2)
+			MyTime.setTime(time.time() + 10)
 			# update log manually (should cause a seek to end of log without wait for next second):
 			self.jail.database.updateJournal(self.jail, 'systemd-journal', MyTime.time(), 'TEST')
 			# check seek to last (simulated) position succeeds (without bans of previous copied tickets):
@@ -1490,7 +1538,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self._initFilter()
 			self.filter.setMaxRetry(1)
 			self.filter.start()
-			self.waitForTicks(1)
+			self.waitForTicks(2)
 			# check new IP but no old IPs found:
 			_gen_falure("192.0.2.5")
 			self.assertFalse(self.jail.getFailTicket())
@@ -1503,15 +1551,47 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self._initFilter()
 			self.filter.setMaxRetry(1)
 			self.filter.start()
-			self.waitForTicks(1)
-			MyTime.setTime(time.time() + 3)
+			self.waitForTicks(2)
+			MyTime.setTime(time.time() + 20)
 			# check new IP but no old IPs found:
 			_gen_falure("192.0.2.6")
 			self.assertFalse(self.jail.getFailTicket())
 
+			# now reset DB, so we'd find all messages before filter entering in operation mode:
+			self.filter.stop()
+			self.filter.join()
+			self.jail.database.updateJournal(self.jail, 'systemd-journal', MyTime.time()-10000, 'TEST')
+			self._initFilter()
+			self.filter.setMaxRetry(1)
+			states = []
+			def _state(*args):
+				try:
+					self.assertNotIn("** in operation", states)
+					self.assertFalse(self.filter.inOperation)
+					states.append("** process line: %r" % (args,))
+				except Exception as e:
+					states.append("** failed: %r" % (e,))
+					raise
+			self.filter.processLineAndAdd = _state
+			def _inoper():
+				try:
+					self.assertNotIn("** in operation", states)
+					self.assertEqual(len(states), 11)
+					states.append("** in operation")
+					self.filter.__class__.inOperationMode(self.filter)
+				except Exception as e:
+					states.append("** failed: %r" % (e,))
+					raise
+			self.filter.inOperationMode = _inoper
+			self.filter.start()
+			self.waitForTicks(12)
+			self.assertTrue(Utils.wait_for(lambda: len(states) == 12, _maxWaitTime(10)))
+			self.assertEqual(states[-1], "** in operation")
+
 		def test_delJournalMatch(self):
 			self._initFilter()
 			self.filter.start()
+			self.waitForTicks(1); # wait for start
 			# Smoke test for removing of match
 
 			# basic full test
@@ -1544,6 +1624,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def test_WrongChar(self):
 			self._initFilter()
 			self.filter.start()
+			self.waitForTicks(1); # wait for start
 			# Now let's feed it with entries from the file
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, skip=15, n=4)

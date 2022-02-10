@@ -255,23 +255,6 @@ def with_alt_time(f):
 	return wrapper
 
 
-# backwards compatibility to python 2.6:
-if not hasattr(unittest, 'SkipTest'): # pragma: no cover
-	class SkipTest(Exception):
-		pass
-	unittest.SkipTest = SkipTest
-	_org_AddError = unittest._TextTestResult.addError
-	def addError(self, test, err):
-		if err[0] is SkipTest: 
-			if self.showAll:
-				self.stream.writeln(str(err[1]))
-			elif self.dots:
-				self.stream.write('s')
-				self.stream.flush()
-			return
-		_org_AddError(self, test, err)
-	unittest._TextTestResult.addError = addError
-
 def initTests(opts):
 	## if running from installer (setup.py):
 	if not opts:

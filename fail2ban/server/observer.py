@@ -364,7 +364,7 @@ class ObserverThread(JailThread):
 	## [Async] ban time increment functionality ...
 	## -----------------------------------------
 
-	def failureFound(self, failManager, jail, ticket):
+	def failureFound(self, jail, ticket):
 		""" Notify observer a failure for ip was found
 
 		Observer will check ip was known (bad) and possibly increase an retry count
@@ -380,7 +380,7 @@ class ObserverThread(JailThread):
 		retryCount = 1
 		timeOfBan = None
 		try:
-			maxRetry = failManager.getMaxRetry()
+			maxRetry = jail.filter.failManager.getMaxRetry()
 			db = jail.database
 			if db is not None:
 				for banCount, timeOfBan, lastBanTime in db.getBan(ip, jail):
@@ -403,18 +403,12 @@ class ObserverThread(JailThread):
 				MyTime.time2str(unixTime), banCount, retryCount,
 				(', Ban' if retryCount >= maxRetry else ''))
 			# retryCount-1, because a ticket was already once incremented by filter self
-			retryCount = failManager.addFailure(ticket, retryCount - 1, True)
+			retryCount = jail.filter.failManager.addFailure(ticket, retryCount - 1, True)
 			ticket.setBanCount(banCount)
 			# after observe we have increased attempt count, compare it >= maxretry ...
 			if retryCount >= maxRetry:
 				# perform the banning of the IP now (again)
-				# [todo]: this code part will be used multiple times - optimize it later.
-				try: # pragma: no branch - exception is the only way out
-					while True:
-						ticket = failManager.toBan(ip)
-						jail.putFailTicket(ticket)
-				except FailManagerEmpty:
-					failManager.cleanup(MyTime.time())
+				jail.filter.performBan(ip)
 
 		except Exception as e:
 			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
@@ -462,7 +456,7 @@ class ObserverThread(JailThread):
 					if ticket.getTime() > timeOfBan:
 						logSys.info('[%s] IP %s is bad: %s # last %s - incr %s to %s' % (jail.name, ip, banCount, 
 							MyTime.time2str(timeOfBan), 
-							datetime.timedelta(seconds=int(orgBanTime)), datetime.timedelta(seconds=int(banTime))));
+							MyTime.seconds2str(orgBanTime), MyTime.seconds2str(banTime)))
 					else:
 						ticket.restored = True
 					break
@@ -491,8 +485,7 @@ class ObserverThread(JailThread):
 			# if not permanent
 			if btime != -1:
 				bendtime = ticket.getTime() + btime
-				logtime = (datetime.timedelta(seconds=int(btime)),
-					MyTime.time2str(bendtime))
+				logtime = (MyTime.seconds2str(btime), MyTime.time2str(bendtime))
 				# check ban is not too old :
 				if bendtime < MyTime.time():
 					logSys.debug('Ignore old bantime %s', logtime[1])

@@ -3,6 +3,7 @@ bin/fail2ban-regex
 bin/fail2ban-server
 bin/fail2ban-testcases
 ChangeLog
+config/action.d/apprise.conf
 config/action.d/abuseipdb.conf
 config/action.d/apf.conf
 config/action.d/blocklist_de.conf
@@ -23,7 +24,6 @@ config/action.d/hostsdeny.conf
 config/action.d/ipfilter.conf
 config/action.d/ipfw.conf
 config/action.d/iptables-allports.conf
-config/action.d/iptables-common.conf
 config/action.d/iptables.conf
 config/action.d/iptables-ipset-proto4.conf
 config/action.d/iptables-ipset-proto6-allports.conf
@@ -392,8 +392,8 @@ files/fail2ban.service.in
 files/fail2ban-tmpfiles.conf
 files/fail2ban.upstart
 files/gen_badbots
-files/gentoo-confd
-files/gentoo-initd
+files/fail2ban-openrc.conf
+files/fail2ban-openrc.init.in
 files/ipmasq-ZZZzzz_fail2ban.rul
 files/logwatch/fail2ban
 files/logwatch/fail2ban-0.8.log

@@ -107,6 +107,10 @@ class Filter(JailThread):
 		## Error counter (protected, so can be used in filter implementations)
 		## if it reached 100 (at once), run-cycle will go idle
 		self._errors = 0
+		## Next time to update log or journal position in database:
+		self._nextUpdateTM = 0
+		## Pending updates (must be executed at next update time or during stop):
+		self._pendDBUpdates = {}
 		## return raw host (host is not dns):
 		self.returnRawHost = False
 		## check each regex (used for test purposes):
@@ -631,6 +635,7 @@ class Filter(JailThread):
 		noDate = False
 		if date:
 			tupleLine = line
+			line = "".join(line)
 			self.__lastTimeText = tupleLine[1]
 			self.__lastDate = date
 		else:
@@ -667,30 +672,37 @@ class Filter(JailThread):
 				if self.__lastDate and self.__lastDate > MyTime.time() - 60:
 					tupleLine = ("", self.__lastTimeText, line)
 					date = self.__lastDate
+				elif self.checkFindTime and self.inOperation:
+					date = MyTime.time()
 		
-		if self.checkFindTime:
+		if self.checkFindTime and date is not None:
 			# if in operation (modifications have been really found):
 			if self.inOperation:
 				# if weird date - we'd simulate now for timeing issue (too large deviation from now):
-				if (date is None or date < MyTime.time() - 60 or date > MyTime.time() + 60):
-					# log time zone issue as warning once per day:
+				delta = int(date - MyTime.time())
+				if abs(delta) > 60:
+					# log timing issue as warning once per day:
 					self._logWarnOnce("_next_simByTimeWarn",
-						("Simulate NOW in operation since found time has too large deviation %s ~ %s +/- %s",
-							date, MyTime.time(), 60),
-						("Please check jail has possibly a timezone issue. Line with odd timestamp: %s", 
-							line))
+						("Detected a log entry %s %s the current time in operation mode. "
+						 "This looks like a %s problem. Treating such entries as if they just happened.",
+						 MyTime.seconds2str(abs(delta)), "before" if delta < 0 else "after",
+						 "latency" if -3300 <= delta < 0 else "timezone"
+						 ),
+						("Please check a jail for a timing issue. Line with odd timestamp: %s",
+						 line))
 					# simulate now as date:
 					date = MyTime.time()
 					self.__lastDate = date
 			else:
 				# in initialization (restore) phase, if too old - ignore:
-				if date is not None and date < MyTime.time() - self.getFindTime():
+				if date < MyTime.time() - self.getFindTime():
 					# log time zone issue as warning once per day:
 					self._logWarnOnce("_next_ignByTimeWarn",
-						("Ignore line since time %s < %s - %s",
-							date, MyTime.time(), self.getFindTime()),
-						("Please check jail has possibly a timezone issue. Line with odd timestamp: %s", 
-							line))
+						("Ignoring all log entries older than %ss; these are probably" +
+						 " messages generated while fail2ban was not running.",
+							self.getFindTime()),
+						("Please check a jail for a timing issue. Line with odd timestamp: %s",
+						 line))
 					# ignore - too old (obsolete) entry:
 					return []
 
@@ -724,7 +736,7 @@ class Filter(JailThread):
 					self.performBan(ip)
 				# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
 				if Observers.Main is not None:
-					Observers.Main.add('failureFound', self.failManager, self.jail, tick)
+					Observers.Main.add('failureFound', self.jail, tick)
 			self.procLines += 1
 			# every 100 lines check need to perform service tasks:
 			if self.procLines % 100 == 0:
@@ -738,7 +750,7 @@ class Filter(JailThread):
 			# incr common error counter:
 			self.commonError()
 
-	def commonError(self):
+	def commonError(self, reason="common", exc=None):
 		# incr error counter, stop processing (going idle) after 100th error :
 		self._errors += 1
 		# sleep a little bit (to get around time-related errors):
@@ -1061,9 +1073,6 @@ class FileFilter(Filter):
 			log = self.__logs.pop(path)
 		except KeyError:
 			return
-		db = self.jail.database
-		if db is not None:
-			db.updateLog(self.jail, log)
 		logSys.info("Removed logfile: %r", path)
 		self._delLogPath(path)
 		return
@@ -1183,9 +1192,15 @@ class FileFilter(Filter):
 					self.processLineAndAdd(line)
 		finally:
 			log.close()
-		db = self.jail.database
-		if db is not None:
-			db.updateLog(self.jail, log)
+		if self.jail.database is not None:
+			self._pendDBUpdates[log] = 1
+			if (
+				self.ticks % 100 == 0
+				or MyTime.time() >= self._nextUpdateTM
+				or not self.active
+			):
+				self._updateDBPending()
+				self._nextUpdateTM = MyTime.time() + Utils.DEFAULT_SLEEP_TIME * 5
 		return True
 
 	##
@@ -1287,12 +1302,33 @@ class FileFilter(Filter):
 		ret.append(("File list", path))
 		return ret
 
-	def stop(self):
-		"""Stop monitoring of log-file(s)
+	def _updateDBPending(self):
+		"""Apply pending updates (log position) to database.
 		"""
+		db = self.jail.database
+		while True:
+			try:
+				log, args = self._pendDBUpdates.popitem()
+			except KeyError:
+				break
+			db.updateLog(self.jail, log)
+			
+	def onStop(self):
+		"""Stop monitoring of log-file(s). Invoked after run method.
+		"""
+		# ensure positions of pending logs are up-to-date:
+		if self._pendDBUpdates and self.jail.database:
+			self._updateDBPending()
 		# stop files monitoring:
 		for path in self.__logs.keys():
 			self.delLogPath(path)
+
+	def stop(self):
+		"""Stop filter
+		"""
+		# normally onStop will be called automatically in thread after its run ends, 
+		# but for backwards compatibilities we'll invoke it in caller of stop method.
+		self.onStop()
 		# stop thread:
 		super(Filter, self).stop()
 
@@ -1352,6 +1388,15 @@ class FileContainer:
 			handler.close()
 		## shows that log is in operation mode (expecting new messages only from here):
 		self.inOperation = tail
+
+	def __hash__(self):
+		return hash(self.__filename)
+	def __eq__(self, other):
+		return (id(self) == id(other) or
+			self.__filename == (other.__filename if isinstance(other, FileContainer) else other)
+		)
+	def __repr__(self):
+		return 'file-log:'+self.__filename
 
 	def getFileName(self):
 		return self.__filename
