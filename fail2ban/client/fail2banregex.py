@@ -384,9 +384,15 @@ class Fail2banRegex(object):
 					elif opt[2] == "addfailregex":
 						for optval in optval:
 							self._filter.addFailRegex(optval)
+							if self._verbose_regex:
+								# ordinal number to RE (its order may change later due to rise-up):
+								setattr(self._filter.failRegex[-1], 'ordinal', len(self._filter.failRegex))
 					elif opt[2] == "addignoreregex":
 						for optval in optval:
 							self._filter.addIgnoreRegex(optval)
+							if self._verbose_regex:
+								# ordinal number to RE (its order may change later due to rise-up):
+								setattr(self._filter.ignoreRegex[-1], 'ordinal', len(self._filter.ignoreRegex))
 					elif opt[2] == "maxlines":
 						for optval in optval:
 							self.setMaxLines(optval)
@@ -614,12 +620,17 @@ class Fail2banRegex(object):
 		def _printRegexes(title, failregexes):
 			# Print title
 			total, out = 0, []
+			maxord = ordofs = 0
+			if self._verbose_regex:
+				maxord = len(str(len(failregexes)))
+				ordofs = maxord+2
 			for failregex in failregexes:
 				total += failregex.matchCount
 				if (failregex.matchCount or self._verbose):
-					out.append("[%d] %s" % (failregex.matchCount, failregex.pattern))
-					ofs = len(str(failregex.matchCount))+2
-					if self._verbose_regex or self._verbose and failregex.pattern != failregex.getRegex():
+					ordnum = ("%*d) " % (maxord, getattr(failregex, 'ordinal', 1))) if self._verbose_regex else ''
+					out.append("%s[%d] %s" % (ordnum, failregex.matchCount, failregex.pattern))
+					ofs = ordofs + len(str(failregex.matchCount))+2
+					if self._verbose_regex or self._verbose > 1:
 						out.append("%*s %s" % (ofs, "`=", failregex.getRegex(),))
 				if self._verbose and failregex.stats.get('matchList'):
 					for ip in failregex.stats['matchList']:
@@ -630,7 +641,17 @@ class Fail2banRegex(object):
 								ip[-1] and " (multiple regex matched)" or ""))
 
 			output( "\n%s: %d total" % (title, total) )
-			pprint_list(out, "[# of hits] pattern")
+			if self._verbose_regex:
+				head = (
+					"%*s) [# of hits] pattern\n"
+					"|%*s           `= regular expression" % (maxord, "#", ordofs, '')
+				)
+			else:
+				head = "[# of hits] pattern"
+				if self._verbose > 1:
+					head += ("\n"
+						"|           `= regular expression")
+			pprint_list(out, head)
 			return total
 
 		# Print prefregex:
@@ -639,13 +660,17 @@ class Fail2banRegex(object):
 			pre = self._filter.prefRegex 
 			out = ["[%d] %s" % (pre.matchCount, pre.pattern)]
 			ofs = len(str(pre.matchCount))+2
-			if self._verbose_regex or self._verbose and pre.pattern != pre.getRegex():
+			if self._verbose_regex or self._verbose > 1:
 				out.append("%*s %s" % (ofs, "`=", pre.getRegex()))
 			if self._verbose:
 				for grp in self._prefREGroups:
 					out.append("%*s %s" % (ofs, "", grp))
 			output( "\n%s: %d total" % ("Prefregex", pre.matchCount) )
-			pprint_list(out)
+			head = "[# of hits] pattern"
+			if self._verbose_regex or self._verbose > 1:
+				head += ("\n"
+					"|           `= regular expression")
+			pprint_list(out, head)
 
 		# Print regex's:
 		total = _printRegexes("Failregex", self._filter.failRegex)
