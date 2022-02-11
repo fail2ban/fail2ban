@@ -355,31 +355,31 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('kevin')
 		self.pruneLog()
 		# multiple id combined to a tuple (id, tuple_id):
-		self.assertTrue(_test_exec('-o', 'id', 
+		self.assertTrue(_test_exec('-o', 'id', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 192.0.2.1 192.0.2.2',
 			r'^\s*<F-ID/> <F-TUPLE_ID>\S+</F-TUPLE_ID>'))
 		self.assertLogged(str(('192.0.2.1', '192.0.2.2')))
 		self.pruneLog()
 		# multiple id combined to a tuple, id first - (id, tuple_id_1, tuple_id_2):
-		self.assertTrue(_test_exec('-o', 'id', 
+		self.assertTrue(_test_exec('-o', 'id', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left 192.0.2.3 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID/> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
 		self.assertLogged(str(('192.0.2.3', 'left', 'right')))
 		self.pruneLog()
 		# id had higher precedence as ip-address:
-		self.assertTrue(_test_exec('-o', 'id', 
+		self.assertTrue(_test_exec('-o', 'id', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left [192.0.2.4]:12345 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
 		self.assertLogged(str(('[192.0.2.4]:12345', 'left', 'right')))
 		self.pruneLog()
 		# ip is not id anymore (if IP-address deviates from ID):
-		self.assertTrue(_test_exec('-o', 'ip', 
+		self.assertTrue(_test_exec('-o', 'ip', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left [192.0.2.4]:12345 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
 		self.assertNotLogged(str(('[192.0.2.4]:12345', 'left', 'right')))
 		self.assertLogged('192.0.2.4')
 		self.pruneLog()
-		self.assertTrue(_test_exec('-o', 'ID:<fid> | IP:<ip>',
+		self.assertTrue(_test_exec('-o', 'ID:<fid> | IP:<ip>', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left [192.0.2.4]:12345 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
 		self.assertLogged('ID:'+str(('[192.0.2.4]:12345', 'left', 'right'))+' | IP:192.0.2.4')
@@ -404,6 +404,43 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertTrue(_test_exec('-o', '<ip>, <F-USER>, <family>', STR_00, RE_00_USER))
 		self.assertLogged('192.0.2.0, kevin, inet4')
 		self.pruneLog()
+
+	def testStalledIPByNoFailFrmtOutput(self):
+		opts = (
+			'-c', CONFIG_DIR,
+			"-d", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
+		)
+		log = (
+			'May 27 00:16:33 host sshd[2364]: User root not allowed because account is locked\n'
+			'May 27 00:16:33 host sshd[2364]: Received disconnect from 192.0.2.76 port 58846:11: Bye Bye [preauth]'
+		)
+		_test = lambda *args: _test_exec(*(opts + args))
+		# with MLFID from prefregex and IP after failure obtained from F-NOFAIL RE:
+		self.assertTrue(_test('-o', 'IP:<ip>', log, 'sshd'))
+		self.assertLogged('IP:192.0.2.76')
+		self.pruneLog()
+		# test diverse ID/IP constellations:
+		def _test_variants(flt="sshd", prefix=""):
+			# with different ID/IP from failregex (ID/User from first, IP from second message):
+			self.assertTrue(_test('-o', 'ID:"<fid>" | IP:<ip> | U:<F-USER>', log, 
+				flt+'[failregex="'
+				  '^'+prefix+'<F-ID>User <F-USER>\S+</F-USER></F-ID> not allowed\n'
+				  '^'+prefix+'Received disconnect from <ADDR>'
+				'"]'))
+			self.assertLogged('ID:"User root" | IP:192.0.2.76 | U:root')
+			self.pruneLog()
+			# with different ID/IP from failregex (User from first, ID and IP from second message):
+			self.assertTrue(_test('-o', 'ID:"<fid>" | IP:<ip> | U:<F-USER>', log, 
+				flt+'[failregex="'
+				  '^'+prefix+'User <F-USER>\S+</F-USER> not allowed\n'
+				  '^'+prefix+'Received disconnect from <F-ID><ADDR> port \d+</F-ID>'
+				'"]'))
+			self.assertLogged('ID:"192.0.2.76 port 58846" | IP:192.0.2.76 | U:root')
+			self.pruneLog()
+		# first with sshd and prefregex:
+		_test_variants()
+		# the same without prefregex and MLFID directly in failregex (no merge with prefregex groups):
+		_test_variants('common', prefix="\s*\S+ sshd\[<F-MLFID>\d+</F-MLFID>\]:\s+")
 
 	def testNoDateTime(self):
 		# datepattern doesn't match:
