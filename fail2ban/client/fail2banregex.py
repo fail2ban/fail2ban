@@ -520,10 +520,14 @@ class Fail2banRegex(object):
 	def _prepaireOutput(self):
 		"""Prepares output- and fetch-function corresponding given '--out' option (format)"""
 		ofmt = self._opts.out
-		if ofmt in ('id', 'ip'):
+		if ofmt in ('id', 'fid'):
 			def _out(ret):
 				for r in ret:
 					output(r[1])
+		elif ofmt == 'ip':
+			def _out(ret):
+				for r in ret:
+					output(r[3].get('ip', r[1]))
 		elif ofmt == 'msg':
 			def _out(ret):
 				for r in ret:

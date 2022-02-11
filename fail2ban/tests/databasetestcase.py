@@ -192,7 +192,7 @@ class DatabaseTest(LogCaptureTestCase):
 		ticket.setAttempt(3)
 		self.assertEqual(bans[0], ticket)
 		# second ban found also:
-		self.assertEqual(bans[1].getIP(), "1.2.3.8")
+		self.assertEqual(bans[1].getID(), "1.2.3.8")
 		# updated ?
 		self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
 		# check current bans (should find 2 tickets after upgrade):
@@ -312,7 +312,7 @@ class DatabaseTest(LogCaptureTestCase):
 		for i, ticket in enumerate(tickets):
 			DefLogSys.debug('readtickets[%d]: %r', i, readtickets[i].getData())
 			DefLogSys.debug(' == tickets[%d]: %r', i, ticket.getData())
-			self.assertEqual(readtickets[i].getIP(), ticket.getIP())
+			self.assertEqual(readtickets[i].getID(), ticket.getID())
 			self.assertEqual(len(readtickets[i].getMatches()), len(ticket.getMatches()))
 
 		self.pruneLog('[test-phase 2] simulate errors')
@@ -354,10 +354,10 @@ class DatabaseTest(LogCaptureTestCase):
 	def testDelBan(self):
 		tickets = self._testAdd3Bans()
 		# delete single IP:
-		self.db.delBan(self.jail, tickets[0].getIP())
+		self.db.delBan(self.jail, tickets[0].getID())
 		self.assertEqual(len(self.db.getBans(jail=self.jail)), 2)
 		# delete two IPs:
-		self.db.delBan(self.jail, tickets[1].getIP(), tickets[2].getIP())
+		self.db.delBan(self.jail, tickets[1].getID(), tickets[2].getID())
 		self.assertEqual(len(self.db.getBans(jail=self.jail)), 0)
 
 	def testFlushBans(self):
@@ -398,7 +398,7 @@ class DatabaseTest(LogCaptureTestCase):
 		# should retrieve 2 matches only, but count of all attempts:
 		self.db.maxMatches = maxMatches;
 		ticket = self.db.getBansMerged("127.0.0.1")
-		self.assertEqual(ticket.getIP(), "127.0.0.1")
+		self.assertEqual(ticket.getID(), "127.0.0.1")
 		self.assertEqual(ticket.getAttempt(), len(failures))
 		self.assertEqual(len(ticket.getMatches()), maxMatches)
 		self.assertEqual(ticket.getMatches(), matches2find[-maxMatches:])
@@ -456,13 +456,13 @@ class DatabaseTest(LogCaptureTestCase):
 
 		# All for IP 127.0.0.1
 		ticket = self.db.getBansMerged("127.0.0.1")
-		self.assertEqual(ticket.getIP(), "127.0.0.1")
+		self.assertEqual(ticket.getID(), "127.0.0.1")
 		self.assertEqual(ticket.getAttempt(), 70)
 		self.assertEqual(ticket.getMatches(), ["abc\n", "123\n", "ABC\n"])
 
 		# All for IP 127.0.0.1 for single jail
 		ticket = self.db.getBansMerged("127.0.0.1", jail=self.jail)
-		self.assertEqual(ticket.getIP(), "127.0.0.1")
+		self.assertEqual(ticket.getID(), "127.0.0.1")
 		self.assertEqual(ticket.getAttempt(), 30)
 		self.assertEqual(ticket.getMatches(), ["abc\n", "123\n"])
 
@@ -490,8 +490,8 @@ class DatabaseTest(LogCaptureTestCase):
 		tickets = self.db.getBansMerged()
 		self.assertEqual(len(tickets), 2)
 		self.assertSortedEqual(
-			list(set(ticket.getIP() for ticket in tickets)),
-			[ticket.getIP() for ticket in tickets])
+			list(set(ticket.getID() for ticket in tickets)),
+			[ticket.getID() for ticket in tickets])
 
 		tickets = self.db.getBansMerged(jail=jail2)
 		self.assertEqual(len(tickets), 1)
@@ -510,7 +510,7 @@ class DatabaseTest(LogCaptureTestCase):
 		tickets = self.db.getCurrentBans(jail=self.jail)
 		self.assertEqual(len(tickets), 2)
 		ticket = self.db.getCurrentBans(jail=None, ip="127.0.0.1");
-		self.assertEqual(ticket.getIP(), "127.0.0.1")
+		self.assertEqual(ticket.getID(), "127.0.0.1")
 		
 		# positive case (1 ticket not yet expired):
 		tickets = self.db.getCurrentBans(jail=self.jail, forbantime=15,

@@ -367,14 +367,14 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		# this old ticket should be removed now:
 		restored_tickets = self.db.getCurrentBans(fromtime=stime, correctBanTime=False)
 		self.assertEqual(len(restored_tickets), 2)
-		self.assertEqual(restored_tickets[0].getIP(), ip)
+		self.assertEqual(restored_tickets[0].getID(), ip)
 
 		# purge remove 1st ip
 		self.db._purgeAge = -48*60*60
 		self.db.purge()
 		restored_tickets = self.db.getCurrentBans(fromtime=stime, correctBanTime=False)
 		self.assertEqual(len(restored_tickets), 1)
-		self.assertEqual(restored_tickets[0].getIP(), ip+'1')
+		self.assertEqual(restored_tickets[0].getID(), ip+'1')
 
 		# this should purge all bans, bips and logs - nothing should be found now
 		self.db._purgeAge = -240*60*60

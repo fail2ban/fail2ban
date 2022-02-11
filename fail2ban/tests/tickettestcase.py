@@ -39,6 +39,7 @@ class TicketTests(unittest.TestCase):
 
     # Ticket
     t = Ticket('193.168.0.128', tm, matches)
+    self.assertEqual(t.getID(), '193.168.0.128')
     self.assertEqual(t.getIP(), '193.168.0.128')
     self.assertEqual(t.getTime(), tm)
     self.assertEqual(t.getMatches(), matches2)
@@ -65,6 +66,7 @@ class TicketTests(unittest.TestCase):
     matches = ['first', 'second']
     ft = FailTicket('193.168.0.128', tm, matches)
     ft.setBanTime(60*60)
+    self.assertEqual(ft.getID(), '193.168.0.128')
     self.assertEqual(ft.getIP(), '193.168.0.128')
     self.assertEqual(ft.getTime(), tm)
     self.assertEqual(ft.getMatches(), matches2)

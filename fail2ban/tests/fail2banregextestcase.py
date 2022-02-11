@@ -372,6 +372,18 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
 		self.assertLogged(str(('[192.0.2.4]:12345', 'left', 'right')))
 		self.pruneLog()
+		# ip is not id anymore (if IP-address deviates from ID):
+		self.assertTrue(_test_exec('-o', 'ip', 
+			'1591983743.667 left [192.0.2.4]:12345 right',
+			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
+		self.assertNotLogged(str(('[192.0.2.4]:12345', 'left', 'right')))
+		self.assertLogged('192.0.2.4')
+		self.pruneLog()
+		self.assertTrue(_test_exec('-o', 'ID:<fid> | IP:<ip>',
+			'1591983743.667 left [192.0.2.4]:12345 right',
+			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
+		self.assertLogged('ID:'+str(('[192.0.2.4]:12345', 'left', 'right'))+' | IP:192.0.2.4')
+		self.pruneLog()
 		# row with id :
 		self.assertTrue(_test_exec('-o', 'row', STR_00, RE_00_ID))
 		self.assertLogged("['kevin'", "'ip4': '192.0.2.0'", "'fid': 'kevin'", all=True)
