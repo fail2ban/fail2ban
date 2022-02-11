@@ -364,6 +364,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertTrue(_test_exec('-o', 'id', 
 			'1591983743.667 left 192.0.2.3 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID/> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
+		self.assertLogged(str(('192.0.2.3', 'left', 'right')))
 		self.pruneLog()
 		# id had higher precedence as ip-address:
 		self.assertTrue(_test_exec('-o', 'id', 
