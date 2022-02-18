@@ -599,7 +599,7 @@ class Fail2BanDb(object):
 		ticket : BanTicket
 			Ticket of the ban to be added.
 		"""
-		ip = str(ticket.getIP())
+		ip = str(ticket.getID())
 		try:
 			del self._bansMergedCache[(ip, jail)]
 		except KeyError:

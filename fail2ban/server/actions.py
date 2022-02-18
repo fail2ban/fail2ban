@@ -497,7 +497,7 @@ class Actions(JailThread, Mapping):
 
 			bTicket = BanTicket.wrap(ticket)
 			btime = ticket.getBanTime(self.banManager.getBanTime())
-			ip = bTicket.getIP()
+			ip = bTicket.getID()
 			aInfo = self._getActionInfo(bTicket)
 			reason = {}
 			if self.banManager.addBanTicket(bTicket, reason=reason):
@@ -575,10 +575,10 @@ class Actions(JailThread, Mapping):
 			Ticket to reban
 		"""
 		actions = actions or self._actions
-		ip = ticket.getIP()
+		ip = ticket.getID()
 		aInfo = self._getActionInfo(ticket)
 		if log:
-			logSys.notice("[%s] Reban %s%s", self._jail.name, aInfo["ip"], (', action %r' % actions.keys()[0] if len(actions) == 1 else ''))
+			logSys.notice("[%s] Reban %s%s", self._jail.name, ip, (', action %r' % actions.keys()[0] if len(actions) == 1 else ''))
 		for name, action in actions.iteritems():
 			try:
 				logSys.debug("[%s] action %r: reban %s", self._jail.name, name, ip)
@@ -703,10 +703,10 @@ class Actions(JailThread, Mapping):
 			unbactions = self._actions
 		else:
 			unbactions = actions
-		ip = ticket.getIP()
+		ip = ticket.getID()
 		aInfo = self._getActionInfo(ticket)
 		if log:
-			logSys.notice("[%s] Unban %s", self._jail.name, aInfo["ip"])
+			logSys.notice("[%s] Unban %s", self._jail.name, ip)
 		for name, action in unbactions.iteritems():
 			try:
 				logSys.debug("[%s] action %r: unban %s", self._jail.name, name, ip)

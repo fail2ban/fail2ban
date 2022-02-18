@@ -257,6 +257,8 @@ class IPAddr(object):
 	FAM_IPv6 = CIDR_RAW - socket.AF_INET6
 
 	def __new__(cls, ipstr, cidr=CIDR_UNSPEC):
+		if cidr == IPAddr.CIDR_UNSPEC and isinstance(ipstr, (tuple, list)):
+			cidr = IPAddr.CIDR_RAW
 		if cidr == IPAddr.CIDR_RAW: # don't cache raw
 			ip = super(IPAddr, cls).__new__(cls)
 			ip.__init(ipstr, cidr)
