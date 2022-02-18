@@ -18,6 +18,9 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
   - due to change of `actioncheck` behavior (gh-488), some actions can be incompatible as regards
     the invariant check, if `actionban` or `actionunban` would not throw an error (exit code 
     different from 0) in case of unsane environment.
+  - actions that have used tag `<ip>` (instead of `<fid>` or `<F-ID>`) to get failure-ID may become
+    incompatible, if filter uses IP-related tags (like `<ADDR>` or `<HOST>`) additionally to `<F-ID>`
+    and the values are different (gh-3217)
 
 ### Fixes
 * readline fixed to consider interim new-line character as part of code point in multi-byte logs
@@ -34,6 +37,8 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 * better recognition of log rotation, better performance by reopen: avoid unnecessary seek to begin of file
   (and hash calculation)
 * file filter reads only complete lines (ended with new-line) now, so waits for end of line (for its completion)
+* actions differentiate tags `<ip>` and `<fid>` (`<F-ID>`), if IP-address deviates from ID then the value
+  of `<ip>` is not equal `<fid>` anymore (gh-3217)
 * `action.d/ufw.conf` (gh-3018):
   - new option `add` (default `prepend`), can be supplied as `insert 1` for ufw versions before v.0.36 (gh-2331, gh-3018)
   - new options `kill-mode` and `kill` to drop established connections of intruder (see action for details, gh-3018)
