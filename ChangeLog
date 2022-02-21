@@ -9,7 +9,7 @@ Fail2Ban: Changelog
 ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 -----------
 
-### Compatibility:
+### Compatibility
 * the minimum supported python version is now 2.7, if you have previous python version
   you can use the 0.11 version of fail2ban or upgrade python (or even build it from source).
 * potential incompatibility by parsing of options of `backend`, `filter` and `action` parameters (if they
@@ -49,7 +49,7 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 ver. 0.11.2 (2020/11/23) - heal-the-world-with-security-tools
 -----------
 
-### Compatibility:
+### Compatibility
 * to v.0.10:
   - 0.11 is totally compatible to 0.10 (configuration- and API-related stuff), but the database
     got some new tables and fields (auto-converted during the first start), so once updated to 0.11, you
