@@ -303,7 +303,7 @@ class Fail2banRegex(object):
 		fltFile = None
 		fltOpt = {}
 		if regextype == 'fail':
-			if re.search(r'^/{0,3}[\w/_\-.]+(?:\[.*\])?$', value):
+			if re.search(r'^(?ms)/{0,3}[\w/_\-.]+(?:\[.*\])?$', value):
 				try:
 					fltName, fltOpt = extractOptions(value)
 					if "." in fltName[~5:]:
@@ -483,10 +483,14 @@ class Fail2banRegex(object):
 	def _prepaireOutput(self):
 		"""Prepares output- and fetch-function corresponding given '--out' option (format)"""
 		ofmt = self._opts.out
-		if ofmt in ('id', 'ip'):
+		if ofmt in ('id', 'fid'):
 			def _out(ret):
 				for r in ret:
 					output(r[1])
+		elif ofmt == 'ip':
+			def _out(ret):
+				for r in ret:
+					output(r[3].get('ip', r[1]))
 		elif ofmt == 'msg':
 			def _out(ret):
 				for r in ret:

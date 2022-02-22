@@ -141,7 +141,7 @@ def _ticket_tuple(ticket):
 	"""
 	attempts = ticket.getAttempt()
 	date = ticket.getTime()
-	ip = ticket.getIP()
+	ip = ticket.getID()
 	matches = ticket.getMatches()
 	return (ip, attempts, date, matches)
 
@@ -1460,7 +1460,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.assertTrue(ticket)
 
 			attempts = ticket.getAttempt()
-			ip = ticket.getIP()
+			ip = ticket.getID()
 			ticket.getMatches()
 
 			self.assertEqual(ip, test_ip)
@@ -1646,7 +1646,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.waitForTicks(1)
 			self.waitFailTotal(6, 10)
 			self.assertTrue(Utils.wait_for(lambda: len(self.jail) == 2, 10))
-			self.assertSortedEqual([self.jail.getFailTicket().getIP(), self.jail.getFailTicket().getIP()], 
+			self.assertSortedEqual([self.jail.getFailTicket().getID(), self.jail.getFailTicket().getID()], 
 				["192.0.2.1", "192.0.2.2"])
 
 	cls = MonitorJournalFailures

@@ -1,3 +1,4 @@
+<!-- vim: syntax=Markdown -->
                          __      _ _ ___ _
                         / _|__ _(_) |_  ) |__  __ _ _ _
                        |  _/ _` | | |/ /| '_ \/ _` | ' \
@@ -9,7 +10,7 @@ Fail2Ban: Changelog
 ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 -----------
 
-### Compatibility:
+### Compatibility
 * the minimum supported python version is now 2.7, if you have previous python version
   you can use the 0.11 version of fail2ban or upgrade python (or even build it from source).
 * potential incompatibility by parsing of options of `backend`, `filter` and `action` parameters (if they
@@ -18,6 +19,9 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
   - due to change of `actioncheck` behavior (gh-488), some actions can be incompatible as regards
     the invariant check, if `actionban` or `actionunban` would not throw an error (exit code 
     different from 0) in case of unsane environment.
+  - actions that have used tag `<ip>` (instead of `<fid>` or `<F-ID>`) to get failure-ID may become
+    incompatible, if filter uses IP-related tags (like `<ADDR>` or `<HOST>`) additionally to `<F-ID>`
+    and the values are different (gh-3217)
 
 ### Fixes
 * readline fixed to consider interim new-line character as part of code point in multi-byte logs
@@ -34,6 +38,8 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 * better recognition of log rotation, better performance by reopen: avoid unnecessary seek to begin of file
   (and hash calculation)
 * file filter reads only complete lines (ended with new-line) now, so waits for end of line (for its completion)
+* actions differentiate tags `<ip>` and `<fid>` (`<F-ID>`), if IP-address deviates from ID then the value
+  of `<ip>` is not equal `<fid>` anymore (gh-3217)
 * regex of multiple `failregex` (and `ignoreregex`) can rise up in filter depending on numer of matched lines,
   (most used expressions go to the begin of list so will be applied first) what can provide better performance by
   match search; two new option allow to switch this behavior for single or any expression:
@@ -56,7 +62,7 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 ver. 0.11.2 (2020/11/23) - heal-the-world-with-security-tools
 -----------
 
-### Compatibility:
+### Compatibility
 * to v.0.10:
   - 0.11 is totally compatible to 0.10 (configuration- and API-related stuff), but the database
     got some new tables and fields (auto-converted during the first start), so once updated to 0.11, you

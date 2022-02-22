@@ -565,7 +565,7 @@ class Filter(JailThread):
 		ticket = None
 		if isinstance(ip, FailTicket):
 			ticket = ip
-			ip = ticket.getIP()
+			ip = ticket.getID()
 		elif not isinstance(ip, IPAddr):
 			ip = IPAddr(ip)
 		return self._inIgnoreIPList(ip, ticket, log_ignore)
@@ -714,10 +714,7 @@ class Filter(JailThread):
 		"""Processes the line for failures and populates failManager
 		"""
 		try:
-			for element in self.processLine(line, date):
-				ip = element[1]
-				unixTime = element[2]
-				fail = element[3]
+			for (_, ip, unixTime, fail) in self.processLine(line, date):
 				logSys.debug("Processing line with time:%s and ip:%s", 
 						unixTime, ip)
 				# ensure the time is not in the future, e. g. by some estimated (assumed) time:
@@ -873,11 +870,9 @@ class Filter(JailThread):
 		failList = list()
 
 		ll = logSys.getEffectiveLevel()
-		returnRawHost = self.returnRawHost
-		cidr = IPAddr.CIDR_UNSPEC
-		if self.__useDns == "raw":
-			returnRawHost = True
-			cidr = IPAddr.CIDR_RAW
+		defcidr = IPAddr.CIDR_UNSPEC
+		if self.__useDns == "raw" or self.returnRawHost:
+			defcidr = IPAddr.CIDR_RAW
 
 		if self.__lineBufferSize > 1:
 			self.__lineBuffer.append(tupleLine)
@@ -950,7 +945,8 @@ class Filter(JailThread):
 					self.__lineBuffer, buf = failRegex.getUnmatchedTupleLines(), None
 					if ll <= 5 and self.checkAllRegex: logSys.log(5, "Looking further for match of %r", self.__lineBuffer)
 				# merge data if multi-line failure:
-				raw = returnRawHost
+				cidr = defcidr
+				raw = (defcidr == IPAddr.CIDR_RAW)
 				if preGroups:
 					currFail, fail = fail, preGroups.copy()
 					fail.update(currFail)
@@ -969,49 +965,50 @@ class Filter(JailThread):
 				# failure-id:
 				fid = fail.get('fid')
 				# ip-address or host:
-				host = fail.get('ip4')
-				if host is not None:
+				ip = fail.get('ip4')
+				if ip is not None:
 					cidr = int(fail.get('cidr') or IPAddr.FAM_IPv4)
 					raw = True
 				else:
-					host = fail.get('ip6')
-					if host is not None:
+					ip = fail.get('ip6')
+					if ip is not None:
 						cidr = int(fail.get('cidr') or IPAddr.FAM_IPv6)
 						raw = True
-				if host is None:
-					host = fail.get('dns')
-					if host is None:
-						# first try to check we have mlfid case (cache connection id):
-						if fid is None and mlfid is None:
-								# if no failure-id also (obscure case, wrong regex), throw error inside getFailID:
-								fid = failRegex.getFailID()
-						host = fid
-						cidr = IPAddr.CIDR_RAW
-						raw = True
+					else:
+						ip = fail.get('dns')
+						if ip is None:
+							# first try to check we have mlfid case (cache connection id):
+							if fid is None and mlfid is None:
+									# if no failure-id also (obscure case, wrong regex), throw error inside getFailID:
+									fid = failRegex.getFailID()
+							ip = fid
+							raw = True
 				# if mlfid case (not failure):
-				if host is None:
+				if ip is None:
 					if ll <= 7: logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
 						mlfid, failRegexIndex, fail.get('mlfforget', "waiting for identifier"))
 					fail['mlfpending'] = 1; # mark failure is pending
 					if not self.checkAllRegex and self.ignorePending: return failList
-					ips = [None]
+					fids = [None]
 				# if raw - add single ip or failure-id,
 				# otherwise expand host to multiple ips using dns (or ignore it if not valid):
 				elif raw:
-					ip = IPAddr(host, cidr)
-					# check host equal failure-id, if not - failure with complex id:
-					if fid is not None and fid != host:
-						ip = IPAddr(fid, IPAddr.CIDR_RAW)
-					ips = [ip]
+					# check ip/host equal failure-id, if not - failure with complex id:
+					if fid is None or fid == ip:
+						fid = IPAddr(ip, cidr)
+					else:
+						fail['ip'] = IPAddr(ip, cidr)
+						fid = IPAddr(fid, defcidr)
+					fids = [fid]
 				# otherwise, try to use dns conversion:
 				else:
-					ips = DNSUtils.textToIp(host, self.__useDns)
+					fids = DNSUtils.textToIp(ip, self.__useDns)
 				# if checkAllRegex we must make a copy (to be sure next RE doesn't change merged/cached failure):
 				if self.checkAllRegex and mlfid is not None:
 					fail = fail.copy()
 				# append failure with match to the list:
-				for ip in ips:
-					failList.append([failRegex, ip, date, fail])
+				for fid in fids:
+					failList.append([failRegex, fid, date, fail])
 				if not self.checkAllRegex:
 					break
 			except RegexException as e: # pragma: no cover - unsure if reachable
