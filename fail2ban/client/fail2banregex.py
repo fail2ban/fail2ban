@@ -334,7 +334,7 @@ class Fail2banRegex(object):
 		fltFile = None
 		fltOpt = {}
 		if regextype == 'fail':
-			if re.search(r'^/{0,3}[\w/_\-.]+(?:\[.*\])?$', value):
+			if re.search(r'^(?ms)/{0,3}[\w/_\-.]+(?:\[.*\])?$', value):
 				try:
 					fltName, fltOpt = extractOptions(value)
 					if "." in fltName[~5:]:
