@@ -793,6 +793,8 @@ class Filter(JailThread):
 			# be sure we've correct current state ('nofail' and 'mlfgained' only from last failure)
 			if mlfidGroups.pop('nofail', None): nfflgs |= 4
 			if mlfidGroups.pop('mlfgained', None): nfflgs |= 4
+			# gained resets all pending failures (retaining users to check it later)
+			if nfflgs & 8: mlfidGroups.pop('mlfpending', None)
 			# if we had no pending failures then clear the matches (they are already provided):
 			if (nfflgs & 4) == 0 and not mlfidGroups.get('mlfpending', 0):
 				mlfidGroups.pop("matches", None)

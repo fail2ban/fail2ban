@@ -440,6 +440,27 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			'192.0.2.1, git, '+lines[-1],
 			all=True)
 
+	def testOutputNoPendingFailuresAfterGained(self):
+		unittest.F2B.SkipIfCfgMissing(stock=True)
+		# connect finished without authorization must generate a failure, because
+		# connect started will produce pending failure which gets reset by gained
+		# connect authorized.
+		self.assertTrue(_test_exec('-o', 'failure from == <ip> ==',
+			'-c', CONFIG_DIR, '-d', '{NONE}',
+			'svc[1] connect started 192.0.2.3\n'
+			'svc[1] connect finished 192.0.2.3\n'
+			'svc[2] connect started 192.0.2.4\n'
+			'svc[2] connect authorized 192.0.2.4\n'
+			'svc[2] connect finished 192.0.2.4\n',
+			'common[prefregex="^svc\[<F-MLFID>\d+</F-MLFID>\] connect <F-CONTENT>.+</F-CONTENT>$"'
+			', failregex="'
+			'^started\n'
+			'^<F-NOFAIL><F-MLFFORGET>finished</F-MLFFORGET></F-NOFAIL> <ADDR>\n'
+			'^<F-MLFGAINED>authorized</F-MLFGAINED> <ADDR>'
+			'", maxlines=1]'
+		))
+		self.assertLogged('failure from == 192.0.2.3 ==')
+		self.assertNotLogged('failure from == 192.0.2.4 ==')
 
 	def testWrongFilterFile(self):
 		# use test log as filter file to cover eror cases...
