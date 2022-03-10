@@ -1174,7 +1174,7 @@ fail2ban (0.6.1-3) unstable; urgency=low
 fail2ban (0.6.1-2) unstable; urgency=low
 
   * Assigned maxreinits to 1000 to be reasonable since otherwise logfile grows
-    indefinetly if there is a real problem on the system (closes: #359218)
+    indefinitely if there is a real problem on the system (closes: #359218)
   * Adjusted debian/{copyright,watch}
   * New version of init.d script (Thanks to Aaron Isotton) (closes: #364278)
 
@@ -1228,7 +1228,7 @@ fail2ban (0.6.0-4) unstable; urgency=low
     of "ChallengeResponseAuthentication no" and "PasswordAuthentication
     yes"
   * Fixed Apache timeregex and timepattern to confirm
-    the fomat of time stamp used in Debian's access.log (error.log uses
+    the format of time stamp used in Debian's access.log (error.log uses
     RFC 2822 format)
   * Added section ApacheAttacks to specify some common patterns of attacks on
     a webserver (awstats.pl as a try). This section stays split from Apache
