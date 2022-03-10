@@ -2,6 +2,8 @@ fail2ban (0.11.2-6) unstable; urgency=medium
 
   * Cherry-pick upstream fix to fix a startup issue with Python 3.10
     (LP: #1958505)
+  * Fix a potential race condition (Closes: #935778)
+  * Cherry-pick upstream fix for courier-auth (Closes: #1004466)
 
  -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 10 Mar 2022 22:52:59 +0100
 
