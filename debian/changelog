@@ -4,6 +4,8 @@ fail2ban (0.11.2-6) unstable; urgency=medium
     (LP: #1958505)
   * Fix a potential race condition (Closes: #935778)
   * Cherry-pick upstream fix for courier-auth (Closes: #1004466)
+  * ignore false positive
+    fail2ban: read-in-maintainer-script [postinst:41
 
  -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 10 Mar 2022 22:52:59 +0100
 
