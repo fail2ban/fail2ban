@@ -13,3 +13,4 @@ scanlogd.patch
 python3.10.diff
 fix-race.diff
 courier-auth.diff
+fix-typo.diff
