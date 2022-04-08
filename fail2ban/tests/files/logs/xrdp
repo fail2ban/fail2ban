@@ -1,0 +1,37 @@
+#
+# /var/log/xrdp-sesman.log -- should be about the same on any linux distro
+#
+
+# failJSON: { "time": "2022-04-07T12:11:06", "match": true, "host": "10.171.161.151"}
+[20220407-12:11:06] [INFO ] AUTHFAIL: user=badtypist ip=::ffff:10.171.161.151 time=1649351466
+
+# ip injection: 10.171.161.151 should be matched as the host; 192.168.0.1 is an innocent, injected address
+# failJSON: { "time": "2022-04-07T12:11:24", "match": true, "host": "10.171.161.151", "desc": "specifying ip address as username"}
+[20220407-12:11:24] [INFO ] AUTHFAIL: user=192.168.0.1 ip=::ffff:10.171.161.151 time=1649351484
+
+# ip injection: 10.171.161.151 should be matched as the host; 192.168.0.4 is an innocent, injected address
+# failJSON: { "time": "2022-04-07T12:22:02", "match": true, "host": "10.171.161.151", "desc": "more devious log injection"}
+[20220407-12:22:02] [INFO ] AUTHFAIL: user=loginjector ip=192.168.0.4 time=123456789\n[20220407-12:16:59] [INFO ] AUTHFAIL: user=endinjection ip=::ffff:10.171.161.151 time=1649352122
+
+
+#
+# /var/log/messages -- RHEL/Fedora family
+#
+
+# failJSON: { "time": "2005-04-07T12:11:06", "match": true, "host": "10.171.161.151"}
+Apr  7 12:11:06 servername xrdp-sesman[41441]: [INFO ] AUTHFAIL: user=badtypist ip=::ffff:10.171.161.151 time=1649351466
+
+# ip injection: 10.171.161.151 should be matched as the host; 192.168.0.1 is an innocent, injected address
+# failJSON: { "time": "2005-04-07T12:11:24", "match": true, "host": "10.171.161.151", "desc": "specifying ip address as username"}
+Apr  7 12:11:24 servername xrdp-sesman[41441]: [INFO ] AUTHFAIL: user=192.168.0.1 ip=::ffff:10.171.161.151 time=1649351484
+
+# ip injection: 10.171.161.151 should be matched as the host; 192.168.0.4 is an innocent, injected address
+# failJSON: { "time": "2005-04-07T12:22:02", "match": true, "host": "10.171.161.151", "desc": "more devious log injection"}
+Apr  7 12:22:02 servername xrdp-sesman[41441]: [INFO ] AUTHFAIL: user=loginjector ip=192.168.0.4 time=123456789\n[20220407-12:16:59] [INFO ] AUTHFAIL: user=endinjection ip=::ffff:10.171.161.151 time=1649352122
+
+# ip injection: innocent, injected ip 192.168.0.4 in a line that shouldn't contain a host
+# failJSON: { "match": false }
+Apr  7 12:22:02 servername xrdp[52415]: [INFO ] xrdp_wm_log_msg: login failed for user loginjector ip=192.168.0.4 time=12345\n[20220407-12:16:59] [INFO ] AUTHFAIL: user=endinjection
+
+# failJSON: { "match": false }
+Apr  7 12:22:02 servername xrdp[52415]: [INFO ] n[20220407-12:16:59] [INFO ] AUTHFAIL: user=endinjection
