@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9, '3.10', '3.11.0-alpha.1', pypy2, pypy3]
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9, '3.10', '3.11.0-alpha.7', pypy2, pypy3]
       fail-fast: false
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
