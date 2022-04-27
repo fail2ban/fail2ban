@@ -21,6 +21,7 @@ ver. 1.0.3-dev-1 (20??/??/??) - development nightly edition
   if available for platform and uses DNS to find local IPv6 as a fallback only
 * improve `ignoreself` by considering all local addresses from network interfaces additionally to IPs from hostnames (gh-3132)
 * `action.d/mikrotik.conf` - new action for mikrotik routerOS, adds and removes entries from address lists on the router (gh-2860)
+* `action.d/smtp.py` - added optional support for TLS connections via the `ssl` arg.
 * `filter.d/exim.conf` - fixed "dropped: too many ..." regex, also matching unrecognized commands now (gh-3502)
 * `filter.d/nginx-forbidden.conf` - new filter to ban forbidden locations, e. g. using `deny` directive (gh-2226)
 * `filter.d/sshd.conf`:

@@ -75,7 +75,7 @@ class SMTPAction(ActionBase):
 	"""
 
 	def __init__(
-		self, jail, name, host="localhost", user=None, password=None,
+		self, jail, name, host="localhost", ssl=False, user=None, password=None,
 		sendername="Fail2Ban", sender="fail2ban", dest="root", matches=None):
 		"""Initialise action.
 
@@ -88,6 +88,8 @@ class SMTPAction(ActionBase):
 		host : str, optional
 			SMTP host, of host:port format. Default host "localhost" and
 			port "25"
+		ssl : bool, optional
+			Whether to use TLS for the SMTP connection or not.  Default False.
 		user : str, optional
 			Username used for authentication with SMTP server.
 		password : str, optional
@@ -109,7 +111,7 @@ class SMTPAction(ActionBase):
 		super(SMTPAction, self).__init__(jail, name)
 
 		self.host = host
-		#TODO: self.ssl = ssl
+		self.ssl = ssl
 
 		self.user = user
 		self.password =password
@@ -155,10 +157,19 @@ class SMTPAction(ActionBase):
 		msg['To'] = self.toaddr
 		msg['Date'] = formatdate()
 
-		smtp = smtplib.SMTP()
+		smtp = smtplib.SMTP(self.host)
 		try:
 			self._logSys.debug("Connected to SMTP '%s', response: %i: %s",
 				self.host, *smtp.connect(self.host))
+
+			if self.ssl: # pragma: no cover
+				tls_result = smtp.starttls()[0];
+				if tls_result != 220: # pragma: no cover
+					self._logSys.error(
+						"Failed to starttls() on '%s' for user '%s': %s",
+						self.host, self.user, tls_result)
+					raise Exception("Failed to starttls()")
+
 			if self.user and self.password: # pragma: no cover (ATM no tests covering that)
 				smtp.login(self.user, self.password)
 			failed_recipients = smtp.sendmail(
