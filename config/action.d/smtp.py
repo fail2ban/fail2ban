@@ -165,10 +165,7 @@ class SMTPAction(ActionBase):
 			if self.ssl: # pragma: no cover
 				tls_result = smtp.starttls()[0];
 				if tls_result != 220: # pragma: no cover
-					self._logSys.error(
-						"Failed to starttls() on '%s' for user '%s': %s",
-						self.host, self.user, tls_result)
-					raise Exception("Failed to starttls()")
+					raise Exception("Failed to starttls() on '%s': %s" % (self.host, tls_result))
 
 			if self.user and self.password: # pragma: no cover (ATM no tests covering that)
 				smtp.login(self.user, self.password)
