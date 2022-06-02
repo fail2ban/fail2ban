@@ -250,7 +250,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		logSys.log(5, "[%s] Read systemd journal entry: %s %s", self.jailName,
 			date[0], logline)
 		## use the same type for 1st argument:
-		return ((logline[:0], date[0], logline.replace('\n', '\\n')), date[1])
+		return ((logline[:0], date[0] + ' ', logline.replace('\n', '\\n')), date[1])
 
 	def seekToTime(self, date):
 		if isinstance(date, (int, long)):
