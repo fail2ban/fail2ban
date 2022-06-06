@@ -10,3 +10,5 @@ htmlcov
 __pycache__
 .vagrant/
 .idea/
+config/.DS_Store
+.DS_Store
