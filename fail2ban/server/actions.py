@@ -664,7 +664,7 @@ class Actions(JailThread, Mapping):
 				if hasattr(action, 'consistencyCheck'):
 					def _beforeRepair():
 						if stop and not getattr(action, 'actionrepair_on_unban', None): # don't need repair on stop
-							self._logSys.error("Invariant check failed. Flush is impossible.")
+							logSys.error("Invariant check failed. Flush is impossible.")
 							return False
 						return True
 					action.consistencyCheck(_beforeRepair)

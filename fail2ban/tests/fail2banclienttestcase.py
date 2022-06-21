@@ -600,6 +600,11 @@ class Fail2banClientTest(Fail2banClientServerBase):
 				os.kill(pid, signal.SIGCONT)
 			self.assertLogged("timed out")
 			self.pruneLog()
+			# check readline module available (expected by interactive client)
+			try:
+				import readline
+			except ImportError as e:
+				raise unittest.SkipTest('Skip test because of import error: %s' % e)
 			# interactive client chat with started server:
 			INTERACT += [
 				"echo INTERACT-ECHO",
