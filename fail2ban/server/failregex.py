@@ -91,6 +91,13 @@ R_MAP = {
 	"PORT": "fport",
 }
 
+# map global flags like ((?i)xxx) or (?:(?i)xxx) to local flags (?i:xxx) if supported by RE-engine in this python version:
+try:
+	re.search("^re(?i:val)$", "reVAL")
+	R_GLOB2LOCFLAGS = ( re.compile(r"(?<!\\)\((?:\?:)?(\(\?[a-z]+)\)"), r"\1:" )
+except:
+	R_GLOB2LOCFLAGS = ()
+
 def mapTag2Opt(tag):
 	try: # if should be mapped:
 		return R_MAP[tag]
@@ -124,6 +131,9 @@ class Regex:
 		#
 		if regex.lstrip() == '':
 			raise RegexException("Cannot add empty regex")
+		# special handling wrapping global flags to local flags:
+		if R_GLOB2LOCFLAGS:
+			regex = R_GLOB2LOCFLAGS[0].sub(R_GLOB2LOCFLAGS[1], regex)
 		try:
 			self._regexObj = re.compile(regex, re.MULTILINE if multiline else 0)
 			self._regex = regex
