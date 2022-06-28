@@ -45,6 +45,7 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
   - new options `kill-mode` and `kill` to drop established connections of intruder (see action for details, gh-3018)
 * `filter.d/nginx-http-auth.conf` - extended with parameter mode, so additionally to `auth` (or `normal`) 
    mode `fallback` (or combined as `aggressive`) can find SSL errors while SSL handshaking, gh-2881
+* `filter.d/xrdp.conf` - new filter for XRDP, an open source RDP server
 
 
 ver. 0.11.2 (2020/11/23) - heal-the-world-with-security-tools
