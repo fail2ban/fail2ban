@@ -26,7 +26,10 @@ __license__ = "GPL"
 
 import glob
 import os
-from ConfigParser import NoOptionError, NoSectionError
+try:
+    from ConfigParser import NoOptionError, NoSectionError
+except ImportError:
+    from configparser import NoOptionError, NoSectionError
 
 from .configparserinc import sys, SafeConfigParserWithIncludes, logLevel
 from ..helpers import getLogger, _as_bool, _merge_dicts, substituteRecursiveTags

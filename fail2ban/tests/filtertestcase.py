@@ -22,7 +22,11 @@
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier; 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-from __builtin__ import open as fopen
+try:
+	from __builtin__ import open as fopen
+except ImportError:
+	from builtins import open as fopen
+from builtins import range
 import unittest
 import os
 import re
@@ -209,7 +213,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	else:
 		fin = in_
 	# Skip
-	for i in xrange(skip):
+	for i in range(skip):
 		fin.readline()
 	# Read
 	i = 0
@@ -250,7 +254,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 	# Required for filtering
 	fields.update(TEST_JOURNAL_FIELDS)
 	# Skip
-	for i in xrange(skip):
+	for i in range(skip):
 		fin.readline()
 	# Read/Write
 	i = 0
@@ -312,7 +316,7 @@ class BasicFilter(unittest.TestCase):
 	def testTest_tm(self):
 		unittest.F2B.SkipIfFast()
 		## test function "_tm" works correct (returns the same as slow strftime):
-		for i in xrange(1417512352, (1417512352 // 3600 + 3) * 3600):
+		for i in range(1417512352, (1417512352 // 3600 + 3) * 3600):
 			tm = MyTime.time2str(i)
 			if _tm(i) != tm: # pragma: no cover - never reachable
 				self.assertEqual((_tm(i), i), (tm, i))
@@ -510,7 +514,7 @@ class IgnoreIP(LogCaptureTestCase):
 
 	def testAddAttempt(self):
 		self.filter.setMaxRetry(3)
-		for i in xrange(1, 1+3):
+		for i in range(1, 1+3):
 			self.filter.addAttempt('192.0.2.1')
 			self.assertLogged('Attempt 192.0.2.1', '192.0.2.1:%d' % i, all=True, wait=True)
 		self.jail.actions._Actions__checkBan()
@@ -547,7 +551,7 @@ class IgnoreIP(LogCaptureTestCase):
 		# like both test-cases above, just cached (so once per key)...
 		self.filter.ignoreCache = {"key":"<ip>"}
 		self.filter.ignoreCommand = 'if [ "<ip>" = "10.0.0.1" ]; then exit 0; fi; exit 1'
-		for i in xrange(5):
+		for i in range(5):
 			self.pruneLog()
 			self.assertTrue(self.filter.inIgnoreIPList("10.0.0.1"))
 			self.assertFalse(self.filter.inIgnoreIPList("10.0.0.0"))
@@ -558,7 +562,7 @@ class IgnoreIP(LogCaptureTestCase):
 		# by host of IP:
 		self.filter.ignoreCache = {"key":"<ip-host>"}
 		self.filter.ignoreCommand = 'if [ "<ip-host>" = "test-host" ]; then exit 0; fi; exit 1'
-		for i in xrange(5):
+		for i in range(5):
 			self.pruneLog()
 			self.assertTrue(self.filter.inIgnoreIPList(FailTicket("2001:db8::1")))
 			self.assertFalse(self.filter.inIgnoreIPList(FailTicket("2001:db8::ffff")))
@@ -570,7 +574,7 @@ class IgnoreIP(LogCaptureTestCase):
 		self.filter.ignoreCache = {"key":"<F-USER>", "max-count":"10", "max-time":"1h"}
 		self.assertEqual(self.filter.ignoreCache, ["<F-USER>", 10, 60*60])
 		self.filter.ignoreCommand = 'if [ "<F-USER>" = "tester" ]; then exit 0; fi; exit 1'
-		for i in xrange(5):
+		for i in range(5):
 			self.pruneLog()
 			self.assertTrue(self.filter.inIgnoreIPList(FailTicket("tester", data={'user': 'tester'})))
 			self.assertFalse(self.filter.inIgnoreIPList(FailTicket("root", data={'user': 'root'})))
@@ -733,7 +737,7 @@ class LogFileFilterPoll(unittest.TestCase):
 			fc = FileContainer(fname, self.filter.getLogEncoding())
 			fc.open()
 			# no time - nothing should be found :
-			for i in xrange(10):
+			for i in range(10):
 				f.write("[sshd] error: PAM: failure len 1\n")
 				f.flush()
 				fc.setPos(0); self.filter.seekToTime(fc, time)
@@ -807,14 +811,14 @@ class LogFileFilterPoll(unittest.TestCase):
 			# variable length of file (ca 45K or 450K before and hereafter):
 			# write lines with smaller as search time:
 			t = time - count - 1
-			for i in xrange(count):
+			for i in range(count):
 				f.write("%s [sshd] error: PAM: failure\n" % _tm(t))
 				t += 1
 			f.flush()
 			fc.setPos(0); self.filter.seekToTime(fc, time)
 			self.assertEqual(fc.getPos(), 47*count)
 			# write lines with exact search time:
-			for i in xrange(10):
+			for i in range(10):
 				f.write("%s [sshd] error: PAM: failure\n" % _tm(time))
 			f.flush()
 			fc.setPos(0); self.filter.seekToTime(fc, time)
@@ -823,8 +827,8 @@ class LogFileFilterPoll(unittest.TestCase):
 			self.assertEqual(fc.getPos(), 47*count)
 			# write lines with greater as search time:
 			t = time+1
-			for i in xrange(count//500):
-				for j in xrange(500):
+			for i in range(count//500):
+				for j in range(500):
 					f.write("%s [sshd] error: PAM: failure\n" % _tm(t))
 					t += 1
 				f.flush()
@@ -1775,7 +1779,7 @@ class GetFailures(LogCaptureTestCase):
 	def testGetFailures02(self):
 		output = ('141.3.81.106', 4, 1124013539.0,
 				  [u'Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2'
-				   % m for m in 53, 54, 57, 58])
+				   % m for m in (53, 54, 57, 58)])
 
 		self.filter.setMaxRetry(4)
 		self.filter.addLogPath(GetFailures.FILENAME_02, autoSeek=0)
@@ -2004,9 +2008,9 @@ class DNSUtilsTests(unittest.TestCase):
 		self.assertTrue(c.get('a') is None)
 		self.assertEqual(c.get('a', 'test'), 'test')
 		# exact 5 elements :
-		for i in xrange(5):
+		for i in range(5):
 			c.set(i, i)
-		for i in xrange(5):
+		for i in range(5):
 			self.assertEqual(c.get(i), i)
 		# remove unavailable key:
 		c.unset('a'); c.unset('a')
@@ -2014,30 +2018,30 @@ class DNSUtilsTests(unittest.TestCase):
 	def testCacheMaxSize(self):
 		c = Utils.Cache(maxCount=5, maxTime=60)
 		# exact 5 elements :
-		for i in xrange(5):
+		for i in range(5):
 			c.set(i, i)
-		self.assertEqual([c.get(i) for i in xrange(5)], [i for i in xrange(5)])
-		self.assertNotIn(-1, (c.get(i, -1) for i in xrange(5)))
+		self.assertEqual([c.get(i) for i in range(5)], [i for i in range(5)])
+		self.assertNotIn(-1, (c.get(i, -1) for i in range(5)))
 		# add one - too many:
 		c.set(10, i)
 		# one element should be removed :
-		self.assertIn(-1, (c.get(i, -1) for i in xrange(5)))
+		self.assertIn(-1, (c.get(i, -1) for i in range(5)))
 		# test max size (not expired):
-		for i in xrange(10):
+		for i in range(10):
 			c.set(i, 1)
 		self.assertEqual(len(c), 5)
 
 	def testCacheMaxTime(self):
 		# test max time (expired, timeout reached) :
 		c = Utils.Cache(maxCount=5, maxTime=0.0005)
-		for i in xrange(10):
+		for i in range(10):
 			c.set(i, 1)
 		st = time.time()
 		self.assertTrue(Utils.wait_for(lambda: time.time() >= st + 0.0005, 1))
 		# we have still 5 elements (or fewer if too slow test mashine):
 		self.assertTrue(len(c) <= 5)
 		# but all that are expiered also:
-		for i in xrange(10):
+		for i in range(10):
 			self.assertTrue(c.get(i) is None)
 		# here the whole cache should be empty:
 		self.assertEqual(len(c), 0)
@@ -2058,7 +2062,7 @@ class DNSUtilsTests(unittest.TestCase):
 					c = count
 					while c:
 						c -= 1
-						s = xrange(0, 256, 1) if forw else xrange(255, -1, -1)
+						s = range(0, 256, 1) if forw else range(255, -1, -1)
 						if random: shuffle([i for i in s])
 						for i in s:
 							IPAddr('192.0.2.'+str(i), IPAddr.FAM_IPv4)
@@ -2184,16 +2188,16 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 
 	def testAddr2bin(self):
 		res = IPAddr('10.0.0.0')
-		self.assertEqual(res.addr, 167772160L)
+		self.assertEqual(res.addr, 167772160)
 		res = IPAddr('10.0.0.0', cidr=None)
-		self.assertEqual(res.addr, 167772160L)
-		res = IPAddr('10.0.0.0', cidr=32L)
-		self.assertEqual(res.addr, 167772160L)
-		res = IPAddr('10.0.0.1', cidr=32L)
-		self.assertEqual(res.addr, 167772161L)
+		self.assertEqual(res.addr, 167772160)
+		res = IPAddr('10.0.0.0', cidr=32)
+		self.assertEqual(res.addr, 167772160)
+		res = IPAddr('10.0.0.1', cidr=32)
+		self.assertEqual(res.addr, 167772161)
 		self.assertTrue(res.isSingle)
-		res = IPAddr('10.0.0.1', cidr=31L)
-		self.assertEqual(res.addr, 167772160L)
+		res = IPAddr('10.0.0.1', cidr=31)
+		self.assertEqual(res.addr, 167772160)
 		self.assertFalse(res.isSingle)
 
 		self.assertEqual(IPAddr('10.0.0.0').hexdump, '0a000000')

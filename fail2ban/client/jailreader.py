@@ -117,7 +117,7 @@ class JailReader(ConfigReader):
 	}
 	_configOpts.update(FilterReader._configOpts)
 
-	_ignoreOpts = set(['action', 'filter', 'enabled'] + FilterReader._configOpts.keys())
+	_ignoreOpts = set(['action', 'filter', 'enabled'] + list(FilterReader._configOpts.keys()))
 
 	def getOptions(self):
 

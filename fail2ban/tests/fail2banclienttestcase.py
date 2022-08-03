@@ -30,6 +30,7 @@ import sys
 import time
 import signal
 import unittest
+from builtins import range
 
 from os.path import join as pjoin, isdir, isfile, exists, dirname
 from functools import wraps
@@ -1669,6 +1670,6 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			self.stopAndWaitForServerEnd(SUCCESS)
 
 		def testServerStartStop(self):
-			for i in xrange(2000):
+			for i in range(2000):
 				self._testServerStartStop()
 

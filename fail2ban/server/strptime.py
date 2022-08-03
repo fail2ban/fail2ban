@@ -21,6 +21,7 @@ import re
 import time
 import calendar
 import datetime
+from builtins import range
 from _strptime import LocaleTime, TimeRE, _calc_julian_from_U_or_W
 
 from .mytime import MyTime
@@ -99,7 +100,7 @@ def _updateTimeRE():
 				if len(exprset) > 1 else "".join(exprset)
 		exprset = set( cent(now[0].year + i) for i in (-1, distance) )
 		if len(now) > 1 and now[1]:
-			exprset |= set( cent(now[1].year + i) for i in xrange(-1, now[0].year-now[1].year+1, distance) )
+			exprset |= set( cent(now[1].year + i) for i in range(-1, now[0].year-now[1].year+1, distance) )
 		return grp(sorted(list(exprset)))
 
 	# more precise year patterns, within same century of last year and

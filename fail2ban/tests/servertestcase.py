@@ -31,6 +31,7 @@ import os
 import re
 import sys
 import platform
+from builtins import range
 
 from ..server.failregex import Regex, FailRegex, RegexException
 from ..server import actions as _actions
@@ -930,7 +931,7 @@ class TransmitterLogging(TransmitterBase):
 
 	def testLogTarget(self):
 		logTargets = []
-		for _ in xrange(3):
+		for _ in range(3):
 			tmpFile = tempfile.mkstemp("fail2ban", "transmitter")
 			logTargets.append(tmpFile[1])
 			os.close(tmpFile[0])
@@ -1185,7 +1186,7 @@ class LoggingTests(LogCaptureTestCase):
 					os.remove(f)
 
 
-from clientreadertestcase import ActionReader, JailsReader, CONFIG_DIR
+from .clientreadertestcase import ActionReader, JailsReader, CONFIG_DIR
 
 class ServerConfigReaderTests(LogCaptureTestCase):
 
@@ -1396,7 +1397,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),
 				'ip6-unban': (
 					r"`nft delete element inet f2b-table addr6-set-j-w-nft-mp \{ 2001:db8:: \}`",
-				),					
+				),     
 			}),
 			# nft-allports --
 			('j-w-nft-ap', 'nftables-allports[name=%(__name__)s, protocol="tcp,udp"]', {

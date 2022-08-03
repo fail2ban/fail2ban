@@ -53,7 +53,7 @@ _RETCODE_HINTS = {
 
 # Dictionary to lookup signal name from number
 signame = dict((num, name)
-	for name, num in signal.__dict__.iteritems() if name.startswith("SIG"))
+	for name, num in signal.__dict__.items() if name.startswith("SIG"))
 
 class Utils():
 	"""Utilities provide diverse static methods like executes OS shell commands, etc.

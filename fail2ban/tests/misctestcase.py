@@ -17,6 +17,7 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+from __future__ import print_function
 __author__ = "Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
@@ -29,9 +30,10 @@ import tempfile
 import shutil
 import fnmatch
 from glob import glob
-from StringIO import StringIO
+from io import StringIO
+from builtins import range
 
-from utils import LogCaptureTestCase, logSys as DefLogSys
+from .utils import LogCaptureTestCase, logSys as DefLogSys
 
 from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger, \
 	getVerbosityFormat, splitwords, uni_decode, uni_string
@@ -256,7 +258,7 @@ class TestsUtilsTest(LogCaptureTestCase):
 					func_raise()
 
 			try:
-				print deep_function(3)
+				print(deep_function(3))
 			except ValueError:
 				s = tb()
 
@@ -311,13 +313,13 @@ class TestsUtilsTest(LogCaptureTestCase):
 		self._testAssertionErrorRE(r"'a' unexpectedly found in 'cba'",
 			self.assertNotIn, 'a', 'cba')
 		self._testAssertionErrorRE(r"1 unexpectedly found in \[0, 1, 2\]",
-			self.assertNotIn, 1, xrange(3))
+			self.assertNotIn, 1, range(3))
 		self._testAssertionErrorRE(r"'A' unexpectedly found in \['C', 'A'\]",
 			self.assertNotIn, 'A', (c.upper() for c in 'cba' if c != 'b'))
 		self._testAssertionErrorRE(r"'a' was not found in 'xyz'",
 			self.assertIn, 'a', 'xyz')
 		self._testAssertionErrorRE(r"5 was not found in \[0, 1, 2\]",
-			self.assertIn, 5, xrange(3))
+			self.assertIn, 5, range(3))
 		self._testAssertionErrorRE(r"'A' was not found in \['C', 'B'\]",
 			self.assertIn, 'A', (c.upper() for c in 'cba' if c != 'a'))
 		## assertLogged, assertNotLogged positive case:
