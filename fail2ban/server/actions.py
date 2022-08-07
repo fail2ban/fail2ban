@@ -305,8 +305,7 @@ class Actions(JailThread, Mapping):
 		"""
 		if actions is None:
 			actions = self._actions
-		revactions = actions.items()
-		revactions.reverse()
+		revactions = reversed(actions.items())
 		for name, action in revactions:
 			try:
 				action.stop()
