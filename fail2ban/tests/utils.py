@@ -235,12 +235,8 @@ def with_tmpdir(f):
 	"""
 	@wraps(f)
 	def wrapper(self, *args, **kwargs):
-		tmp = tempfile.mkdtemp(prefix="f2b-temp")
-		try:
+		with tempfile.TemporaryDirectory(prefix="f2b-temp") as tmp:
 			return f(self, tmp, *args, **kwargs)
-		finally:
-			# clean up
-			shutil.rmtree(tmp)
 	return wrapper
 
 def with_alt_time(f):
