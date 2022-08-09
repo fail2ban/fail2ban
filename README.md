@@ -49,12 +49,14 @@ To install:
 
     tar xvfj fail2ban-1.0.1.tar.bz2
     cd fail2ban-1.0.1
+    if [[ $(python --version) =~ ' 3.' ]] ; then ./fail2ban-2to3 ; fi # detect Python 3 and run conversion (bash if statement)
     sudo python setup.py install
    
 Alternatively, you can clone the source from GitHub to a directory of Your choice, and do the install from there. Pick the correct branch, for example, master or 0.11
 
     git clone https://github.com/fail2ban/fail2ban.git
     cd fail2ban
+    if [[ $(python --version) =~ ' 3.' ]] ; then ./fail2ban-2to3 ; fi # detect Python 3 and run conversion (bash if statement)
     sudo python setup.py install 
     
 This will install Fail2Ban into the python library directory. The executable
