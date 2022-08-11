@@ -157,15 +157,16 @@ class SMTPAction(ActionBase):
 		msg['To'] = self.toaddr
 		msg['Date'] = formatdate()
 
-		smtp = smtplib.SMTP(self.host)
+		smtp = smtplib.SMTP()
 		try:
+			r = smtp.connect(self.host)
 			self._logSys.debug("Connected to SMTP '%s', response: %i: %s",
-				self.host, *smtp.connect(self.host))
+				self.host, *r)
 
 			if self.ssl: # pragma: no cover
-				tls_result = smtp.starttls()[0];
-				if tls_result != 220: # pragma: no cover
-					raise Exception("Failed to starttls() on '%s': %s" % (self.host, tls_result))
+				r = smtp.starttls()[0];
+				if r != 220: # pragma: no cover
+					raise Exception("Failed to starttls() on '%s': %s" % (self.host, r))
 
 			if self.user and self.password: # pragma: no cover (ATM no tests covering that)
 				smtp.login(self.user, self.password)
