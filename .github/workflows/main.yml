@@ -81,12 +81,12 @@ jobs:
       - name: Test suite
         run: |
           if [[ "$F2B_PY" = 2 ]]; then
-            python setup.py test
+            sudo sh -c 'ulimit -n 1048576 && python setup.py test'
           elif dpkg --compare-versions "$F2B_PYV" lt 3.10; then 
-            python bin/fail2ban-testcases --verbosity=2
+            sudo sh -c 'ulimit -n 1048576 && python bin/fail2ban-testcases --verbosity=2'
           else
             echo "Skip systemd backend since systemd-python module must be fixed for python >= v.3.10 in GHA ..."
-            python bin/fail2ban-testcases --verbosity=2 -i "[sS]ystemd|[jJ]ournal"
+            sudo sh -c 'ulimit -n 1048576 && python bin/fail2ban-testcases --verbosity=2 -i "[sS]ystemd|[jJ]ournal"'
           fi
 
       #- name: Test suite (debug some systemd tests only)
