@@ -196,7 +196,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 				th.daemon = True
 				th.start()
 				# Mark current (main) thread as daemon:
-				self.setDaemon(True)
+				self.daemon = True
 				# Start server direct here in main thread (not fork):
 				self._server = Fail2banServer.startServerDirect(self._conf, False)
 
