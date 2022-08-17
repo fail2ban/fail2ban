@@ -809,6 +809,26 @@ class Server:
 	def getDatabase(self):
 		return self.__db
 
+	@staticmethod
+	def __get_fdlist():
+		"""Generate a list of open file descriptors.
+		
+		This wouldn't work on some platforms, or if proc/fdescfs not mounted, or a chroot environment,
+		then it'd raise a FileExistsError.
+		"""
+		for path in (
+			'/proc/self/fd', # Linux, Cygwin and NetBSD
+			'/proc/fd',      # MacOS and FreeBSD
+		):
+			if os.path.exists(path):
+				def fdlist():
+					for name in os.listdir(path):
+						if name.isdigit():
+							yield int(name)
+				return fdlist()
+		# other platform or unmounted, chroot etc:
+		raise FileExistsError("fd-list not found")
+
 	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the
 			background as a daemon.
@@ -866,25 +886,37 @@ class Server:
 			# Signal to exit, parent of the first child.
 			return None
 	
-		# Close all open files.  Try the system configuration variable, SC_OPEN_MAX,
+		# Close all open files. Try to obtain the range of open descriptors directly.
+		# As a fallback try the system configuration variable, SC_OPEN_MAX,
 		# for the maximum number of open files to close.  If it doesn't exist, use
 		# the default value (configurable).
 		try:
-			maxfd = os.sysconf("SC_OPEN_MAX")
-		except (AttributeError, ValueError):
-			maxfd = 256	   # default maximum
+			fdlist = self.__get_fdlist()
+			maxfd = -1
+		except:
+			try:
+				maxfd = os.sysconf("SC_OPEN_MAX")
+			except (AttributeError, ValueError):
+				maxfd = 256	   # default maximum
+			fdlist = xrange(maxfd+1)
 	
 		# urandom should not be closed in Python 3.4.0. Fixed in 3.4.1
 		# http://bugs.python.org/issue21207
 		if sys.version_info[0:3] == (3, 4, 0): # pragma: no cover
 			urandom_fd = os.open("/dev/urandom", os.O_RDONLY)
-			for fd in range(0, maxfd):
+			for fd in fdlist:
 				try:
 					if not os.path.sameopenfile(urandom_fd, fd):
 						os.close(fd)
 				except OSError:   # ERROR (ignore)
 					pass
 			os.close(urandom_fd)
+		elif maxfd == -1:
+			for fd in fdlist:
+				try:
+					os.close(fd)
+				except OSError:   # ERROR (ignore)
+					pass
 		else:
 			os.closerange(0, maxfd)
 	
