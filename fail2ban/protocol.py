@@ -66,7 +66,7 @@ protocol = [
 ["set loglevel <LEVEL>", "sets logging level to <LEVEL>. Levels: CRITICAL, ERROR, WARNING, NOTICE, INFO, "
 	"DEBUG, TRACEDEBUG, HEAVYDEBUG or corresponding numeric value (50-5)"], 
 ["get loglevel", "gets the logging level"], 
-["set logtarget <TARGET>", "sets logging target to <TARGET>. Can be STDOUT, STDERR, SYSLOG or a file"], 
+["set logtarget <TARGET>", "sets logging target to <TARGET>. Can be STDOUT, STDERR, SYSLOG, SYSTEMD-JOURNAL or a file"], 
 ["get logtarget", "gets logging target"], 
 ["set syslogsocket auto|<SOCKET>", "sets the syslog socket path to auto or <SOCKET>. Only used if logtarget is SYSLOG"],
 ["get syslogsocket", "gets syslog socket path"],

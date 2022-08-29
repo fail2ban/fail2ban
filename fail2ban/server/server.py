@@ -678,7 +678,10 @@ class Server:
 				return True
 			padding = logOptions.get('padding')
 			# set a format which is simpler for console use
-			if systarget == "SYSLOG":
+			if systarget == "SYSTEMD-JOURNAL":
+				from systemd.journal import JournalHandler
+				hdlr = JournalHandler(SYSLOG_IDENTIFIER='fail2ban')
+			elif systarget == "SYSLOG":
 				facility = logOptions.get('facility', 'DAEMON').upper()
 				# backwards compatibility - default no padding for syslog handler:
 				if padding is None: padding = '0'
@@ -754,7 +757,8 @@ class Server:
 					verbose = self.__verbose-1
 				fmt = getVerbosityFormat(verbose, addtime=addtime, padding=padding)
 			# tell the handler to use this format
-			hdlr.setFormatter(logging.Formatter(fmt))
+			if target != "SYSTEMD-JOURNAL":
+				hdlr.setFormatter(logging.Formatter(fmt))
 			logger.addHandler(hdlr)
 			# Does not display this message at startup.
 			if self.__logTarget is not None:
@@ -793,7 +797,7 @@ class Server:
 			return self.__syslogSocket
 
 	def flushLogs(self):
-		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
+		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG', 'SYSTEMD-JOURNAL']:
 			for handler in getLogger("fail2ban").handlers:
 				try:
 					handler.doRollover()
