@@ -182,10 +182,12 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testDirectRE_1(self):
 		self.assertTrue(_test_exec(
+			"-l", "notice", # suppress debug messages (output of --print-all-matched only)
 			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
 			"--print-all-matched",
 			FILENAME_01, RE_00
 		))
+		self.assertLogged('[19] ' + RE_00); # pattern
 		self.assertLogged('Lines: 19 lines, 0 ignored, 16 matched, 3 missed')
 
 		self.assertLogged('Error decoding line');
@@ -237,6 +239,17 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 		self.assertLogged('141.3.81.106  Sun Aug 14 11:53:59 2005')
 		self.assertLogged('141.3.81.106  Sun Aug 14 11:54:59 2005')
+
+	def testVerboseRegex(self):
+		self.assertTrue(_test_exec(
+			"-d", "^Epoch", "-l", "notice",
+			"--verbose-regex",
+			("1490349000 192.0.2.1 FAIL\n"*5),
+			r"^\s*<ADDR> FAIL\b"
+		))
+		self.assertLogged('Lines: 5 lines, 0 ignored, 5 matched, 0 missed')
+		self.assertLogged(r'[5] ^\s*<ADDR> FAIL\b'); # pattern
+		self.assertLogged('(?P<ip4>', '(?P<ip6>', all=True); # real regex
 
 	def testVerboseFullSshd(self):
 		self.assertTrue(_test_exec(

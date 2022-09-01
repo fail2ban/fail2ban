@@ -129,9 +129,8 @@ class FilterSamplesRegex(unittest.TestCase):
 			if RE_WRONG_GREED.search(fr): # pragma: no cover
 				raise AssertionError("Following regexp of \"%s\" contains greedy catch-all before <HOST>, "
 					"that is not hard-anchored at end or has not precise sub expression after <HOST>:\n%s" %
-					(fltName, str(fr).replace(RE_HOST, '<HOST>')))
+					(fltName, fr.pattern.replace(RE_HOST, '<HOST>')))
 		# Cache within used filter combinations and return:
-		flt = [flt, set()]
 		self._filters[fltName] = flt
 		return flt
 
@@ -147,7 +146,6 @@ def testSampleRegexsFactory(name, basedir):
 			"No sample log file available for '%s' filter" % name)
 		
 		filenames = [name]
-		regexsUsedRe = set()
 
 		# process each test-file (note: array filenames can grow during processing):
 		commonOpts = {}
@@ -223,9 +221,8 @@ def testSampleRegexsFactory(name, basedir):
 					# Bypass if constraint (as expression) is not valid:
 					if faildata.get('constraint') and not eval(faildata['constraint']):
 						continue
-					flt, regexsUsedIdx = flt
 					regexList = flt.getFailRegex()
-					failregex = -1
+					failregex = None
 					try:
 						fail = {}
 						# for logtype "journal" we don't need parse timestamp (simulate real systemd-backend handling):
@@ -242,8 +239,6 @@ def testSampleRegexsFactory(name, basedir):
 								failregex, fid, fail2banTime, fail = ret
 								# bypass pending and nofail:
 								if fid is None or fail.get('nofail'):
-									regexsUsedIdx.add(failregex)
-									regexsUsedRe.add(regexList[failregex])
 									continue
 								found.append(ret)
 							ret = found
@@ -293,26 +288,38 @@ def testSampleRegexsFactory(name, basedir):
 									jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(jsonTime)),
 									fail2banTime - jsonTime) )
 
-							regexsUsedIdx.add(failregex)
-							regexsUsedRe.add(regexList[failregex])
-					except AssertionError as e: # pragma: no cover
+					except Exception as e: # pragma: no cover
+						# extend exception with additional info retaining traceback:
 						import pprint
-						raise AssertionError("%s: %s on: %s:%i, line:\n  %s\nregex (%s):\n  %s\n"
-							"faildata: %s\nfail: %s" % (
-								fltName, e, logFile.getFileName(), lnnum, 
-								line, failregex, regexList[failregex] if failregex != -1 else None,
+						msg = ('%s\ntesting filter "%s" on "%s:%i", line:\n  %s\n'
+							'pattern:\n  %s\nregex:\n  %s\n'
+							'faildata: %s\nfail: %s' % (
+								e, fltName, logFile.getFileName(), lnnum, line,
+								failregex.pattern if failregex else '',
+								failregex.getRegex() if failregex else '',
 								'\n'.join(pprint.pformat(faildata).splitlines()),
 								'\n'.join(pprint.pformat(fail).splitlines())))
+						# common for single string arg except:
+						if len(e.args) == 1 and isinstance(e.args[0], basestring):
+							e.args = (msg,)
+							raise
+						if hasattr(e, 'message'): # 2.x (throws 1 except)
+							#e.args = (str(e), msg,)+e.args[1:]
+							raise AssertionError, msg, sys.exc_info()[2]
+						else: # 3.x (throws 2 excepts)
+							raise AssertionError(msg).with_traceback(e.__traceback__)
 
 		# check missing samples for regex using each filter-options combination:
+		counts = {}
 		for fltName, flt in self._filters.iteritems():
-			flt, regexsUsedIdx = flt
-			regexList = flt.getFailRegex()
-			for failRegexIndex, failRegex in enumerate(regexList):
+			for failRegex in flt.failRegex:
+				counts[failRegex.pattern] = counts.get(failRegex.pattern, 0) + failRegex.matchCount
+		for fltName, flt in self._filters.iteritems():
+			for failRegexIndex, failRegex in enumerate(flt.failRegex):
 				self.assertTrue(
-					failRegexIndex in regexsUsedIdx or failRegex in regexsUsedRe,
+					counts.get(failRegex.pattern, 0) > 0,
 					"%s: Regex has no samples: %i: %r" %
-						(fltName, failRegexIndex, failRegex))
+						(fltName, failRegexIndex, failRegex.pattern))
 
 	return testFilter
 
