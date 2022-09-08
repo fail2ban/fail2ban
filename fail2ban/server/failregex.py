@@ -145,9 +145,9 @@ class Regex:
 				n = ALTNAME_CRE.match(k).group(1)
 				self._altValues[k] = n
 			self._altValues = list(self._altValues.items()) if len(self._altValues) else None
-		except sre_constants.error:
-			raise RegexException("Unable to compile regular expression '%s'" %
-								 regex)
+		except sre_constants.error as e:
+			raise RegexException("Unable to compile regular expression '%s':\n%s" %
+								 (regex, e))
 		# set fetch handler depending on presence of alternate tags:
 		self.getGroups = self._getGroupsWithAlt if self._altValues else self._getGroups
 
