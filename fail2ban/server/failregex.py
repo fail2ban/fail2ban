@@ -157,9 +157,9 @@ class Regex:
 			self._tupleValues.sort()
 			self._altValues = self._altValues if len(self._altValues) else None
 			self._tupleValues = self._tupleValues if len(self._tupleValues) else None
-		except sre_constants.error:
-			raise RegexException("Unable to compile regular expression '%s'" %
-								 regex)
+		except sre_constants.error as e:
+			raise RegexException("Unable to compile regular expression '%s':\n%s" %
+								 (regex, e))
 		# set fetch handler depending on presence of alternate (or tuple) tags:
 		self.getGroups = self._getGroupsWithAlt if (self._altValues or self._tupleValues) else self._getGroups
 

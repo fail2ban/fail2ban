@@ -140,6 +140,13 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"test", r".** from <HOST>$"
 		))
 		self.assertLogged("Unable to compile regular expression")
+		self.assertLogged("multiple repeat", "at position 2", all=False); # details of failed compilation
+		self.pruneLog()
+		self.assertFalse(_test_exec(
+			"test", r"^(?:(?P<type>A)|B)? (?(typo)...) from <ADDR>"
+		))
+		self.assertLogged("Unable to compile regular expression")
+		self.assertLogged("unknown group name: 'typo'", "at position 23", all=False); # details of failed compilation
 
 	def testWrongIngnoreRE(self):
 		self.assertFalse(_test_exec(
@@ -147,6 +154,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"test", r".*? from <HOST>$", r".**"
 		))
 		self.assertLogged("Unable to compile regular expression")
+		self.assertLogged("multiple repeat", "at position 2", all=False); # details of failed compilation
 
 	def testWrongFilterOptions(self):
 		self.assertFalse(_test_exec(
