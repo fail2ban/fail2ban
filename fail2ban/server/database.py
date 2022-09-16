@@ -104,7 +104,11 @@ def commitandrollback(f):
 	def wrapper(self, *args, **kwargs):
 		with self._lock: # Threading lock
 			with self._db: # Auto commit and rollback on exception
-				return f(self, self._db.cursor(), *args, **kwargs)
+				cur = self._db.cursor()
+				try:
+					return f(self, cur, *args, **kwargs)
+				finally:
+					cur.close()
 	return wrapper
 
 
@@ -747,34 +751,36 @@ class Fail2BanDb(object):
 			query += " GROUP BY ip ORDER BY ip, timeofban DESC"
 		else:
 			query += " ORDER BY timeofban DESC LIMIT 1"
-		cur = self._db.cursor()
 		return cur.execute(query, queryArgs)
 
 	def getCurrentBans(self, jail = None, ip = None, forbantime=None, fromtime=None, maxmatches=None):
 		tickets = []
 		ticket = None
 
-		with self._lock:
-			results = list(self._getCurrentBans(self._db.cursor(), 
-				jail=jail, ip=ip, forbantime=forbantime, fromtime=fromtime))
+		try:
+			with self._lock:
+				cur = self._db.cursor()
+				results = list(self._getCurrentBans(self._db.cursor(), 
+					jail=jail, ip=ip, forbantime=forbantime, fromtime=fromtime))
 
-		if results:
-			for banip, timeofban, data in results:
-				# logSys.debug('restore ticket   %r, %r, %r', banip, timeofban, data)
-				ticket = FailTicket(banip, timeofban, data=data)
-				# filter matches if expected (current count > as maxmatches specified):
-				if maxmatches is None:
-					maxmatches = self.maxMatches
-				if maxmatches:
-					matches = ticket.getMatches()
-					if matches and len(matches) > maxmatches:
-						ticket.setMatches(matches[-maxmatches:])
-				else:
-					ticket.setMatches(None)
-				# logSys.debug('restored ticket: %r', ticket)
-				if ip is not None: return ticket
-				tickets.append(ticket)
-
+			if results:
+				for banip, timeofban, data in results:
+					# logSys.debug('restore ticket   %r, %r, %r', banip, timeofban, data)
+					ticket = FailTicket(banip, timeofban, data=data)
+					# filter matches if expected (current count > as maxmatches specified):
+					if maxmatches is None:
+						maxmatches = self.maxMatches
+					if maxmatches:
+						matches = ticket.getMatches()
+						if matches and len(matches) > maxmatches:
+							ticket.setMatches(matches[-maxmatches:])
+					else:
+						ticket.setMatches(None)
+					# logSys.debug('restored ticket: %r', ticket)
+					if ip is not None: return ticket
+					tickets.append(ticket)
+		finally:
+			cur.close()
 		return tickets
 
 	@commitandrollback
