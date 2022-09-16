@@ -104,7 +104,11 @@ def commitandrollback(f):
 	def wrapper(self, *args, **kwargs):
 		with self._lock: # Threading lock
 			with self._db: # Auto commit and rollback on exception
-				return f(self, self._db.cursor(), *args, **kwargs)
+				cur = self._db.cursor()
+				try:
+					return f(self, cur, *args, **kwargs)
+				finally:
+					cur.close()
 	return wrapper
 
 
@@ -253,7 +257,7 @@ class Fail2BanDb(object):
 			self.repairDB()
 		else:
 			version = cur.fetchone()[0]
-			if version < Fail2BanDb.__version__:
+			if version != Fail2BanDb.__version__:
 				newversion = self.updateDb(version)
 				if newversion == Fail2BanDb.__version__:
 					logSys.warning( "Database updated from '%r' to '%r'",
@@ -301,9 +305,11 @@ class Fail2BanDb(object):
 		try:
 			# backup
 			logSys.info("Trying to repair database %s", self._dbFilename)
-			shutil.move(self._dbFilename, self._dbBackupFilename)
-			logSys.info("  Database backup created: %s", self._dbBackupFilename)
-
+			if not os.path.isfile(self._dbBackupFilename):
+				shutil.move(self._dbFilename, self._dbBackupFilename)
+				logSys.info("  Database backup created: %s", self._dbBackupFilename)
+			elif os.path.isfile(self._dbFilename):
+				os.remove(self._dbFilename)
 			# first try to repair using dump/restore in order 
 			Utils.executeCmd((r"""f2b_db=$0; f2b_dbbk=$1; sqlite3 "$f2b_dbbk" ".dump" | sqlite3 "$f2b_db" """,
 				self._dbFilename, self._dbBackupFilename))
@@ -415,7 +421,7 @@ class Fail2BanDb(object):
 			logSys.error("Failed to upgrade database '%s': %s",
 				self._dbFilename, e.args[0], 
 				exc_info=logSys.getEffectiveLevel() <= 10)
-			raise
+			self.repairDB()
 
 	@commitandrollback
 	def addJail(self, cur, jail):
@@ -789,7 +795,6 @@ class Fail2BanDb(object):
 			queryArgs.append(fromtime)
 		if overalljails or jail is None:
 			query += " GROUP BY ip ORDER BY timeofban DESC LIMIT 1"
-		cur = self._db.cursor()
 		# repack iterator as long as in lock:
 		return list(cur.execute(query, queryArgs))
 
@@ -812,11 +817,9 @@ class Fail2BanDb(object):
 			query += " GROUP BY ip ORDER BY ip, timeofban DESC"
 		else:
 			query += " ORDER BY timeofban DESC LIMIT 1"
-		cur = self._db.cursor()
 		return cur.execute(query, queryArgs)
 
-	@commitandrollback
-	def getCurrentBans(self, cur, jail=None, ip=None, forbantime=None, fromtime=None,
+	def getCurrentBans(self, jail=None, ip=None, forbantime=None, fromtime=None,
 		correctBanTime=True, maxmatches=None
 	):
 		"""Reads tickets (with merged info) currently affected from ban from the database.
@@ -828,57 +831,63 @@ class Fail2BanDb(object):
 		(and therefore endOfBan) of the ticket (normally it is ban-time of jail as maximum)
 		for all tickets with ban-time greater (or persistent).
 		"""
-		if fromtime is None:
-			fromtime = MyTime.time()
-		tickets = []
-		ticket = None
-		if correctBanTime is True:
-			correctBanTime = jail.getMaxBanTime() if jail is not None else None
-			# don't change if persistent allowed:
-			if correctBanTime == -1: correctBanTime = None
+		cur = self._db.cursor()
+		try:
+			if fromtime is None:
+				fromtime = MyTime.time()
+			tickets = []
+			ticket = None
+			if correctBanTime is True:
+				correctBanTime = jail.getMaxBanTime() if jail is not None else None
+				# don't change if persistent allowed:
+				if correctBanTime == -1: correctBanTime = None
 
-		for ticket in self._getCurrentBans(cur, jail=jail, ip=ip, 
-			forbantime=forbantime, fromtime=fromtime
-		):
-			# can produce unpack error (database may return sporadical wrong-empty row):
-			try:
-				banip, timeofban, bantime, bancount, data = ticket
-				# additionally check for empty values:
-				if banip is None or banip == "": # pragma: no cover
-					raise ValueError('unexpected value %r' % (banip,))
-				# if bantime unknown (after upgrade-db from earlier version), just use min known ban-time:
-				if bantime == -2: # todo: remove it in future version
-					bantime = jail.actions.getBanTime() if jail is not None else (
-						correctBanTime if correctBanTime else 600)
-				elif correctBanTime and correctBanTime >= 0:
-					# if persistent ban (or greater as max), use current max-bantime of the jail:
-					if bantime == -1 or bantime > correctBanTime:
-						bantime = correctBanTime
-				# after correction check the end of ban again:
-				if bantime != -1 and timeofban + bantime <= fromtime:
-					# not persistent and too old - ignore it:
-					logSys.debug("ignore ticket (with new max ban-time %r): too old %r <= %r, ticket: %r",
-						bantime, timeofban + bantime, fromtime, ticket)
+			with self._lock:
+				bans = self._getCurrentBans(cur, jail=jail, ip=ip, 
+					forbantime=forbantime, fromtime=fromtime
+				)
+			for ticket in bans:
+				# can produce unpack error (database may return sporadical wrong-empty row):
+				try:
+					banip, timeofban, bantime, bancount, data = ticket
+					# additionally check for empty values:
+					if banip is None or banip == "": # pragma: no cover
+						raise ValueError('unexpected value %r' % (banip,))
+					# if bantime unknown (after upgrade-db from earlier version), just use min known ban-time:
+					if bantime == -2: # todo: remove it in future version
+						bantime = jail.actions.getBanTime() if jail is not None else (
+							correctBanTime if correctBanTime else 600)
+					elif correctBanTime and correctBanTime >= 0:
+						# if persistent ban (or greater as max), use current max-bantime of the jail:
+						if bantime == -1 or bantime > correctBanTime:
+							bantime = correctBanTime
+					# after correction check the end of ban again:
+					if bantime != -1 and timeofban + bantime <= fromtime:
+						# not persistent and too old - ignore it:
+						logSys.debug("ignore ticket (with new max ban-time %r): too old %r <= %r, ticket: %r",
+							bantime, timeofban + bantime, fromtime, ticket)
+						continue
+				except ValueError as e: # pragma: no cover
+					logSys.debug("get current bans: ignore row %r - %s", ticket, e)
 					continue
-			except ValueError as e: # pragma: no cover
-				logSys.debug("get current bans: ignore row %r - %s", ticket, e)
-				continue
-			# logSys.debug('restore ticket   %r, %r, %r', banip, timeofban, data)
-			ticket = FailTicket(banip, timeofban, data=data)
-			# filter matches if expected (current count > as maxmatches specified):
-			if maxmatches is None:
-				maxmatches = self.maxMatches
-			if maxmatches:
-				matches = ticket.getMatches()
-				if matches and len(matches) > maxmatches:
-					ticket.setMatches(matches[-maxmatches:])
-			else:
-				ticket.setMatches(None)
-			# logSys.debug('restored ticket: %r', ticket)
-			ticket.setBanTime(bantime)
-			ticket.setBanCount(bancount)
-			if ip is not None: return ticket
-			tickets.append(ticket)
+				# logSys.debug('restore ticket   %r, %r, %r', banip, timeofban, data)
+				ticket = FailTicket(banip, timeofban, data=data)
+				# filter matches if expected (current count > as maxmatches specified):
+				if maxmatches is None:
+					maxmatches = self.maxMatches
+				if maxmatches:
+					matches = ticket.getMatches()
+					if matches and len(matches) > maxmatches:
+						ticket.setMatches(matches[-maxmatches:])
+				else:
+					ticket.setMatches(None)
+				# logSys.debug('restored ticket: %r', ticket)
+				ticket.setBanTime(bantime)
+				ticket.setBanCount(bancount)
+				if ip is not None: return ticket
+				tickets.append(ticket)
+		finally:
+			cur.close() 
 
 		return tickets
 

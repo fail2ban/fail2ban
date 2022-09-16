@@ -491,6 +491,39 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		self.execCmd(FAILED, startparams, "~~unknown~cmd~failed~~")
 		self.execCmd(SUCCESS, startparams, "echo", "TEST-ECHO")
 
+	@with_tmpdir
+	@with_kill_srv
+	def testStartFailsInForeground(self, tmp):
+		if not server.Fail2BanDb: # pragma: no cover
+			raise unittest.SkipTest('Skip test because no database')
+		dbname = pjoin(tmp,"tmp.db")
+		db = server.Fail2BanDb(dbname)
+		# set inappropriate DB version to simulate an irreparable error by start:
+		cur = db._db.cursor()
+		cur.executescript("UPDATE fail2banDb SET version = 555")
+		cur.close()
+		# timeout (thread will stop foreground server):
+		startparams = _start_params(tmp, db=dbname, logtarget='INHERITED')
+		phase = {'stop': True}
+		def _stopTimeout(startparams, phase):
+			if not Utils.wait_for(lambda: not phase['stop'], MAX_WAITTIME):
+				# print('==== STOP ====')
+				self.execCmdDirect(startparams, 'stop')
+		th = Thread(
+			name="_TestCaseWorker",
+			target=_stopTimeout,
+			args=(startparams, phase)
+		)		
+		th.start()
+		# test:
+		try:
+			self.execCmd(FAILED, ("-f",) + startparams, "start")
+		finally:
+			phase['stop'] = False
+			th.join()
+		self.assertLogged("Attempt to travel to future version of database", 
+			"Exit with code 255", all=True)
+
 
 class Fail2banClientTest(Fail2banClientServerBase):
 
