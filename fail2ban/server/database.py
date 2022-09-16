@@ -238,7 +238,7 @@ class Fail2BanDb(object):
 			self.repairDB()
 		else:
 			version = cur.fetchone()[0]
-			if version < Fail2BanDb.__version__:
+			if version != Fail2BanDb.__version__:
 				newversion = self.updateDb(version)
 				if newversion == Fail2BanDb.__version__:
 					logSys.warning( "Database updated from '%r' to '%r'",
@@ -286,9 +286,11 @@ class Fail2BanDb(object):
 		try:
 			# backup
 			logSys.info("Trying to repair database %s", self._dbFilename)
-			shutil.move(self._dbFilename, self._dbBackupFilename)
-			logSys.info("  Database backup created: %s", self._dbBackupFilename)
-
+			if not os.path.isfile(self._dbBackupFilename):
+				shutil.move(self._dbFilename, self._dbBackupFilename)
+				logSys.info("  Database backup created: %s", self._dbBackupFilename)
+			elif os.path.isfile(self._dbFilename):
+				os.remove(self._dbFilename)
 			# first try to repair using dump/restore in order 
 			Utils.executeCmd((r"""f2b_db=$0; f2b_dbbk=$1; sqlite3 "$f2b_dbbk" ".dump" | sqlite3 "$f2b_db" """,
 				self._dbFilename, self._dbBackupFilename))
@@ -381,7 +383,7 @@ class Fail2BanDb(object):
 			logSys.error("Failed to upgrade database '%s': %s",
 				self._dbFilename, e.args[0], 
 				exc_info=logSys.getEffectiveLevel() <= 10)
-			raise
+			self.repairDB()
 
 	@commitandrollback
 	def addJail(self, cur, jail):
