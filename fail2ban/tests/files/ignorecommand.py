@@ -1,4 +1,3 @@
-#!/usr/bin/env fail2ban-python
 import sys
 if len(sys.argv) != 2 or sys.argv[1] == "":
 	sys.stderr.write('usage: ignorecommand IP')
