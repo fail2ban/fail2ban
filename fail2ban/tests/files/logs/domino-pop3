@@ -1,0 +1,4 @@
+# failJSON: { "time": "2005-07-03T23:07:20", "match": true , "host": "1.1.1.1" }
+03-07-2005 23:07:20   POP3 Server: Authentication failure for httpd, connecting host 1.1.1.1: Password not found in the Name and Address Book entry or password did not verify
+# failJSON: { "time": "2014-06-22T09:56:12", "match": true , "host": "1.1.1.2" }
+[28325:00010-3735542592] 22-06-2014 09:56:12   POP3 Server: Authentication failure for noreply@github.com, connecting host 1.1.1.2: Password not found in the Name and Address Book entry or password did not verify
