@@ -151,6 +151,11 @@ PID filename.  Default: /var/run/fail2ban/fail2ban.pid
 .br
 This is used to store the process ID of the fail2ban server.
 .TP
+.B allowipv6
+option to allow IPv6 interface - auto, yes (on, true, 1) or no (off, false, 0).  Default: auto
+.br
+This value can be used to declare fail2ban whether IPv6 is allowed or not.
+.TP
 .B dbfile
 Database filename. Default: /var/lib/fail2ban/fail2ban.sqlite3
 .br
@@ -266,7 +271,7 @@ effective ban duration (in seconds or time abbreviation format).
 time interval (in seconds or time abbreviation format) before the current time where failures will count towards a ban.
 .TP
 .B maxretry
-number of failures that have to occur in the last \fBfindtime\fR seconds to ban then IP.
+number of failures that have to occur in the last \fBfindtime\fR seconds to ban the IP.
 .TP
 .B backend
 backend to be used to detect changes in the logpath.
@@ -476,13 +481,29 @@ is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. T
 .IP
 \fI<IP4>\fR - regex for IPv4 addresses.
 .IP
-\fI<IP6>\fR - regex for IPv6 addresses (also IP enclosed in brackets).
+\fI<IP6>\fR - regex for IPv6 addresses.
 .IP
 \fI<DNS>\fR - regex to match hostnames.
 .IP
 \fI<CIDR>\fR - helper regex to match CIDR (simple integer form of net-mask).
 .IP
-\fI<SUBNET>\fR - regex to match sub-net adresses (in form of IP/CIDR, also single IP is matched, so part /CIDR is optional).
+\fI<SUBNET>\fR - regex to match sub-net addresses (in form of IP/CIDR, also single IP is matched, so part /CIDR is optional).
+.IP
+\fI<F-ID>...</F-ID>\fR - free regex capturing group targeting identifier used for ban (instead of IP address or hostname).
+.IP
+\fI<F-*>...</F-*>\fR - free regex capturing named group stored in ticket, which can be used in action.
+.nf
+For example \fI<F-USER>[^@]+</F-USER>\fR matches and stores a user name, that can be used in action with interpolation tag \fI<F-USER>\fR.
+.IP
+\fI<F-ALT_*n>...</F-ALT_*n>\fR - free regex capturing alternative named group stored in ticket.
+.nf
+For example first found matched value defined in regex as \fI<F-ALT_USER>\fR, \fI<F-ALT_USER1>\fR or \fI<F-ALT_USER2>\fR would be stored as <F-USER> (if direct match is not found or empty).
+.PP
+Every of abovementioned tags can be specified in \fBprefregex\fR and in \fBfailregex\fR, thereby if specified in both, the value matched in \fBfailregex\fR overwrites a value matched in \fBprefregex\fR.
+.TQ
+All standard tags like IP4 or IP6 can be also specified with custom regex using \fI<F-*>...</F-*>\fR syntax, for example \fI(?:ip4:<F-IP4>\\S+</F-IP4>|ip6:<F-IP6>\\S+</F-IP6>)\fR.
+.TQ
+Tags \fI<ADDR>\fR, \fI<HOST>\fR and \fI<SUBNET>\fR would also match the IP address enclosed in square brackets.
 .PP
 \fBNOTE:\fR the \fBfailregex\fR will be applied to the remaining part of message after \fBprefregex\fR processing (if specified), which in turn takes place after \fBdatepattern\fR processing (whereby the string of timestamp matching the best pattern, cut out from the message).
 .PP
@@ -519,7 +540,7 @@ There are several prefixes and words with special meaning that could be specifie
 .IP
 \fI{UNB}\fR - prefix to disable automatic word boundaries in regex.
 .IP
-\fI{NONE}\fR - value would allow to find failures totally without date-time in log message. Filter will use now as a timestamp (or last known timestamp from previous line with timestamp).
+\fI{NONE}\fR - value would allow one to find failures totally without date-time in log message. Filter will use now as a timestamp (or last known timestamp from previous line with timestamp).
 .RE
 .TP
 \fBjournalmatch\fR

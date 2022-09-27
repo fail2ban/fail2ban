@@ -39,6 +39,7 @@ class TicketTests(unittest.TestCase):
 
     # Ticket
     t = Ticket('193.168.0.128', tm, matches)
+    self.assertEqual(t.getID(), '193.168.0.128')
     self.assertEqual(t.getIP(), '193.168.0.128')
     self.assertEqual(t.getTime(), tm)
     self.assertEqual(t.getMatches(), matches2)
@@ -65,6 +66,7 @@ class TicketTests(unittest.TestCase):
     matches = ['first', 'second']
     ft = FailTicket('193.168.0.128', tm, matches)
     ft.setBanTime(60*60)
+    self.assertEqual(ft.getID(), '193.168.0.128')
     self.assertEqual(ft.getIP(), '193.168.0.128')
     self.assertEqual(ft.getTime(), tm)
     self.assertEqual(ft.getMatches(), matches2)
@@ -115,6 +117,17 @@ class TicketTests(unittest.TestCase):
     self.assertEqual(ft2.getTime(), ft.getTime())
     self.assertEqual(ft2.getTime(), ft.getTime())
     self.assertEqual(ft2.getBanTime(), ft.getBanTime())
+
+  def testDiffIDAndIPTicket(self):
+    tm = MyTime.time()
+    # different ID (string) and IP:
+    t = Ticket('123-456-678', tm, data={'ip':'192.0.2.1'})
+    self.assertEqual(t.getID(), '123-456-678')
+    self.assertEqual(t.getIP(), '192.0.2.1')
+    # different ID (tuple) and IP:
+    t = Ticket(('192.0.2.1', '5000'), tm, data={'ip':'192.0.2.1'})
+    self.assertEqual(t.getID(), ('192.0.2.1', '5000'))
+    self.assertEqual(t.getIP(), '192.0.2.1')
 
   def testTicketFlags(self):
     flags = ('restored', 'banned')
