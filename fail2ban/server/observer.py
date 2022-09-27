@@ -232,7 +232,7 @@ class ObserverThread(JailThread):
 					if self._paused:
 						continue
 				else:
-					## notify event deleted (shutdown) - just sleep a litle bit (waiting for shutdown events, prevent high cpu usage)
+					## notify event deleted (shutdown) - just sleep a little bit (waiting for shutdown events, prevent high cpu usage)
 					time.sleep(ObserverThread.DEFAULT_SLEEP_INTERVAL)
 					## stop by shutdown and empty queue :
 					if not self.is_full:
@@ -364,7 +364,7 @@ class ObserverThread(JailThread):
 	## [Async] ban time increment functionality ...
 	## -----------------------------------------
 
-	def failureFound(self, failManager, jail, ticket):
+	def failureFound(self, jail, ticket):
 		""" Notify observer a failure for ip was found
 
 		Observer will check ip was known (bad) and possibly increase an retry count
@@ -372,7 +372,7 @@ class ObserverThread(JailThread):
 		# check jail active :
 		if not jail.isAlive() or not jail.getBanTimeExtra("increment"):
 			return
-		ip = ticket.getIP()
+		ip = ticket.getID()
 		unixTime = ticket.getTime()
 		logSys.debug("[%s] Observer: failure found %s", jail.name, ip)
 		# increase retry count for known (bad) ip, corresponding banCount of it (one try will count than 2, 3, 5, 9 ...)  :
@@ -380,7 +380,7 @@ class ObserverThread(JailThread):
 		retryCount = 1
 		timeOfBan = None
 		try:
-			maxRetry = failManager.getMaxRetry()
+			maxRetry = jail.filter.failManager.getMaxRetry()
 			db = jail.database
 			if db is not None:
 				for banCount, timeOfBan, lastBanTime in db.getBan(ip, jail):
@@ -403,18 +403,12 @@ class ObserverThread(JailThread):
 				MyTime.time2str(unixTime), banCount, retryCount,
 				(', Ban' if retryCount >= maxRetry else ''))
 			# retryCount-1, because a ticket was already once incremented by filter self
-			retryCount = failManager.addFailure(ticket, retryCount - 1, True)
+			retryCount = jail.filter.failManager.addFailure(ticket, retryCount - 1, True)
 			ticket.setBanCount(banCount)
 			# after observe we have increased attempt count, compare it >= maxretry ...
 			if retryCount >= maxRetry:
 				# perform the banning of the IP now (again)
-				# [todo]: this code part will be used multiple times - optimize it later.
-				try: # pragma: no branch - exception is the only way out
-					while True:
-						ticket = failManager.toBan(ip)
-						jail.putFailTicket(ticket)
-				except FailManagerEmpty:
-					failManager.cleanup(MyTime.time())
+				jail.filter.performBan(ip)
 
 		except Exception as e:
 			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
@@ -441,7 +435,7 @@ class ObserverThread(JailThread):
 		if not jail.isAlive() or not jail.database:
 			return banTime
 		be = jail.getBanTimeExtra()
-		ip = ticket.getIP()
+		ip = ticket.getID()
 		orgBanTime = banTime
 		# check ip was already banned (increment time of ban):
 		try:
@@ -462,7 +456,7 @@ class ObserverThread(JailThread):
 					if ticket.getTime() > timeOfBan:
 						logSys.info('[%s] IP %s is bad: %s # last %s - incr %s to %s' % (jail.name, ip, banCount, 
 							MyTime.time2str(timeOfBan), 
-							datetime.timedelta(seconds=int(orgBanTime)), datetime.timedelta(seconds=int(banTime))));
+							MyTime.seconds2str(orgBanTime), MyTime.seconds2str(banTime)))
 					else:
 						ticket.restored = True
 					break
@@ -480,7 +474,7 @@ class ObserverThread(JailThread):
 			return
 		try:
 			oldbtime = btime
-			ip = ticket.getIP()
+			ip = ticket.getID()
 			logSys.debug("[%s] Observer: ban found %s, %s", jail.name, ip, btime)
 			# if not permanent and ban time was not set - check time should be increased:
 			if btime != -1 and ticket.getBanTime() is None:
@@ -491,8 +485,7 @@ class ObserverThread(JailThread):
 			# if not permanent
 			if btime != -1:
 				bendtime = ticket.getTime() + btime
-				logtime = (datetime.timedelta(seconds=int(btime)),
-					MyTime.time2str(bendtime))
+				logtime = (MyTime.seconds2str(btime), MyTime.time2str(bendtime))
 				# check ban is not too old :
 				if bendtime < MyTime.time():
 					logSys.debug('Ignore old bantime %s', logtime[1])
@@ -521,7 +514,7 @@ class ObserverThread(JailThread):
 		"""
 		try:
 			btime = ticket.getBanTime()
-			ip = ticket.getIP()
+			ip = ticket.getID()
 			logSys.debug("[%s] Observer: prolong %s, %s", jail.name, ip, btime)
 			# prolong ticket via actions that expected this:
 			jail.actions._prolongBan(ticket)

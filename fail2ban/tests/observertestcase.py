@@ -181,7 +181,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		super(BanTimeIncrDB, self).setUp()
-		if Fail2BanDb is None and sys.version_info >= (2,7): # pragma: no cover
+		if Fail2BanDb is None: # pragma: no cover
 			raise unittest.SkipTest(
 				"Unable to import fail2ban database module as sqlite is not "
 				"available.")
@@ -367,14 +367,14 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		# this old ticket should be removed now:
 		restored_tickets = self.db.getCurrentBans(fromtime=stime, correctBanTime=False)
 		self.assertEqual(len(restored_tickets), 2)
-		self.assertEqual(restored_tickets[0].getIP(), ip)
+		self.assertEqual(restored_tickets[0].getID(), ip)
 
 		# purge remove 1st ip
 		self.db._purgeAge = -48*60*60
 		self.db.purge()
 		restored_tickets = self.db.getCurrentBans(fromtime=stime, correctBanTime=False)
 		self.assertEqual(len(restored_tickets), 1)
-		self.assertEqual(restored_tickets[0].getIP(), ip+'1')
+		self.assertEqual(restored_tickets[0].getID(), ip+'1')
 
 		# this should purge all bans, bips and logs - nothing should be found now
 		self.db._purgeAge = -240*60*60
@@ -450,7 +450,8 @@ class BanTimeIncrDB(LogCaptureTestCase):
 	def testObserver(self):
 		if Fail2BanDb is None: # pragma: no cover
 			return
-		jail = self.jail
+		jail = self.jail = DummyJail(backend='polling')
+		jail.database = self.db
 		self.db.addJail(jail)
 		# we tests with initial ban time = 10 seconds:
 		jail.actions.setBanTime(10)
@@ -480,27 +481,27 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		# add failure:
 		ip = "192.0.2.1"
 		ticket = FailTicket(ip, stime-120, [])
-		failManager = FailManager()
+		failManager = jail.filter.failManager = FailManager()
 		failManager.setMaxRetry(3)
 		for i in xrange(3):
 			failManager.addFailure(ticket)
-			obs.add('failureFound', failManager, jail, ticket)
+			obs.add('failureFound', jail, ticket)
 		obs.wait_empty(5)
 		self.assertEqual(ticket.getBanCount(), 0)
 		# check still not ban :
 		self.assertTrue(not jail.getFailTicket())
 		# add manually 4th times banned (added to bips - make ip bad):
 		ticket.setBanCount(4)
-		self.db.addBan(self.jail, ticket)
+		self.db.addBan(jail, ticket)
 		restored_tickets = self.db.getCurrentBans(jail=jail, fromtime=stime-120, correctBanTime=False)
 		self.assertEqual(len(restored_tickets), 1)
 		# check again, new ticket, new failmanager:
 		ticket = FailTicket(ip, stime, [])
-		failManager = FailManager()
+		failManager = jail.filter.failManager = FailManager()
 		failManager.setMaxRetry(3)
 		# add once only - but bad - should be banned:
 		failManager.addFailure(ticket)
-		obs.add('failureFound', failManager, self.jail, ticket)
+		obs.add('failureFound', jail, ticket)
 		obs.wait_empty(5)
 		# wait until ticket transfered from failmanager into jail:
 		ticket2 = Utils.wait_for(jail.getFailTicket, 10)

@@ -10,16 +10,8 @@ dist: xenial
 matrix:
   fast_finish: true
   include:
-  - python: 2.6
-    dist: trusty   # required for Python 2.6
   - python: 2.7
-    dist: trusty   # required for packages like gamin
-    name: 2.7 (trusty)
-  - python: 2.7
-    name: 2.7 (xenial)
-  - python: pypy
-  - python: 3.3
-    dist: trusty
+  #- python: pypy
   - python:  3.4
   - python:  3.5
   - python:  3.6
@@ -41,7 +33,8 @@ install:
   #   coverage
   - travis_retry pip install coverage
   #   coveralls (note coveralls doesn't support 2.6 now):
-  - if [[ $TRAVIS_PYTHON_VERSION != 2.6* ]]; then F2B_COV=1; else F2B_COV=0; fi
+  #- if [[ $TRAVIS_PYTHON_VERSION != 2.6* ]]; then F2B_COV=1; else F2B_COV=0; fi
+  - F2B_COV=1
   - if [[ "$F2B_COV" = 1 ]]; then travis_retry pip install coveralls; fi
   #   codecov:
   - travis_retry pip install codecov
