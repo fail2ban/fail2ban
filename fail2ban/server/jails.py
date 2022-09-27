@@ -22,7 +22,10 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2013- Yaroslav Halchenko"
 __license__ = "GPL"
 
 from threading import Lock
-from collections import Mapping
+try:
+	from collections.abc import Mapping
+except ImportError:
+	from collections import Mapping
 
 from ..exceptions import DuplicateJailException, UnknownJailException
 from .jail import Jail

@@ -25,6 +25,7 @@ __license__ = "GPL"
 
 import os
 import sys
+import tempfile
 import unittest
 
 from ..client import fail2banregex
@@ -80,6 +81,11 @@ def _test_exec_command_line(*args):
 		sys.stderr = _org['stderr']
 	return _exit_code
 
+def _reset():
+	# reset global warn-counter:
+	from ..server.filter import _decode_line_warn
+	_decode_line_warn.clear()
+
 STR_00 = "Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.0.2.0"
 STR_00_NODT = "[sshd] error: PAM: Authentication failure for kevin from 192.0.2.0"
 
@@ -122,6 +128,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		"""Call before every test case."""
 		LogCaptureTestCase.setUp(self)
 		setUpMyTime()
+		_reset()
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -133,6 +140,13 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"test", r".** from <HOST>$"
 		))
 		self.assertLogged("Unable to compile regular expression")
+		self.assertLogged("multiple repeat", "at position 2", all=False); # details of failed compilation
+		self.pruneLog()
+		self.assertFalse(_test_exec(
+			"test", r"^(?:(?P<type>A)|B)? (?(typo)...) from <ADDR>"
+		))
+		self.assertLogged("Unable to compile regular expression")
+		self.assertLogged("unknown group name: 'typo'", "at position 23", all=False); # details of failed compilation
 
 	def testWrongIngnoreRE(self):
 		self.assertFalse(_test_exec(
@@ -140,6 +154,13 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"test", r".*? from <HOST>$", r".**"
 		))
 		self.assertLogged("Unable to compile regular expression")
+		self.assertLogged("multiple repeat", "at position 2", all=False); # details of failed compilation
+
+	def testWrongFilterOptions(self):
+		self.assertFalse(_test_exec(
+			"test", "flt[a='x,y,z',b=z,y,x]"
+		))
+		self.assertLogged("Wrong filter name or options", "wrong syntax at 14: y,x", all=True)
 
 	def testDirectFound(self):
 		self.assertTrue(_test_exec(
@@ -342,21 +363,34 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('kevin')
 		self.pruneLog()
 		# multiple id combined to a tuple (id, tuple_id):
-		self.assertTrue(_test_exec('-o', 'id', 
+		self.assertTrue(_test_exec('-o', 'id', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 192.0.2.1 192.0.2.2',
 			r'^\s*<F-ID/> <F-TUPLE_ID>\S+</F-TUPLE_ID>'))
 		self.assertLogged(str(('192.0.2.1', '192.0.2.2')))
 		self.pruneLog()
 		# multiple id combined to a tuple, id first - (id, tuple_id_1, tuple_id_2):
-		self.assertTrue(_test_exec('-o', 'id', 
+		self.assertTrue(_test_exec('-o', 'id', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left 192.0.2.3 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID/> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
+		self.assertLogged(str(('192.0.2.3', 'left', 'right')))
 		self.pruneLog()
 		# id had higher precedence as ip-address:
-		self.assertTrue(_test_exec('-o', 'id', 
+		self.assertTrue(_test_exec('-o', 'id', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left [192.0.2.4]:12345 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
 		self.assertLogged(str(('[192.0.2.4]:12345', 'left', 'right')))
+		self.pruneLog()
+		# ip is not id anymore (if IP-address deviates from ID):
+		self.assertTrue(_test_exec('-o', 'ip', '-d', '{^LN-BEG}EPOCH',
+			'1591983743.667 left [192.0.2.4]:12345 right',
+			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
+		self.assertNotLogged(str(('[192.0.2.4]:12345', 'left', 'right')))
+		self.assertLogged('192.0.2.4')
+		self.pruneLog()
+		self.assertTrue(_test_exec('-o', 'ID:<fid> | IP:<ip>', '-d', '{^LN-BEG}EPOCH',
+			'1591983743.667 left [192.0.2.4]:12345 right',
+			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
+		self.assertLogged('ID:'+str(('[192.0.2.4]:12345', 'left', 'right'))+' | IP:192.0.2.4')
 		self.pruneLog()
 		# row with id :
 		self.assertTrue(_test_exec('-o', 'row', STR_00, RE_00_ID))
@@ -379,6 +413,43 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('192.0.2.0, kevin, inet4')
 		self.pruneLog()
 
+	def testStalledIPByNoFailFrmtOutput(self):
+		opts = (
+			'-c', CONFIG_DIR,
+			"-d", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
+		)
+		log = (
+			'May 27 00:16:33 host sshd[2364]: User root not allowed because account is locked\n'
+			'May 27 00:16:33 host sshd[2364]: Received disconnect from 192.0.2.76 port 58846:11: Bye Bye [preauth]'
+		)
+		_test = lambda *args: _test_exec(*(opts + args))
+		# with MLFID from prefregex and IP after failure obtained from F-NOFAIL RE:
+		self.assertTrue(_test('-o', 'IP:<ip>', log, 'sshd'))
+		self.assertLogged('IP:192.0.2.76')
+		self.pruneLog()
+		# test diverse ID/IP constellations:
+		def _test_variants(flt="sshd", prefix=""):
+			# with different ID/IP from failregex (ID/User from first, IP from second message):
+			self.assertTrue(_test('-o', 'ID:"<fid>" | IP:<ip> | U:<F-USER>', log, 
+				flt+'[failregex="'
+				  '^'+prefix+'<F-ID>User <F-USER>\S+</F-USER></F-ID> not allowed\n'
+				  '^'+prefix+'Received disconnect from <ADDR>'
+				'"]'))
+			self.assertLogged('ID:"User root" | IP:192.0.2.76 | U:root')
+			self.pruneLog()
+			# with different ID/IP from failregex (User from first, ID and IP from second message):
+			self.assertTrue(_test('-o', 'ID:"<fid>" | IP:<ip> | U:<F-USER>', log, 
+				flt+'[failregex="'
+				  '^'+prefix+'User <F-USER>\S+</F-USER> not allowed\n'
+				  '^'+prefix+'Received disconnect from <F-ID><ADDR> port \d+</F-ID>'
+				'"]'))
+			self.assertLogged('ID:"192.0.2.76 port 58846" | IP:192.0.2.76 | U:root')
+			self.pruneLog()
+		# first with sshd and prefregex:
+		_test_variants()
+		# the same without prefregex and MLFID directly in failregex (no merge with prefregex groups):
+		_test_variants('common', prefix="\s*\S+ sshd\[<F-MLFID>\d+</F-MLFID>\]:\s+")
+
 	def testNoDateTime(self):
 		# datepattern doesn't match:
 		self.assertTrue(_test_exec('-d', '{^LN-BEG}EPOCH', '-o', 'Found-ID:<F-ID>', STR_00_NODT, RE_00_ID))
@@ -395,7 +466,17 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"Found a match but no valid date/time found",
 			"Match without a timestamp:", all=True)
 
-		self.pruneLog()
+	def testIncompleteDateTime(self):
+		# datepattern in followed lines doesn't match previously known pattern + line is too short
+		# (logging break-off, no flush, etc):
+		self.assertTrue(_test_exec(
+			'-o', 'Found-ADDR:<ip>',
+			'192.0.2.1 - - [02/May/2021:18:40:55 +0100] "GET / HTTP/1.1" 302 328 "-" "Mozilla/5.0" "-"\n'
+			'192.0.2.2 - - [02/May/2021:18:40:55 +0100\n'
+			'192.0.2.3 - - [02/May/2021:18:40:55',
+			'^<ADDR>'))
+		self.assertLogged(
+			"Found-ADDR:192.0.2.1", "Found-ADDR:192.0.2.2", "Found-ADDR:192.0.2.3", all=True)	
 
 	def testFrmtOutputWrapML(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
@@ -441,6 +522,27 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			'192.0.2.1, git, '+lines[-1],
 			all=True)
 
+	def testOutputNoPendingFailuresAfterGained(self):
+		unittest.F2B.SkipIfCfgMissing(stock=True)
+		# connect finished without authorization must generate a failure, because
+		# connect started will produce pending failure which gets reset by gained
+		# connect authorized.
+		self.assertTrue(_test_exec('-o', 'failure from == <ip> ==',
+			'-c', CONFIG_DIR, '-d', '{NONE}',
+			'svc[1] connect started 192.0.2.3\n'
+			'svc[1] connect finished 192.0.2.3\n'
+			'svc[2] connect started 192.0.2.4\n'
+			'svc[2] connect authorized 192.0.2.4\n'
+			'svc[2] connect finished 192.0.2.4\n',
+			'common[prefregex="^svc\[<F-MLFID>\d+</F-MLFID>\] connect <F-CONTENT>.+</F-CONTENT>$"'
+			', failregex="'
+			'^started\n'
+			'^<F-NOFAIL><F-MLFFORGET>finished</F-MLFFORGET></F-NOFAIL> <ADDR>\n'
+			'^<F-MLFGAINED>authorized</F-MLFGAINED> <ADDR>'
+			'", maxlines=1]'
+		))
+		self.assertLogged('failure from == 192.0.2.3 ==')
+		self.assertNotLogged('failure from == 192.0.2.4 ==')
 
 	def testWrongFilterFile(self):
 		# use test log as filter file to cover eror cases...
@@ -448,14 +550,8 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			FILENAME_ZZZ_GEN, FILENAME_ZZZ_GEN
 		))
 
-	def _reset(self):
-		# reset global warn-counter:
-		from ..server.filter import _decode_line_warn
-		_decode_line_warn.clear()
-
 	def testWronChar(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
-		self._reset()
 		self.assertTrue(_test_exec(
 		"-l", "notice", # put down log-level, because of too many debug-messages
 			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
@@ -471,7 +567,6 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testWronCharDebuggex(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
-		self._reset()
 		self.assertTrue(_test_exec(
 		"-l", "notice", # put down log-level, because of too many debug-messages
 			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
@@ -483,6 +578,36 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('Lines: 4 lines, 1 ignored, 2 matched, 1 missed')
 
 		self.assertLogged('https://')
+
+	def testNLCharAsPartOfUniChar(self):
+		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='uni')
+		# test two multi-byte encodings (both contains `\x0A` in either \x02\x0A or \x0A\x02):
+		for enc in ('utf-16be', 'utf-16le'):
+			self.pruneLog("[test-phase encoding=%s]" % enc)
+			try:
+				fout = open(fname, 'wb')
+				# test on unicode string containing \x0A as part of uni-char,
+				# it must produce exactly 2 lines (both are failures):
+				for l in (
+					u'1490349000 \u20AC Failed auth: invalid user Test\u020A from 192.0.2.1\n',
+					u'1490349000 \u20AC Failed auth: invalid user TestI from 192.0.2.2\n'
+				):
+					fout.write(l.encode(enc))
+				fout.close()
+
+				self.assertTrue(_test_exec(
+				"-l", "notice", # put down log-level, because of too many debug-messages
+					"--encoding", enc,
+					"--datepattern", r"^EPOCH",
+					fname, r"Failed .* from <HOST>",
+				))
+
+				self.assertLogged(" encoding : %s" % enc,
+					"Lines: 2 lines, 0 ignored, 2 matched, 0 missed", all=True)
+				self.assertNotLogged("Missed line(s)")
+			finally:
+				fout.close()
+				os.unlink(fname)
 
 	def testExecCmdLine_Usage(self):
 		self.assertNotEqual(_test_exec_command_line(), 0)

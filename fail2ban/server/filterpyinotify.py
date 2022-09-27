@@ -75,7 +75,6 @@ class FilterPyinotify(FileFilter):
 
 	def __init__(self, jail):
 		FileFilter.__init__(self, jail)
-		self.__modified = False
 		# Pyinotify watch manager
 		self.__monitor = pyinotify.WatchManager()
 		self.__notifier = None
@@ -140,9 +139,6 @@ class FilterPyinotify(FileFilter):
 		"""
 		if not self.idle:
 			self.getFailures(path)
-			if not self.banASAP: # pragma: no cover
-				self.performBan()
-			self.__modified = False
 
 	def _addPending(self, path, reason, isDir=False):
 		if path not in self.__pending:
@@ -169,7 +165,7 @@ class FilterPyinotify(FileFilter):
 			return
 		found = {}
 		minTime = 60
-		for path, (retardTM, isDir) in self.__pending.iteritems():
+		for path, (retardTM, isDir) in list(self.__pending.items()):
 			if ntm - self.__pendingChkTime < retardTM:
 				if minTime > retardTM: minTime = retardTM
 				continue
@@ -192,7 +188,7 @@ class FilterPyinotify(FileFilter):
 				self._refreshWatcher(path, isDir=isDir)
 			if isDir:
 				# check all files belong to this dir:
-				for logpath in self.__watchFiles:
+				for logpath in list(self.__watchFiles):
 					if logpath.startswith(path + pathsep):
 						# if still no file - add to pending, otherwise refresh and process:
 						if not os.path.isfile(logpath):
@@ -272,15 +268,13 @@ class FilterPyinotify(FileFilter):
 
 	def _addLogPath(self, path):
 		self._addFileWatcher(path)
-		# initial scan:
+		# notify (wake up if in waiting):
 		if self.active:
-			# we can execute it right now:
-			self._process_file(path)
-		else:
-			# retard until filter gets started, isDir=None signals special case: process file only (don't need to refresh monitor):
-			self._addPending(path, ('INITIAL', path), isDir=None)
+			self.__pendingMinTime = 0
+		# retard until filter gets started, isDir=None signals special case: process file only (don't need to refresh monitor):
+		self._addPending(path, ('INITIAL', path), isDir=None)
 
-    ##
+	##
 	# Delete a log path
 	#
 	# @param path the log file to delete
@@ -291,7 +285,7 @@ class FilterPyinotify(FileFilter):
 			logSys.error("Failed to remove watch on path: %s", path)
 
 		path_dir = dirname(path)
-		for k in self.__watchFiles:
+		for k in list(self.__watchFiles):
 			if k.startswith(path_dir + pathsep):
 				path_dir = None
 				break
@@ -345,16 +339,26 @@ class FilterPyinotify(FileFilter):
 				self.__notifier.process_events()
 
 				# wait for events / timeout:
-				notify_maxtout = self.__notify_maxtout
 				def __check_events():
-					return not self.active or self.__notifier.check_events(timeout=notify_maxtout)
-				if Utils.wait_for(__check_events, min(self.sleeptime, self.__pendingMinTime)):
+					return (
+						not self.active
+						or bool(self.__notifier.check_events(timeout=self.__notify_maxtout))
+						or (self.__pendingMinTime and self.__pending)
+					)
+				wres = Utils.wait_for(__check_events, min(self.sleeptime, self.__pendingMinTime))
+				if wres:
 					if not self.active: break
-					self.__notifier.read_events()
+					if not isinstance(wres, dict):
+						self.__notifier.read_events()
+
+				self.ticks += 1
 
 				# check pending files/dirs (logrotate ready):
-				if not self.idle:
-					self._checkPending()
+				if self.idle:
+					continue
+				self._checkPending()
+				if self.ticks % 10 == 0:
+					self.performSvc()
 
 			except Exception as e: # pragma: no cover
 				if not self.active: # if not active - error by stop...
@@ -362,10 +366,8 @@ class FilterPyinotify(FileFilter):
 				logSys.error("Caught unhandled exception in main cycle: %r", e,
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 				# incr common error counter:
-				self.commonError()
+				self.commonError("unhandled", e)
 			
-			self.ticks += 1
-
 		logSys.debug("[%s] filter exited (pyinotifier)", self.jailName)
 		self.__notifier = None
 

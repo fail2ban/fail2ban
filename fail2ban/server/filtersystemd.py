@@ -22,7 +22,7 @@ __author__ = "Steven Hiscocks"
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import datetime
+import os
 import time
 from distutils.version import LooseVersion
 
@@ -91,9 +91,14 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		try:
 			args['flags'] = int(kwargs.pop('journalflags'))
 		except KeyError:
-			# be sure all journal types will be opened if files specified (don't set flags):
-			if 'files' not in args or not len(args['files']):
-				args['flags'] = 4
+			# be sure all journal types will be opened if files/path specified (don't set flags):
+			if ('files' not in args or not len(args['files'])) and ('path' not in args or not args['path']):
+				args['flags'] = int(os.getenv("F2B_SYSTEMD_DEFAULT_FLAGS", 4))
+				
+		try:
+			args['namespace'] = kwargs.pop('namespace')
+		except KeyError:
+			pass
 
 		return args
 
@@ -245,12 +250,16 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		logSys.log(5, "[%s] Read systemd journal entry: %s %s", self.jailName,
 			date[0], logline)
 		## use the same type for 1st argument:
-		return ((logline[:0], date[0], logline.replace('\n', '\\n')), date[1])
+		return ((logline[:0], date[0] + ' ', logline.replace('\n', '\\n')), date[1])
 
 	def seekToTime(self, date):
-		if not isinstance(date, datetime.datetime):
-			date = datetime.datetime.fromtimestamp(date)
+		if isinstance(date, (int, long)):
+			date = float(date)
 		self.__journal.seek_realtime(date)
+
+	def inOperationMode(self):
+		self.inOperation = True
+		logSys.info("[%s] Jail is in operation now (process new journal entries)", self.jailName)
 
 	##
 	# Main loop.
@@ -262,17 +271,40 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 		if not self.getJournalMatch():
 			logSys.notice(
-				"Jail started without 'journalmatch' set. "
+				"[%s] Jail started without 'journalmatch' set. "
 				"Jail regexs will be checked against all journal entries, "
-				"which is not advised for performance reasons.")
+				"which is not advised for performance reasons.", self.jailName)
 
-		# Try to obtain the last known time (position of journal)
-		start_time = 0
-		if self.jail.database is not None:
-			start_time = self.jail.database.getJournalPos(self.jail, 'systemd-journal') or 0
-		# Seek to max(last_known_time, now - findtime) in journal
-		start_time = max( start_time, MyTime.time() - int(self.getFindTime()) )
-		self.seekToTime(start_time)
+		# Save current cursor position (to recognize in operation mode):
+		logentry = None
+		try:
+			self.__journal.seek_tail()
+			logentry = self.__journal.get_previous()
+			if logentry:
+				self.__journal.get_next()
+		except OSError:
+			logentry = None # Reading failure, so safe to ignore
+		if logentry:
+			# Try to obtain the last known time (position of journal)
+			startTime = 0
+			if self.jail.database is not None:
+				startTime = self.jail.database.getJournalPos(self.jail, 'systemd-journal') or 0
+			# Seek to max(last_known_time, now - findtime) in journal
+			startTime = max( startTime, MyTime.time() - int(self.getFindTime()) )
+			self.seekToTime(startTime)
+			# Not in operation while we'll read old messages ...
+			self.inOperation = False
+			# Save current time in order to check time to switch "in operation" mode
+			startTime = (1, MyTime.time(), logentry.get('__CURSOR'))
+		else:
+			# empty journal or no entries for current filter:
+			self.inOperationMode()
+			# seek_tail() seems to have a bug by no entries (could bypass some entries hereafter), so seek to now instead:
+			startTime = MyTime.time()
+			self.seekToTime(startTime)
+			# for possible future switches of in-operation mode:
+			startTime = (0, startTime)
+
 		# Move back one entry to ensure do not end up in dead space
 		# if start time beyond end of journal
 		try:
@@ -280,6 +312,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		except OSError:
 			pass # Reading failure, so safe to ignore
 
+		line = None
 		while self.active:
 			# wait for records (or for timeout in sleeptime seconds):
 			try:
@@ -289,9 +322,10 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				#self.__journal.wait(self.sleeptime) != journal.NOP
 				## 
 				## wait for entries without sleep in intervals, because "sleeping" in journal.wait:
-				Utils.wait_for(lambda: not self.active or \
-					self.__journal.wait(Utils.DEFAULT_SLEEP_INTERVAL) != journal.NOP,
-					self.sleeptime, 0.00001)
+				if not logentry:
+					Utils.wait_for(lambda: not self.active or \
+						self.__journal.wait(Utils.DEFAULT_SLEEP_INTERVAL) != journal.NOP,
+						self.sleeptime, 0.00001)
 				if self.idle:
 					# because journal.wait will returns immediatelly if we have records in journal,
 					# just wait a little bit here for not idle, to prevent hi-load:
@@ -310,27 +344,50 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 							e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
 					self.ticks += 1
 					if logentry:
-						line = self.formatJournalEntry(logentry)
-						self.processLineAndAdd(*line)
+						line, tm = self.formatJournalEntry(logentry)
+						# switch "in operation" mode if we'll find start entry (+ some delta):
+						if not self.inOperation:
+							if tm >= MyTime.time() - 1: # reached now (approximated):
+								self.inOperationMode()
+							elif startTime[0] == 1:
+								# if it reached start entry (or get read time larger than start time)
+								if logentry.get('__CURSOR') == startTime[2] or tm > startTime[1]:
+									# give the filter same time it needed to reach the start entry:
+									startTime = (0, MyTime.time()*2 - startTime[1])
+							elif tm > startTime[1]: # reached start time (approximated):
+								self.inOperationMode()
+						# process line
+						self.processLineAndAdd(line, tm)
 						self.__modified += 1
 						if self.__modified >= 100: # todo: should be configurable
 							break
 					else:
+						# "in operation" mode since we don't have messages anymore (reached end of journal):
+						if not self.inOperation:
+							self.inOperationMode()
 						break
-				if self.__modified:
-					if not self.banASAP: # pragma: no cover
-						self.performBan()
-					self.__modified = 0
-					# update position in log (time and iso string):
-					if self.jail.database is not None:
-						self.jail.database.updateJournal(self.jail, 'systemd-journal', line[1], line[0][1])
+				self.__modified = 0
+				if self.ticks % 10 == 0:
+					self.performSvc()
+				# update position in log (time and iso string):
+				if self.jail.database:
+					if line:
+						self._pendDBUpdates['systemd-journal'] = (tm, line[1])
+						line = None
+					if self._pendDBUpdates and (
+				    self.ticks % 100 == 0
+				    or MyTime.time() >= self._nextUpdateTM
+				    or not self.active
+				  ):
+						self._updateDBPending()
+						self._nextUpdateTM = MyTime.time() + Utils.DEFAULT_SLEEP_TIME * 5
 			except Exception as e: # pragma: no cover
 				if not self.active: # if not active - error by stop...
 					break
 				logSys.error("Caught unhandled exception in main cycle: %r", e,
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 				# incr common error counter:
-				self.commonError()
+				self.commonError("unhandled", e)
 
 		logSys.debug("[%s] filter terminated", self.jailName)
 
@@ -350,3 +407,22 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		ret.append(("Journal matches",
 			[" + ".join(" ".join(match) for match in self.__matches)]))
 		return ret
+
+	def _updateDBPending(self):
+		"""Apply pending updates (jornal position) to database.
+		"""
+		db = self.jail.database
+		while True:
+			try:
+				log, args = self._pendDBUpdates.popitem()
+			except KeyError:
+				break
+			db.updateJournal(self.jail, log, *args)
+
+	def onStop(self):
+		"""Stop monitoring of journal. Invoked after run method.
+		"""
+		# ensure positions of pending logs are up-to-date:
+		if self._pendDBUpdates and self.jail.database:
+			self._updateDBPending()
+

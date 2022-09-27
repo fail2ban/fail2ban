@@ -217,6 +217,9 @@ class ExecuteActions(LogCaptureTestCase):
 		# flush for inet6 is intentionally "broken" here - test no unhandled except and invariant check:
 		act['actionflush?family=inet6'] = act.actionflush + '; exit 1'
 		act.actionstart_on_demand = True
+		# force errors via check in ban/unban:
+		act.actionban = "<actioncheck> ; " + act.actionban
+		act.actionunban = "<actioncheck> ; " + act.actionunban
 		self.__actions.start()
 		self.assertNotLogged("stdout: %r" % 'ip start')
 
@@ -294,6 +297,9 @@ class ExecuteActions(LogCaptureTestCase):
 		act['actionflush?family=inet6'] = act.actionflush + '; exit 1'
 		act.actionstart_on_demand = True
 		act.actionrepair_on_unban = True
+		# force errors via check in ban/unban:
+		act.actionban = "<actioncheck> ; " + act.actionban
+		act.actionunban = "<actioncheck> ; " + act.actionunban
 		self.__actions.start()
 		self.assertNotLogged("stdout: %r" % 'ip start')
 

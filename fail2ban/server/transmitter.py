@@ -58,7 +58,7 @@ class Transmitter:
 			ret = self.__commandHandler(command)
 			ack = 0, ret
 		except Exception as e:
-			logSys.warning("Command %r has failed. Received %r",
+			logSys.error("Command %r has failed. Received %r",
 						command, e, 
 						exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 			ack = 1, e
@@ -173,6 +173,11 @@ class Transmitter:
 				return self.__server.getSyslogSocket()
 			else:
 				raise Exception("Failed to change syslog socket")
+		elif name == "allowipv6":
+			value = command[1]
+			self.__server.setIPv6IsAllowed(value)
+			if self.__quiet: return
+			return value
 		#Thread
 		elif name == "thread":
 			value = command[1]

@@ -70,16 +70,10 @@ class HelpersTest(unittest.TestCase):
 		self.assertEqual(splitwords(u' 1\n  2, 3'), ['1', '2', '3'])
 
 
-if sys.version_info >= (2,7):
-	def _sh_call(cmd):
-		import subprocess
-		ret = subprocess.check_output(cmd, shell=True)
-		return uni_decode(ret).rstrip()
-else:
-	def _sh_call(cmd):
-		import subprocess
-		ret = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
-		return uni_decode(ret).rstrip()
+def _sh_call(cmd):
+	import subprocess
+	ret = subprocess.check_output(cmd, shell=True)
+	return uni_decode(ret).rstrip()
 
 def _getSysPythonVersion():
 	return _sh_call("fail2ban-python -c 'import sys; print(tuple(sys.version_info))'")
@@ -92,7 +86,7 @@ class SetupTest(unittest.TestCase):
 		unittest.F2B.SkipIfFast()
 		setup = os.path.join(os.path.dirname(__file__), '..', '..', 'setup.py')
 		self.setup = os.path.exists(setup) and setup or None
-		if not self.setup and sys.version_info >= (2,7): # pragma: no cover - running not out of the source
+		if not self.setup: # pragma: no cover - running not out of the source
 			raise unittest.SkipTest(
 				"Seems to be running not out of source distribution"
 				" -- cannot locate setup.py")
@@ -111,7 +105,7 @@ class SetupTest(unittest.TestCase):
 		supdbgout = ' >/dev/null 2>&1' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
 		try:
 			# try dry-run:
-			os.system("%s %s --dry-run install --disable-2to3 --root=%s%s"
+			os.system("%s %s --dry-run install --root=%s%s"
 					  % (sys.executable, self.setup , tmp, supdbgout))
 			# check nothing was created:
 			self.assertTrue(not os.listdir(tmp))
@@ -127,7 +121,7 @@ class SetupTest(unittest.TestCase):
 		# suppress stdout (and stderr) if not heavydebug
 		supdbgout = ' >/dev/null' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
 		try:
-			self.assertEqual(os.system("%s %s install --disable-2to3 --root=%s%s"
+			self.assertEqual(os.system("%s %s install --root=%s%s"
 					  % (sys.executable, self.setup, tmp, supdbgout)), 0)
 
 			def strippath(l):
@@ -457,3 +451,18 @@ class MyTimeTest(unittest.TestCase):
 		self.assertEqual(float(str2sec("1 month")) / 60 / 60 / 24, 30.4375)
 		self.assertEqual(float(str2sec("1 year")) / 60 / 60 / 24, 365.25)
 
+	def testSec2Str(self):
+		sec2str = lambda s: str(MyTime.seconds2str(s))
+		self.assertEqual(sec2str(86400*390),            '1y 3w 4d')
+		self.assertEqual(sec2str(86400*368),            '1y 3d')
+		self.assertEqual(sec2str(86400*365.49),         '1y')
+		self.assertEqual(sec2str(86400*15),             '2w 1d')
+		self.assertEqual(sec2str(86400*14-10),          '2w')
+		self.assertEqual(sec2str(86400*2+3600*7+60*15), '2d 7h 15m')
+		self.assertEqual(sec2str(86400*2+3599),         '2d 1h')
+		self.assertEqual(sec2str(3600*3.52),            '3h 31m')
+		self.assertEqual(sec2str(3600*2-5),             '2h')
+		self.assertEqual(sec2str(3600-5),               '1h')
+		self.assertEqual(sec2str(3600-10),              '59m 50s')
+		self.assertEqual(sec2str(59),                   '59s')
+		self.assertEqual(sec2str(0),                    '0')

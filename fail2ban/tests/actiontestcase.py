@@ -75,61 +75,59 @@ class CommandActionTest(LogCaptureTestCase):
 			lambda: substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
 		self.assertRaises(ValueError,
 			lambda: substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP>', 'sweet': '<honeypot>', 'honeypot': '<sweet>', 'ignoreregex': ''}))
-		# We need here an ordered, because the sequence of iteration is very important for this test
-		if OrderedDict:
-			# No cyclic recursion, just multiple replacement of tag <T>, should be successful:
-			self.assertEqual(substituteRecursiveTags( OrderedDict(
-					(('X', 'x=x<T>'), ('T', '1'), ('Z', '<X> <T> <Y>'), ('Y', 'y=y<T>')))
-				), {'X': 'x=x1', 'T': '1', 'Y': 'y=y1', 'Z': 'x=x1 1 y=y1'}
-			)
-			# No cyclic recursion, just multiple replacement of tag <T> in composite tags, should be successful:
-			self.assertEqual(substituteRecursiveTags( OrderedDict(
-				  (('X', 'x=x<T> <Z> <<R1>> <<R2>>'), ('R1', 'Z'), ('R2', 'Y'), ('T', '1'), ('Z', '<T> <Y>'), ('Y', 'y=y<T>')))
-				), {'X': 'x=x1 1 y=y1 1 y=y1 y=y1', 'R1': 'Z', 'R2': 'Y', 'T': '1', 'Z': '1 y=y1', 'Y': 'y=y1'}
-			)
-			# No cyclic recursion, just multiple replacement of same tags, should be successful:
-			self.assertEqual(substituteRecursiveTags( OrderedDict((
-					('actionstart', 'ipset create <ipmset> hash:ip timeout <bantime> family <ipsetfamily>\n<iptables> -I <chain> <actiontype>'),
-					('ipmset', 'f2b-<name>'),
-					('name', 'any'),
-					('bantime', '600'),
-					('ipsetfamily', 'inet'),
-					('iptables', 'iptables <lockingopt>'),
-					('lockingopt', '-w'),
-					('chain', 'INPUT'),
-					('actiontype', '<multiport>'),
-					('multiport', '-p <protocol> -m multiport --dports <port> -m set --match-set <ipmset> src -j <blocktype>'),
-					('protocol', 'tcp'),
-					('port', 'ssh'),
-					('blocktype', 'REJECT',),
-				))
-				), OrderedDict((
-					('actionstart', 'ipset create f2b-any hash:ip timeout 600 family inet\niptables -w -I INPUT -p tcp -m multiport --dports ssh -m set --match-set f2b-any src -j REJECT'),
-					('ipmset', 'f2b-any'),
-					('name', 'any'),
-					('bantime', '600'),
-					('ipsetfamily', 'inet'),
-					('iptables', 'iptables -w'),
-					('lockingopt', '-w'),
-					('chain', 'INPUT'),
-					('actiontype', '-p tcp -m multiport --dports ssh -m set --match-set f2b-any src -j REJECT'),
-					('multiport', '-p tcp -m multiport --dports ssh -m set --match-set f2b-any src -j REJECT'),
-					('protocol', 'tcp'),
-					('port', 'ssh'),
-					('blocktype', 'REJECT')
-				))
-			)
-			# Cyclic recursion by composite tag creation, tags "create" another tag, that closes cycle:
-			self.assertRaises(ValueError, lambda: substituteRecursiveTags( OrderedDict((
-					('A', '<<B><C>>'),
-					('B', 'D'), ('C', 'E'),
-					('DE', 'cycle <A>'),
-			)) ))
-			self.assertRaises(ValueError, lambda: substituteRecursiveTags( OrderedDict((
-					('DE', 'cycle <A>'),
-					('A', '<<B><C>>'),
-					('B', 'D'), ('C', 'E'),
-			)) ))
+		# No cyclic recursion, just multiple replacement of tag <T>, should be successful:
+		self.assertEqual(substituteRecursiveTags( OrderedDict(
+				(('X', 'x=x<T>'), ('T', '1'), ('Z', '<X> <T> <Y>'), ('Y', 'y=y<T>')))
+			), {'X': 'x=x1', 'T': '1', 'Y': 'y=y1', 'Z': 'x=x1 1 y=y1'}
+		)
+		# No cyclic recursion, just multiple replacement of tag <T> in composite tags, should be successful:
+		self.assertEqual(substituteRecursiveTags( OrderedDict(
+			  (('X', 'x=x<T> <Z> <<R1>> <<R2>>'), ('R1', 'Z'), ('R2', 'Y'), ('T', '1'), ('Z', '<T> <Y>'), ('Y', 'y=y<T>')))
+			), {'X': 'x=x1 1 y=y1 1 y=y1 y=y1', 'R1': 'Z', 'R2': 'Y', 'T': '1', 'Z': '1 y=y1', 'Y': 'y=y1'}
+		)
+		# No cyclic recursion, just multiple replacement of same tags, should be successful:
+		self.assertEqual(substituteRecursiveTags( OrderedDict((
+				('actionstart', 'ipset create <ipmset> hash:ip timeout <bantime> family <ipsetfamily>\n<iptables> -I <chain> <actiontype>'),
+				('ipmset', 'f2b-<name>'),
+				('name', 'any'),
+				('bantime', '600'),
+				('ipsetfamily', 'inet'),
+				('iptables', 'iptables <lockingopt>'),
+				('lockingopt', '-w'),
+				('chain', 'INPUT'),
+				('actiontype', '<multiport>'),
+				('multiport', '-p <protocol> -m multiport --dports <port> -m set --match-set <ipmset> src -j <blocktype>'),
+				('protocol', 'tcp'),
+				('port', 'ssh'),
+				('blocktype', 'REJECT',),
+			))
+			), OrderedDict((
+				('actionstart', 'ipset create f2b-any hash:ip timeout 600 family inet\niptables -w -I INPUT -p tcp -m multiport --dports ssh -m set --match-set f2b-any src -j REJECT'),
+				('ipmset', 'f2b-any'),
+				('name', 'any'),
+				('bantime', '600'),
+				('ipsetfamily', 'inet'),
+				('iptables', 'iptables -w'),
+				('lockingopt', '-w'),
+				('chain', 'INPUT'),
+				('actiontype', '-p tcp -m multiport --dports ssh -m set --match-set f2b-any src -j REJECT'),
+				('multiport', '-p tcp -m multiport --dports ssh -m set --match-set f2b-any src -j REJECT'),
+				('protocol', 'tcp'),
+				('port', 'ssh'),
+				('blocktype', 'REJECT')
+			))
+		)
+		# Cyclic recursion by composite tag creation, tags "create" another tag, that closes cycle:
+		self.assertRaises(ValueError, lambda: substituteRecursiveTags( OrderedDict((
+				('A', '<<B><C>>'),
+				('B', 'D'), ('C', 'E'),
+				('DE', 'cycle <A>'),
+		)) ))
+		self.assertRaises(ValueError, lambda: substituteRecursiveTags( OrderedDict((
+				('DE', 'cycle <A>'),
+				('A', '<<B><C>>'),
+				('B', 'D'), ('C', 'E'),
+		)) ))
 			
 		# missing tags are ok
 		self.assertEqual(substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
@@ -305,8 +303,8 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertEqual(self.__action.actionstart, "touch '%s'" % tmp)
 		self.__action.actionstop = "rm -f '%s'" % tmp
 		self.assertEqual(self.__action.actionstop, "rm -f '%s'" % tmp)
-		self.__action.actionban = "echo -n"
-		self.assertEqual(self.__action.actionban, 'echo -n')
+		self.__action.actionban = "<actioncheck> && echo -n"
+		self.assertEqual(self.__action.actionban, "<actioncheck> && echo -n")
 		self.__action.actioncheck = "[ -e '%s' ]" % tmp
 		self.assertEqual(self.__action.actioncheck, "[ -e '%s' ]" % tmp)
 		self.__action.actionunban = "true"
@@ -316,6 +314,7 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertNotLogged('returned')
 		# no action was actually executed yet
 
+		# start on demand is false, so it should cause failure on first attempt of ban:
 		self.__action.ban({'ip': None})
 		self.assertLogged('Invariant check failed')
 		self.assertLogged('returned successfully')
@@ -365,11 +364,50 @@ class CommandActionTest(LogCaptureTestCase):
 		self.pruneLog('[phase 2]')
 		self.__action.actionstart = "touch '%s'" % tmp
 		self.__action.actionstop = "rm '%s'" % tmp
-		self.__action.actionban = """printf "%%%%b\n" <ip> >> '%s'""" % tmp
+		self.__action.actionban = """<actioncheck> && printf "%%%%b\n" <ip> >> '%s'""" % tmp
 		self.__action.actioncheck = "[ -e '%s' ]" % tmp
 		self.__action.ban({'ip': None})
 		self.assertLogged('Invariant check failed')
 		self.assertNotLogged('Unable to restore environment')
+
+	@with_tmpdir
+	def testExecuteActionCheckOnBanFailure(self, tmp):
+		tmp += '/fail2ban.test'
+		self.__action.actionstart = "touch '%s'; echo 'started ...'" % tmp
+		self.__action.actionstop = "rm -f '%s'" % tmp
+		self.__action.actionban = "[ -e '%s' ] && echo 'banned '<ip>" % tmp
+		self.__action.actioncheck = "[ -e '%s' ] && echo 'check ok' || { echo 'check failed'; exit 1; }" % tmp
+		self.__action.actionrepair = "echo 'repair ...'; touch '%s'" % tmp
+		self.__action.actionstart_on_demand = False
+		self.__action.start()
+		# phase 1: with repair;
+		# phase 2: without repair (start/stop), not on demand;
+		# phase 3: without repair (start/stop), start on demand.
+		for i in (1, 2, 3):
+			self.pruneLog('[phase %s]' % i)
+			# 1st time with success ban:
+			self.__action.ban({'ip': '192.0.2.1'})
+			self.assertLogged(
+				"stdout: %r" % 'banned 192.0.2.1', all=True)
+			self.assertNotLogged("Invariant check failed. Trying", 
+				"stdout: %r" % 'check failed',
+				"stdout: %r" % ('repair ...' if self.__action.actionrepair else 'started ...'),
+				"stdout: %r" % 'check ok', all=True)
+			# force error in ban:
+			os.remove(tmp)
+			self.pruneLog()
+			# 2nd time with fail recognition, success repair, check and ban:
+			self.__action.ban({'ip': '192.0.2.2'})
+			self.assertLogged("Invariant check failed. Trying",
+				"stdout: %r" % 'check failed',
+				"stdout: %r" % ('repair ...' if self.__action.actionrepair else 'started ...'),
+				"stdout: %r" % 'check ok', 
+				"stdout: %r" % 'banned 192.0.2.2', all=True)
+			# repeat without repair (stop/start), herafter enable on demand:
+			if self.__action.actionrepair:
+				self.__action.actionrepair = ""
+			elif not self.__action.actionstart_on_demand:
+				self.__action.actionstart_on_demand = True
 
 	@with_tmpdir
 	def testExecuteActionCheckRepairEnvironment(self, tmp):

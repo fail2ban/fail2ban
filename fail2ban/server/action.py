@@ -30,7 +30,10 @@ import tempfile
 import threading
 import time
 from abc import ABCMeta
-from collections import MutableMapping
+try:
+	from collections.abc import MutableMapping
+except ImportError:
+	from collections import MutableMapping
 
 from .failregex import mapTag2Opt
 from .ipdns import DNSUtils
@@ -407,7 +410,7 @@ class CommandAction(ActionBase):
 		cmd = self.replaceTag(tag, self._properties,
 			conditional=('family='+family if family else ''),
 			cache=self.__substCache)
-		if '<' not in cmd or not family: return cmd
+		if not family or '<' not in cmd: return cmd
 		# replace family as dynamic tags, important - don't cache, no recursion and auto-escape here:
 		cmd = self.replaceDynamicTags(cmd, {'family':family})
 		return cmd
@@ -974,31 +977,38 @@ class CommandAction(ActionBase):
 		except (KeyError, TypeError):
 			family = ''
 
-		# invariant check:
-		if self.actioncheck:
-			# don't repair/restore if unban (no matter):
-			def _beforeRepair():
-				if cmd == '<actionunban>' and not self._properties.get('actionrepair_on_unban'):
-					self._logSys.error("Invariant check failed. Unban is impossible.")
+		repcnt = 0
+		while True:
+
+			# got some error, do invariant check:
+			if repcnt and self.actioncheck:
+				# don't repair/restore if unban (no matter):
+				def _beforeRepair():
+					if cmd == '<actionunban>' and not self._properties.get('actionrepair_on_unban'):
+						self._logSys.error("Invariant check failed. Unban is impossible.")
+						return False
+					return True
+				# check and repair if broken:
+				ret = self._invariantCheck(family, _beforeRepair, forceStart=(cmd != '<actionunban>'))
+				# if not sane (and not restored) return:
+				if ret != 1:
 					return False
-				return True
-			# check and repair if broken:
-			ret = self._invariantCheck(family, _beforeRepair, forceStart=(cmd != '<actionunban>'))
-			# if not sane (and not restored) return:
-			if ret != 1:
-				return False
 
-		# Replace static fields
-		realCmd = self.replaceTag(cmd, self._properties, 
-			conditional=('family='+family if family else ''), cache=self.__substCache)
+			# Replace static fields
+			realCmd = self.replaceTag(cmd, self._properties, 
+				conditional=('family='+family if family else ''), cache=self.__substCache)
 
-		# Replace dynamical tags, important - don't cache, no recursion and auto-escape here
-		if aInfo is not None:
-			realCmd = self.replaceDynamicTags(realCmd, aInfo)
-		else:
-			realCmd = cmd
+			# Replace dynamical tags, important - don't cache, no recursion and auto-escape here
+			if aInfo is not None:
+				realCmd = self.replaceDynamicTags(realCmd, aInfo)
+			else:
+				realCmd = cmd
 
-		return self.executeCmd(realCmd, self.timeout)
+			# try execute command:
+			ret = self.executeCmd(realCmd, self.timeout)
+			repcnt += 1
+			if ret or repcnt > 1:
+				return ret
 
 	@staticmethod
 	def executeCmd(realCmd, timeout=60, **kwargs):

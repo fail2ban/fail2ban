@@ -1,0 +1,86 @@
+#!/sbin/openrc-run
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# Author: Sireyessire, Cyril Jaquier
+#
+
+description="Ban hosts that cause multiple authentication errors"
+description_reload="reload configuration without dropping bans"
+extra_started_commands="reload"
+
+# Can't (and shouldn't) be changed by the end-user.
+#
+# Note that @BINDIR@ is already supplied by the build system. Some
+# day, it might be nice to have @RUNDIR@ supplied by the build system
+# as well, so that we don't have to hard-code /run here.
+FAIL2BAN_RUNDIR="/run/${RC_SVCNAME}"
+FAIL2BAN_SOCKET="${FAIL2BAN_RUNDIR}/${RC_SVCNAME}.sock"
+
+# The fail2ban-client program is also capable of starting and stopping
+# the server, but things are simpler if we let start-stop-daemon do it.
+command="@BINDIR@/fail2ban-server"
+pidfile="${FAIL2BAN_RUNDIR}/${RC_SVCNAME}.pid"
+
+# We force the pidfile/socket location in this service script because
+# we're taking responsibility for ensuring that their parent directory
+# exists and has the correct permissions (which we can't do if the
+# user is allowed to change them).
+command_args="${FAIL2BAN_OPTIONS} -p ${pidfile} -s ${FAIL2BAN_SOCKET}"
+retry="30"
+
+depend() {
+	use logger
+	after iptables
+}
+
+checkconfig() {
+    "${command}" ${command_args} --test
+}
+
+start_pre() {
+	# If this isn't a restart, make sure that the user's config isn't
+	# busted before we try to start the daemon (this will produce
+	# better error messages than if we just try to start it blindly).
+	#
+	# If, on the other hand, this *is* a restart, then the stop_pre
+	# action will have ensured that the config is usable and we don't
+	# need to do that again.
+	if [ "${RC_CMD}" != "restart" ] ; then
+		checkconfig || return $?
+	fi
+	checkpath -d "${FAIL2BAN_RUNDIR}"
+}
+
+stop_pre() {
+	# If this is a restart, check to make sure the user's config
+	# isn't busted before we stop the running daemon.
+	if [ "${RC_CMD}" = "restart" ] ; then
+		checkconfig || return $?
+	fi
+}
+
+reload() {
+	# The fail2ban-client uses an undocumented protocol to tell
+	# the server to reload(), so we have to use it here rather
+	# than e.g. sending a signal to the server daemon. Note that
+	# the reload will fail (on the server side) if the new config
+	# is invalid; we therefore don't need to test it ourselves
+	# with checkconfig() before initiating the reload.
+	ebegin "Reloading ${RC_SVCNAME}"
+	"@BINDIR@/fail2ban-client" ${command_args} reload
+	eend $? "Failed to reload ${RC_SVCNAME}"
+}
