@@ -5,4 +5,3 @@ deb_manpages_reportbug
 deb_no_iptables_service
 python3-test-suite.diff
 no-python-user.diff
-roundcude-update.diff

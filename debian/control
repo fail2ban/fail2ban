@@ -4,8 +4,7 @@ Priority: optional
 Maintainer: Sergey G. Brester <fail2ban@sebres.de>
 Uploaders: Sergey G. Brester <fail2ban@sebres.de>
 Build-Depends:
- debhelper-compat (= 9)
- , debhelper (>= 9.20160709)
+ debhelper (>= 9.20160709)
  , dh-python
  , python3
  , python3-setuptools

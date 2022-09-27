@@ -1,3 +1,10 @@
+fail2ban (1.0.1-1~upstream1) unstable; urgency=medium
+
+  [ Sergey Brester ]
+  * upstream package for debian, https://github.com/fail2ban/fail2ban/releases/tag/1.0.1
+
+ -- Sergey G. Brester <serg.brester@sebres.de>  Thu, 27 Sep 2022 19:07:41 +0200
+
 fail2ban (0.11.2-1~upstream1) unstable; urgency=medium
 
   [ Sergey Brester ]
