@@ -1,3 +1,10 @@
+fail2ban (0.11.2-7) UNRELEASED; urgency=medium
+
+  [ Gioele Barabucci ]
+  * d/post{inst,rm},preinst: Remove code for ancient versions
+
+ -- Bastian Germann <bage@debian.org>  Tue, 27 Sep 2022 12:47:12 +0200
+
 fail2ban (0.11.2-6) unstable; urgency=medium
 
   * Cherry-pick upstream fix to fix a startup issue with Python 3.10
