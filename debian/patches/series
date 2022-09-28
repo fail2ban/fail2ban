@@ -6,11 +6,4 @@ deb_no_iptables_service
 python3-test-suite.diff
 no-python-user.diff
 roundcube.diff
-debian_roundcube.diff
 systemd-run.diff
-scanlogd.patch
-997601-use_2to3.diff
-python3.10.diff
-#fix-race.diff
-courier-auth.diff
-fix-typo.diff

@@ -11,6 +11,7 @@ fail2ban (1.0.1-1~exp1) experimental; urgency=medium
   [ Sylvestre Ledru ]
   * New upstream release
   * Fix debian/watch
+  * Remove a bunch of patches (merged upstream)
 
  -- Sylvestre Ledru <sylvestre@debian.org>  Wed, 28 Sep 2022 07:16:20 -1000
 

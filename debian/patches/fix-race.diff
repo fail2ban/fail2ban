@@ -1,9 +1,0 @@
-Index: fail2ban/files/fail2ban.service.in
-===================================================================
---- fail2ban.orig/files/fail2ban.service.in
-+++ fail2ban/files/fail2ban.service.in
-@@ -20,3 +20,4 @@ Environment="PYTHONNOUSERSITE=yes"
- 
- [Install]
- WantedBy=multi-user.target
-+WantedBy=logrotate.service
