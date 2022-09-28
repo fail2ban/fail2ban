@@ -1,0 +1,2 @@
+fail2ban: national-encoding *usr/lib/python3/dist-packages/fail2ban/tests/files/testcase-wrong-char.log*
+fail2ban: national-encoding *usr/lib/python3/dist-packages/fail2ban/tests/files/testcase01.log*
