@@ -1,4 +1,4 @@
-fail2ban (1.0.1-1) UNRELEASED; urgency=medium
+fail2ban (1.0.1-1~exp1) experimental; urgency=medium
 
   [ Bastian Germann ]
   [ Gioele Barabucci ]
@@ -12,7 +12,7 @@ fail2ban (1.0.1-1) UNRELEASED; urgency=medium
   * New upstream release
   * Fix debian/watch
 
- -- Sylvestre Ledru <sylvestre@debian.org>  Tue, 27 Sep 2022 07:28:06 -1000
+ -- Sylvestre Ledru <sylvestre@debian.org>  Wed, 28 Sep 2022 07:16:20 -1000
 
 fail2ban (0.11.2-6) unstable; urgency=medium
 
