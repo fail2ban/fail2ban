@@ -1,5 +1,6 @@
-fail2ban (0.11.2-7) UNRELEASED; urgency=medium
+fail2ban (1.0.1-1) UNRELEASED; urgency=medium
 
+  [ Bastian Germann ]
   [ Gioele Barabucci ]
   * d/post{inst,rm},preinst: Remove code for ancient versions
 
@@ -7,7 +8,11 @@ fail2ban (0.11.2-7) UNRELEASED; urgency=medium
   * debian/watch: Use GitHub /tags rather than /releases page.
   * Update standards version to 4.6.1, no changes needed.
 
- -- Bastian Germann <bage@debian.org>  Tue, 27 Sep 2022 12:47:12 +0200
+  [ Sylvestre Ledru ]
+  * New upstream release
+  * Fix debian/watch
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Tue, 27 Sep 2022 07:28:06 -1000
 
 fail2ban (0.11.2-6) unstable; urgency=medium
 
