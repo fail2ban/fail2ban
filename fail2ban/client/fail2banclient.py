@@ -175,9 +175,13 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 
 		return [["server-stream", stream], ['server-status']]
 
+	def _set_server(self, s):
+		self._server = s
+
 	##
 	def __startServer(self, background=True):
 		from .fail2banserver import Fail2banServer
+		# read configuration here (in client only, in server we do that in the config-thread):
 		stream = self.__prepareStartServer()
 		self._alive = True
 		if not stream:
@@ -192,16 +196,19 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 					return False
 			else:
 				# In foreground mode we should make server/client communication in different threads:
-				th = Thread(target=Fail2banClient.__processStartStreamAfterWait, args=(self, stream, False))
-				th.daemon = True
-				th.start()
+				phase = dict()
+				self.configureServer(phase=phase, stream=stream)
 				# Mark current (main) thread as daemon:
-				self.setDaemon(True)
+				self.daemon = True
 				# Start server direct here in main thread (not fork):
-				self._server = Fail2banServer.startServerDirect(self._conf, False)
-
+				self._server = Fail2banServer.startServerDirect(self._conf, False, self._set_server)
+				if not phase.get('done', False):
+					if self._server: # pragma: no cover
+						self._server.quit()
+						self._server = None
+					exit(255)
 		except ExitException: # pragma: no cover
-			pass
+			raise
 		except Exception as e: # pragma: no cover
 			output("")
 			logSys.error("Exception while starting server " + ("background" if background else "foreground"))
@@ -214,23 +221,39 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		return True
 
 	##
-	def configureServer(self, nonsync=True, phase=None):
+	def configureServer(self, nonsync=True, phase=None, stream=None):
 		# if asynchronous start this operation in the new thread:
 		if nonsync:
-			th = Thread(target=Fail2banClient.configureServer, args=(self, False, phase))
+			if phase is not None:
+				# event for server ready flag:
+				def _server_ready():
+					phase['start-ready'] = True
+					logSys.log(5, '  server phase %s', phase)
+				# notify waiting thread if server really ready
+				self._conf['onstart'] = _server_ready
+			th = Thread(target=Fail2banClient.configureServer, args=(self, False, phase, stream))
 			th.daemon = True
-			return th.start()
+			th.start()
+			# if we need to read configuration stream:
+			if stream is None and phase is not None:
+				# wait, do not continue if configuration is not 100% valid:
+				Utils.wait_for(lambda: phase.get('ready', None) is not None, self._conf["timeout"], 0.001)
+				logSys.log(5, '  server phase %s', phase)
+				if not phase.get('start', False):
+					raise ServerExecutionException('Async configuration of server failed')
+			return True
 		# prepare: read config, check configuration is valid, etc.:
 		if phase is not None:
 			phase['start'] = True
 			logSys.log(5, '  client phase %s', phase)
-		stream = self.__prepareStartServer()
+		if stream is None:
+			stream = self.__prepareStartServer()
 		if phase is not None:
 			phase['ready'] = phase['start'] = (True if stream else False)
 			logSys.log(5, '  client phase %s', phase)
 		if not stream:
 			return False
-		# wait a litle bit for phase "start-ready" before enter active waiting:
+		# wait a little bit for phase "start-ready" before enter active waiting:
 		if phase is not None:
 			Utils.wait_for(lambda: phase.get('start-ready', None) is not None, 0.5, 0.001)
 			phase['configure'] = (True if stream else False)
@@ -321,13 +344,14 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 
 
 	def __processStartStreamAfterWait(self, *args):
+		ret = False
 		try:
 			# Wait for the server to start
 			if not self.__waitOnServer(): # pragma: no cover
 				logSys.error("Could not find server, waiting failed")
 				return False
 				# Configure the server
-			self.__processCmd(*args)
+			ret = self.__processCmd(*args)
 		except ServerExecutionException as e: # pragma: no cover
 			if self._conf["verbose"] > 1:
 				logSys.exception(e)
@@ -336,10 +360,11 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 						 "remove " + self._conf["socket"] + ". If "
 						 "you used fail2ban-client to start the "
 						 "server, adding the -x option will do it")
-			if self._server:
-				self._server.quit()
-			return False
-		return True
+
+		if not ret and self._server: # stop on error (foreground, config read in another thread):
+			self._server.quit()
+			self._server = None
+		return ret
 
 	def __waitOnServer(self, alive=True, maxtime=None):
 		if maxtime is None:

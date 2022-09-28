@@ -91,6 +91,13 @@ R_MAP = {
 	"port": "fport",
 }
 
+# map global flags like ((?i)xxx) or (?:(?i)xxx) to local flags (?i:xxx) if supported by RE-engine in this python version:
+try:
+	re.search("^re(?i:val)$", "reVAL")
+	R_GLOB2LOCFLAGS = ( re.compile(r"(?<!\\)\((?:\?:)?(\(\?[a-z]+)\)"), r"\1:" )
+except:
+	R_GLOB2LOCFLAGS = ()
+
 def mapTag2Opt(tag):
 	tag = tag.lower()
 	return R_MAP.get(tag, tag)
@@ -128,6 +135,9 @@ class Regex:
 		#
 		if regex.lstrip() == '':
 			raise RegexException("Cannot add empty regex")
+		# special handling wrapping global flags to local flags:
+		if R_GLOB2LOCFLAGS:
+			regex = R_GLOB2LOCFLAGS[0].sub(R_GLOB2LOCFLAGS[1], regex)
 		try:
 			self._regexObj = re.compile(regex, re.MULTILINE if multiline else 0)
 			self._regex = regex
@@ -147,9 +157,9 @@ class Regex:
 			self._tupleValues.sort()
 			self._altValues = self._altValues if len(self._altValues) else None
 			self._tupleValues = self._tupleValues if len(self._tupleValues) else None
-		except sre_constants.error:
-			raise RegexException("Unable to compile regular expression '%s'" %
-								 regex)
+		except sre_constants.error as e:
+			raise RegexException("Unable to compile regular expression '%s':\n%s" %
+								 (regex, e))
 		# set fetch handler depending on presence of alternate (or tuple) tags:
 		self.getGroups = self._getGroupsWithAlt if (self._altValues or self._tupleValues) else self._getGroups
 

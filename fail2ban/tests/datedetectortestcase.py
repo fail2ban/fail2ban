@@ -516,6 +516,9 @@ class CustomDateFormatsTest(unittest.TestCase):
 			(1072746123.0 - 3600, "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %Z)?", "[2003-12-30 01:02:03] server ..."),
 			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %z)?", "[2003-12-30 01:02:03 UTC] server ..."),
 			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %Z)?", "[2003-12-30 01:02:03 UTC] server ..."),
+			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %z)?", "[2003-12-30 01:02:03 Z] server ..."),
+			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %z)?", "[2003-12-30 01:02:03 +0000] server ..."),
+			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %Z)?", "[2003-12-30 01:02:03 Z] server ..."),
 		):
 			logSys.debug('== test: %r', (matched, dp, line))
 			if dp is None:
@@ -551,6 +554,9 @@ class CustomDateFormatsTest(unittest.TestCase):
 			(1123970401.0,  "^%ExH:%ExM:%ExS**", '00:00:01'),
 			# cover date with current year, in test cases now == Aug 2005 -> back to last year (Sep 2004):
 			(1094068799.0,  "^%m/%d %ExH:%ExM:%ExS**", '09/01 21:59:59'),
+			# no time (only date) in pattern, assume local 00:00:00 for H:M:S :
+			(1093989600.0,  "^%Y-%m-%d**",   '2004-09-01'),
+			(1093996800.0,  "^%Y-%m-%d%z**", '2004-09-01Z'),
 		):
 			logSys.debug('== test: %r', (matched, dp, line))
 			dd = DateDetector()

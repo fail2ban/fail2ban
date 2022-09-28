@@ -34,7 +34,7 @@ import sys
 
 from .observer import Observers, ObserverThread
 from .jails import Jails
-from .filter import FileFilter, JournalFilter
+from .filter import DNSUtils, FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
@@ -293,6 +293,11 @@ class Server:
 			for name in self.__jails.keys():
 				self.delJail(name, stop=False, join=True)
 
+	def clearCaches(self):
+		# we need to clear caches, to be able to recognize new IPs/families etc:
+		DNSUtils.CACHE_nameToIp.clear()
+		DNSUtils.CACHE_ipToName.clear()	
+
 	def reloadJails(self, name, opts, begin):
 		if begin:
 			# begin reload:
@@ -314,6 +319,8 @@ class Server:
 						if "--restart" in opts:
 							self.stopJail(name)
 				else:
+					# invalidate caches by reload
+					self.clearCaches()
 					# first unban all ips (will be not restored after (re)start):
 					if "--unban" in opts:
 						self.setUnbanIP()
@@ -384,7 +391,7 @@ class Server:
 		if isinstance(filter_, FileFilter):
 			return filter_.getLogPaths()
 		else: # pragma: systemd no cover
-			logSys.info("Jail %s is not a FileFilter instance" % name)
+			logSys.debug("Jail %s is not a FileFilter instance" % name)
 			return []
 	
 	def addJournalMatch(self, name, match): # pragma: systemd no cover
@@ -402,7 +409,7 @@ class Server:
 		if isinstance(filter_, JournalFilter):
 			return filter_.getJournalMatch()
 		else:
-			logSys.info("Jail %s is not a JournalFilter instance" % name)
+			logSys.debug("Jail %s is not a JournalFilter instance" % name)
 			return []
 	
 	def setLogEncoding(self, name, encoding):
@@ -671,7 +678,10 @@ class Server:
 				return True
 			padding = logOptions.get('padding')
 			# set a format which is simpler for console use
-			if systarget == "SYSLOG":
+			if systarget == "SYSTEMD-JOURNAL":
+				from systemd.journal import JournalHandler
+				hdlr = JournalHandler(SYSLOG_IDENTIFIER='fail2ban')
+			elif systarget == "SYSLOG":
 				facility = logOptions.get('facility', 'DAEMON').upper()
 				# backwards compatibility - default no padding for syslog handler:
 				if padding is None: padding = '0'
@@ -721,9 +731,7 @@ class Server:
 				except (ValueError, KeyError): # pragma: no cover
 					# Is known to be thrown after logging was shutdown once
 					# with older Pythons -- seems to be safe to ignore there
-					# At least it was still failing on 2.6.2-0ubuntu1 (jaunty)
-					if (2, 6, 3) <= sys.version_info < (3,) or \
-							(3, 2) <= sys.version_info:
+					if sys.version_info < (3,) or sys.version_info >= (3, 2):
 						raise
 			# detailed format by deep log levels (as DEBUG=10):
 			if logger.getEffectiveLevel() <= logging.DEBUG: # pragma: no cover
@@ -749,7 +757,8 @@ class Server:
 					verbose = self.__verbose-1
 				fmt = getVerbosityFormat(verbose, addtime=addtime, padding=padding)
 			# tell the handler to use this format
-			hdlr.setFormatter(logging.Formatter(fmt))
+			if target != "SYSTEMD-JOURNAL":
+				hdlr.setFormatter(logging.Formatter(fmt))
 			logger.addHandler(hdlr)
 			# Does not display this message at startup.
 			if self.__logTarget is not None:
@@ -788,7 +797,7 @@ class Server:
 			return self.__syslogSocket
 
 	def flushLogs(self):
-		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
+		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG', 'SYSTEMD-JOURNAL']:
 			for handler in getLogger("fail2ban").handlers:
 				try:
 					handler.doRollover()
@@ -803,6 +812,11 @@ class Server:
 				logSys.info("flush performed on %s" % self.__logTarget)
 			return "flushed"
 			
+	@staticmethod
+	def setIPv6IsAllowed(value):
+		value = _as_bool(value) if value != 'auto' else None
+		return DNSUtils.setIPv6IsAllowed(value)
+
 	def setThreadOptions(self, value):
 		for o, v in value.iteritems():
 			if o == 'stacksize':
@@ -838,6 +852,26 @@ class Server:
 	
 	def getDatabase(self):
 		return self.__db
+
+	@staticmethod
+	def __get_fdlist():
+		"""Generate a list of open file descriptors.
+		
+		This wouldn't work on some platforms, or if proc/fdescfs not mounted, or a chroot environment,
+		then it'd raise a FileExistsError.
+		"""
+		for path in (
+			'/proc/self/fd', # Linux, Cygwin and NetBSD
+			'/proc/fd',      # MacOS and FreeBSD
+		):
+			if os.path.exists(path):
+				def fdlist():
+					for name in os.listdir(path):
+						if name.isdigit():
+							yield int(name)
+				return fdlist()
+		# other platform or unmounted, chroot etc:
+		raise FileExistsError("fd-list not found")
 
 	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the
@@ -896,25 +930,37 @@ class Server:
 			# Signal to exit, parent of the first child.
 			return None
 	
-		# Close all open files.  Try the system configuration variable, SC_OPEN_MAX,
+		# Close all open files. Try to obtain the range of open descriptors directly.
+		# As a fallback try the system configuration variable, SC_OPEN_MAX,
 		# for the maximum number of open files to close.  If it doesn't exist, use
 		# the default value (configurable).
 		try:
-			maxfd = os.sysconf("SC_OPEN_MAX")
-		except (AttributeError, ValueError):
-			maxfd = 256	   # default maximum
+			fdlist = self.__get_fdlist()
+			maxfd = -1
+		except:
+			try:
+				maxfd = os.sysconf("SC_OPEN_MAX")
+			except (AttributeError, ValueError):
+				maxfd = 256	   # default maximum
+			fdlist = xrange(maxfd+1)
 	
 		# urandom should not be closed in Python 3.4.0. Fixed in 3.4.1
 		# http://bugs.python.org/issue21207
 		if sys.version_info[0:3] == (3, 4, 0): # pragma: no cover
 			urandom_fd = os.open("/dev/urandom", os.O_RDONLY)
-			for fd in range(0, maxfd):
+			for fd in fdlist:
 				try:
 					if not os.path.sameopenfile(urandom_fd, fd):
 						os.close(fd)
 				except OSError:   # ERROR (ignore)
 					pass
 			os.close(urandom_fd)
+		elif maxfd == -1:
+			for fd in fdlist:
+				try:
+					os.close(fd)
+				except OSError:   # ERROR (ignore)
+					pass
 		else:
 			os.closerange(0, maxfd)
 	
