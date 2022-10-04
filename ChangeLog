@@ -11,6 +11,10 @@ ver. 1.0.2-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Fixes
+* `filter.d/dovecot.conf`:
+  - fixes regression introduced in gh-3210: resolve extremely long search by repeated apply of non-greedy RE-part
+    with following branches (it may be extremely slow up to infinite search depending on message), gh-3370
+  - fixes regression and matches new format in aggressive mode too (amend to gh-3210)
 
 ### New Features and Enhancements
 
