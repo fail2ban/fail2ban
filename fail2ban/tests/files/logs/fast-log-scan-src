@@ -1,0 +1,2 @@
+10/08/2022-03:32:12.984300  [**] [1:2029054:2] ET SCAN Zmap User-Agent (Inbound) [**] [Classification: Detection of a Network Scan] [Priority: 3] {TCP} 192.241.206.226:51308 -> 192.168.14.42:443
+10/08/2022-09:27:48.261773  [**] [1:2031505:1] ET SCAN WordPress Scanner Performing Multiple Requests to Windows Live Writer XML [**] [Classification: Detection of a Network Scan] [Priority: 3] {TCP} 65.21.138.118:57045 -> 192.168.14.42:80

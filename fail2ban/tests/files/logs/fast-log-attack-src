@@ -1,0 +1,3 @@
+10/08/2022-19:55:04.165078  [**] [1:2403373:77918] ET CINS Active Threat Intelligence Poor Reputation IP group 74 [**] [Classification: Misc Attack] [Priority: 2] {TCP} 78.128.113.250:40927 -> 192.168.14.42:31408
+10/08/2022-20:02:09.229370  [**] [1:2403367:77918] ET CINS Active Threat Intelligence Poor Reputation IP group 68 [**] [Classification: Misc Attack] [Priority: 2] {UDP} 65.49.20.117:5178 -> 192.168.14.42:53
+10/08/2022-20:10:56.351896  [**] [1:2403367:77918] ET CINS Active Threat Intelligence Poor Reputation IP group 68 [**] [Classification: Misc Attack] [Priority: 2] {TCP} 65.49.20.73:45552 -> 192.168.14.42:443

@@ -1,0 +1,3 @@
+10/08/2022-18:11:22.963923  [**] [1:2260000:1] SURICATA Applayer Mismatch protocol both directions [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 138.197.151.131:47936 -> 192.168.14.42:80
+10/06/2022-05:19:07.765532  [**] [1:2260000:1] SURICATA Applayer Mismatch protocol both directions [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 167.99.40.147:36782 -> 192.168.14.42:2222
+10/08/2022-16:18:19.835838  [**] [1:2260000:1] SURICATA Applayer Mismatch protocol both directions [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 222.186.19.235:38354 -> 192.168.14.42:80

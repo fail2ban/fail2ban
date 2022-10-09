@@ -1,0 +1,4 @@
+10/06/2022-20:07:59.234800  [**] [1:2230003:1] SURICATA TLS invalid handshake message [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 165.22.18.14:45666 -> 192.168.14.42:443
+10/06/2022-20:07:59.234800  [**] [1:2230010:1] SURICATA TLS invalid record/traffic [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 165.22.18.14:45666 -> 192.168.14.42:443
+10/06/2022-19:04:16.822978  [**] [1:2230003:1] SURICATA TLS invalid handshake message [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 87.236.176.146:56949 -> 192.168.14.42:443
+10/06/2022-19:04:16.822978  [**] [1:2230010:1] SURICATA TLS invalid record/traffic [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 87.236.176.146:56949 -> 192.168.14.42:443

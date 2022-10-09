@@ -1,0 +1,3 @@
+10/07/2022-20:25:42.195149  [**] [1:2100257:10] GPL DNS named version attempt [**] [Classification: Attempted Information Leak] [Priority: 2] {TCP} 45.83.66.17:64614 -> 192.168.14.42:53
+10/07/2022-19:52:48.943767  [**] [1:2023753:3] ET SCAN MS Terminal Server Traffic on Non-standard Port [**] [Classification: Attempted Information Leak] [Priority: 2] {TCP} 185.190.24.102:64537 -> 192.168.14.42:8448
+10/07/2022-01:26:53.845306  [**] [1:2019418:6] ET EXPLOIT SSL excessive fatal alerts (possible POODLE attack against server) [**] [Classification: Attempted Information Leak] [Priority: 2] {TCP} 192.168.14.42:443 -> 18.234.254.127:38304
