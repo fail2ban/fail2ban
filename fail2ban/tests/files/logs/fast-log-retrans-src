@@ -1,5 +1,2 @@
-10/01/2022-17:52:17.892262  [**] [1:2210054:1] SURICATA STREAM excessive retransmissions [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 117.26.89.136:55566 -> 192.168.14.42:25
-10/01/2022-16:08:38.378238  [**] [1:2210054:1] SURICATA STREAM excessive retransmissions [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 27.30.19.131:55464 -> 192.168.14.42:25
-10/01/2022-13:28:18.232180  [**] [1:2210054:1] SURICATA STREAM excessive retransmissions [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 121.205.230.234:57468 -> 192.168.14.42:25
-
-
+# failJSON: { "time": "2022-10-01T17:52:17", "match": true , "1.2.3.4" }
+10/01/2022-17:52:17.892262  [**] [1:2210054:1] SURICATA STREAM excessive retransmissions [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 1.2.3.4:55566 -> 192.168.14.42:25
