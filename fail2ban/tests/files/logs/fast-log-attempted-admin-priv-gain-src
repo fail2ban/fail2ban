@@ -1,12 +1,12 @@
-# failJSON: { "time": "2022-10-06T22:29:51", "match": true , "1.2.3.4" }
+# failJSON: { "time": "2022-10-06T22:29:51", "match": true , "host": "1.2.3.4" }
 10/06/2022-22:29:51.168508  [**] [1:2019309:4] ET WEB_SERVER WGET Command Specifying Output in HTTP Headers [**] [Classification: Attempted Administrator Privilege Gain] [Priority: 1] {TCP} 1.2.3.4:57282 -> 192.168.14.42:80
 
-# failJSON: { "time": "2022-10-06T22:29:51", "match": true , "1.2.3.4" }
+# failJSON: { "time": "2022-10-06T22:29:51", "match": true , "host": "1.2.3.4" }
 10/06/2022-22:29:51.168508  [**] [1:2020899:5] ET EXPLOIT D-Link Devices Home Network Administration Protocol Command Execution [**] [Classification: Attempted Administrator Privilege Gain] [Priority: 1] {TCP} 1.2.3.4:57282 -> 192.168.14.42:80
 
-# failJSON: { "time": "2022-10-08T19:15:19", "match": true , "1.2.3.4" }
+# failJSON: { "time": "2022-10-08T19:15:19", "match": true , "host": "1.2.3.4" }
 10/08/2022-19:15:19.299994  [**] [1:2009363:10] ET HUNTING Suspicious Chmod Usage in URI (Inbound) [**] [Classification: Attempted Administrator Privilege Gain] [Priority: 1] {TCP} 1.2.3.4:44942 -> 192.168.14.42:80
 
-# failJSON: { "time": "2022-10-04T03:30:44", "match": true , "1.2.3.4" }
+# failJSON: { "time": "2022-10-04T03:30:44", "match": true , "host": "1.2.3.4" }
 10/04/2022-03:30:44.151242  [**] [1:2025883:3] ET EXPLOIT MVPower DVR Shell UCE [**] [Classification: Attempted Administrator Privilege Gain] [Priority: 1] {TCP} 1.2.3.4:33016 -> 192.168.14.42:80
 

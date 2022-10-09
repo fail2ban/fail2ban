@@ -1,2 +1,2 @@
-# failJSON: { "time": "2022-10-08T18:11:22", "match": true , "1.2.3.4" }
+# failJSON: { "time": "2022-10-08T18:11:22", "match": true , "host": "1.2.3.4" }
 10/08/2022-18:11:22.963923  [**] [1:2260000:1] SURICATA Applayer Mismatch protocol both directions [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 1.2.3.4:47936 -> 192.168.14.42:80

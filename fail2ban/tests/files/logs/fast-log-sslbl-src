@@ -1,5 +1,5 @@
-# failJSON: { "time": "2022-10-07T21:21:36", "match": true , "1.2.3.4" }
+# failJSON: { "time": "2022-10-07T21:21:36", "match": true , "host": "1.2.3.4" }
 10/07/2022-21:21:36.712370  [**] [1:906200068:1] SSLBL: Malicious JA3 SSL-Client Fingerprint detected (CoinMiner) [**] [Classification: (null)] [Priority: 3] {TCP} 1.2.3.4:57896 -> 192.168.14.42:443
 
-# failJSON: { "time": "2022-10-08T04:10:48", "match": true , "1.2.3.4" }
+# failJSON: { "time": "2022-10-08T04:10:48", "match": true , "host": "1.2.3.4" }
 10/08/2022-04:10:48.547474  [**] [1:906200006:1] SSLBL: Malicious JA3 SSL-Client Fingerprint detected (Tofsee) [**] [Classification: (null)] [Priority: 3] {TCP} 1.2.3.4:23264 -> 192.168.14.42:443

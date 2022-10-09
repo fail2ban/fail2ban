@@ -1,5 +1,5 @@
-# failJSON: { "time": "2022-10-08T20:07:59", "match": true , "1.2.3.4" }
+# failJSON: { "time": "2022-10-08T20:07:59", "match": true , "host": "1.2.3.4" }
 10/06/2022-20:07:59.234800  [**] [1:2230003:1] SURICATA TLS invalid handshake message [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 1.2.3.4:45666 -> 192.168.14.42:443
 
-# failJSON: { "time": "2022-10-08T20:07:59", "match": true , "1.2.3.4" }
+# failJSON: { "time": "2022-10-08T20:07:59", "match": true , "host": "1.2.3.4" }
 10/06/2022-20:07:59.234800  [**] [1:2230010:1] SURICATA TLS invalid record/traffic [**] [Classification: Generic Protocol Command Decode] [Priority: 3] {TCP} 1.2.3.4:45666 -> 192.168.14.42:443
