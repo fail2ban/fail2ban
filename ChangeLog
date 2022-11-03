@@ -11,6 +11,9 @@ ver. 1.0.2-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Fixes
+* `filter.d/named-refused.conf`:
+  - support BIND named log categories, gh-3388
+  - allow `info:` as possible error prefix too ("query (cache) denied" may occur as info)
 * `filter.d/dovecot.conf`:
   - fixes regression introduced in gh-3210: resolve extremely long search by repeated apply of non-greedy RE-part
     with following branches (it may be extremely slow up to infinite search depending on message), gh-3370
