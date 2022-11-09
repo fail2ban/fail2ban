@@ -1,3 +1,9 @@
+fail2ban (1.0.2-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Wed, 09 Nov 2022 17:42:47 +0100
+
 fail2ban (1.0.1-1~exp1) experimental; urgency=medium
 
   [ Bastian Germann ]
