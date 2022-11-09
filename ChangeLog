@@ -7,6 +7,25 @@
 Fail2Ban: Changelog
 ===================
 
+ver. 1.0.2 (2022/11/09) - finally-war-game-test-tape-not-a-nuclear-alarm
+-----------
+
+### Fixes
+* backend `systemd`: code review and several fixes:
+  - wait only if it is necessary, e. g. in operational mode and if no more entries retrieved (end of journal);
+  - ensure we give enough time after possible rotation, vacuuming or adding/removing journal files,
+    and move cursor back and forth to avoid entering dead space
+* `filter.d/named-refused.conf`:
+  - support BIND named log categories, gh-3388
+  - allow `info:` as possible error prefix too ("query (cache) denied" may occur as info)
+* `filter.d/dovecot.conf`:
+  - fixes regression introduced in gh-3210: resolve extremely long search by repeated apply of non-greedy RE-part
+    with following branches (it may be extremely slow up to infinite search depending on message), gh-3370
+  - fixes regression and matches new format in aggressive mode too (amend to gh-3210)
+
+### New Features and Enhancements
+
+
 ver. 1.0.1 (2022/09/27) - energy-equals-mass-times-the-speed-of-light-squared
 -----------
 
