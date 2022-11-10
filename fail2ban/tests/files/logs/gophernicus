@@ -1,0 +1,6 @@
+# failJSON: { "time": "2005-03-13T10:59:44", "match": true, "host": "192.0.2.30" }
+Mar 13 10:59:44 server gophernicus[21661]: error "File or directory not found! " for request "/^C" from 192.0.2.30 (No such file or directory)
+# failJSON: { "time": "2005-03-14T14:18:15", "match": true, "host": "192.0.2.36" }
+Mar 14 14:18:15 server gophernicus[8059]: error "File or directory not found! " for request "/^V^C^A^B" from 192.0.2.36 (No such file or directory)
+# failJSON: { "time": "2005-03-15T21:43:27", "match": true, "host": "192.0.2.130" }
+Mar 15 21:43:27 server gophernicus[31389]: error "File or directory not found! " for request "/^V^C^A" from 192.0.2.130 (No such file or directory)
