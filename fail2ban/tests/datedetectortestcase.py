@@ -119,6 +119,15 @@ class DateDetectorTest(LogCaptureTestCase):
 			log = log % dateLong
 			datelog = self.datedetector.getTime(log)
 			self.assertFalse(datelog)
+
+	def testGetEpochPatternCut(self):
+		self.__datedetector = DateDetector()
+		self.__datedetector.appendTemplate(r'^type=\S+ msg=audit\(({EPOCH})')
+		# correct epoch time and cut out epoch string only (captured group only, not the whole match):
+		line = "type=USER_AUTH msg=audit(1106513999.000:987)"
+		datelog = self.datedetector.getTime(line)
+		timeMatch = datelog[1]
+		self.assertEqual([int(datelog[0]), line[timeMatch.start(1):timeMatch.end(1)]], [1106513999, '1106513999.000'])
 	
 	def testGetTime(self):
 		log = "Jan 23 21:59:59 [sshd] error: PAM: Authentication failure"
