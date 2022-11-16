@@ -17,3 +17,20 @@ Feb 24 14:00:00 server sendmail[26592]: u0CB32qX026592: [192.0.2.1]: possible SM
 
 # failJSON: { "time": "2005-02-24T14:00:01", "match": true , "host": "192.0.2.2", "desc": "long PID, ID longer as 14 chars (gh-2563)" }
 Feb 24 14:00:01 server sendmail[3529566]: xA32R2PQ3529566: [192.0.2.2]: possible SMTP attack: command=AUTH, count=5
+
+# failJSON: { "time": "2005-02-25T04:02:27", "match": true , "host": "192.0.2.3", "desc": "sendmail 8.16.1, AUTH_FAIL_LOG_USER (gh-2757)" }
+Feb 25 04:02:27 relay1 sendmail[16664]: 06I02CNi016764: AUTH failure (LOGIN): authentication failure (-13) SASL(-13): authentication failure: checkpass failed, user=user@example.com, relay=example.com [192.0.2.3] (may be forged)
+# failJSON: { "time": "2005-02-25T04:02:28", "match": true , "host": "192.0.2.4", "desc": "injection attempt on user name" }
+Feb 25 04:02:28 relay1 sendmail[16665]: 06I02CNi016765: AUTH failure (LOGIN): authentication failure (-13) SASL(-13): authentication failure: checkpass failed, user=criminal, relay=[192.0.2.100], relay=[192.0.2.4] (may be forged)
+
+# failJSON: { "time": "2005-05-24T01:58:40", "match": true , "host": "192.0.2.5", "desc": "user not found (gh-3030)" }
+May 24 01:58:40 server sm-mta[65696]: 14NNwaRl065696: AUTH failure (DIGEST-MD5): user not found (-20) SASL(-13): user not found: unable to canonify user and get auxprops, user=scanner, relay=[192.0.2.5]
+# failJSON: { "time": "2005-05-24T01:59:07", "match": true , "host": "192.0.2.6", "desc": "user not found (gh-3030)" }
+May 24 01:59:07 server sm-mta[65815]: 14NNx65Q065815: AUTH failure (CRAM-MD5): user not found (-20) SASL(-13): user not found: user: scan@server.example.com property: userPassword not found in sasldb /usr/local/etc/sasldb2, user=scan, relay=[192.0.2.6]
+
+# failJSON: { "time": "2005-05-29T23:14:04", "match": true , "host": "192.0.2.7", "desc": "authentication failure, sendmail 8.16.1 (gh-2757)" }
+May 29 23:14:04 mail sendmail[5976]: 09DJDgOM005976: AUTH failure (login): authentication failure (-13) SASL(-13): authentication failure: checkpass failed, user=test, relay=host.example.com [192.0.2.7] (may be forged)
+# failJSON: { "time": "2005-05-29T23:14:04", "match": true , "host": "192.0.2.8", "desc": "authentication failure, sendmail 8.16.1 (gh-2757)" }
+May 29 23:14:04 mail sendmail[5976]: 09DJDgOM005976: AUTH failure (PLAIN): authentication failure (-13) SASL(-13): authentication failure: Password verification failed, user=test, relay=host.example.com [192.0.2.8]
+# failJSON: { "time": "2005-05-29T23:14:05", "match": true , "host": "192.0.2.9", "desc": "authentication failure, no user part (gh-2757)" }
+May 29 23:14:05 server sendmail[25411]: 26H8MRrS025411: AUTH failure (LOGIN): authentication failure (-13) SASL(-13): authentication failure: checkpass failed, relay=[192.0.2.9]

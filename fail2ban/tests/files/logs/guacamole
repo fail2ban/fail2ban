@@ -10,3 +10,8 @@ WARNING: Authentication attempt from 192.0.2.0 for user "null" failed.
 apr 16, 2013 8:32:28 AM org.slf4j.impl.JCLLoggerAdapter warn
 # failJSON: { "time": "2013-04-16T08:32:28", "match": true , "host": "192.0.2.0" }
 WARNING: Authentication attempt from 192.0.2.0 for user "pippo" failed.
+
+# filterOptions: {"logging": "webapp"}
+
+# failJSON: { "time": "2005-08-13T12:57:32", "match": true , "host": "182.23.72.36" }
+12:57:32.907 [http-nio-8080-exec-10] WARN  o.a.g.r.auth.AuthenticationService - Authentication attempt from 182.23.72.36 for user "guacadmin" failed.

@@ -29,7 +29,7 @@ import re
 import sys
 from ..helpers import getLogger
 
-if sys.version_info >= (3,2):
+if sys.version_info >= (3,): # pragma: 2.x no cover
 
 	# SafeConfigParser deprecated from Python 3.2 (renamed to ConfigParser)
 	from configparser import ConfigParser as SafeConfigParser, BasicInterpolation, \
@@ -61,7 +61,7 @@ if sys.version_info >= (3,2):
 				return super(BasicInterpolationWithName, self)._interpolate_some(
 					parser, option, accum, rest, section, map, *args, **kwargs)
 
-else: # pragma: no cover
+else: # pragma: 3.x no cover
 	from ConfigParser import SafeConfigParser, \
 		InterpolationMissingOptionError, NoOptionError, NoSectionError
 
@@ -372,7 +372,8 @@ after = 1.conf
 						s2 = alls.get(n)
 						if isinstance(s2, dict):
 							# save previous known values, for possible using in local interpolations later:
-							self.merge_section('KNOWN/'+n, s2, '')
+							self.merge_section('KNOWN/'+n, 
+								dict(filter(lambda i: i[0] in s, s2.iteritems())), '')
 							# merge section
 							s2.update(s)
 						else:

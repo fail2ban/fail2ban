@@ -1,0 +1,4 @@
+[Definition]
+
+# no options here, coverage for testFilterReaderSubstKnown:
+# avoid to overwrite known/option with unmodified (not available) value of option from .local config file

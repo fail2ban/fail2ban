@@ -1,0 +1,11 @@
+# failJSON: { "time": "2020-02-24T16:05:21", "match": true , "host": "192.0.2.1" }
+2020-02-24 16:05:21.00 Logon       Login failed for user 'Backend'. Reason: Could not find a login matching the name provided. [CLIENT: 192.0.2.1]
+# failJSON: { "time": "2020-02-24T16:30:25", "match": true , "host": "192.0.2.2" }
+2020-02-24 16:30:25.88 Logon       Login failed for user '===)jf02hüas9ä##22f'. Reason: Could not find a login matching the name provided. [CLIENT: 192.0.2.2]
+# failJSON: { "time": "2020-02-24T16:31:12", "match": true , "host": "192.0.2.3" }
+2020-02-24 16:31:12.20 Logon       Login failed for user ''. Reason: An attempt to login using SQL authentication failed. Server is configured for Integrated authentication only. [CLIENT: 192.0.2.3]
+
+# failJSON: { "time": "2020-02-24T16:31:26", "match": true , "host": "192.0.2.4", "user":"O'Leary" }
+2020-02-24 16:31:26.01 Logon       Login failed for user 'O'Leary'. Reason: Could not find a login matching the name provided. [CLIENT: 192.0.2.4]
+# failJSON: { "time": "2020-02-24T16:31:26", "match": false, "desc": "test injection in possibly unescaped foreign input" }
+2020-02-24 16:31:26.02 Wrong data received: Logon       Login failed for user 'test'. Reason: Could not find a login matching the name provided. [CLIENT: 192.0.2.5]

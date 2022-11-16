@@ -1,0 +1,7 @@
+# Access of unauthorized host in /usr/local/vpnserver/security_log/*/sec.log
+# failJSON: { "time": "2020-05-12T10:53:19", "match": true , "host": "80.10.11.12" }
+2020-05-12 10:53:19.781 Connection "CID-72": User authentication failed. The user name that has been provided was "bob", from 80.10.11.12.
+
+# Access of unauthorized host in syslog
+# failJSON: { "time": "2020-05-13T10:53:19", "match": true , "host": "80.10.11.13" }
+2020-05-13T10:53:19 localhost  [myserver.com/VPN/defaultvpn] (2020-05-13 10:53:19.591) <SECURITY_LOG>: Connection "CID-594": User authentication failed. The user name that has been provided was "alice", from 80.10.11.13.

@@ -130,7 +130,7 @@ Comments: use '#' for comment lines and '; ' (space is important) for inline com
 The items that can be set in section [Definition] are:
 .TP
 .B loglevel
-verbosity level of log output: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG, TRACEDEBUG, HEAVYDEBUG or corresponding numeric value (50-5). Default: ERROR (equal 40)
+verbosity level of log output: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG, TRACEDEBUG, HEAVYDEBUG or corresponding numeric value (50-5). Default: INFO (equal 20)
 .TP
 .B logtarget
 log target: filename, SYSLOG, STDERR or STDOUT. Default: STDOUT if not set in fail2ban.conf/fail2ban.local
@@ -150,6 +150,11 @@ This is used for communication with the fail2ban server daemon. Do not remove th
 PID filename.  Default: /var/run/fail2ban/fail2ban.pid
 .br
 This is used to store the process ID of the fail2ban server.
+.TP
+.B allowipv6
+option to allow IPv6 interface - auto, yes (on, true, 1) or no (off, false, 0).  Default: auto
+.br
+This value can be used to declare fail2ban whether IPv6 is allowed or not.
 .TP
 .B dbfile
 Database filename. Default: /var/lib/fail2ban/fail2ban.sqlite3
@@ -266,7 +271,7 @@ effective ban duration (in seconds or time abbreviation format).
 time interval (in seconds or time abbreviation format) before the current time where failures will count towards a ban.
 .TP
 .B maxretry
-number of failures that have to occur in the last \fBfindtime\fR seconds to ban then IP.
+number of failures that have to occur in the last \fBfindtime\fR seconds to ban the IP.
 .TP
 .B backend
 backend to be used to detect changes in the logpath.
@@ -275,6 +280,9 @@ It defaults to "auto" which will try "pyinotify", "gamin", "systemd" before "pol
 .TP
 .B usedns
 use DNS to resolve HOST names that appear in the logs. By default it is "warn" which will resolve hostnames to IPs however it will also log a warning. If you are using DNS here you could be blocking the wrong IPs due to the asymmetric nature of reverse DNS (that the application used to write the domain name to log) compared to forward DNS that fail2ban uses to resolve this back to an IP (but not necessarily the same one). Ideally you should configure your applications to log a real IP. This can be set to "yes" to prevent warnings in the log or "no" to disable DNS resolution altogether (thus ignoring entries where hostname, not an IP is logged)..
+.TP
+.B prefregex
+regex (Python \fBreg\fRular \fBex\fRpression) to parse a common part containing in every message (see \fBprefregex\fR in section FILTER FILES for details).
 .TP
 .B failregex
 regex (Python \fBreg\fRular \fBex\fRpression) to be added to the filter's failregexes (see \fBfailregex\fR in section FILTER FILES for details). If this is useful for others using your application please share you regular expression with the fail2ban developers by reporting an issue (see REPORTING BUGS below).
@@ -298,7 +306,14 @@ requires Gamin (a file alteration monitor) to be installed. If Gamin is not inst
 uses a polling algorithm which does not require external libraries.
 .TP
 .B systemd
-uses systemd python library to access the systemd journal. Specifying \fBlogpath\fR is not valid for this backend and instead utilises \fBjournalmatch\fR from the jails associated filter config.
+uses systemd python library to access the systemd journal. Specifying \fBlogpath\fR is not valid for this backend and instead utilises \fBjournalmatch\fR from the jails associated filter config. Multiple systemd-specific flags can be passed to the backend, including \fBjournalpath\fR and \fBjournalfiles\fR, to explicitly set the path to a directory or set of files. \fBjournalflags\fR, which by default is 4 and excludes user session files, can be set to include them with \fBjournalflags=1\fR, see the python-systemd documentation for other settings and further details. Examples:
+.PP
+.RS
+.nf
+backend = systemd[journalpath=/run/log/journal/machine-1]
+backend = systemd[journalfiles="/path/to/system.journal, /path/to/user.journal"]
+backend = systemd[journalflags=1]
+.fi
 
 .SS Actions
 Each jail can be configured with only a single filter, but may have multiple actions. By default, the name of a action is the action filename, and in the case of Python actions, the ".py" file extension is stripped. Where multiple of the same action are to be used, the \fBactname\fR option can be assigned to the action to avoid duplication e.g.:
@@ -425,7 +440,36 @@ These are used to identify failed authentication attempts in log files and to ex
 
 Like action files, filter files are ini files. The main section is the [Definition] section.
 
-There are two filter definitions used in the [Definition] section:
+There are several standard filter definitions used in the [Definition] section:
+.TP
+.B prefregex
+is the regex (\fBreg\fRular \fBex\fRpression) to parse a common part containing in every message, which is applied after \fBdatepattern\fR found a match, before the search for any \fBfailregex\fR or \fBignoreregex\fR would start.
+.br
+If this regex doesn't match the process is starting immediately with next message and search for any \fBfailregex\fR does not occur.
+.br
+If \fBprefregex\fR contains \fI<F-CONTENT>...</F-CONTENT>\fR, the part of message enclosed between this tags will be extracted and herafter used as whole message for search with \fBfailregex\fR or \fBignoreregex\fR.
+.IP
+For example:
+.nf
+        prefregex = ^%(__prefix_line)s (?:ERROR|FAILURE) <F-CONTENT>.+</F-CONTENT>$
+        failregex = ^user not found
+                    ^authentication failed
+                    ^unknown authentication method
+.fi
+.IP
+You can use \fBprefregex\fR in order to:
+.RS
+.IP
+- specify 1 common regex to match some common part present in every messages (do avoid unneeded match in every \fBfailregex\fR if you have more as one);
+.IP
+- to cut some interesting part of message only (to simplify \fBfailregex\fR) enclosed between tags \fI<F-CONTENT>\fI and \fI</F-CONTENT>\fR;
+.IP
+- to gather some failure identifier (e. g. some prefix matched by \fI<F-MLFID>...<F-MLFID/>\fR tag) to identify several messages belonging to same session, where a connect message containing IP followed by failure message(s) that are not contain IP;
+this provides a new multi-line parsing method as replacement for old (slow an ugly) multi-line parsing using buffering window (\fImaxlines\fR > 1 and \fI<SKIPLINES>\fR);
+.IP
+- to ignore some wrong, too long or even unneeded messages (a.k.a. parasite log traffic) which can be also present in journal, before \fBfailregex\fR search would take place.
+.RE
+
 .TP
 .B failregex
 is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The standard replacement tags can be used as part of the regex:
@@ -437,39 +481,74 @@ is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. T
 .IP
 \fI<IP4>\fR - regex for IPv4 addresses.
 .IP
-\fI<IP6>\fR - regex for IPv6 addresses (also IP enclosed in brackets).
+\fI<IP6>\fR - regex for IPv6 addresses.
 .IP
 \fI<DNS>\fR - regex to match hostnames.
 .IP
 \fI<CIDR>\fR - helper regex to match CIDR (simple integer form of net-mask).
 .IP
-\fI<SUBNET>\fR - regex to match sub-net adresses (in form of IP/CIDR, also single IP is matched, so part /CIDR is optional).
+\fI<SUBNET>\fR - regex to match sub-net addresses (in form of IP/CIDR, also single IP is matched, so part /CIDR is optional).
+.IP
+\fI<F-ID>...</F-ID>\fR - free regex capturing group targeting identifier used for ban (instead of IP address or hostname).
+.IP
+\fI<F-*>...</F-*>\fR - free regex capturing named group stored in ticket, which can be used in action.
+.nf
+For example \fI<F-USER>[^@]+</F-USER>\fR matches and stores a user name, that can be used in action with interpolation tag \fI<F-USER>\fR.
+.IP
+\fI<F-ALT_*n>...</F-ALT_*n>\fR - free regex capturing alternative named group stored in ticket.
+.nf
+For example first found matched value defined in regex as \fI<F-ALT_USER>\fR, \fI<F-ALT_USER1>\fR or \fI<F-ALT_USER2>\fR would be stored as <F-USER> (if direct match is not found or empty).
+.PP
+Every of abovementioned tags can be specified in \fBprefregex\fR and in \fBfailregex\fR, thereby if specified in both, the value matched in \fBfailregex\fR overwrites a value matched in \fBprefregex\fR.
+.TQ
+All standard tags like IP4 or IP6 can be also specified with custom regex using \fI<F-*>...</F-*>\fR syntax, for example \fI(?:ip4:<F-IP4>\\S+</F-IP4>|ip6:<F-IP6>\\S+</F-IP6>)\fR.
+.TQ
+Tags \fI<ADDR>\fR, \fI<HOST>\fR and \fI<SUBNET>\fR would also match the IP address enclosed in square brackets.
+.PP
+\fBNOTE:\fR the \fBfailregex\fR will be applied to the remaining part of message after \fBprefregex\fR processing (if specified), which in turn takes place after \fBdatepattern\fR processing (whereby the string of timestamp matching the best pattern, cut out from the message).
+.PP
+For multiline regexs (parsing with \fImaxlines\fR greater that 1) the tag \fI<SKIPLINES>\fR can be used to separate lines. This allows lines between the matched lines to continue to be searched for other failures. The tag can be used multiple times.
+.br
+This is an obsolete handling and if the lines contain some common identifier, better would be to use new handling (with tags \fI<F-MLFID>...<F-MLFID/>\fR).
 .RE
-.TP
-For multiline regexs the tag \fI<SKIPLINES>\fR should be used to separate lines. This allows lines between the matched lines to continue to be searched for other failures. The tag can be used multiple times.
 
 .TP
 .B ignoreregex
 is the regex to identify log entries that should be ignored by Fail2Ban, even if they match failregex.
 
-
-.PP
-Similar to actions, filters have an [Init] section which can be overridden in \fIjail.conf/jail.local\fR. Besides the filter-specific settings, the filter [Init] section can be used to set following standard options:
 .TP
 \fBmaxlines\fR
 specifies the maximum number of lines to buffer to match multi-line regexs. For some log formats this will not required to be changed. Other logs may require to increase this value if a particular log file is frequently written to.
 .TP
 \fBdatepattern\fR
-specifies a custom date pattern/regex as an alternative to the default date detectors e.g. %Y-%m-%d %H:%M(?::%S)?. For a list of valid format directives, see Python library documentation for strptime behaviour.
-.br
-Also, special values of \fIEpoch\fR (UNIX Timestamp), \fITAI64N\fR and \fIISO8601\fR can be used.
+specifies a custom date pattern/regex as an alternative to the default date detectors e.g. %%Y-%%m-%%d %%H:%%M(?::%%S)?.
+For a list of valid format directives, see Python library documentation for strptime behaviour.
 .br
 \fBNOTE:\fR due to config file string substitution, that %'s must be escaped by an % in config files.
+.br
+Also, special values of \fIEpoch\fR (UNIX Timestamp), \fITAI64N\fR and \fIISO8601\fR can be used as datepattern.
+.br
+Normally the regexp generated for datepattern additionally gets word-start and word-end boundaries to avoid accidental match inside of some word in a message.
+There are several prefixes and words with special meaning that could be specified with custom datepattern to control resulting regex:
+.RS
+.IP
+\fI{DEFAULT}\fR - can be used to add default date patterns of fail2ban.
+.IP
+\fI{DATE}\fR - can be used as part of regex that will be replaced with default date patterns.
+.IP
+\fI{^LN-BEG}\fR - prefix (similar to \fI^\fR) changing word-start boundary to line-start boundary (ignoring up to 2 characters). If used as value (not as a prefix), it will also set all default date patterns (similar to \fI{DEFAULT}\fR), but anchored at begin of message line.
+.IP
+\fI{UNB}\fR - prefix to disable automatic word boundaries in regex.
+.IP
+\fI{NONE}\fR - value would allow one to find failures totally without date-time in log message. Filter will use now as a timestamp (or last known timestamp from previous line with timestamp).
+.RE
 .TP
 \fBjournalmatch\fR
 specifies the systemd journal match used to filter the journal entries. See \fBjournalctl(1)\fR and \fBsystemd.journal-fields(7)\fR for matches syntax and more details on special journal fields. This option is only valid for the \fIsystemd\fR backend.
 .PP
-Similar to actions [Init] section enables filter-specific settings. All parameters specified in [Init] section can be redefined or extended in \fIjail.conf/jail.local\fR.
+Similar to actions, filters may have an [Init] section also (optional since v.0.10). All parameters of both sections [Definition] and [Init] can be overridden (redefined or extended) in \fIjail.conf\fR or \fIjail.local\fR (or in related \fIfilter.d/filter-name.local\fR).
+Every option supplied in the jail to the filter overwrites the value specified in [Init] section, which in turm would overwrite the value in [Definition] section.
+Besides the standard settings of filter both sections can be used to initialize filter-specific options.
 
 Filters can also have a section called [INCLUDES]. This is used to read other configuration files.
 

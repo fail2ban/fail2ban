@@ -8,3 +8,5 @@ Nov 13 08:11:53 server imapd-ssl: LOGIN FAILED, user=user@domain.tld, ip=[::ffff
 Apr 17 19:17:11 SERVER courierpop3login: LOGIN FAILED, user=USER@EXAMPLE.org, ip=[::ffff:1.2.3.4]
 # failJSON: { "time": "2005-04-17T19:17:12", "match": true , "host": "192.0.2.4" }
 Apr 17 19:17:12 server imapd-ssl: LOGIN FAILED, method=PLAIN, ip=[::ffff:192.0.2.4]
+# failJSON: { "time": "2005-04-27T09:00:00", "match": true , "user": "tester", "host": "192.0.2.5" }
+Apr 27 09:00:00 servername imapd: LOGIN FAILED, user=tester, ip=[::ffff:192.0.2.5], port=[255]

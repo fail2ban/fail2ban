@@ -1,0 +1,5 @@
+# Access of unauthorized host in /var/log/grafana/grafana.log
+# failJSON: { "time": "2020-10-19T17:44:33", "match": true , "host": "182.56.23.12" }
+t=2020-10-19T17:44:33+0200 lvl=eror msg="Invalid username or password" logger=context userId=0 orgId=0 uname= error="Invalid Username or Password" remote_addr=182.56.23.12
+# failJSON: { "time": "2020-10-19T18:44:33", "match": true , "host": "182.56.23.13" }
+t=2020-10-19T18:44:33+0200 lvl=eror msg="Invalid username or password" logger=context userId=0 orgId=0 uname= error="User not found" remote_addr=182.56.23.13

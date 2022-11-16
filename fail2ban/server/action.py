@@ -30,7 +30,10 @@ import tempfile
 import threading
 import time
 from abc import ABCMeta
-from collections import MutableMapping
+try:
+	from collections.abc import MutableMapping
+except ImportError:
+	from collections import MutableMapping
 
 from .failregex import mapTag2Opt
 from .ipdns import DNSUtils
@@ -455,7 +458,18 @@ class CommandAction(ActionBase):
 				ret = True
 				# avoid double execution of same command for both families:
 				if cmd and cmd not in self._operationExecuted(tag, lambda f: f != famoper):
-					ret = self.executeCmd(cmd, self.timeout)
+					realCmd = cmd
+					if self._jail:
+						# simulate action info with "empty" ticket:
+						aInfo = getattr(self._jail.actions, 'actionInfo', None)
+						if not aInfo:
+							aInfo = self._jail.actions._getActionInfo(None)
+							setattr(self._jail.actions, 'actionInfo', aInfo)
+						aInfo['time'] = MyTime.time()
+						aInfo['family'] = famoper
+						# replace dynamical tags, important - don't cache, no recursion and auto-escape here
+						realCmd = self.replaceDynamicTags(cmd, aInfo)
+					ret = self.executeCmd(realCmd, self.timeout)
 					res &= ret
 				if afterExec: afterExec(famoper, ret)
 				self._operationExecuted(tag, famoper, cmd if ret else None)
@@ -868,7 +882,7 @@ class CommandAction(ActionBase):
 			tickData = aInfo.get("F-*")
 			if not tickData: tickData = {}
 			def substTag(m):
-				tag = mapTag2Opt(m.groups()[0])
+				tag = mapTag2Opt(m.group(1))
 				try:
 					value = uni_string(tickData[tag])
 				except KeyError:

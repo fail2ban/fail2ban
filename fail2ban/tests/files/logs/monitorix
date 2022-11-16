@@ -1,0 +1,8 @@
+# failJSON: { "time": "2021-04-14T08:11:01", "match": false, "desc": "should be ignored: successful request" }
+Wed Apr 14 08:11:01 2021 - OK - [127.0.0.1] "GET /monitorix-cgi/monitorix.cgi - Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0"
+# failJSON: { "time": "2021-04-14T08:54:22", "match": true, "host": "127.0.0.1", "desc": "file does not exist"  }
+Wed Apr 14 08:54:22 2021 - NOTEXIST - [127.0.0.1] File does not exist: /manager/html
+# failJSON: { "time": "2021-04-14T11:24:31", "match": true, "host": "127.0.0.1", "desc": "access not allowed"  }
+Wed Apr 14 11:24:31 2021 - NOTALLOWED - [127.0.0.1] Access not allowed: /monitorix/
+# failJSON: { "time": "2021-04-14T11:26:08", "match": true, "host": "127.0.0.1", "desc": "authentication error"  }
+Wed Apr 14 11:26:08 2021 - AUTHERR - [127.0.0.1] Authentication error: /monitorix/

@@ -153,7 +153,7 @@ class Socket(LogCaptureTestCase):
 		org_handler = RequestHandler.found_terminator
 		try:
 			RequestHandler.found_terminator = lambda self: self.close()
-			self.assertRaisesRegexp(RuntimeError, r"socket connection broken", 
+			self.assertRaisesRegexp(Exception, r"reset by peer|Broken pipe",
 				lambda: client.send(testMessage, timeout=unittest.F2B.maxWaitTime(10)))
 		finally:
 			RequestHandler.found_terminator = org_handler
@@ -169,7 +169,7 @@ class Socket(LogCaptureTestCase):
 		org_handler = RequestHandler.found_terminator
 		try:
 			RequestHandler.found_terminator = lambda self: TestMsgError()
-			#self.assertRaisesRegexp(RuntimeError, r"socket connection broken", client.send, testMessage)
+			#self.assertRaisesRegexp(Exception, r"reset by peer|Broken pipe", client.send, testMessage)
 			self.assertEqual(client.send(testMessage), 'ERROR: test unpickle error')
 		finally:
 			RequestHandler.found_terminator = org_handler

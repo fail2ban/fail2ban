@@ -40,6 +40,9 @@ Feb 27 15:49:07 batman sm-mta[88390]: ruleset=check_relay, arg1=189-30-205-74.pa
 # failJSON: { "time": "2005-02-19T18:01:50", "match": true , "host": "196.213.73.146" }
 Feb 19 18:01:50 batman sm-mta[78152]: ruleset=check_relay, arg1=[196.213.73.146], arg2=196.213.73.146, relay=[196.213.73.146], reject=421 4.3.2 Connection rate limit exceeded.
 
+# failJSON: { "time": "2005-02-19T20:17:12", "match": true , "host": "192.0.2.123" }
+Feb 19 20:17:12 server sm-mta[201892]: ruleset=check_relay, arg1=[192.0.2.123], arg2=192.0.2.123, relay=host.example.com [192.0.2.123] (may be forged), reject=421 4.3.2 Connection rate limit exceeded.
+
 # failJSON: { "time": "2005-02-27T10:53:06", "match": true , "host": "209.15.212.253" }
 Feb 27 10:53:06 batman sm-mta[44307]: s1R9r60D044307: rejecting commands from  [209.15.212.253] due to pre-greeting traffic after 0 seconds
 # failJSON: { "time": "2005-02-27T10:53:07", "match": true , "host": "1.2.3.4" }
@@ -69,6 +72,8 @@ Feb 13 01:16:50 batman sm-mta[25815]: s1D0GoSs025815: [217.193.142.180]: vrfy in
 # failJSON: { "time": "2005-02-22T14:02:44", "match": true , "host": "24.73.201.194" }
 Feb 22 14:02:44 batman sm-mta[4030]: s1MD2hsd004030: rrcs-24-73-201-194.se.biz.rr.com [24.73.201.194]: VRFY root [rejected]
 
+# failJSON: { "time": "2005-02-22T15:20:27", "match": true , "host": "192.0.2.5", "desc": "Fix reverse DNS for ... (gh-3012)" }
+Feb 22 15:20:27 localhost sm-mta[275631]: 13O9Ixhq275631: ruleset=check_rcpt, arg1=<linda@domain.com>, relay=[192.0.2.5], reject=550 5.7.1 <linda@domain.com>... Fix reverse DNS for 192.0.2.5
 
 # failJSON: { "match": false }
 Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026250: <arhipov@domain.com>... No such user here
@@ -103,3 +108,7 @@ Mar 29 22:51:42 kismet sm-mta[24202]: x2TMpAlI024202: internettl.org [104.152.52
 
 # failJSON: { "time": "2005-03-29T22:51:43", "match": true , "host": "192.0.2.2", "desc": "long PID, ID longer as 14 chars (gh-2563)" }
 Mar 29 22:51:43 server sendmail[3529565]: xA32R2PQ3529565: [192.0.2.2] did not issue MAIL/EXPN/VRFY/ETRN during connection to MTA
+# failJSON: { "time": "2005-03-29T22:51:45", "match": true , "host": "192.0.2.3", "desc": "sendmail 8.15.2 default names IPv4/6 (gh-2787)" }
+Mar 29 22:51:45 server sm-mta[50437]: 06QDQnNf050437: example.com [192.0.2.3] did not issue MAIL/EXPN/VRFY/ETRN during connection to IPv4
+# failJSON: { "time": "2005-03-29T22:51:46", "match": true , "host": "2001:DB8::1", "desc": "IPv6" }
+Mar 29 22:51:46 server sm-mta[50438]: 06QDQnNf050438: example.com [IPv6:2001:DB8::1] did not issue MAIL/EXPN/VRFY/ETRN during connection to IPv6

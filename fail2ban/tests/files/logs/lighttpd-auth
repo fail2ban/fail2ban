@@ -1,4 +1,3 @@
-#authentification failure (mod_auth)
 # failJSON: { "time": "2011-12-25T17:09:20", "match": true , "host": "4.4.4.4" }
 2011-12-25 17:09:20: (http_auth.c.875) password doesn't match for /gitweb/ username: francois, IP: 4.4.4.4
 # failJSON: { "time": "2012-09-26T10:24:35", "match": true , "host": "4.4.4.4" }
@@ -7,3 +6,9 @@
 2013-08-25 00:24:55: (http_auth.c.877) get_password failed, IP: 4.4.4.4
 # failJSON: { "time": "2018-01-16T14:10:32", "match": true , "host": "192.0.2.1", "desc": "http_auth -> mod_auth, gh-2018" }
 2018-01-16 14:10:32: (mod_auth.c.525) password doesn't match for /test-url username: test, IP: 192.0.2.1
+# failJSON: { "time": "2021-09-30T16:05:33", "match": true , "host": "192.0.2.2", "user":"test", "desc": "gh-3116" }
+2021-09-30 16:05:33: mod_auth.c.828) password doesn't match for /secure/ username: test IP: 192.0.2.2
+# failJSON: { "time": "2021-09-30T17:44:37", "match": true , "host": "192.0.2.3", "user":"tester", "desc": "gh-3116" }
+2021-09-30 17:44:37: (mod_auth.c.791) digest: auth failed for  tester : wrong password, IP: 192.0.2.3
+# failJSON: { "time": "2021-09-30T17:44:37", "match": true , "host": "192.0.2.4", "desc": "gh-3116" }
+2021-09-30 17:44:37: (mod_auth.c.791) digest: auth failed: uri mismatch (/uri1 != /uri2), IP: 192.0.2.4

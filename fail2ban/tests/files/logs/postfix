@@ -15,6 +15,9 @@ Aug 10 10:55:38 f-vanier-bourgeois postfix/smtpd[2162]: NOQUEUE: reject: VRFY fr
 # failJSON: { "time": "2005-08-13T15:45:46", "match": true , "host": "192.0.2.1" }
 Aug 13 15:45:46 server postfix/smtpd[13844]: 00ADB3C0899: reject: RCPT from example.com[192.0.2.1]: 550 5.1.1 <sales@server.com>: Recipient address rejected: User unknown in local recipient table; from=<xxxxxx@example.com> to=<sales@server.com> proto=ESMTP helo=<mail.example.com>
 
+# failJSON: { "time": "2005-05-19T00:00:30", "match": true , "host": "192.0.2.2", "desc": "undeliverable address (sender/recipient verification, gh-3039)" }
+May 19 00:00:30 proxy2 postfix/smtpd[16123]: NOQUEUE: reject: RCPT from example.net[192.0.2.2]: 550 5.1.1 <user1@example.com>: Recipient address rejected: undeliverable address: verification failed; from=<user2@example.org> to=<user1@example.com> proto=ESMTP helo=<example.net>
+
 # failJSON: { "time": "2005-01-12T11:07:49", "match": true , "host": "181.21.131.88" }
 Jan 12 11:07:49 emf1pt2-2-35-70 postfix/smtpd[13767]: improper command pipelining after DATA from unknown[181.21.131.88]:
 
@@ -34,6 +37,16 @@ Nov 22 22:33:44 xxx postfix/smtpd[11111]: NOQUEUE: reject: RCPT from 1-2-3-4.exa
 
 # failJSON: { "time": "2005-01-31T13:55:24", "match": true , "host": "78.107.251.238" }
 Jan 31 13:55:24 xxx postfix/smtpd[3462]: NOQUEUE: reject: EHLO from s271272.static.corbina.ru[78.107.251.238]: 504 5.5.2 <User>: Helo command rejected: need fully-qualified hostname; proto=SMTP helo=<User>
+
+# failJSON: { "time": "2005-03-7T02:09:33", "match": true , "host": "192.0.2.151", "desc": "reject: DATA from, gh-2927" }
+Mar 7 02:09:33 server postfix/smtpd[27246]: 1D8CC1CA0A7F: milter-reject: DATA from 66-220-155-151.mail-mail.facebook.com[192.0.2.151]: 550 5.7.1 Command rejected; from=<security@mail.example.com> to=<hostmaster@example.com> proto=ESMTP helo=<192-0-2-151.mail-mail.example.com>
+# failJSON: { "time": "2005-03-11T23:27:54", "match": true , "host": "192.0.2.109", "desc": "reject: BDAT from, gh-2927" }
+Mar 11 23:27:54 server postfix-smo/submission/smtpd[22427]: 44JCRG5tYPzCqt2: reject: BDAT from signing-milter.example.com[192.0.2.109]: 550 5.5.3 <DATA>: Data command rejected: Multi-recipient bounce; from=<> to=<some@example.com> proto=ESMTP helo=<domain.tld>
+
+# failJSON: { "time": "2005-04-06T13:05:01", "match": true , "host": "192.0.2.116", "desc": "RCPT from unknown, gh-2995" }
+Apr  6 13:05:01 server postfix/smtpd[20589]: NOQUEUE: reject: RCPT from unknown[192.0.2.116]: 504 5.5.2 <WIN-6A0KEE6QVP5>: Helo command rejected: need fully-qualified hostname; from=<spameri@example.com> to=<spameri@example.com> proto=ESMTP helo=<WIN-6A0KEE6QVP5>
+# failJSON: { "time": "2005-04-07T03:10:56", "match": true , "host": "192.0.2.246", "desc": "550 5.7.25 Client host rejected, gh-2996" }
+Apr  7 03:10:56 server postfix/smtpd[7754]: NOQUEUE: reject: RCPT from unknown[192.0.2.246]: 550 5.7.25 Client host rejected: cannot find your hostname, [192.0.2.246]; from=<laqqubtbyop@example.com> to=<sxhcpltqhpex@example.com> proto=ESMTP helo=<[192.0.2.246]>
 
 # failJSON: { "time": "2005-01-31T13:55:24", "match": true , "host": "78.107.251.238" }
 Jan 31 13:55:24 xxx postfix-incoming/smtpd[3462]: NOQUEUE: reject: EHLO from s271272.static.corbina.ru[78.107.251.238]: 504 5.5.2 <User>: Helo command rejected: need fully-qualified hostname; proto=SMTP helo=<User>
@@ -150,6 +163,17 @@ Feb 18 09:45:12 xxx postfix/smtpd[42]: lost connection after STARTTLS from spamm
 Feb 18 09:48:04 xxx postfix/smtpd[23]: lost connection after AUTH from unknown[192.0.2.23]
 # failJSON: { "time": "2005-02-18T09:48:04", "match": true , "host": "192.0.2.23" }
 Feb 18 09:48:04 xxx postfix/smtpd[23]: lost connection after AUTH from unknown[192.0.2.23]
+
+# failJSON: { "time": "2004-12-23T19:39:13", "match": true , "host": "192.0.2.2" }
+Dec 23 19:39:13 xxx postfix/postscreen[21057]: PREGREET 14 after 0.08 from [192.0.2.2]:59415: EHLO ylmf-pc\r\n
+# failJSON: { "time": "2004-12-24T00:54:36", "match": true , "host": "192.0.2.3" }
+Dec 24 00:54:36 xxx postfix/postscreen[22515]: HANGUP after 16 from [192.0.2.3]:48119 in tests after SMTP handshake
+
+# failJSON: { "time": "2005-06-08T23:14:28", "match": true , "host": "192.0.2.77", "desc": "abusive clients hitting command limit, see see http://www.postfix.org/POSTSCREEN_README.html (gh-3040)" }
+Jun  8 23:14:28 proxy2 postfix/postscreen[473]: COMMAND TIME LIMIT from [192.0.2.77]:3608 after CONNECT
+# failJSON: { "time": "2005-06-08T23:14:54", "match": true , "host": "192.0.2.26", "desc": "abusive clients hitting command limit (gh-3040)" }
+Jun  8 23:14:54 proxy2 postfix/postscreen[473]: COMMAND COUNT LIMIT from [192.0.2.26]:15592 after RCPT
+
 
 # filterOptions: [{}, {"mode": "ddos"}, {"mode": "aggressive"}]
 # failJSON: { "match": false, "desc": "don't affect lawful data (sporadical connection aborts within DATA-phase, see gh-1813 for discussion)" }

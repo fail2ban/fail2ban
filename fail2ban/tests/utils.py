@@ -39,7 +39,7 @@ from cStringIO import StringIO
 from functools import wraps
 
 from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, uni_decode
-from ..server.ipdns import DNSUtils
+from ..server.ipdns import IPAddr, DNSUtils
 from ..server.mytime import MyTime
 from ..server.utils import Utils
 # for action_d.test_smtp :
@@ -47,7 +47,7 @@ from ..server import asyncserver
 from ..version import version
 
 
-logSys = getLogger(__name__)
+logSys = getLogger("fail2ban")
 
 TEST_NOW = 1124013600
 
@@ -126,9 +126,6 @@ def getOptParser(doc=""):
 
 def initProcess(opts):
 	# Logger:
-	global logSys
-	logSys = getLogger("fail2ban")
-
 	llev = None
 	if opts.log_level is not None: # pragma: no cover
 		# so we had explicit settings
@@ -258,23 +255,6 @@ def with_alt_time(f):
 	return wrapper
 
 
-# backwards compatibility to python 2.6:
-if not hasattr(unittest, 'SkipTest'): # pragma: no cover
-	class SkipTest(Exception):
-		pass
-	unittest.SkipTest = SkipTest
-	_org_AddError = unittest._TextTestResult.addError
-	def addError(self, test, err):
-		if err[0] is SkipTest: 
-			if self.showAll:
-				self.stream.writeln(str(err[1]))
-			elif self.dots:
-				self.stream.write('s')
-				self.stream.flush()
-			return
-		_org_AddError(self, test, err)
-	unittest._TextTestResult.addError = addError
-
 def initTests(opts):
 	## if running from installer (setup.py):
 	if not opts:
@@ -292,15 +272,15 @@ def initTests(opts):
 		unittest.F2B.SkipIfFast = F2B_SkipIfFast
 	else:
 		# smaller inertance inside test-cases (litle speedup):
-		Utils.DEFAULT_SLEEP_TIME = 0.25
-		Utils.DEFAULT_SLEEP_INTERVAL = 0.025
+		Utils.DEFAULT_SLEEP_TIME = 0.025
+		Utils.DEFAULT_SLEEP_INTERVAL = 0.005
 		Utils.DEFAULT_SHORT_INTERVAL = 0.0005
 		# sleep intervals are large - use replacement for sleep to check time to sleep:
 		_org_sleep = time.sleep
 		def _new_sleep(v):
-			if v > max(1, Utils.DEFAULT_SLEEP_TIME): # pragma: no cover
+			if v > 0.25: # pragma: no cover
 				raise ValueError('[BAD-CODE] To long sleep interval: %s, try to use conditional Utils.wait_for instead' % v)
-			_org_sleep(min(v, Utils.DEFAULT_SLEEP_TIME))
+			_org_sleep(v)
 		time.sleep = _new_sleep
 	# --no-network :
 	if unittest.F2B.no_network: # pragma: no cover
@@ -320,6 +300,7 @@ def initTests(opts):
 
 	# precache all invalid ip's (TEST-NET-1, ..., TEST-NET-3 according to RFC 5737):
 	c = DNSUtils.CACHE_ipToName
+	c.clear = lambda: logSys.warn('clear CACHE_ipToName is disabled in test suite')
 	# increase max count and max time (too many entries, long time testing):
 	c.setOptions(maxCount=10000, maxTime=5*60)
 	for i in xrange(256):
@@ -331,13 +312,22 @@ def initTests(opts):
 	c.set('2001:db8::ffff', 'test-other')
 	c.set('87.142.124.10', 'test-host')
 	if unittest.F2B.no_network: # pragma: no cover
-		# precache all wrong dns to ip's used in test cases:
+		# precache all ip to dns used in test cases:
+		c.set('192.0.2.888', None)
+		c.set('8.8.4.4', 'dns.google')
+		c.set('8.8.4.4', 'dns.google')
+		# precache all dns to ip's used in test cases:
 		c = DNSUtils.CACHE_nameToIp
+		c.clear = lambda: logSys.warn('clear CACHE_nameToIp is disabled in test suite')
 		for i in (
 			('999.999.999.999', set()),
 			('abcdef.abcdef', set()),
 			('192.168.0.', set()),
 			('failed.dns.ch', set()),
+			('doh1.2.3.4.buga.xxxxx.yyy.invalid', set()),
+			('1.2.3.4.buga.xxxxx.yyy.invalid', set()),
+			('example.com', set([IPAddr('2606:2800:220:1:248:1893:25c8:1946'), IPAddr('93.184.216.34')])),
+			('www.example.com', set([IPAddr('2606:2800:220:1:248:1893:25c8:1946'), IPAddr('93.184.216.34')])),
 		):
 			c.set(*i)
 		# if fast - precache all host names as localhost addresses (speed-up getSelfIPs/ignoreself):
@@ -552,7 +542,7 @@ if not hasattr(unittest.TestCase, 'assertDictEqual'):
 			self.fail(msg)
 	unittest.TestCase.assertDictEqual = assertDictEqual
 
-def assertSortedEqual(self, a, b, level=1, nestedOnly=True, key=repr, msg=None):
+def assertSortedEqual(self, a, b, level=1, nestedOnly=False, key=repr, msg=None):
 	"""Compare complex elements (like dict, list or tuple) in sorted order until
 	level 0 not reached (initial level = -1 meant all levels),
 	or if nestedOnly set to True and some of the objects still contains nested lists or dicts.
@@ -562,6 +552,13 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=True, key=repr, msg=None):
 		if isinstance(v, dict):
 			return any(isinstance(v, (dict, list, tuple)) for v in v.itervalues())
 		return any(isinstance(v, (dict, list, tuple)) for v in v)
+	if nestedOnly:
+		_nest_sorted = sorted
+	else:
+		def _nest_sorted(v, key=key):
+			if isinstance(v, (set, list, tuple)):
+				return sorted(list(_nest_sorted(v, key) for v in v), key=key)
+			return v
 	# level comparison routine:
 	def _assertSortedEqual(a, b, level, nestedOnly, key):
 		# first the lengths:
@@ -580,8 +577,8 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=True, key=repr, msg=None):
 				elif v1 != v2:
 					raise ValueError('%r != %r' % (a, b))
 		else: # list, tuple, something iterable:
-			a = sorted(a, key=key)
-			b = sorted(b, key=key)
+			a = _nest_sorted(a, key=key)
+			b = _nest_sorted(b, key=key)
 			for v1, v2 in zip(a, b):
 				if isinstance(v1, (dict, list, tuple)) and isinstance(v2, (dict, list, tuple)):
 					_assertSortedEqual(v1, v2, level-1 if level != 0 else 0, nestedOnly, key)
@@ -765,8 +762,9 @@ class LogCaptureTestCase(unittest.TestCase):
 		"""Call after every test case."""
 		# print "O: >>%s<<" % self._log.getvalue()
 		self.pruneLog()
+		self._log.close()
 		logSys.handlers = self._old_handlers
-		logSys.level = self._old_level
+		logSys.setLevel(self._old_level)
 		super(LogCaptureTestCase, self).tearDown()
 
 	def _is_logged(self, *s, **kwargs):

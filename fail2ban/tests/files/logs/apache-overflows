@@ -3,6 +3,8 @@
 [Tue Mar 16 15:39:29 2010] [error] [client 58.179.109.179] Invalid URI in request \xf9h\xa9\xf3\x88\x8cXKj \xbf-l*4\x87n\xe4\xfe\xd4\x1d\x06\x8c\xf8m\\rS\xf6n\xeb\x8
 # failJSON: { "time": "2010-03-15T15:44:47", "match": true , "host": "121.222.2.133" }
 [Mon Mar 15 15:44:47 2010] [error] [client 121.222.2.133] Invalid URI in request n\xed*\xbe*\xab\xefd\x80\xb5\xae\xf6\x01\x10M?\xf2\xce\x13\x9c\xd7\xa0N\xa7\xdb%0\xde\xe0\xfc\xd2\xa0\xfe\xe9w\xee\xc4`v\x9b[{\x0c:\xcb\x93\xc6\xa0\x93\x9c`l\\\x8d\xc9
+# failJSON: { "time": "2010-03-15T16:04:06", "match": true , "host": "192.0.2.1", "desc": "AH00126 failure, gh-2908" }
+[Sat Mar 15 16:04:06.105212 2010] [core:error] [pid 17408] [client 192.0.2.1:55280] AH00126: Invalid URI in request GET /static/../../../a/../../../../etc/passwd HTTP/1.1
 
 # http://forum.nconf.org/viewtopic.php?f=14&t=427&p=1488
 # failJSON: { "time": "2010-07-30T11:23:54", "match": true , "host": "10.85.6.69" }

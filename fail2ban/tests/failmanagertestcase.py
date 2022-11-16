@@ -150,8 +150,8 @@ class AddFailure(unittest.TestCase):
 		self.__failManager.setMaxRetry(5)
 		#ticket = FailTicket('193.168.0.128', None)
 		ticket = self.__failManager.toBan()
-		self.assertEqual(ticket.getIP(), "193.168.0.128")
-		self.assertTrue(isinstance(ticket.getIP(), (str, IPAddr)))
+		self.assertEqual(ticket.getID(), "193.168.0.128")
+		self.assertTrue(isinstance(ticket.getID(), (str, IPAddr)))
 
 		# finish with rudimentary tests of the ticket
 		# verify consistent str
@@ -180,9 +180,9 @@ class AddFailure(unittest.TestCase):
 	def testWindow(self):
 		self._addDefItems()
 		ticket = self.__failManager.toBan()
-		self.assertNotEqual(ticket.getIP(), "100.100.10.10")
+		self.assertNotEqual(ticket.getID(), "100.100.10.10")
 		ticket = self.__failManager.toBan()
-		self.assertNotEqual(ticket.getIP(), "100.100.10.10")
+		self.assertNotEqual(ticket.getID(), "100.100.10.10")
 		self.assertRaises(FailManagerEmpty, self.__failManager.toBan)
 
 	def testBgService(self):

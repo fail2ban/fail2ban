@@ -33,7 +33,7 @@ logSys = getLogger(__name__)
 
 
 class Ticket(object):
-	__slots__ = ('_ip', '_flags', '_banCount', '_banTime', '_time', '_data', '_retry', '_lastReset')
+	__slots__ = ('_id', '_flags', '_banCount', '_banTime', '_time', '_data', '_retry', '_lastReset')
 
 	MAX_TIME = 0X7FFFFFFFFFFF ;# 4461763-th year
 	
@@ -48,7 +48,7 @@ class Ticket(object):
 		@param matches (log) lines caused the ticket
 		"""
 
-		self.setIP(ip)
+		self.setID(ip)
 		self._flags = 0;
 		self._banCount = 0;
 		self._banTime = None;
@@ -65,7 +65,7 @@ class Ticket(object):
 
 	def __str__(self):
 		return "%s: ip=%s time=%s bantime=%s bancount=%s #attempts=%d matches=%r" % \
-				 (self.__class__.__name__.split('.')[-1], self._ip, self._time,
+				 (self.__class__.__name__.split('.')[-1], self._id, self._time,
 					self._banTime, self._banCount,
 					self._data['failures'], self._data.get('matches', []))
 
@@ -74,7 +74,7 @@ class Ticket(object):
 
 	def __eq__(self, other):
 		try:
-			return self._ip == other._ip and \
+			return self._id == other._id and \
 				round(self._time, 2) == round(other._time, 2) and \
 				self._data == other._data
 		except AttributeError:
@@ -86,18 +86,17 @@ class Ticket(object):
 			if v is not None:
 				setattr(self, n, v)
 
-
-	def setIP(self, value):
+	def setID(self, value):
 		# guarantee using IPAddr instead of unicode, str for the IP
 		if isinstance(value, basestring):
 			value = IPAddr(value)
-		self._ip = value
+		self._id = value
 	
 	def getID(self):
-		return self._data.get('fid', self._ip)
+		return self._id
 	
 	def getIP(self):
-		return self._ip
+		return self._data.get('ip', self._id)
 	
 	def setTime(self, value):
 		self._time = value

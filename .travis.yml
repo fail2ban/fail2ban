@@ -10,17 +10,8 @@ dist: xenial
 matrix:
   fast_finish: true
   include:
-  - python: 2.6
-    dist: trusty   # required for Python 2.6
   - python: 2.7
-    dist: trusty   # required for packages like gamin
-    name: 2.7 (trusty)
-  - python: 2.7
-    name: 2.7 (xenial)
-  - python: pypy
-    dist: trusty
-  - python: 3.3
-    dist: trusty
+  #- python: pypy
   - python:  3.4
   - python:  3.5
   - python:  3.6
@@ -42,7 +33,8 @@ install:
   #   coverage
   - travis_retry pip install coverage
   #   coveralls (note coveralls doesn't support 2.6 now):
-  - if [[ $TRAVIS_PYTHON_VERSION != 2.6* ]]; then F2B_COV=1; else F2B_COV=0; fi
+  #- if [[ $TRAVIS_PYTHON_VERSION != 2.6* ]]; then F2B_COV=1; else F2B_COV=0; fi
+  - F2B_COV=1
   - if [[ "$F2B_COV" = 1 ]]; then travis_retry pip install coveralls; fi
   #   codecov:
   - travis_retry pip install codecov
@@ -70,8 +62,8 @@ script:
   - if [[ "$F2B_PY" = 3 ]]; then coverage run bin/fail2ban-testcases --verbosity=2; fi
   # Use $VENV_BIN (not python) or else sudo will always run the system's python (2.7)
   - sudo $VENV_BIN/pip install .
-  # Doc files should get installed on Travis under Linux (python >= 3.8 seem to use another path segment)
-  - if [[ $TRAVIS_PYTHON_VERSION < 3.8 ]]; then test -e /usr/share/doc/fail2ban/FILTERS; fi
+  # Doc files should get installed on Travis under Linux (some builds/python's seem to use another path segment)
+  - test -e /usr/share/doc/fail2ban/FILTERS && echo 'found' || echo 'not found'
   # Test initd script
   - shellcheck -s bash -e SC1090,SC1091 files/debian-initd
 after_success:

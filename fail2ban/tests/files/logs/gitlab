@@ -1,0 +1,5 @@
+# Access of unauthorized host in /var/log/gitlab/gitlab-rails/application.log
+# failJSON: { "time": "2020-04-09T16:04:00", "match": true , "host": "80.10.11.12" }
+2020-04-09T14:04:00.667Z: Failed Login: username=admin ip=80.10.11.12
+# failJSON: { "time": "2020-04-09T16:15:09", "match": true , "host": "80.10.11.12" }
+2020-04-09T14:15:09.344Z: Failed Login: username=user name ip=80.10.11.12

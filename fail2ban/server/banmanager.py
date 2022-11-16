@@ -57,7 +57,7 @@ class BanManager:
 		## Total number of banned IP address
 		self.__banTotal = 0
 		## The time for next unban process (for performance and load reasons):
-		self.__nextUnbanTime = BanTicket.MAX_TIME
+		self._nextUnbanTime = BanTicket.MAX_TIME
 	
 	##
 	# Set the ban time.
@@ -66,7 +66,6 @@ class BanManager:
 	# @param value the time
 	
 	def setBanTime(self, value):
-		with self.__lock:
 			self.__banTime = int(value)
 	
 	##
@@ -76,7 +75,6 @@ class BanManager:
 	# @return the time
 	
 	def getBanTime(self):
-		with self.__lock:
 			return self.__banTime
 	
 	##
@@ -85,7 +83,6 @@ class BanManager:
 	# @param value total number
 	
 	def setBanTotal(self, value):
-		with self.__lock:
 			self.__banTotal = value
 	
 	##
@@ -94,7 +91,6 @@ class BanManager:
 	# @return the total number
 	
 	def getBanTotal(self):
-		with self.__lock:
 			return self.__banTotal
 
 	##
@@ -103,21 +99,21 @@ class BanManager:
 	# @return IP list
 	
 	def getBanList(self, ordered=False, withTime=False):
+		if not ordered:
+			return list(self.__banList.keys())
 		with self.__lock:
-			if not ordered:
-				return self.__banList.keys()
 			lst = []
 			for ticket in self.__banList.itervalues():
 				eob = ticket.getEndOfBanTime(self.__banTime)
 				lst.append((ticket,eob))
-			lst.sort(key=lambda t: t[1])
-			t2s = MyTime.time2str
-			if withTime:
-				return ['%s \t%s + %d = %s' % (
-						t[0].getID(), 
-						t2s(t[0].getTime()), t[0].getBanTime(self.__banTime), t2s(t[1])
-					) for t in lst]
-			return [t[0].getID() for t in lst]
+		lst.sort(key=lambda t: t[1])
+		t2s = MyTime.time2str
+		if withTime:
+			return ['%s \t%s + %d = %s' % (
+					t[0].getID(), 
+					t2s(t[0].getTime()), t[0].getBanTime(self.__banTime), t2s(t[1])
+				) for t in lst]
+		return [t[0].getID() for t in lst]
 
 	##
 	# Returns a iterator to ban list (used in reload, so idle).
@@ -125,8 +121,8 @@ class BanManager:
 	# @return ban list iterator
 	
 	def __iter__(self):
-		with self.__lock:
-			return self.__banList.itervalues()
+		# ensure iterator is safe - traverse over the list in snapshot created within lock (GIL):
+			return iter(list(self.__banList.values()))
 
 	##
 	# Returns normalized value
@@ -297,8 +293,8 @@ class BanManager:
 			self.__banTotal += 1
 			ticket.incrBanCount()
 			# correct next unban time:
-			if self.__nextUnbanTime > eob:
-				self.__nextUnbanTime = eob
+			if self._nextUnbanTime > eob:
+				self._nextUnbanTime = eob
 			return True
 
 	##
@@ -329,12 +325,8 @@ class BanManager:
 	
 	def unBanList(self, time, maxCount=0x7fffffff):
 		with self.__lock:
-			# Permanent banning
-			if self.__banTime < 0:
-				return list()
-
 			# Check next unban time:
-			nextUnbanTime = self.__nextUnbanTime
+			nextUnbanTime = self._nextUnbanTime
 			if nextUnbanTime > time:
 				return list()
 
@@ -347,12 +339,12 @@ class BanManager:
 				if time > eob:
 					unBanList[fid] = ticket
 					if len(unBanList) >= maxCount: # stop search cycle, so reset back the next check time
-						nextUnbanTime = self.__nextUnbanTime
+						nextUnbanTime = self._nextUnbanTime
 						break
 				elif nextUnbanTime > eob:
 					nextUnbanTime = eob
 
-			self.__nextUnbanTime = nextUnbanTime
+			self._nextUnbanTime = nextUnbanTime
 			# Removes tickets.
 			if len(unBanList):
 				if len(unBanList) / 2.0 <= len(self.__banList) / 3.0:

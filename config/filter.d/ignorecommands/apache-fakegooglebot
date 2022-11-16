@@ -6,24 +6,35 @@
 #
 import sys
 from fail2ban.server.ipdns import DNSUtils, IPAddr
+from threading import Thread
 
 def process_args(argv):
-    if len(argv) != 2:
-       raise ValueError("Please provide a single IP as an argument. Got: %s\n"
-                        % (argv[1:]))
+    if len(argv) - 1 not in (1, 2):
+       raise ValueError("Usage %s ip ?timeout?. Got: %s\n"
+                        % (argv[0], argv[1:]))
     ip = argv[1]
 
     if not IPAddr(ip).isValid:
        raise ValueError("Argument must be a single valid IP. Got: %s\n"
                         % ip)
-    return ip
+    return argv[1:]
 
 google_ips = None
 
-def is_googlebot(ip):
+def is_googlebot(ip, timeout=55):
     import re
 
-    host = DNSUtils.ipToName(ip)
+    timeout = float(timeout or 0)
+    if timeout:
+      def ipToNameTO(host, ip, timeout):
+        host[0] = DNSUtils.ipToName(ip)
+      host = [None]
+      th = Thread(target=ipToNameTO, args=(host, ip, timeout)); th.daemon=True; th.start()
+      th.join(timeout)
+      host = host[0]
+    else:
+      host = DNSUtils.ipToName(ip)
+
     if not host or not re.match(r'.*\.google(bot)?\.com$', host):
        return False
     host_ips = DNSUtils.dnsToIp(host)
@@ -31,7 +42,7 @@ def is_googlebot(ip):
 
 if __name__ == '__main__': # pragma: no cover
     try:
-      ret = is_googlebot(process_args(sys.argv))
+      ret = is_googlebot(*process_args(sys.argv))
     except ValueError as e:
       sys.stderr.write(str(e))
       sys.exit(2)

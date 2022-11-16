@@ -1,0 +1,8 @@
+# failJSON: { "time": "2005-03-05T21:44:43", "match": true , "host": "192.0.2.123" } 
+Mar  5 21:44:43 srv scanlogd: 192.0.2.123 to 192.0.2.1 ports 80, 81, 83, 88, 99, 443, 1080, 3128, ..., f????uxy, TOS 00, TTL 49 @20:44:43
+# failJSON: { "time": "2005-03-05T21:44:44", "match": true , "host": "192.0.2.123" } 
+Mar  5 21:44:44 srv scanlogd: 192.0.2.123 to 192.0.2.1 ports 497, 515, 544, 543, 464, 513, ..., fSrpauxy, TOS 00 @09:04:25
+# failJSON: { "time": "2005-03-05T21:44:45", "match": true , "host": "192.0.2.123" } 
+Mar  5 21:44:45 srv scanlogd: 192.0.2.123 to 192.0.2.1 ports 593, 548, 636, 646, 625, 631, ..., fSrpauxy, TOS 00, TTL 239 @17:34:00
+# failJSON: { "time": "2005-03-05T21:44:46", "match": true , "host": "192.0.2.123" } 
+Mar  5 21:44:46 srv scanlogd: 192.0.2.123 to 192.0.2.1 ports 22, 26, 37, 80, 25, 79, ..., fSrpauxy, TOS 00 @22:38:37
