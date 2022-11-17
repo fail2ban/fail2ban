@@ -1,0 +1,2 @@
+# failJSON: { "time": "2022-10-08T19:55:04", "match": true , "host": "1.2.3.4" }
+10/08/2022-19:55:04.165078  [**] [1:2403373:77918] ET CINS Active Threat Intelligence Poor Reputation IP group 74 [**] [Classification: Misc Attack] [Priority: 2] {TCP} 1.2.3.4:40927 -> 192.168.14.42:31408
