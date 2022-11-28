@@ -277,7 +277,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 				# TODO: validate error handling here.
 			except NoOptionError:
 				if not optvalue is None:
-					logSys.warning("'%s' not defined in '%s'. Using default one: %r"
+					logSys.debug("'%s' not defined in '%s'. Using default one: %r"
 								% (optname, sec, optvalue))
 					values[optname] = optvalue
 				# elif logSys.getEffectiveLevel() <= logLevel:
