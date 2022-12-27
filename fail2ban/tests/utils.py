@@ -35,7 +35,7 @@ import time
 import threading
 import unittest
 
-from cStringIO import StringIO
+from io import StringIO
 from functools import wraps
 
 from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, uni_decode
