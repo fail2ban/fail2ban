@@ -92,14 +92,14 @@ class DNSUtils:
 		# retrieve ips
 		ips = set()
 		saveerr = None
-		for fam, ipfam in ((socket.AF_INET, IPAddr.FAM_IPv4), (socket.AF_INET6, IPAddr.FAM_IPv6)):
+		for fam in ((socket.AF_INET,socket.AF_INET6) if DNSUtils.IPv6IsAllowed(True) else (socket.AF_INET,)):
 			try:
 				for result in socket.getaddrinfo(dns, None, fam, 0, socket.IPPROTO_TCP):
 					# if getaddrinfo returns something unexpected:
 					if len(result) < 4 or not len(result[4]): continue
 					# get ip from `(2, 1, 6, '', ('127.0.0.1', 0))`,be sure we've an ip-string
 					# (some python-versions resp. host configurations causes returning of integer there):
-					ip = IPAddr(str(result[4][0]), ipfam)
+					ip = IPAddr(str(result[4][0]), IPAddr._AF2FAM(fam))
 					if ip.isValid:
 						ips.add(ip)
 			except Exception as e:
@@ -209,6 +209,31 @@ class DNSUtils:
 	_IPv6IsAllowed = None
 
 	@staticmethod
+	def _IPv6IsSupportedBySystem():
+		if not socket.has_ipv6:
+			return False
+		s = None
+		try:
+			# try to create INET6 socket:
+			s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+			# bind it to free port for any interface supporting IPv6:
+			s.bind(("", 0));
+			return True
+		except Exception as e: # pragma: no cover
+			if hasattr(e, 'errno'):
+				import errno
+				# negative (-9 'Address family not supported', etc) or not available/supported:
+				if e.errno < 0 or e.errno in (errno.EADDRNOTAVAIL, errno.EAFNOSUPPORT):
+					return False
+				# in use:
+				if e.errno in (errno.EADDRINUSE, errno.EACCES): # normally unreachable (free port and root)
+					return True
+		finally:
+			if s: s.close()
+		# unable to detect:
+		return None
+
+	@staticmethod
 	def setIPv6IsAllowed(value):
 		DNSUtils._IPv6IsAllowed = value
 		logSys.debug("IPv6 is %s", ('on' if value else 'off') if value is not None else 'auto')
@@ -218,13 +243,19 @@ class DNSUtils:
 	_IPv6IsAllowed_key = ('self','ipv6-allowed')
 
 	@staticmethod
-	def IPv6IsAllowed():
+	def IPv6IsAllowed(knownOnly=False):
 		if DNSUtils._IPv6IsAllowed is not None:
 			return DNSUtils._IPv6IsAllowed
 		v = DNSUtils.CACHE_nameToIp.get(DNSUtils._IPv6IsAllowed_key)
 		if v is not None:
 			return v
-		v = any((':' in ip.ntoa) for ip in DNSUtils.getSelfIPs())
+		v = DNSUtils._IPv6IsSupportedBySystem()
+		if v is None:
+			# avoid self recursion (and assume we may have IPv6 during auto-detection):
+			if knownOnly:
+				return True
+			# detect by IPs of host:
+			v = any((':' in ip.ntoa) for ip in DNSUtils.getSelfIPs())
 		DNSUtils.CACHE_nameToIp.set(DNSUtils._IPv6IsAllowed_key, v)
 		return v
 
@@ -255,6 +286,9 @@ class IPAddr(object):
 	CIDR_UNSPEC = -1
 	FAM_IPv4 = CIDR_RAW - socket.AF_INET
 	FAM_IPv6 = CIDR_RAW - socket.AF_INET6
+	@staticmethod
+	def _AF2FAM(v):
+		return IPAddr.CIDR_RAW - v
 
 	def __new__(cls, ipstr, cidr=CIDR_UNSPEC):
 		if cidr == IPAddr.CIDR_UNSPEC and isinstance(ipstr, (tuple, list)):
