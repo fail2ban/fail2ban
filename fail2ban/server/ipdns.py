@@ -212,6 +212,13 @@ class DNSUtils:
 	def _IPv6IsSupportedBySystem():
 		if not socket.has_ipv6:
 			return False
+		# try to check sysctl net.ipv6.conf.all.disable_ipv6:
+		try:
+			with open('/proc/sys/net/ipv6/conf/all/disable_ipv6', 'rb') as f:
+				# if 1 - disabled, 0 - enabled
+				return not int(f.read())
+		except:
+			pass
 		s = None
 		try:
 			# try to create INET6 socket:
