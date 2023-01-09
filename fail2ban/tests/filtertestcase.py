@@ -40,7 +40,7 @@ from ..server.jail import Jail
 from ..server.filterpoll import FilterPoll
 from ..server.filter import FailTicket, Filter, FileFilter, FileContainer
 from ..server.failmanager import FailManagerEmpty
-from ..server.ipdns import asip, getfqdn, DNSUtils, IPAddr
+from ..server.ipdns import asip, getfqdn, DNSUtils, IPAddr, IPAddrSet
 from ..server.mytime import MyTime
 from ..server.utils import Utils, uni_decode
 from .databasetestcase import getFail2BanDb
@@ -2332,6 +2332,38 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 			self.assertEqual(id(ip1), id(ip2))
 		ip1 = IPAddr('93.184.216.34'); ip2 = IPAddr('93.184.216.34'); self.assertEqual(id(ip1), id(ip2))
 		ip1 = IPAddr('2606:2800:220:1:248:1893:25c8:1946'); ip2 = IPAddr('2606:2800:220:1:248:1893:25c8:1946'); self.assertEqual(id(ip1), id(ip2))
+
+	def test_IPAddrSet(self):
+		ips = IPAddrSet([IPAddr('192.0.2.1/27'), IPAddr('2001:DB8::/32')])
+		self.assertTrue(IPAddr('192.0.2.1') in ips)
+		self.assertTrue(IPAddr('192.0.2.31') in ips)
+		self.assertFalse(IPAddr('192.0.2.32') in ips)
+		self.assertTrue(IPAddr('2001:DB8::1') in ips)
+		self.assertTrue(IPAddr('2001:0DB8:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF') in ips)
+		self.assertFalse(IPAddr('2001:DB9::') in ips)
+		# self IPs must be a set too (cover different mechanisms to obtain own IPs):
+		for cov in ('ni', 'dns', 'last'):
+			_org_NetworkInterfacesAddrs = None
+			if cov == 'dns': # mock-up _NetworkInterfacesAddrs like it's not implemented (raises error)
+				_org_NetworkInterfacesAddrs = DNSUtils._NetworkInterfacesAddrs
+				def _tmp_NetworkInterfacesAddrs():
+					raise NotImplementedError();
+				DNSUtils._NetworkInterfacesAddrs = staticmethod(_tmp_NetworkInterfacesAddrs)
+			try:
+				ips = DNSUtils.getSelfIPs()
+				# print('*****', ips)
+				if ips:
+					ip = IPAddr('127.0.0.1')
+					self.assertEqual(ip in ips, any(ip in n for n in ips))
+					ip = IPAddr('127.0.0.2')
+					self.assertEqual(ip in ips, any(ip in n for n in ips))
+					ip = IPAddr('::1')
+					self.assertEqual(ip in ips, any(ip in n for n in ips))
+			finally:
+				if _org_NetworkInterfacesAddrs:
+					DNSUtils._NetworkInterfacesAddrs = staticmethod(_org_NetworkInterfacesAddrs)
+				if cov != 'last':
+					DNSUtils.CACHE_nameToIp.unset(DNSUtils._getSelfIPs_key)
 
 	def testFQDN(self):
 		unittest.F2B.SkipIfNoNetwork()
