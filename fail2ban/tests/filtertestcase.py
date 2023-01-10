@@ -2333,6 +2333,17 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		ip1 = IPAddr('93.184.216.34'); ip2 = IPAddr('93.184.216.34'); self.assertEqual(id(ip1), id(ip2))
 		ip1 = IPAddr('2606:2800:220:1:248:1893:25c8:1946'); ip2 = IPAddr('2606:2800:220:1:248:1893:25c8:1946'); self.assertEqual(id(ip1), id(ip2))
 
+	def test_NetworkInterfacesAddrs(self):
+		try:
+			ips = IPAddrSet([a for ni, a in DNSUtils._NetworkInterfacesAddrs()])
+			ip = IPAddr('127.0.0.1')
+			self.assertEqual(ip in ips, any(ip in n for n in ips))
+			ip = IPAddr('::1')
+			self.assertEqual(ip in ips, any(ip in n for n in ips))
+		except Exception as e: # pragma: no cover
+			# simply skip if not available, TODO: make coverage platform dependent
+			raise unittest.SkipTest(e)
+
 	def test_IPAddrSet(self):
 		ips = IPAddrSet([IPAddr('192.0.2.1/27'), IPAddr('2001:DB8::/32')])
 		self.assertTrue(IPAddr('192.0.2.1') in ips)
@@ -2347,7 +2358,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 			if cov == 'dns': # mock-up _NetworkInterfacesAddrs like it's not implemented (raises error)
 				_org_NetworkInterfacesAddrs = DNSUtils._NetworkInterfacesAddrs
 				def _tmp_NetworkInterfacesAddrs():
-					raise NotImplementedError();
+					raise NotImplementedError()
 				DNSUtils._NetworkInterfacesAddrs = staticmethod(_tmp_NetworkInterfacesAddrs)
 			try:
 				ips = DNSUtils.getSelfIPs()
@@ -2364,6 +2375,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 					DNSUtils._NetworkInterfacesAddrs = staticmethod(_org_NetworkInterfacesAddrs)
 				if cov != 'last':
 					DNSUtils.CACHE_nameToIp.unset(DNSUtils._getSelfIPs_key)
+					DNSUtils.CACHE_nameToIp.unset(DNSUtils._getNetIntrfIPs_key)
 
 	def testFQDN(self):
 		unittest.F2B.SkipIfNoNetwork()

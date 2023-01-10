@@ -92,7 +92,7 @@ class DNSUtils:
 		# retrieve ips
 		ips = set()
 		saveerr = None
-		for fam in ((socket.AF_INET,socket.AF_INET6) if DNSUtils.IPv6IsAllowed(True) else (socket.AF_INET,)):
+		for fam in ((socket.AF_INET,socket.AF_INET6) if DNSUtils.IPv6IsAllowed() else (socket.AF_INET,)):
 			try:
 				for result in socket.getaddrinfo(dns, None, fam, 0, socket.IPPROTO_TCP):
 					# if getaddrinfo returns something unexpected:
@@ -188,6 +188,25 @@ class DNSUtils:
 		DNSUtils.CACHE_ipToName.set(DNSUtils._getSelfNames_key, names)
 		return names
 
+	# key to find cached network interfaces IPs (this tuple-key cannot be used elsewhere):
+	_getNetIntrfIPs_key = ('netintrf','ips')
+
+	@staticmethod
+	def getNetIntrfIPs():
+		"""Get own IP addresses of self"""
+		# to find cached own IPs:
+		ips = DNSUtils.CACHE_nameToIp.get(DNSUtils._getNetIntrfIPs_key)
+		if ips is not None:
+			return ips
+		# try to obtain from network interfaces if possible (implemented for this platform):
+		try:
+			ips = IPAddrSet([a for ni, a in DNSUtils._NetworkInterfacesAddrs()])
+		except:
+			ips = IPAddrSet()
+		# cache and return :
+		DNSUtils.CACHE_nameToIp.set(DNSUtils._getNetIntrfIPs_key, ips)
+		return ips
+
 	# key to find cached own IPs (this tuple-key cannot be used elsewhere):
 	_getSelfIPs_key = ('self','ips')
 
@@ -199,14 +218,11 @@ class DNSUtils:
 		if ips is not None:
 			return ips
 		# firstly try to obtain from network interfaces if possible (implemented for this platform):
-		try:
-			ips = IPAddrSet([a for ni, a in DNSUtils._NetworkInterfacesAddrs()])
-		except:
-			ips = IPAddrSet()
+		ips = IPAddrSet(DNSUtils.getNetIntrfIPs())
 		# extend it using different ways (a set with IPs of localhost, hostname, fully qualified):
 		for hostname in DNSUtils.getSelfNames():
 			try:
-				ips |= IPAddrSet(DNSUtils.textToIp(hostname, 'yes'))
+				ips |= IPAddrSet(DNSUtils.dnsToIp(hostname))
 			except Exception as e: # pragma: no cover
 				logSys.warning("Retrieving own IPs of %s failed: %s", hostname, e)
 		# cache and return :
@@ -257,7 +273,7 @@ class DNSUtils:
 	_IPv6IsAllowed_key = ('self','ipv6-allowed')
 
 	@staticmethod
-	def IPv6IsAllowed(knownOnly=False):
+	def IPv6IsAllowed():
 		if DNSUtils._IPv6IsAllowed is not None:
 			return DNSUtils._IPv6IsAllowed
 		v = DNSUtils.CACHE_nameToIp.get(DNSUtils._IPv6IsAllowed_key)
@@ -265,11 +281,15 @@ class DNSUtils:
 			return v
 		v = DNSUtils._IPv6IsSupportedBySystem()
 		if v is None:
-			# avoid self recursion (and assume we may have IPv6 during auto-detection):
-			if knownOnly:
-				return True
 			# detect by IPs of host:
-			v = any((':' in ip.ntoa) for ip in DNSUtils.getSelfIPs())
+			ips = DNSUtils.getNetIntrfIPs()
+			if not ips:
+				DNSUtils._IPv6IsAllowed = True; # avoid self recursion from getSelfIPs -> dnsToIp -> IPv6IsAllowed
+				try:
+					ips = DNSUtils.getSelfIPs()
+				finally:
+					DNSUtils._IPv6IsAllowed = None
+			v = any((':' in ip.ntoa) for ip in ips)
 		DNSUtils.CACHE_nameToIp.set(DNSUtils._IPv6IsAllowed_key, v)
 		return v
 
@@ -659,95 +679,102 @@ def _NetworkInterfacesAddrs():
 
 	# Closure implementing lazy load modules and libc and define _NetworkInterfacesAddrs on demand:
 	# Currently tested on Linux only (TODO: implement for MacOS, Solaris, etc)
+	try:
+		from ctypes import (
+			Structure, Union, POINTER,
+			pointer, get_errno, cast,
+			c_ushort, c_byte, c_void_p, c_char_p, c_uint, c_int, c_uint16, c_uint32
+		)
+		import ctypes.util
+		import ctypes
 
-	from ctypes import (
-		Structure, Union, POINTER,
-		pointer, get_errno, cast,
-		c_ushort, c_byte, c_void_p, c_char_p, c_uint, c_int, c_uint16, c_uint32
-	)
-	import ctypes.util
-	import ctypes
+		class struct_sockaddr(Structure):
+			_fields_ = [
+				('sa_family', c_ushort),
+				('sa_data', c_byte * 14),]
 
-	class struct_sockaddr(Structure):
-		_fields_ = [
-			('sa_family', c_ushort),
-			('sa_data', c_byte * 14),]
+		class struct_sockaddr_in(Structure):
+			_fields_ = [
+				('sin_family', c_ushort),
+				('sin_port', c_uint16),
+				('sin_addr', c_byte * 4)]
 
-	class struct_sockaddr_in(Structure):
-		_fields_ = [
-			('sin_family', c_ushort),
-			('sin_port', c_uint16),
-			('sin_addr', c_byte * 4)]
+		class struct_sockaddr_in6(Structure):
+			_fields_ = [
+				('sin6_family', c_ushort),
+				('sin6_port', c_uint16),
+				('sin6_flowinfo', c_uint32),
+				('sin6_addr', c_byte * 16),
+				('sin6_scope_id', c_uint32)]
 
-	class struct_sockaddr_in6(Structure):
-		_fields_ = [
-			('sin6_family', c_ushort),
-			('sin6_port', c_uint16),
-			('sin6_flowinfo', c_uint32),
-			('sin6_addr', c_byte * 16),
-			('sin6_scope_id', c_uint32)]
+		class union_ifa_ifu(Union):
+			_fields_ = [
+				('ifu_broadaddr', POINTER(struct_sockaddr)),
+				('ifu_dstaddr', POINTER(struct_sockaddr)),]
 
-	class union_ifa_ifu(Union):
-		_fields_ = [
-			('ifu_broadaddr', POINTER(struct_sockaddr)),
-			('ifu_dstaddr', POINTER(struct_sockaddr)),]
+		class struct_ifaddrs(Structure):
+			pass
+		struct_ifaddrs._fields_ = [
+			('ifa_next', POINTER(struct_ifaddrs)),
+			('ifa_name', c_char_p),
+			('ifa_flags', c_uint),
+			('ifa_addr', POINTER(struct_sockaddr)),
+			('ifa_netmask', POINTER(struct_sockaddr)),
+			('ifa_ifu', union_ifa_ifu),
+			('ifa_data', c_void_p),]
 
-	class struct_ifaddrs(Structure):
-		pass
-	struct_ifaddrs._fields_ = [
-		('ifa_next', POINTER(struct_ifaddrs)),
-		('ifa_name', c_char_p),
-		('ifa_flags', c_uint),
-		('ifa_addr', POINTER(struct_sockaddr)),
-		('ifa_netmask', POINTER(struct_sockaddr)),
-		('ifa_ifu', union_ifa_ifu),
-		('ifa_data', c_void_p),]
+		libc = ctypes.CDLL(ctypes.util.find_library('c') or "")
+		if not libc.getifaddrs: # pragma: no cover
+			raise NotImplementedError('libc.getifaddrs is not available')
 
-	libc = ctypes.CDLL(ctypes.util.find_library('c'))
+		def ifap_iter(ifap):
+			ifa = ifap.contents
+			while True:
+				yield ifa
+				if not ifa.ifa_next:
+					break
+				ifa = ifa.ifa_next.contents
 
-	def ifap_iter(ifap):
-		ifa = ifap.contents
-		while True:
-			yield ifa
-			if not ifa.ifa_next:
-				break
-			ifa = ifa.ifa_next.contents
+		def getfamaddr(ifa):
+			sa = ifa.ifa_addr.contents
+			fam = sa.sa_family
+			if fam == socket.AF_INET:
+				sa = cast(pointer(sa), POINTER(struct_sockaddr_in)).contents
+				addr = socket.inet_ntop(fam, sa.sin_addr)
+				nm = ifa.ifa_netmask.contents
+				if nm is not None and nm.sa_family == socket.AF_INET:
+					nm = cast(pointer(nm), POINTER(struct_sockaddr_in)).contents
+					addr += '/'+socket.inet_ntop(fam, nm.sin_addr)
+				return IPAddr(addr)
+			elif fam == socket.AF_INET6:
+				sa = cast(pointer(sa), POINTER(struct_sockaddr_in6)).contents
+				addr = socket.inet_ntop(fam, sa.sin6_addr)
+				nm = ifa.ifa_netmask.contents
+				if nm is not None and nm.sa_family == socket.AF_INET6:
+					nm = cast(pointer(nm), POINTER(struct_sockaddr_in6)).contents
+					addr += '/'+socket.inet_ntop(fam, nm.sin6_addr)
+				return IPAddr(addr)
+			return None
 
-	def getfamaddr(ifa):
-		sa = ifa.ifa_addr.contents
-		fam = sa.sa_family
-		if fam == socket.AF_INET:
-			sa = cast(pointer(sa), POINTER(struct_sockaddr_in)).contents
-			addr = socket.inet_ntop(fam, sa.sin_addr)
-			nm = ifa.ifa_netmask.contents
-			if nm is not None and nm.sa_family == socket.AF_INET:
-				nm = cast(pointer(nm), POINTER(struct_sockaddr_in)).contents
-				addr += '/'+socket.inet_ntop(fam, nm.sin_addr)
-			return IPAddr(addr)
-		elif fam == socket.AF_INET6:
-			sa = cast(pointer(sa), POINTER(struct_sockaddr_in6)).contents
-			addr = socket.inet_ntop(fam, sa.sin6_addr)
-			nm = ifa.ifa_netmask.contents
-			if nm is not None and nm.sa_family == socket.AF_INET6:
-				nm = cast(pointer(nm), POINTER(struct_sockaddr_in6)).contents
-				addr += '/'+socket.inet_ntop(fam, nm.sin6_addr)
-			return IPAddr(addr)
-		return None
-
-	def _NetworkInterfacesAddrs():
-		ifap = POINTER(struct_ifaddrs)()
-		result = libc.getifaddrs(pointer(ifap))
-		if result != 0:
-			raise OSError(get_errno())
-		del result
-		try:
-			for ifa in ifap_iter(ifap):
-				name = ifa.ifa_name.decode("UTF-8")
-				addr = getfamaddr(ifa)
-				if addr:
-					yield name, addr
-		finally:
-			libc.freeifaddrs(ifap)
+		def _NetworkInterfacesAddrs():
+			ifap = POINTER(struct_ifaddrs)()
+			result = libc.getifaddrs(pointer(ifap))
+			if result != 0:
+				raise OSError(get_errno())
+			del result
+			try:
+				for ifa in ifap_iter(ifap):
+					name = ifa.ifa_name.decode("UTF-8")
+					addr = getfamaddr(ifa)
+					if addr:
+						yield name, addr
+			finally:
+				libc.freeifaddrs(ifap)
+	
+	except Exception as e: # pragma: no cover
+		_init_error = NotImplementedError(e)
+		def _NetworkInterfacesAddrs():
+			raise _init_error
 
 	DNSUtils._NetworkInterfacesAddrs = staticmethod(_NetworkInterfacesAddrs);
 	return _NetworkInterfacesAddrs()
