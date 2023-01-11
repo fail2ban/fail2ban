@@ -669,13 +669,28 @@ IPAddr.IP6_4COMPAT = IPAddr("::ffff:0:0", 96)
 
 class IPAddrSet(set):
 
+	hasSubNet = False
+
+	def __init__(self, ips=[]):
+		ips2 = set()
+		for ip in ips:
+			if not isinstance(ip, IPAddr): ip = IPAddr(ip)
+			ips2.add(ip)
+			self.hasSubNet |= not ip.isSingle
+		set.__init__(self, ips2)
+
+	def add(self, ip):
+		if not isinstance(ip, IPAddr): ip = IPAddr(ip)
+		self.hasSubNet |= not ip.isSingle
+		set.add(self, ip)
+
 	def __contains__(self, ip):
 		if not isinstance(ip, IPAddr): ip = IPAddr(ip)
 		# IP can be found directly or IP is in each subnet:
-		return set.__contains__(self, ip) or any(n.contains(ip) for n in self)
+		return set.__contains__(self, ip) or (self.hasSubNet and any(n.contains(ip) for n in self))
 
 
-def _NetworkInterfacesAddrs():
+def _NetworkInterfacesAddrs(withMask=False):
 
 	# Closure implementing lazy load modules and libc and define _NetworkInterfacesAddrs on demand:
 	# Currently tested on Linux only (TODO: implement for MacOS, Solaris, etc)
@@ -735,28 +750,30 @@ def _NetworkInterfacesAddrs():
 					break
 				ifa = ifa.ifa_next.contents
 
-		def getfamaddr(ifa):
+		def getfamaddr(ifa, withMask=False):
 			sa = ifa.ifa_addr.contents
 			fam = sa.sa_family
 			if fam == socket.AF_INET:
 				sa = cast(pointer(sa), POINTER(struct_sockaddr_in)).contents
 				addr = socket.inet_ntop(fam, sa.sin_addr)
-				nm = ifa.ifa_netmask.contents
-				if nm is not None and nm.sa_family == socket.AF_INET:
-					nm = cast(pointer(nm), POINTER(struct_sockaddr_in)).contents
-					addr += '/'+socket.inet_ntop(fam, nm.sin_addr)
+				if withMask:
+					nm = ifa.ifa_netmask.contents
+					if nm is not None and nm.sa_family == socket.AF_INET:
+						nm = cast(pointer(nm), POINTER(struct_sockaddr_in)).contents
+						addr += '/'+socket.inet_ntop(fam, nm.sin_addr)
 				return IPAddr(addr)
 			elif fam == socket.AF_INET6:
 				sa = cast(pointer(sa), POINTER(struct_sockaddr_in6)).contents
 				addr = socket.inet_ntop(fam, sa.sin6_addr)
-				nm = ifa.ifa_netmask.contents
-				if nm is not None and nm.sa_family == socket.AF_INET6:
-					nm = cast(pointer(nm), POINTER(struct_sockaddr_in6)).contents
-					addr += '/'+socket.inet_ntop(fam, nm.sin6_addr)
+				if withMask:
+					nm = ifa.ifa_netmask.contents
+					if nm is not None and nm.sa_family == socket.AF_INET6:
+						nm = cast(pointer(nm), POINTER(struct_sockaddr_in6)).contents
+						addr += '/'+socket.inet_ntop(fam, nm.sin6_addr)
 				return IPAddr(addr)
 			return None
 
-		def _NetworkInterfacesAddrs():
+		def _NetworkInterfacesAddrs(withMask=False):
 			ifap = POINTER(struct_ifaddrs)()
 			result = libc.getifaddrs(pointer(ifap))
 			if result != 0:
@@ -765,7 +782,7 @@ def _NetworkInterfacesAddrs():
 			try:
 				for ifa in ifap_iter(ifap):
 					name = ifa.ifa_name.decode("UTF-8")
-					addr = getfamaddr(ifa)
+					addr = getfamaddr(ifa, withMask)
 					if addr:
 						yield name, addr
 			finally:
@@ -777,6 +794,6 @@ def _NetworkInterfacesAddrs():
 			raise _init_error
 
 	DNSUtils._NetworkInterfacesAddrs = staticmethod(_NetworkInterfacesAddrs);
-	return _NetworkInterfacesAddrs()
+	return _NetworkInterfacesAddrs(withMask)
 
 DNSUtils._NetworkInterfacesAddrs = staticmethod(_NetworkInterfacesAddrs);
