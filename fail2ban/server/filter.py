@@ -613,7 +613,6 @@ class Filter(JailThread):
 
 		# check if the IP's geolocation is not on geo ignore list
 		httprequest = Request("http://ip-api.com/json/" + str(ip), headers={"Accept": "application/json"})
-
 		response = urlopen(httprequest)
 		geoipcc = json.loads(response.read().decode())['countryCode']
 
