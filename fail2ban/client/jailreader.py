@@ -108,6 +108,7 @@ class JailReader(ConfigReader):
 		"ignorecommand": ["string", None],
 		"ignoreself": ["bool", None],
 		"ignoreip": ["string", None],
+		"ignoregeoapi": ["string", None],
 		"ignoregeo": ["string", None],
 		"ignorecache": ["string", None],
 		"filter": ["string", ""],
