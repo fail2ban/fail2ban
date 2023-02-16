@@ -616,7 +616,7 @@ class Filter(JailThread):
 		response = urlopen(httprequest)
 		geoipcc = json.loads(response.read().decode())['countryCode']
 
-		if response == 200 and geoipcc in self.__ignoreGeoSet:
+		if response.getcode() == 200 and geoipcc in self.__ignoreGeoSet:
 			self.logIgnoreIp(ip, log_ignore, ignore_source="geo-" + geoipcc)
 			return True
 
