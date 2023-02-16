@@ -29,9 +29,9 @@ import os
 import re
 import sys
 import time
-import json
+import subprocess
+import shutil
 
-from urllib.request import urlopen, Request
 
 from .actions import Actions
 from .failmanager import FailManagerEmpty, FailManager
@@ -612,13 +612,12 @@ class Filter(JailThread):
 			return True
 
 		# check if the IP's geolocation is not on geo ignore list
-		httprequest = Request("http://ip-api.com/json/" + str(ip), headers={"Accept": "application/json"})
-		response = urlopen(httprequest)
-		geoipcc = json.loads(response.read().decode())['countryCode']
+		if shutil.which('geoiplookup'):
+			geoipcc = str(subprocess.check_output(['geoiplookup',str(ip)])).split(" ")[3].replace(",","")
 
-		if response == 200 and geoipcc in self.__ignoreGeoSet:
-			self.logIgnoreIp(ip, log_ignore, ignore_source="geo-" + geoipcc)
-			return True
+			if geoipcc in self.__ignoreGeoSet:
+				self.logIgnoreIp(ip, log_ignore, ignore_source="geo-" + geoipcc)
+				return True
 
 		# check if the IP is covered by ignore IP (in set or in subnet/dns):
 		if ip in self.__ignoreIpSet:
