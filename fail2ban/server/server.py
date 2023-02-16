@@ -376,6 +376,12 @@ class Server:
 	def getIgnoreIP(self, name):
 		return self.__jails[name].filter.getIgnoreIP()
 
+	def setIgnoreGEOAPI(self, name, api):
+		self.__jails[name].filter.setIgnoreGEOAPI(api)
+
+	def getIgnoreGEOAPI(self, name):
+		self.__jails[name].filter.getIgnoreGEOAPI()
+
 	def addIgnoreGEO(self, name, geo):
 		self.__jails[name].filter.addIgnoreGEO(geo)
 

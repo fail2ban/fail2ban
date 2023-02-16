@@ -86,6 +86,8 @@ class Filter(JailThread):
 		## The ignore IP list.
 		self.__ignoreIpSet = set()
 		self.__ignoreIpList = []
+		# GEO-IP database api endpoint
+		self.__ignoreGeoApi = None
 		## The ignore GEO ip list.
 		self.__ignoreGeoSet = set()
 		## External command
@@ -545,6 +547,19 @@ class Filter(JailThread):
 
 	def getIgnoreIP(self):
 		return self.__ignoreIpList + list(self.__ignoreIpSet)
+
+	def setIgnoreGEOAPI(self, api):
+		if api == "":
+			return
+		
+		if self.__ignoreGeoApi:
+			logSys.log(logging.MSG, "  GEO API was already set to %r and will be changed.", self.__ignoreGeoApi)
+
+		logSys.debug("  Set %r as GEO API endpoint", api)
+		self.__ignoreGeoApi = api
+
+	def getIgnoreGEOAPI(self):
+		return self.__ignoreGeoApi
 
 	def addIgnoreGEO(self, geo):
 		# An empty string is always false
