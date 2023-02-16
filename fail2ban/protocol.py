@@ -131,6 +131,7 @@ protocol = [
 ["get <JAIL> journalmatch", "gets the journal filter match for <JAIL>"],
 ["get <JAIL> ignoreself", "gets the current value of the ignoring the own IP addresses"],
 ["get <JAIL> ignoreip", "gets the list of ignored IP addresses for <JAIL>"],
+["get <JAIL> ignoregeo", "gets the list of ignored GEO locations for <JAIL>"],
 ["get <JAIL> ignorecommand", "gets ignorecommand of <JAIL>"],
 ["get <JAIL> failregex", "gets the list of regular expressions which matches the failures for <JAIL>"],
 ["get <JAIL> ignoreregex", "gets the list of regular expressions which matches patterns to ignore for <JAIL>"],
