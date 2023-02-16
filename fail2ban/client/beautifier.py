@@ -147,6 +147,14 @@ class Beautifier:
 					for ip in response[:-1]:
 						msg += "|- " + ip + "\n"
 					msg += "`- " + response[-1]
+			elif inC[2] in ("ignoregeo", "addignoregeo", "delignoregeo"):
+				if len(response) == 0:
+					msg = "No GEO location is ignored"
+				else:
+					msg = "These GEO locations are ignored:\n"
+					for geo in response[:-1]:
+						msg += "|- " + geo + "\n"
+					msg += "`- " + response[-1]
 			elif inC[2] in ("failregex", "addfailregex", "delfailregex",
 							"ignoreregex", "addignoreregex", "delignoreregex"):
 				if len(response) == 0:
