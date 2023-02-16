@@ -235,11 +235,6 @@ class Transmitter:
 			self.__server.delIgnoreIP(name, value)
 			if self.__quiet: return
 			return self.__server.getIgnoreIP(name)
-		elif command[1] == "setignoregeoapi":
-			for value in command[2:]:
-				self.__server.setIgnoreGEOAPI(name, value)
-			if self.__quiet: return
-			return self.__server.getIgnoreGEOAPI(name)
 		elif command[1] == "addignoregeo":
 			for value in command[2:]:
 				self.__server.addIgnoreGEO(name, value)
