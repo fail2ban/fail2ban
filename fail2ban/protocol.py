@@ -88,6 +88,8 @@ protocol = [
 ["set <JAIL> ignoreself true|false", "allows the ignoring of own IP addresses"], 
 ["set <JAIL> addignoreip <IP>", "adds <IP> to the ignore list of <JAIL>"], 
 ["set <JAIL> delignoreip <IP>", "removes <IP> from the ignore list of <JAIL>"], 
+["set <JAIL> addignoregeo <GEO>", "adds <GEO> to the ignore list of <JAIL>"], 
+["set <JAIL> delignoregeo <GEO>", "removes <GEO> from the ignore list of <JAIL>"], 
 ["set <JAIL> ignorecommand <VALUE>", "sets ignorecommand of <JAIL>"],
 ["set <JAIL> ignorecache <VALUE>", "sets ignorecache of <JAIL>"],
 ["set <JAIL> addlogpath <FILE> ['tail']", "adds <FILE> to the monitoring list of <JAIL>, optionally starting at the 'tail' of the file (default 'head')."], 
