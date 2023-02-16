@@ -463,6 +463,8 @@ class Transmitter:
 			return self.__server.getIgnoreSelf(name)
 		elif command[1] == "ignoreip":
 			return self.__server.getIgnoreIP(name)
+		elif command[1] == "ignoregeo":
+			return self.__server.getIgnoreGEO(name)
 		elif command[1] == "ignorecommand":
 			return self.__server.getIgnoreCommand(name)
 		elif command[1] == "ignorecache":
