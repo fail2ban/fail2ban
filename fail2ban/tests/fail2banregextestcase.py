@@ -36,7 +36,7 @@ from .utils import CONFIG_DIR
 
 fail2banregex.logSys = logSys
 def _test_output(*args):
-	logSys.notice(args[0])
+	logSys.notice('output: %s', args[0])
 
 fail2banregex.output = _test_output
 
@@ -140,6 +140,13 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"test", r".** from <HOST>$"
 		))
 		self.assertLogged("Unable to compile regular expression")
+		self.assertLogged("multiple repeat", "at position 2", all=False); # details of failed compilation
+		self.pruneLog()
+		self.assertFalse(_test_exec(
+			"test", r"^(?:(?P<type>A)|B)? (?(typo)...) from <ADDR>"
+		))
+		self.assertLogged("Unable to compile regular expression")
+		self.assertLogged("unknown group name: 'typo'", "at position 23", all=False); # details of failed compilation
 
 	def testWrongIngnoreRE(self):
 		self.assertFalse(_test_exec(
@@ -147,6 +154,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"test", r".*? from <HOST>$", r".**"
 		))
 		self.assertLogged("Unable to compile regular expression")
+		self.assertLogged("multiple repeat", "at position 2", all=False); # details of failed compilation
 
 	def testWrongFilterOptions(self):
 		self.assertFalse(_test_exec(
@@ -352,57 +360,57 @@ class Fail2banRegexTest(LogCaptureTestCase):
 	def testFrmtOutput(self):
 		# id/ip only:
 		self.assertTrue(_test_exec('-o', 'id', STR_00, RE_00_ID))
-		self.assertLogged('kevin')
+		self.assertLogged('output: %s' % 'kevin')
 		self.pruneLog()
 		# multiple id combined to a tuple (id, tuple_id):
 		self.assertTrue(_test_exec('-o', 'id', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 192.0.2.1 192.0.2.2',
 			r'^\s*<F-ID/> <F-TUPLE_ID>\S+</F-TUPLE_ID>'))
-		self.assertLogged(str(('192.0.2.1', '192.0.2.2')))
+		self.assertLogged('output: %s' % str(('192.0.2.1', '192.0.2.2')))
 		self.pruneLog()
 		# multiple id combined to a tuple, id first - (id, tuple_id_1, tuple_id_2):
 		self.assertTrue(_test_exec('-o', 'id', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left 192.0.2.3 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID/> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
-		self.assertLogged(str(('192.0.2.3', 'left', 'right')))
+		self.assertLogged('output: %s' % str(('192.0.2.3', 'left', 'right')))
 		self.pruneLog()
 		# id had higher precedence as ip-address:
 		self.assertTrue(_test_exec('-o', 'id', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left [192.0.2.4]:12345 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
-		self.assertLogged(str(('[192.0.2.4]:12345', 'left', 'right')))
+		self.assertLogged('output: %s' % str(('[192.0.2.4]:12345', 'left', 'right')))
 		self.pruneLog()
 		# ip is not id anymore (if IP-address deviates from ID):
 		self.assertTrue(_test_exec('-o', 'ip', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left [192.0.2.4]:12345 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
-		self.assertNotLogged(str(('[192.0.2.4]:12345', 'left', 'right')))
-		self.assertLogged('192.0.2.4')
+		self.assertNotLogged('output: %s' % str(('[192.0.2.4]:12345', 'left', 'right')))
+		self.assertLogged('output: %s' % '192.0.2.4')
 		self.pruneLog()
 		self.assertTrue(_test_exec('-o', 'ID:<fid> | IP:<ip>', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left [192.0.2.4]:12345 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
-		self.assertLogged('ID:'+str(('[192.0.2.4]:12345', 'left', 'right'))+' | IP:192.0.2.4')
+		self.assertLogged('output: %s' % 'ID:'+str(('[192.0.2.4]:12345', 'left', 'right'))+' | IP:192.0.2.4')
 		self.pruneLog()
 		# row with id :
 		self.assertTrue(_test_exec('-o', 'row', STR_00, RE_00_ID))
-		self.assertLogged("['kevin'", "'ip4': '192.0.2.0'", "'fid': 'kevin'", all=True)
+		self.assertLogged('output: %s' % "['kevin'", "'ip4': '192.0.2.0'", "'fid': 'kevin'", all=True)
 		self.pruneLog()
 		# row with ip :
 		self.assertTrue(_test_exec('-o', 'row', STR_00, RE_00_USER))
-		self.assertLogged("['192.0.2.0'", "'ip4': '192.0.2.0'", "'user': 'kevin'", all=True)
+		self.assertLogged('output: %s' % "['192.0.2.0'", "'ip4': '192.0.2.0'", "'user': 'kevin'", all=True)
 		self.pruneLog()
 		# log msg :
 		self.assertTrue(_test_exec('-o', 'msg', STR_00, RE_00_USER))
-		self.assertLogged(STR_00)
+		self.assertLogged('output: %s' % STR_00)
 		self.pruneLog()
 		# item of match (user):
 		self.assertTrue(_test_exec('-o', 'user', STR_00, RE_00_USER))
-		self.assertLogged('kevin')
+		self.assertLogged('output: %s' % 'kevin')
 		self.pruneLog()
 		# complex substitution using tags (ip, user, family):
 		self.assertTrue(_test_exec('-o', '<ip>, <F-USER>, <family>', STR_00, RE_00_USER))
-		self.assertLogged('192.0.2.0, kevin, inet4')
+		self.assertLogged('output: %s' % '192.0.2.0, kevin, inet4')
 		self.pruneLog()
 
 	def testStalledIPByNoFailFrmtOutput(self):

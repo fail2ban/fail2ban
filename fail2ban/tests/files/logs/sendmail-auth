@@ -32,3 +32,5 @@ May 24 01:59:07 server sm-mta[65815]: 14NNx65Q065815: AUTH failure (CRAM-MD5): u
 May 29 23:14:04 mail sendmail[5976]: 09DJDgOM005976: AUTH failure (login): authentication failure (-13) SASL(-13): authentication failure: checkpass failed, user=test, relay=host.example.com [192.0.2.7] (may be forged)
 # failJSON: { "time": "2005-05-29T23:14:04", "match": true , "host": "192.0.2.8", "desc": "authentication failure, sendmail 8.16.1 (gh-2757)" }
 May 29 23:14:04 mail sendmail[5976]: 09DJDgOM005976: AUTH failure (PLAIN): authentication failure (-13) SASL(-13): authentication failure: Password verification failed, user=test, relay=host.example.com [192.0.2.8]
+# failJSON: { "time": "2005-05-29T23:14:05", "match": true , "host": "192.0.2.9", "desc": "authentication failure, no user part (gh-2757)" }
+May 29 23:14:05 server sendmail[25411]: 26H8MRrS025411: AUTH failure (LOGIN): authentication failure (-13) SASL(-13): authentication failure: checkpass failed, relay=[192.0.2.9]
