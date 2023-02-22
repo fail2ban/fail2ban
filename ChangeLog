@@ -26,7 +26,7 @@ ver. 1.0.3-dev-1 (20??/??/??) - development nightly edition
 * `filter.d/sshd.conf`:
   - avoid double counting for "maximum authentication attempts exceeded" (gh-3502)
   - message "Disconnecting ... Too many authentication failures" is not a failure anymore
-
+* added Policy Based Routing (pbr) action: more granular blocking compared with 'route' action
 
 ver. 1.0.2 (2022/11/09) - finally-war-game-test-tape-not-a-nuclear-alarm
 -----------
