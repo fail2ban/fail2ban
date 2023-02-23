@@ -67,7 +67,7 @@ class DatabaseTest(LogCaptureTestCase):
 
 	@property
 	def db(self):
-		if isinstance(self._db, basestring) and self._db == ':auto-create-in-memory:':
+		if isinstance(self._db, str) and self._db == ':auto-create-in-memory:':
 			self._db = getFail2BanDb(self.dbFilename)
 		return self._db
 	@db.setter
@@ -159,7 +159,7 @@ class DatabaseTest(LogCaptureTestCase):
 			self.db = Fail2BanDb(self.dbFilename)
 			self.assertEqual(self.db.getJailNames(), set(['DummyJail #29162448 with 0 tickets']))
 			self.assertEqual(self.db.getLogPaths(), set(['/tmp/Fail2BanDb_pUlZJh.log']))
-			ticket = FailTicket("127.0.0.1", 1388009242.26, [u"abc\n"])
+			ticket = FailTicket("127.0.0.1", 1388009242.26, ["abc\n"])
 			self.assertEqual(self.db.getBans()[0], ticket)
 
 			self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
@@ -185,9 +185,9 @@ class DatabaseTest(LogCaptureTestCase):
 		self.assertEqual(len(bans), 2)
 		# compare first ticket completely:
 		ticket = FailTicket("1.2.3.7", 1417595494, [
-			u'Dec  3 09:31:08 f2btest test:auth[27658]: pam_unix(test:auth): authentication failure; logname= uid=0 euid=0 tty=test ruser= rhost=1.2.3.7',
-			u'Dec  3 09:31:32 f2btest test:auth[27671]: pam_unix(test:auth): authentication failure; logname= uid=0 euid=0 tty=test ruser= rhost=1.2.3.7',
-			u'Dec  3 09:31:34 f2btest test:auth[27673]: pam_unix(test:auth): authentication failure; logname= uid=0 euid=0 tty=test ruser= rhost=1.2.3.7'
+			'Dec  3 09:31:08 f2btest test:auth[27658]: pam_unix(test:auth): authentication failure; logname= uid=0 euid=0 tty=test ruser= rhost=1.2.3.7',
+			'Dec  3 09:31:32 f2btest test:auth[27671]: pam_unix(test:auth): authentication failure; logname= uid=0 euid=0 tty=test ruser= rhost=1.2.3.7',
+			'Dec  3 09:31:34 f2btest test:auth[27673]: pam_unix(test:auth): authentication failure; logname= uid=0 euid=0 tty=test ruser= rhost=1.2.3.7'
 		])
 		ticket.setAttempt(3)
 		self.assertEqual(bans[0], ticket)
@@ -287,11 +287,11 @@ class DatabaseTest(LogCaptureTestCase):
 		# invalid + valid, invalid + valid unicode, invalid + valid dual converted (like in filter:readline by fallback) ...
 		tickets = [
 		  FailTicket("127.0.0.1", 0, ['user "test"', 'user "\xd1\xe2\xe5\xf2\xe0"', 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
-		  FailTicket("127.0.0.2", 0, ['user "test"', u'user "\xd1\xe2\xe5\xf2\xe0"', u'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
+		  FailTicket("127.0.0.2", 0, ['user "test"', 'user "\xd1\xe2\xe5\xf2\xe0"', 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
 		  FailTicket("127.0.0.3", 0, ['user "test"', b'user "\xd1\xe2\xe5\xf2\xe0"', b'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
-		  FailTicket("127.0.0.4", 0, ['user "test"', 'user "\xd1\xe2\xe5\xf2\xe0"', u'user "\xe4\xf6\xfc\xdf"']),
+		  FailTicket("127.0.0.4", 0, ['user "test"', 'user "\xd1\xe2\xe5\xf2\xe0"', 'user "\xe4\xf6\xfc\xdf"']),
 		  FailTicket("127.0.0.5", 0, ['user "test"', 'unterminated \xcf']),
-		  FailTicket("127.0.0.6", 0, ['user "test"', u'unterminated \xcf']),
+		  FailTicket("127.0.0.6", 0, ['user "test"', 'unterminated \xcf']),
 		  FailTicket("127.0.0.7", 0, ['user "test"', b'unterminated \xcf'])
 		]
 		for ticket in tickets:

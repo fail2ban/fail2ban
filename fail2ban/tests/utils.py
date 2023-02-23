@@ -35,7 +35,7 @@ import time
 import threading
 import unittest
 
-from cStringIO import StringIO
+from io import StringIO
 from functools import wraps
 
 from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, uni_decode
@@ -171,8 +171,8 @@ def initProcess(opts):
 
 	# Let know the version
 	if opts.verbosity != 0:
-		print("Fail2ban %s test suite. Python %s. Please wait..." \
-				% (version, str(sys.version).replace('\n', '')))
+		print(("Fail2ban %s test suite. Python %s. Please wait..." \
+				% (version, str(sys.version).replace('\n', ''))))
 
 	return opts;
 
@@ -303,7 +303,7 @@ def initTests(opts):
 	c.clear = lambda: logSys.warn('clear CACHE_ipToName is disabled in test suite')
 	# increase max count and max time (too many entries, long time testing):
 	c.setOptions(maxCount=10000, maxTime=5*60)
-	for i in xrange(256):
+	for i in range(256):
 		c.set('192.0.2.%s' % i, None)
 		c.set('198.51.100.%s' % i, None)
 		c.set('203.0.113.%s' % i, None)
@@ -531,8 +531,8 @@ def gatherTests(regexps=None, opts=None):
 import difflib, pprint
 if not hasattr(unittest.TestCase, 'assertDictEqual'):
 	def assertDictEqual(self, d1, d2, msg=None):
-		self.assert_(isinstance(d1, dict), 'First argument is not a dictionary')
-		self.assert_(isinstance(d2, dict), 'Second argument is not a dictionary')
+		self.assertTrue(isinstance(d1, dict), 'First argument is not a dictionary')
+		self.assertTrue(isinstance(d2, dict), 'Second argument is not a dictionary')
 		if d1 != d2:
 			standardMsg = '%r != %r' % (d1, d2)
 			diff = ('\n' + '\n'.join(difflib.ndiff(
@@ -550,7 +550,7 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=False, key=repr, msg=None)
 	# used to recognize having element as nested dict, list or tuple:
 	def _is_nested(v):
 		if isinstance(v, dict):
-			return any(isinstance(v, (dict, list, tuple)) for v in v.itervalues())
+			return any(isinstance(v, (dict, list, tuple)) for v in v.values())
 		return any(isinstance(v, (dict, list, tuple)) for v in v)
 	if nestedOnly:
 		_nest_sorted = sorted
@@ -570,7 +570,7 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=False, key=repr, msg=None)
 				return
 			raise ValueError('%r != %r' % (a, b))
 		if isinstance(a, dict) and isinstance(b, dict): # compare dict's:
-			for k, v1 in a.iteritems():
+			for k, v1 in a.items():
 				v2 = b[k]
 				if isinstance(v1, (dict, list, tuple)) and isinstance(v2, (dict, list, tuple)):
 					_assertSortedEqual(v1, v2, level-1 if level != 0 else 0, nestedOnly, key)
@@ -605,14 +605,14 @@ if not hasattr(unittest.TestCase, 'assertRaisesRegexp'):
 				self.fail('\"%s\" does not match \"%s\"' % (regexp, e))
 		else:
 			self.fail('%s not raised' % getattr(exccls, '__name__'))
-	unittest.TestCase.assertRaisesRegexp = assertRaisesRegexp
+	unittest.TestCase.assertRaisesRegex = assertRaisesRegexp
 
 # always custom following methods, because we use atm better version of both (support generators)
 if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
 	def assertIn(self, a, b, msg=None):
 		bb = b
 		wrap = False
-		if msg is None and hasattr(b, '__iter__') and not isinstance(b, basestring):
+		if msg is None and hasattr(b, '__iter__') and not isinstance(b, str):
 			b, bb = itertools.tee(b)
 			wrap = True
 		if a not in b:
@@ -623,7 +623,7 @@ if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
 	def assertNotIn(self, a, b, msg=None):
 		bb = b
 		wrap = False
-		if msg is None and hasattr(b, '__iter__') and not isinstance(b, basestring):
+		if msg is None and hasattr(b, '__iter__') and not isinstance(b, str):
 			b, bb = itertools.tee(b)
 			wrap = True
 		if a in b:

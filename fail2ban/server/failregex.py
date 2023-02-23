@@ -143,9 +143,7 @@ class Regex:
 			self._regex = regex
 			self._altValues = []
 			self._tupleValues = []
-			for k in filter(
-				lambda k: len(k) > len(COMPLNAME_PRE[0]), self._regexObj.groupindex
-			):
+			for k in [k for k in self._regexObj.groupindex if len(k) > len(COMPLNAME_PRE[0])]:
 				n = COMPLNAME_CRE.match(k)
 				if n:
 					g, n = n.group(1), mapTag2Opt(n.group(2))
@@ -235,7 +233,7 @@ class Regex:
 	#
 	@staticmethod
 	def _tupleLinesBuf(tupleLines):
-		return "\n".join(map(lambda v: "".join(v[::2]), tupleLines)) + "\n"
+		return "\n".join(["".join(v[::2]) for v in tupleLines]) + "\n"
 
 	##
 	# Searches the regular expression.
@@ -247,7 +245,7 @@ class Regex:
 	
 	def search(self, tupleLines, orgLines=None):
 		buf = tupleLines
-		if not isinstance(tupleLines, basestring):
+		if not isinstance(tupleLines, str):
 			buf = Regex._tupleLinesBuf(tupleLines)
 		self._matchCache = self._regexObj.search(buf)
 		if self._matchCache:

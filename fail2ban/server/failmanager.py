@@ -55,7 +55,7 @@ class FailManager:
 	def getFailCount(self):
 		# may be slow on large list of failures, should be used for test purposes only...
 		with self.__lock:
-			return len(self.__failList), sum([f.getRetry() for f in self.__failList.values()])
+			return len(self.__failList), sum([f.getRetry() for f in list(self.__failList.values())])
 
 	def setMaxRetry(self, value):
 		self.__maxRetry = value
@@ -116,7 +116,7 @@ class FailManager:
 				# in case of having many active failures, it should be ran only
 				# if debug level is "low" enough
 				failures_summary = ', '.join(['%s:%d' % (k, v.getRetry())
-											  for k,v in  self.__failList.iteritems()])
+											  for k,v in  self.__failList.items()])
 				logSys.log(logLevel, "Total # of detected failures: %d. Current failures from %d IPs (IP:count): %s"
 							 % (self.__failTotal, len(self.__failList), failures_summary))
 
@@ -129,7 +129,7 @@ class FailManager:
 	def cleanup(self, time):
 		time -= self.__maxTime
 		with self.__lock:
-			todelete = [fid for fid,item in self.__failList.iteritems() \
+			todelete = [fid for fid,item in self.__failList.items() \
 				if item.getTime() <= time]
 			if len(todelete) == len(self.__failList):
 				# remove all:
@@ -143,7 +143,7 @@ class FailManager:
 					del self.__failList[fid]
 			else:
 				# create new dictionary without items to be deleted:
-				self.__failList = dict((fid,item) for fid,item in self.__failList.iteritems() \
+				self.__failList = dict((fid,item) for fid,item in self.__failList.items() \
 					if item.getTime() > time)
 		self.__bgSvc.service()
 	

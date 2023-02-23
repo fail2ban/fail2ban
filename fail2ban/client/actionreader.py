@@ -89,11 +89,11 @@ class ActionReader(DefinitionInitConfigReader):
 		stream = list()
 		stream.append(head + ["addaction", self._name])
 		multi = []
-		for opt, optval in opts.iteritems():
+		for opt, optval in opts.items():
 			if opt in self._configOpts and not opt.startswith('known/'):
 				multi.append([opt, optval])
 		if self._initOpts:
-			for opt, optval in self._initOpts.iteritems():
+			for opt, optval in self._initOpts.items():
 				if opt not in self._configOpts and not opt.startswith('known/'):
 					multi.append([opt, optval])
 		if len(multi) > 1:

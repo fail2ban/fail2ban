@@ -419,7 +419,7 @@ class JailReaderTest(LogCaptureTestCase):
 		# And multiple groups (`][` instead of `,`)
 		result = extractOptions(option.replace(',', ']['))
 		expected2 = (expected[0],
-		 dict((k, v.replace(',', '][')) for k, v in expected[1].iteritems())
+		 dict((k, v.replace(',', '][')) for k, v in expected[1].items())
 		)
 		self.assertEqual(expected2, result)
 
@@ -1018,7 +1018,7 @@ filter = testfilter1
 		self.assertEqual(add_actions[-1][-1], "{}")
 
 	def testLogPathFileFilterBackend(self):
-		self.assertRaisesRegexp(ValueError, r"Have not found any log file for .* jail", 
+		self.assertRaisesRegex(ValueError, r"Have not found any log file for .* jail", 
 			self._testLogPath, backend='polling')
 
 	def testLogPathSystemdBackend(self):

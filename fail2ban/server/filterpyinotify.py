@@ -155,7 +155,7 @@ class FilterPyinotify(FileFilter):
 		except KeyError: pass
 
 	def getPendingPaths(self):
-		return self.__pending.keys()
+		return list(self.__pending.keys())
 
 	def _checkPending(self):
 		if not self.__pending:
@@ -181,7 +181,7 @@ class FilterPyinotify(FileFilter):
 		self.__pendingChkTime = time.time()
 		self.__pendingMinTime = minTime
 		# process now because we've missed it in monitoring:
-		for path, isDir in found.iteritems():
+		for path, isDir in found.items():
 			self._delPending(path)
 			# refresh monitoring of this:
 			if isDir is not None:

@@ -40,10 +40,10 @@ import os
 import shlex
 import sys
 import time
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from optparse import OptionParser, Option
 
-from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
+from configparser import NoOptionError, NoSectionError, MissingSectionHeaderError
 
 try: # pragma: no cover
 	from ..server.filtersystemd import FilterSystemd
@@ -67,7 +67,7 @@ def debuggexURL(sample, regex, multiline=False, useDns="yes"):
 		'flavor': 'python'
 	}
 	if multiline: args['flags'] = 'm'
-	return 'https://www.debuggex.com/?' + urllib.urlencode(args)
+	return 'https://www.debuggex.com/?' + urllib.parse.urlencode(args)
 
 def output(args): # pragma: no cover (overriden in test-cases)
 	print(args)
@@ -246,7 +246,7 @@ class Fail2banRegex(object):
 
 	def __init__(self, opts):
 		# set local protected members from given options:
-		self.__dict__.update(dict(('_'+o,v) for o,v in opts.__dict__.iteritems()))
+		self.__dict__.update(dict(('_'+o,v) for o,v in opts.__dict__.items()))
 		self._opts = opts
 		self._maxlines_set = False		  # so we allow to override maxlines in cmdline
 		self._datepattern_set = False
@@ -313,7 +313,7 @@ class Fail2banRegex(object):
 		realopts = {}
 		combopts = reader.getCombined()
 		# output all options that are specified in filter-argument as well as some special (mostly interested):
-		for k in ['logtype', 'datepattern'] + fltOpt.keys():
+		for k in ['logtype', 'datepattern'] + list(fltOpt.keys()):
 			# combined options win, but they contain only a sub-set in filter expected keys,
 			# so get the rest from definition section:
 			try:
@@ -440,7 +440,7 @@ class Fail2banRegex(object):
 			self.output( "Use %11s line : %s" % (regex, shortstr(value)) )
 			regex_values = {regextype: [RegexStat(value)]}
 
-		for regextype, regex_values in regex_values.iteritems():
+		for regextype, regex_values in regex_values.items():
 			regex = regextype + 'regex'
 			setattr(self, "_" + regex, regex_values)
 			for regex in regex_values:
@@ -532,13 +532,13 @@ class Fail2banRegex(object):
 			def _out(ret):
 				for r in ret:
 					for r in r[3].get('matches'):
-						if not isinstance(r, basestring):
+						if not isinstance(r, str):
 							r = ''.join(r for r in r)
 						output(r)
 		elif ofmt == 'row':
 			def _out(ret):
 				for r in ret:
-					output('[%r,\t%r,\t%r],' % (r[1],r[2],dict((k,v) for k, v in r[3].iteritems() if k != 'matches')))
+					output('[%r,\t%r,\t%r],' % (r[1],r[2],dict((k,v) for k, v in r[3].items() if k != 'matches')))
 		elif '<' not in ofmt:
 			def _out(ret):
 				for r in ret:
@@ -573,7 +573,7 @@ class Fail2banRegex(object):
 				# wrap multiline tag (msg) interpolations to single line:
 				for r, v in rows:
 					for r in r[3].get('matches'):
-						if not isinstance(r, basestring):
+						if not isinstance(r, str):
 							r = ''.join(r for r in r)
 						r = v.replace("\x00msg\x00", r)
 						output(r)
@@ -639,9 +639,9 @@ class Fail2banRegex(object):
 					ans = [[]]
 					for arg in [l, regexlist]:
 						ans = [ x + [y] for x in ans for y in arg ]
-					b = map(lambda a: a[0] +  ' | ' + a[1].getFailRegex() + ' |  ' + 
+					b = [a[0] +  ' | ' + a[1].getFailRegex() + ' |  ' + 
 						debuggexURL(self.encode_line(a[0]), a[1].getFailRegex(), 
-							multiline, self._opts.usedns), ans)
+							multiline, self._opts.usedns) for a in ans]
 					pprint_list([x.rstrip() for x in b], header)
 				else:
 					output( "%s too many to print.  Use --print-all-%s " \

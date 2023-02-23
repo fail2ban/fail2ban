@@ -165,7 +165,7 @@ class MyTime:
 		
 		@returns number (calculated seconds from expression "val")
 		"""
-		if isinstance(val, (int, long, float, complex)):
+		if isinstance(val, (int, float, complex)):
 			return val
 		# replace together standing abbreviations, example '1d12h' -> '1d 12h':
 		val = MyTime._str2sec_prep.sub(r" \1", val)

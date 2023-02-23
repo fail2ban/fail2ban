@@ -99,7 +99,7 @@ def _updateTimeRE():
 				if len(exprset) > 1 else "".join(exprset)
 		exprset = set( cent(now[0].year + i) for i in (-1, distance) )
 		if len(now) > 1 and now[1]:
-			exprset |= set( cent(now[1].year + i) for i in xrange(-1, now[0].year-now[1].year+1, distance) )
+			exprset |= set( cent(now[1].year + i) for i in range(-1, now[0].year-now[1].year+1, distance) )
 		return grp(sorted(list(exprset)))
 
 	# more precise year patterns, within same century of last year and
@@ -116,7 +116,7 @@ def _updateTimeRE():
 _updateTimeRE()
 
 def getTimePatternRE():
-	keys = timeRE.keys()
+	keys = list(timeRE.keys())
 	patt = (r"%%(%%|%s|[%s])" % (
 		"|".join([k for k in keys if len(k) > 1]),
 		"".join([k for k in keys if len(k) == 1]),
@@ -171,7 +171,7 @@ def zone2offset(tz, dt):
 	"""
 	if isinstance(tz, int):
 		return tz
-	if isinstance(tz, basestring):
+	if isinstance(tz, str):
 		return validateTimeZone(tz)
 	tz, tzo = tz
 	if tzo is None or tzo == '': # without offset
@@ -208,7 +208,7 @@ def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
 	year = month = day = tzoffset = \
 	weekday = julian = week_of_year = None
 	hour = minute = second = fraction = 0
-	for key, val in found_dict.iteritems():
+	for key, val in found_dict.items():
 		if val is None: continue
 		# Directives not explicitly handled below:
 		#   c, x, X
