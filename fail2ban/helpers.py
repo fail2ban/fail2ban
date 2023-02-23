@@ -31,7 +31,6 @@ import traceback
 from threading import Lock
 
 from .server.mytime import MyTime
-import importlib
 
 try:
 	import ctypes
@@ -64,7 +63,7 @@ if sys.version_info < (3,): # pragma: 3.x no cover
 					from imp import load_dynamic as __ldm
 					_sys = __ldm('_sys', 'sys')
 				except ImportError: # pragma: no cover - only if load_dynamic fails
-					importlib.reload(sys)
+					reload(sys)
 					_sys = sys
 			if hasattr(_sys, "setdefaultencoding"):
 				_sys.setdefaultencoding(encoding)
@@ -102,7 +101,7 @@ if sys.version_info >= (3,): # pragma: 2.x no cover
 else: # pragma: 3.x no cover
 	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
 		try:
-			if isinstance(x, str):
+			if isinstance(x, unicode):
 				return x.encode(enc, errors)
 			return x
 		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
@@ -111,7 +110,7 @@ else: # pragma: 3.x no cover
 			return x.encode(enc, 'replace')
 	if sys.getdefaultencoding().upper() != 'UTF-8': # pragma: no cover - utf-8 is default encoding now
 		def uni_string(x):
-			if not isinstance(x, str):
+			if not isinstance(x, unicode):
 				return str(x)
 			return x.encode(PREFER_ENC, 'replace')
 	else:
@@ -119,7 +118,7 @@ else: # pragma: 3.x no cover
 
 
 def _as_bool(val):
-	return bool(val) if not isinstance(val, str) \
+	return bool(val) if not isinstance(val, basestring) \
 		else val.lower() in ('1', 'on', 'true', 'yes')
 
 
@@ -328,7 +327,7 @@ def splitwords(s):
 	"""
 	if not s:
 		return []
-	return list(filter(bool, [v.strip() for v in re.split('[ ,\n]+', s)]))
+	return filter(bool, map(lambda v: v.strip(), re.split('[ ,\n]+', s)))
 
 if sys.version_info >= (3,5):
 	eval(compile(r'''if 1:
@@ -445,7 +444,7 @@ def substituteRecursiveTags(inptags, conditional='',
 	while True:
 		repFlag = False
 		# substitute each value:
-		for tag in tags.keys():
+		for tag in tags.iterkeys():
 			# ignore escaped or already done (or in ignore list):
 			if tag in ignore or tag in done: continue
 			# ignore replacing callable items from calling map - should be converted on demand only (by get):
@@ -485,7 +484,7 @@ def substituteRecursiveTags(inptags, conditional='',
 					m = tre_search(value, m.end())
 					continue
 				# if calling map - be sure we've string:
-				if not isinstance(repl, str): repl = uni_string(repl)
+				if not isinstance(repl, basestring): repl = uni_string(repl)
 				value = value.replace('<%s>' % rtag, repl)
 				#logSys.log(5, 'value now: %s' % value)
 				# increment reference count:

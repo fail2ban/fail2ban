@@ -173,4 +173,4 @@ class FilterPoll(FileFilter):
 			return False
 
 	def getPendingPaths(self):
-		return list(self.__file404Cnt.keys())
+		return self.__file404Cnt.keys()

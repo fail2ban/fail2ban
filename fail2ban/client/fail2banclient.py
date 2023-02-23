@@ -45,7 +45,7 @@ def _thread_name():
 	return threading.current_thread().__class__.__name__
 
 def input_command(): # pragma: no cover
-	return input(PROMPT)
+	return raw_input(PROMPT)
 
 ##
 #
@@ -456,7 +456,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 			return False
 		finally:
 			self._alive = False
-			for s, sh in _prev_signals.items():
+			for s, sh in _prev_signals.iteritems():
 				signal.signal(s, sh)
 
 
