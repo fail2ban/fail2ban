@@ -612,12 +612,15 @@ class Filter(JailThread):
 			return True
 
 		# check if the IP's geolocation is not on geo ignore list
-		if shutil.which('geoiplookup'):
-			geoipcc = str(subprocess.check_output(['geoiplookup',str(ip)])).split(" ")[3].replace(",","")
+		if self.__ignoreGeoSet:
+			if shutil.which("geoiplookup"):
+				geoipcc = str(subprocess.check_output(["geoiplookup",str(ip)])).split(" ")[3].replace(",","")
 
-			if geoipcc in self.__ignoreGeoSet:
-				self.logIgnoreIp(ip, log_ignore, ignore_source="geo-" + geoipcc)
-				return True
+				if geoipcc in self.__ignoreGeoSet:
+					self.logIgnoreIp(ip, log_ignore, ignore_source="geo-" + geoipcc)
+					return True
+			else:
+				self._logWarnOnce("_next_geoByTimeWarn", ("Cannot find geoiplookup. Geolocation is unavailable."))
 
 		# check if the IP is covered by ignore IP (in set or in subnet/dns):
 		if ip in self.__ignoreIpSet:
