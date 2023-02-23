@@ -43,6 +43,7 @@ Optional:
 - [systemd >= 204](http://www.freedesktop.org/wiki/Software/systemd) and python bindings:
   * [python-systemd package](https://www.freedesktop.org/software/systemd/python-systemd/index.html)
 - [dnspython](http://www.dnspython.org/)
+- [geoiplookup](https://linux.die.net/man/1/geoiplookup)
 
 
 To install:
