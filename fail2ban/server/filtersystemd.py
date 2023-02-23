@@ -253,7 +253,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		return ((logline[:0], date[0] + ' ', logline.replace('\n', '\\n')), date[1])
 
 	def seekToTime(self, date):
-		if isinstance(date, (int, long)):
+		if isinstance(date, int):
 			date = float(date)
 		self.__journal.seek_realtime(date)
 

@@ -177,7 +177,7 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		super(StatusExtendedCymruInfo, self).setUp()
 		unittest.F2B.SkipIfNoNetwork()
 		setUpMyTime()
-		self.__ban_ip = iter(DNSUtils.dnsToIp("resolver1.opendns.com")).next()
+		self.__ban_ip = next(iter(DNSUtils.dnsToIp("resolver1.opendns.com")))
 		self.__asn = "36692"
 		self.__country = "US"
 		self.__rir = "arin"

@@ -137,7 +137,7 @@ class FilterSamplesRegex(unittest.TestCase):
 
 	@staticmethod
 	def _filterOptions(opts):
-				return dict((k, v) for k, v in opts.iteritems() if not k.startswith('test.'))
+				return dict((k, v) for k, v in opts.items() if not k.startswith('test.'))
 		
 def testSampleRegexsFactory(name, basedir):
 	def testFilter(self):
@@ -258,12 +258,12 @@ def testSampleRegexsFactory(name, basedir):
 						self.assertTrue(faildata.get('match', False), 
 							"Line matched when shouldn't have")
 						self.assertEqual(len(ret), 1,
-							"Multiple regexs matched %r" % (map(lambda x: x[0], ret)))
+							"Multiple regexs matched %r" % ([x[0] for x in ret]))
 
 						for ret in ret:
 							failregex, fid, fail2banTime, fail = ret
 							# Verify match captures (at least fid/host) and timestamp as expected
-							for k, v in faildata.iteritems():
+							for k, v in faildata.items():
 								if k not in ("time", "match", "desc", "constraint"):
 									fv = fail.get(k, None)
 									if fv is None:
@@ -305,7 +305,7 @@ def testSampleRegexsFactory(name, basedir):
 								'\n'.join(pprint.pformat(fail).splitlines())))
 
 		# check missing samples for regex using each filter-options combination:
-		for fltName, flt in self._filters.iteritems():
+		for fltName, flt in self._filters.items():
 			flt, regexsUsedIdx = flt
 			regexList = flt.getFailRegex()
 			for failRegexIndex, failRegex in enumerate(regexList):

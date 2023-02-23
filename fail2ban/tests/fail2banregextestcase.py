@@ -589,8 +589,8 @@ class Fail2banRegexTest(LogCaptureTestCase):
 				# test on unicode string containing \x0A as part of uni-char,
 				# it must produce exactly 2 lines (both are failures):
 				for l in (
-					u'1490349000 \u20AC Failed auth: invalid user Test\u020A from 192.0.2.1\n',
-					u'1490349000 \u20AC Failed auth: invalid user TestI from 192.0.2.2\n'
+					'1490349000 \u20AC Failed auth: invalid user Test\u020A from 192.0.2.1\n',
+					'1490349000 \u20AC Failed auth: invalid user TestI from 192.0.2.2\n'
 				):
 					fout.write(l.encode(enc))
 				fout.close()
