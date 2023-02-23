@@ -616,17 +616,14 @@ class Filter(JailThread):
 		geoip2cf = "/usr/share/GeoIP/GeoIP2-Country.mmdb"
 		if self.__ignoreGeoSet:
 			if shutil.which("mmdblookup") and os.path.isfile(geoip2cf):
-				geoipcc = str(subprocess.check_output(["mmdblookup","--file",geoip2cf,"--ip",str(ip),"country","iso_code"])).split(" ")[2].replace("\"", "")
+				geoipcc = str(subprocess.check_output(["mmdblookup","--file","/usr/share/GeoIP/GeoIP2-Country.mmdb","--ip",str(ip),"country","iso_code"])).split(" ")[2].replace("\"", "")
 			elif shutil.which("geoiplookup"):
-				if shutil.which("mmdblookup") and !os.path.isfile(geoip2cf):
-					self._logWarnOnce("_next_geocfByTimeWarn", ("Found mmdblookup but cannot find mmdb country file at /usr/share/GeoIP/GeoIP2-Country.mmdb, using geoiplookup instead."))
-
 				geoipcc = str(subprocess.check_output(["geoiplookup",str(ip)])).split(" ")[3].replace(",","")
 				if geoipcc in self.__ignoreGeoSet:
 					self.logIgnoreIp(ip, log_ignore, ignore_source="geo-" + geoipcc)
 					return True
 			else:
-				self._logWarnOnce("_next_geoByTimeWarn", ("Cannot find geoiplookup or correctly set mmdblookup. Geolocation is unavailable. If you have mmdblookup installed, please check if the mmdb country file is located at /usr/share/GeoIP/GeoIP2-Country.mmdb. If not run geoipupdate."))
+				self._logWarnOnce("_next_geoByTimeWarn", ("Cannot find geoiplookup. Geolocation is unavailable."))
 
 		# check if the IP is covered by ignore IP (in set or in subnet/dns):
 		if ip in self.__ignoreIpSet:
