@@ -612,9 +612,10 @@ class Filter(JailThread):
 			return True
 
 		# check if the IP's geolocation is not on geo ignore list
-		geoipcc = ''
+		geoipcc = ""
+		geoip2cf = "/usr/share/GeoIP/GeoIP2-Country.mmdb"
 		if self.__ignoreGeoSet:
-			if shutil.which("mmdblookup"):
+			if shutil.which("mmdblookup") and os.path.isfile(geoip2cf):
 				geoipcc = str(subprocess.check_output(["mmdblookup","--file","/usr/share/GeoIP/GeoIP2-Country.mmdb","--ip",str(ip),"country","iso_code"])).split(" ")[2].replace("\"", "")
 			elif shutil.which("geoiplookup"):
 				geoipcc = str(subprocess.check_output(["geoiplookup",str(ip)])).split(" ")[3].replace(",","")
