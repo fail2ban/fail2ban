@@ -618,12 +618,8 @@ class Filter(JailThread):
 			if shutil.which("mmdblookup") and os.path.isfile(geoip2cf):
 				geoipcc = str(subprocess.check_output(["mmdblookup","--file","/usr/share/GeoIP/GeoIP2-Country.mmdb","--ip",str(ip),"country","iso_code"])).split(" ")[2].replace("\"", "")
 			elif shutil.which("geoiplookup"):
-<<<<<<< HEAD
 				if shutil.which("mmdblookup") and not os.path.isfile(geoip2cf):
 					self._logWarnOnce("_next_geocfByTimeWarn", ("Found mmdblookup but cannot find mmdb country file at /usr/share/GeoIP/GeoIP2-Country.mmdb, using geoiplookup instead."))
-
-=======
->>>>>>> 56dec6fadd6e9494d1ef35c97a2c4fb399628ff3
 				geoipcc = str(subprocess.check_output(["geoiplookup",str(ip)])).split(" ")[3].replace(",","")
 				if geoipcc in self.__ignoreGeoSet:
 					self.logIgnoreIp(ip, log_ignore, ignore_source="geo-" + geoipcc)
