@@ -2,7 +2,7 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v1.0.1.dev1            20??/??/??
+                       v1.0.3.dev1            20??/??/??
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
@@ -47,8 +47,8 @@ Optional:
 
 To install:
 
-    tar xvfj fail2ban-1.0.2.tar.bz2
-    cd fail2ban-1.0.2
+    tar xvfj fail2ban-master.tar.bz2
+    cd fail2ban-master
     sudo python setup.py install
    
 Alternatively, you can clone the source from GitHub to a directory of Your choice, and do the install from there. Pick the correct branch, for example, master or 0.11
