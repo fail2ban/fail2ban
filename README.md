@@ -47,8 +47,8 @@ Optional:
 
 To install:
 
-    tar xvfj fail2ban-1.0.1.tar.bz2
-    cd fail2ban-1.0.1
+    tar xvfj fail2ban-1.0.2.tar.bz2
+    cd fail2ban-1.0.2
     sudo python setup.py install
    
 Alternatively, you can clone the source from GitHub to a directory of Your choice, and do the install from there. Pick the correct branch, for example, master or 0.11
