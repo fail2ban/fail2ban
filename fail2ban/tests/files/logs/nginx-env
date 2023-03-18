@@ -1,0 +1,8 @@
+# failJSON: { "time": "2023-03-04T08:17:41", "match": true, "host": "45.92.229.131" }
+45.92.229.131 - - [04/Mar/2023:08:17:41 -0800] "GET //web/.flaskenv HTTP/1.1" 404 48 "-" "Mozilla/5.0 (X11 Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36"
+
+# failJSON: { "time": "2023-03-04T08:23:04", "match": true, "host": "45.92.229.117" }
+45.92.229.117 - - [04/Mar/2023:08:23:04 -0800] "GET //public/.env HTTP/1.1" 404 48 "-" "Mozilla/5.0 (X11 Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36"
+
+# failJSON: { "time": "2023-03-04T12:29:27", "match": true, "host": "180.245.13.73" }
+180.245.13.73 - - [04/Mar/2023:12:29:27 -0800] "GET /.env HTTP/1.1" 404 48 "-" "python-requests/2.27.1"
