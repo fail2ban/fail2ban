@@ -2,7 +2,7 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v0.11.0.dev1            20??/??/??
+                       v1.0.3.dev1            20??/??/??
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
@@ -22,7 +22,8 @@ mechanisms if you really want to protect services.
 ------|------
 
 This README is a quick introduction to Fail2Ban. More documentation, FAQ, and HOWTOs
-to be found on fail2ban(1) manpage, [Wiki](https://github.com/fail2ban/fail2ban/wiki)
+to be found on fail2ban(1) manpage, [Wiki](https://github.com/fail2ban/fail2ban/wiki),
+[Developers documentation](https://fail2ban.readthedocs.io/)
 and the website: https://www.fail2ban.org
 
 Installation:
@@ -32,7 +33,8 @@ Installation:
 this case, you should use that instead.**
 
 Required:
-- [Python2 >= 2.6 or Python >= 3.2](https://www.python.org) or [PyPy](https://pypy.org)
+- [Python2 >= 2.7 or Python >= 3.2](https://www.python.org) or [PyPy](https://pypy.org)
+- python-setuptools, python-distutils or python3-setuptools for installation from source
 
 Optional:
 - [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify), may require:
@@ -45,11 +47,11 @@ Optional:
 
 To install:
 
-    tar xvfj fail2ban-0.11.0.tar.bz2
-    cd fail2ban-0.11.0
+    tar xvfj fail2ban-master.tar.bz2
+    cd fail2ban-master
     sudo python setup.py install
    
-Alternatively, you can clone the source from GitHub to a directory of Your choice, and do the install from there. Pick the correct branch, for example, 0.11
+Alternatively, you can clone the source from GitHub to a directory of Your choice, and do the install from there. Pick the correct branch, for example, master or 0.11
 
     git clone https://github.com/fail2ban/fail2ban.git
     cd fail2ban
@@ -88,11 +90,11 @@ fail2ban(1) and jail.conf(5)  manpages for further references.
 Code status:
 ------------
 
-* travis-ci.org: [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.svg?branch=0.11)](https://travis-ci.org/fail2ban/fail2ban?branch=0.11) (0.11 branch) / [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.svg?branch=0.10)](https://travis-ci.org/fail2ban/fail2ban?branch=0.10) (0.10 branch) 
+* travis-ci.org: [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.svg?branch=master)](https://travis-ci.org/fail2ban/fail2ban?branch=master) / [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.svg?branch=0.11)](https://travis-ci.org/fail2ban/fail2ban?branch=0.11) (0.11 branch) / [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.svg?branch=0.10)](https://travis-ci.org/fail2ban/fail2ban?branch=0.10) (0.10 branch) 
 
-* coveralls.io: [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.svg?branch=0.11)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.11) (0.11 branch) / [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.svg?branch=0.10)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.10) / (0.10 branch)
+* coveralls.io: [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.svg?branch=master)](https://coveralls.io/github/fail2ban/fail2ban?branch=master) / [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.svg?branch=0.11)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.11) (0.11 branch) / [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.svg?branch=0.10)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.10) / (0.10 branch)
 
-* codecov.io: [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=0.11)](https://codecov.io/gh/fail2ban/fail2ban/branch/0.11) (0.11 branch) / [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=0.10)](https://codecov.io/gh/fail2ban/fail2ban/branch/0.10) (0.10 branch)
+* codecov.io: [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=master)](https://codecov.io/gh/fail2ban/fail2ban/branch/master) / [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=0.11)](https://codecov.io/gh/fail2ban/fail2ban/branch/0.11) (0.11 branch) / [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=0.10)](https://codecov.io/gh/fail2ban/fail2ban/branch/0.10) (0.10 branch)
 
 Contact:
 --------

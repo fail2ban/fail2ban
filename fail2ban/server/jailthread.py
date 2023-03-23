@@ -29,7 +29,7 @@ from threading import Thread
 from abc import abstractmethod
 
 from .utils import Utils
-from ..helpers import excepthook
+from ..helpers import excepthook, prctl_set_th_name
 
 
 class JailThread(Thread):
@@ -67,6 +67,8 @@ class JailThread(Thread):
 		def run_with_except_hook(*args, **kwargs):
 			try:
 				run(*args, **kwargs)
+				# call on stop callback to do some finalizations:
+				self.onStop()
 			except Exception as e:
 				# avoid very sporadic error "'NoneType' object has no attribute 'exc_info'" (https://bugs.python.org/issue7336)
 				# only extremely fast systems are affected ATM (2.7 / 3.x), if thread ends nothing is available here.
@@ -75,6 +77,15 @@ class JailThread(Thread):
 				else:
 					print(e)
 		self.run = run_with_except_hook
+
+	if sys.version_info >= (3,): # pragma: 2.x no cover
+		def _bootstrap(self):
+			prctl_set_th_name(self.name)
+			return super(JailThread, self)._bootstrap();
+	else: # pragma: 3.x no cover
+		def __bootstrap(self):
+			prctl_set_th_name(self.name)
+			return Thread._Thread__bootstrap(self)
 
 	@abstractmethod
 	def status(self, flavor="basic"): # pragma: no cover - abstract
@@ -87,6 +98,12 @@ class JailThread(Thread):
 		"""
 		self.active = True
 		super(JailThread, self).start()
+
+	@abstractmethod
+	def onStop(self): # pragma: no cover - absract
+		"""Abstract - Called when thread ends (after run).
+		"""
+		pass
 
 	def stop(self):
 		"""Sets `active` property to False, to flag run method to return.
@@ -108,4 +125,9 @@ class JailThread(Thread):
 		if self.active is not None:
 			super(JailThread, self).join()
 
-
+## python 2.x replace binding of private __bootstrap method:
+if sys.version_info < (3,): # pragma: 3.x no cover
+	JailThread._Thread__bootstrap = JailThread._JailThread__bootstrap
+## python 3.9, restore isAlive method:
+elif not hasattr(JailThread, 'isAlive'): # pragma: 2.x no cover
+	 JailThread.isAlive = JailThread.is_alive

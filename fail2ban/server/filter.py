@@ -81,6 +81,7 @@ class Filter(JailThread):
 		## Ignore own IPs flag:
 		self.__ignoreSelf = True
 		## The ignore IP list.
+		self.__ignoreIpSet = set()
 		self.__ignoreIpList = []
 		## External command
 		self.__ignoreCommand = False
@@ -93,6 +94,8 @@ class Filter(JailThread):
 		## Store last time stamp, applicable for multi-line
 		self.__lastTimeText = ""
 		self.__lastDate = None
+		## Next service (cleanup) time
+		self.__nextSvcTime = -(1<<63)
 		## if set, treat log lines without explicit time zone to be in this time zone
 		self.__logtimezone = None
 		## Default or preferred encoding (to decode bytes from file or journal):
@@ -102,14 +105,28 @@ class Filter(JailThread):
 		## Error counter (protected, so can be used in filter implementations)
 		## if it reached 100 (at once), run-cycle will go idle
 		self._errors = 0
+		## Next time to update log or journal position in database:
+		self._nextUpdateTM = 0
+		## Pending updates (must be executed at next update time or during stop):
+		self._pendDBUpdates = {}
 		## return raw host (host is not dns):
 		self.returnRawHost = False
 		## check each regex (used for test purposes):
 		self.checkAllRegex = False
+		## avoid finding of pending failures (without ID/IP, used in fail2ban-regex):
+		self.ignorePending = True
+		## callback called on ignoreregex match :
+		self.onIgnoreRegex = None
 		## if true ignores obsolete failures (failure time < now - findTime):
 		self.checkFindTime = True
+		## shows that filter is in operation mode (processing new messages):
+		self.inOperation = True
 		## Ticks counter
 		self.ticks = 0
+		## Processed lines counter
+		self.procLines = 0
+		## Thread name:
+		self.name="f2b/f."+self.jailName
 
 		self.dateDetector = DateDetector()
 		logSys.debug("Created %s", self)
@@ -167,7 +184,7 @@ class Filter(JailThread):
 	# @param value the regular expression
 
 	def addFailRegex(self, value):
-		multiLine = self.getMaxLines() > 1
+		multiLine = self.__lineBufferSize > 1
 		try:
 			regex = FailRegex(value, prefRegex=self.__prefRegex, multiline=multiLine,
 				useDns=self.__useDns)
@@ -428,31 +445,45 @@ class Filter(JailThread):
 			)
 		else:
 			self.__ignoreCache = None
-	##
-	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
-	# Arturo 'Buanzo' Busleiman <buanzo@buanzo.com.ar>
-	#
-	# to enable banip fail2ban-client BAN command
 
-	def addBannedIP(self, ip):
+	def performBan(self, ip=None):
+		"""Performs a ban for IPs (or given ip) that are reached maxretry of the jail."""
+		while True:
+			try:
+				ticket = self.failManager.toBan(ip)
+			except FailManagerEmpty:
+				break
+			self.jail.putFailTicket(ticket)
+			if ip: break
+		self.performSvc()
+
+	def performSvc(self, force=False):
+		"""Performs a service tasks (clean failure list)."""
+		tm = MyTime.time()
+		# avoid too early clean up:
+		if force or tm >= self.__nextSvcTime:
+			self.__nextSvcTime = tm + 5
+			# clean up failure list:
+			self.failManager.cleanup(tm)
+
+	def addAttempt(self, ip, *matches):
+		"""Generate a failed attempt for ip"""
 		if not isinstance(ip, IPAddr):
 			ip = IPAddr(ip)
+		matches = list(matches) # tuple to list
 
+		# Generate the failure attempt for the IP:
 		unixTime = MyTime.time()
-		ticket = FailTicket(ip, unixTime)
-		if self._inIgnoreIPList(ip, ticket, log_ignore=False):
-			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.', ip)
-		self.failManager.addFailure(ticket, self.failManager.getMaxRetry())
+		ticket = FailTicket(ip, unixTime, matches=matches)
+		logSys.info(
+			"[%s] Attempt %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
+		)
+		attempts = self.failManager.addFailure(ticket, len(matches) or 1)
+		# Perform the ban if this attempt is resulted to:
+		if attempts >= self.failManager.getMaxRetry():
+			self.performBan(ip)
 
-		# Perform the banning of the IP now.
-		try: # pragma: no branch - exception is the only way out
-			while True:
-				ticket = self.failManager.toBan(ip)
-				self.jail.putFailTicket(ticket)
-		except FailManagerEmpty:
-			self.failManager.cleanup(MyTime.time())
-
-		return ip
+		return 1
 
 	##
 	# Ignore own IP/DNS.
@@ -479,28 +510,36 @@ class Filter(JailThread):
 		# Create IP address object
 		ip = IPAddr(ipstr)
 		# Avoid exact duplicates
-		if ip in self.__ignoreIpList:
-			logSys.warn("  Ignore duplicate %r (%r), already in ignore list", ip, ipstr)
+		if ip in self.__ignoreIpSet or ip in self.__ignoreIpList:
+			logSys.log(logging.MSG, "  Ignore duplicate %r (%r), already in ignore list", ip, ipstr)
 			return
 		# log and append to ignore list
 		logSys.debug("  Add %r to ignore list (%r)", ip, ipstr)
-		self.__ignoreIpList.append(ip)
+		# if single IP (not DNS or a subnet) add to set, otherwise to list:
+		if ip.isSingle:
+			self.__ignoreIpSet.add(ip)
+		else:
+			self.__ignoreIpList.append(ip)
 
 	def delIgnoreIP(self, ip=None):
 		# clear all:
 		if ip is None:
+			self.__ignoreIpSet.clear()
 			del self.__ignoreIpList[:]
 			return
 		# delete by ip:
 		logSys.debug("  Remove %r from ignore list", ip)
-		self.__ignoreIpList.remove(ip)
+		if ip in self.__ignoreIpSet:
+			self.__ignoreIpSet.remove(ip)
+		else:
+			self.__ignoreIpList.remove(ip)
 
 	def logIgnoreIp(self, ip, log_ignore, ignore_source="unknown source"):
 		if log_ignore:
 			logSys.info("[%s] Ignore %s by %s", self.jailName, ip, ignore_source)
 
 	def getIgnoreIP(self):
-		return self.__ignoreIpList
+		return self.__ignoreIpList + list(self.__ignoreIpSet)
 
 	##
 	# Check if IP address/DNS is in the ignore list.
@@ -514,7 +553,7 @@ class Filter(JailThread):
 		ticket = None
 		if isinstance(ip, FailTicket):
 			ticket = ip
-			ip = ticket.getIP()
+			ip = ticket.getID()
 		elif not isinstance(ip, IPAddr):
 			ip = IPAddr(ip)
 		return self._inIgnoreIPList(ip, ticket, log_ignore)
@@ -540,8 +579,11 @@ class Filter(JailThread):
 			if self.__ignoreCache: c.set(key, True)
 			return True
 
+		# check if the IP is covered by ignore IP (in set or in subnet/dns):
+		if ip in self.__ignoreIpSet:
+			self.logIgnoreIp(ip, log_ignore, ignore_source="ip")
+			return True
 		for net in self.__ignoreIpList:
-			# check if the IP is covered by ignore IP
 			if ip.isInNet(net):
 				self.logIgnoreIp(ip, log_ignore, ignore_source=("ip" if net.isValid else "dns"))
 				if self.__ignoreCache: c.set(key, True)
@@ -564,50 +606,126 @@ class Filter(JailThread):
 		if self.__ignoreCache: c.set(key, False)
 		return False
 
+	def _logWarnOnce(self, nextLTM, *args):
+		"""Log some issue as warning once per day, otherwise level 7"""
+		if MyTime.time() < getattr(self, nextLTM, 0):
+			if logSys.getEffectiveLevel() <= 7: logSys.log(7, *(args[0]))
+		else:
+			setattr(self, nextLTM, MyTime.time() + 24*60*60)
+			for args in args:
+				logSys.warning('[%s] ' + args[0], self.jailName, *args[1:])
+
 	def processLine(self, line, date=None):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
+		logSys.log(7, "Working on line %r", line)
+
+		noDate = False
 		if date:
 			tupleLine = line
+			line = "".join(line)
+			self.__lastTimeText = tupleLine[1]
+			self.__lastDate = date
 		else:
-			l = line.rstrip('\r\n')
-			logSys.log(7, "Working on line %r", line)
-
-			(timeMatch, template) = self.dateDetector.matchTime(l)
-			if timeMatch:
-				tupleLine  = (
-					l[:timeMatch.start(1)],
-					l[timeMatch.start(1):timeMatch.end(1)],
-					l[timeMatch.end(1):],
-					(timeMatch, template)
-				)
+			# try to parse date:
+			timeMatch = self.dateDetector.matchTime(line)
+			m = timeMatch[0]
+			if m:
+				s = m.start(1)
+				e = m.end(1)
+				m = line[s:e]
+				tupleLine = (line[:s], m, line[e:])
+				if m: # found and not empty - retrive date:
+					date = self.dateDetector.getTime(m, timeMatch)
+					if date is not None:
+						# Lets get the time part
+						date = date[0]
+						self.__lastTimeText = m
+						self.__lastDate = date
+					else:
+						logSys.error("findFailure failed to parse timeText: %s", m)
+				# matched empty value - date is optional or not available - set it to last known or now:
+				elif self.__lastDate and self.__lastDate > MyTime.time() - 60:
+					# set it to last known:
+					tupleLine = ("", self.__lastTimeText, line)
+					date = self.__lastDate
+				else:
+					# set it to now:
+					date = MyTime.time()
 			else:
-				tupleLine = (l, "", "", None)
+				tupleLine = ("", "", line)
+			# still no date - try to use last known:
+			if date is None:
+				noDate = True
+				if self.__lastDate and self.__lastDate > MyTime.time() - 60:
+					tupleLine = ("", self.__lastTimeText, line)
+					date = self.__lastDate
+				elif self.checkFindTime and self.inOperation:
+					date = MyTime.time()
+		
+		if self.checkFindTime and date is not None:
+			# if in operation (modifications have been really found):
+			if self.inOperation:
+				# if weird date - we'd simulate now for timeing issue (too large deviation from now):
+				delta = int(date - MyTime.time())
+				if abs(delta) > 60:
+					# log timing issue as warning once per day:
+					self._logWarnOnce("_next_simByTimeWarn",
+						("Detected a log entry %s %s the current time in operation mode. "
+						 "This looks like a %s problem. Treating such entries as if they just happened.",
+						 MyTime.seconds2str(abs(delta)), "before" if delta < 0 else "after",
+						 "latency" if -3300 <= delta < 0 else "timezone"
+						 ),
+						("Please check a jail for a timing issue. Line with odd timestamp: %s",
+						 line))
+					# simulate now as date:
+					date = MyTime.time()
+					self.__lastDate = date
+			else:
+				# in initialization (restore) phase, if too old - ignore:
+				if date < MyTime.time() - self.getFindTime():
+					# log time zone issue as warning once per day:
+					self._logWarnOnce("_next_ignByTimeWarn",
+						("Ignoring all log entries older than %ss; these are probably" +
+						 " messages generated while fail2ban was not running.",
+							self.getFindTime()),
+						("Please check a jail for a timing issue. Line with odd timestamp: %s",
+						 line))
+					# ignore - too old (obsolete) entry:
+					return []
 
 		# save last line (lazy convert of process line tuple to string on demand):
 		self.processedLine = lambda: "".join(tupleLine[::2])
-		return self.findFailure(tupleLine, date)
+		return self.findFailure(tupleLine, date, noDate=noDate)
 
 	def processLineAndAdd(self, line, date=None):
 		"""Processes the line for failures and populates failManager
 		"""
 		try:
-			for element in self.processLine(line, date):
-				ip = element[1]
-				unixTime = element[2]
-				fail = element[3]
+			for (_, ip, unixTime, fail) in self.processLine(line, date):
 				logSys.debug("Processing line with time:%s and ip:%s", 
 						unixTime, ip)
+				# ensure the time is not in the future, e. g. by some estimated (assumed) time:
+				if self.checkFindTime and unixTime > MyTime.time():
+					unixTime = MyTime.time()
 				tick = FailTicket(ip, unixTime, data=fail)
 				if self._inIgnoreIPList(ip, tick):
 					continue
 				logSys.info(
-					"[%s] Found %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
+					"[%s] Found %s - %s", self.jailName, ip, MyTime.time2str(unixTime)
 				)
-				self.failManager.addFailure(tick)
+				attempts = self.failManager.addFailure(tick)
+				# avoid RC on busy filter (too many failures) - if attempts for IP/ID reached maxretry,
+				# we can speedup ban, so do it as soon as possible:
+				if attempts >= self.failManager.getMaxRetry():
+					self.performBan(ip)
 				# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
 				if Observers.Main is not None:
-					Observers.Main.add('failureFound', self.failManager, self.jail, tick)
+					Observers.Main.add('failureFound', self.jail, tick)
+			self.procLines += 1
+			# every 100 lines check need to perform service tasks:
+			if self.procLines % 100 == 0:
+				self.performSvc()
 			# reset (halve) error counter (successfully processed line):
 			if self._errors:
 				self._errors //= 2
@@ -617,7 +735,7 @@ class Filter(JailThread):
 			# incr common error counter:
 			self.commonError()
 
-	def commonError(self):
+	def commonError(self, reason="common", exc=None):
 		# incr error counter, stop processing (going idle) after 100th error :
 		self._errors += 1
 		# sleep a little bit (to get around time-related errors):
@@ -627,20 +745,26 @@ class Filter(JailThread):
 			self._errors //= 2
 			self.idle = True
 
-	##
-	# Returns true if the line should be ignored.
-	#
-	# Uses ignoreregex.
-	# @param line: the line
-	# @return: a boolean
-
-	def ignoreLine(self, tupleLines):
-		buf = Regex._tupleLinesBuf(tupleLines)
+	def _ignoreLine(self, buf, orgBuffer, failRegex=None):
+		# if multi-line buffer - use matched only, otherwise (single line) - original buf:
+		if failRegex and self.__lineBufferSize > 1:
+			orgBuffer = failRegex.getMatchedTupleLines()
+			buf = Regex._tupleLinesBuf(orgBuffer)
+		# search ignored:
+		fnd = None
 		for ignoreRegexIndex, ignoreRegex in enumerate(self.__ignoreRegex):
-			ignoreRegex.search(buf, tupleLines)
+			ignoreRegex.search(buf, orgBuffer)
 			if ignoreRegex.hasMatched():
-				return ignoreRegexIndex
-		return None
+				fnd = ignoreRegexIndex
+				logSys.log(7, "  Matched ignoreregex %d and was ignored", fnd)
+				if self.onIgnoreRegex: self.onIgnoreRegex(fnd, ignoreRegex)
+				# remove ignored match:
+				if not self.checkAllRegex or self.__lineBufferSize > 1:
+					# todo: check ignoreRegex.getUnmatchedTupleLines() would be better (fix testGetFailuresMultiLineIgnoreRegex):
+					if failRegex:
+						self.__lineBuffer = failRegex.getUnmatchedTupleLines()
+				if not self.checkAllRegex: break
+		return fnd
 
 	def _updateUsers(self, fail, user=()):
 		users = fail.get('users')
@@ -650,49 +774,33 @@ class Filter(JailThread):
 				fail['users'] = users = set()
 			users.add(user)
 			return users
-		return None
-
-	# # ATM incremental (non-empty only) merge deactivated ...
-	# @staticmethod
-	# def _updateFailure(self, mlfidGroups, fail):
-	# 	# reset old failure-ids when new types of id available in this failure:
-	# 	fids = set()
-	# 	for k in ('fid', 'ip4', 'ip6', 'dns'):
-	# 		if fail.get(k):
-	# 			fids.add(k)
-	# 	if fids:
-	# 		for k in ('fid', 'ip4', 'ip6', 'dns'):
-	# 			if k not in fids:
-	# 				try:
-	# 					del mlfidGroups[k]
-	# 				except:
-	# 					pass
-	# 	# update not empty values:
-	# 	mlfidGroups.update(((k,v) for k,v in fail.iteritems() if v))
+		return users
 
 	def _mergeFailure(self, mlfid, fail, failRegex):
 		mlfidFail = self.mlfidCache.get(mlfid) if self.__mlfidCache else None
 		users = None
 		nfflgs = 0
-		if fail.get('nofail'): nfflgs |= 1
-		if fail.get('mlfforget'): nfflgs |= 2
+		if fail.get("mlfgained"):
+			nfflgs |= (8|1)
+			if not fail.get('nofail'):
+				fail['nofail'] = fail["mlfgained"]
+		elif fail.get('nofail'): nfflgs |= 1
+		if fail.pop('mlfforget', None): nfflgs |= 2
 		# if multi-line failure id (connection id) known:
 		if mlfidFail:
 			mlfidGroups = mlfidFail[1]
 			# update users set (hold all users of connect):
 			users = self._updateUsers(mlfidGroups, fail.get('user'))
-			# be sure we've correct current state ('nofail' only from last failure)
-			try:
-				del mlfidGroups['nofail']
-			except KeyError:
-				pass
-			# # ATM incremental (non-empty only) merge deactivated (for future version only),
-			# # it can be simulated using alternate value tags, like <F-ALT_VAL>...</F-ALT_VAL>,
-			# # so previous value 'val' will be overwritten only if 'alt_val' is not empty...		
-			# _updateFailure(mlfidGroups, fail)
-			#
+			# be sure we've correct current state ('nofail' and 'mlfgained' only from last failure)
+			if mlfidGroups.pop('nofail', None): nfflgs |= 4
+			if mlfidGroups.pop('mlfgained', None): nfflgs |= 4
+			# gained resets all pending failures (retaining users to check it later)
+			if nfflgs & 8: mlfidGroups.pop('mlfpending', None)
+			# if we had no pending failures then clear the matches (they are already provided):
+			if (nfflgs & 4) == 0 and not mlfidGroups.get('mlfpending', 0):
+				mlfidGroups.pop("matches", None)
 			# overwrite multi-line failure with all values, available in fail:
-			mlfidGroups.update(fail)
+			mlfidGroups.update(((k,v) for k,v in fail.iteritems() if v is not None))
 			# new merged failure data:
 			fail = mlfidGroups
 			# if forget (disconnect/reset) - remove cached entry:
@@ -703,23 +811,19 @@ class Filter(JailThread):
 			mlfidFail = [self.__lastDate, fail]
 			self.mlfidCache.set(mlfid, mlfidFail)
 		# check users in order to avoid reset failure by multiple logon-attempts:
-		if users and len(users) > 1:
-			# we've new user, reset 'nofail' because of multiple users attempts:
-			try:
-				del fail['nofail']
-			except KeyError:
-				pass
+		if fail.pop('mlfpending', 0) or users and len(users) > 1:
+			# we've pending failures or new user, reset 'nofail' because of failures or multiple users attempts:
+			fail.pop('nofail', None)
+			fail.pop('mlfgained', None)
+			nfflgs &= ~(8|1) # reset nofail and gained
 		# merge matches:
-		if not fail.get('nofail'): # current state (corresponding users)
-			try:
-				m = fail.pop("nofail-matches")
-				m += fail.get("matches", [])
-			except KeyError:
-				m = fail.get("matches", [])
-			if not (nfflgs & 2): # not mlfforget:
+		if (nfflgs & 1) == 0: # current nofail state (corresponding users)
+			m = fail.pop("nofail-matches", [])
+			m += fail.get("matches", [])
+			if (nfflgs & 8) == 0: # no gain signaled
 				m += failRegex.getMatchedTupleLines()
 			fail["matches"] = m
-		elif not (nfflgs & 2) and (nfflgs & 1): # not mlfforget and nofail:
+		elif (nfflgs & 3) == 1: # not mlfforget and nofail:
 			fail["nofail-matches"] = fail.get("nofail-matches", []) + failRegex.getMatchedTupleLines()
 		# return merged:
 		return fail
@@ -732,72 +836,41 @@ class Filter(JailThread):
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, tupleLine, date=None):
+	def findFailure(self, tupleLine, date, noDate=False):
 		failList = list()
 
 		ll = logSys.getEffectiveLevel()
-		returnRawHost = self.returnRawHost
-		cidr = IPAddr.CIDR_UNSPEC
-		if self.__useDns == "raw":
-			returnRawHost = True
-			cidr = IPAddr.CIDR_RAW
-
-		# Checks if we mut ignore this line.
-		if self.ignoreLine([tupleLine[::2]]) is not None:
-			# The ignoreregex matched. Return.
-			if ll <= 7: logSys.log(7, "Matched ignoreregex and was \"%s\" ignored",
-				"".join(tupleLine[::2]))
-			return failList
-
-		timeText = tupleLine[1]
-		if date:
-			self.__lastTimeText = timeText
-			self.__lastDate = date
-		elif timeText:
-
-			dateTimeMatch = self.dateDetector.getTime(timeText, tupleLine[3])
-
-			if dateTimeMatch is None:
-				logSys.error("findFailure failed to parse timeText: %s", timeText)
-				date = self.__lastDate
-
-			else:
-				# Lets get the time part
-				date = dateTimeMatch[0]
-
-				self.__lastTimeText = timeText
-				self.__lastDate = date
-		else:
-			timeText = self.__lastTimeText or "".join(tupleLine[::2])
-			date = self.__lastDate
-
-		if self.checkFindTime and date is not None and date < MyTime.time() - self.getFindTime():
-			if ll <= 5: logSys.log(5, "Ignore line since time %s < %s - %s", 
-				date, MyTime.time(), self.getFindTime())
-			return failList
+		defcidr = IPAddr.CIDR_UNSPEC
+		if self.__useDns == "raw" or self.returnRawHost:
+			defcidr = IPAddr.CIDR_RAW
 
 		if self.__lineBufferSize > 1:
-			orgBuffer = self.__lineBuffer = (
-				self.__lineBuffer + [tupleLine[:3]])[-self.__lineBufferSize:]
+			self.__lineBuffer.append(tupleLine)
+			orgBuffer = self.__lineBuffer = self.__lineBuffer[-self.__lineBufferSize:]
 		else:
-			orgBuffer = self.__lineBuffer = [tupleLine[:3]]
-		if ll <= 5: logSys.log(5, "Looking for match of %r", self.__lineBuffer)
-		buf = Regex._tupleLinesBuf(self.__lineBuffer)
+			orgBuffer = self.__lineBuffer = [tupleLine]
+		if ll <= 5: logSys.log(5, "Looking for match of %r", orgBuffer)
+		buf = Regex._tupleLinesBuf(orgBuffer)
+
+		# Checks if we must ignore this line (only if fewer ignoreregex than failregex).
+		if self.__ignoreRegex and len(self.__ignoreRegex) < len(self.__failRegex) - 2:
+			if self._ignoreLine(buf, orgBuffer) is not None:
+				# The ignoreregex matched. Return.
+				return failList
 
 		# Pre-filter fail regex (if available):
 		preGroups = {}
 		if self.__prefRegex:
 			if ll <= 5: logSys.log(5, "  Looking for prefregex %r", self.__prefRegex.getRegex())
-			self.__prefRegex.search(buf, self.__lineBuffer)
+			self.__prefRegex.search(buf, orgBuffer)
 			if not self.__prefRegex.hasMatched():
 				if ll <= 5: logSys.log(5, "  Prefregex not matched")
 				return failList
 			preGroups = self.__prefRegex.getGroups()
 			if ll <= 7: logSys.log(7, "  Pre-filter matched %s", preGroups)
-			repl = preGroups.get('content')
+			repl = preGroups.pop('content', None)
 			# Content replacement:
 			if repl:
-				del preGroups['content']
 				self.__lineBuffer, buf = [('', '', repl)], None
 
 		# Iterates over all the regular expressions.
@@ -815,31 +888,25 @@ class Filter(JailThread):
 				# The failregex matched.
 				if ll <= 7: logSys.log(7, "  Matched failregex %d: %s", failRegexIndex, fail)
 				# Checks if we must ignore this match.
-				if self.ignoreLine(failRegex.getMatchedTupleLines()) \
-						is not None:
+				if self.__ignoreRegex and self._ignoreLine(buf, orgBuffer, failRegex) is not None:
 					# The ignoreregex matched. Remove ignored match.
-					self.__lineBuffer, buf = failRegex.getUnmatchedTupleLines(), None
-					if ll <= 7: logSys.log(7, "  Matched ignoreregex and was ignored")
+					buf = None
 					if not self.checkAllRegex:
 						break
-					else:
-						continue
-				if date is None:
-					logSys.warning(
-						"Found a match for %r but no valid date/time "
-						"found for %r. Please try setting a custom "
-						"date pattern (see man page jail.conf(5)). "
-						"If format is complex, please "
-						"file a detailed issue on"
-						" https://github.com/fail2ban/fail2ban/issues "
-						"in order to get support for this format.",
-						 "\n".join(failRegex.getMatchedLines()), timeText)
 					continue
+				if noDate:
+					self._logWarnOnce("_next_noTimeWarn",
+						("Found a match but no valid date/time found for %r.", tupleLine[1]),
+						("Match without a timestamp: %s", "\n".join(failRegex.getMatchedLines())),
+						("Please try setting a custom date pattern (see man page jail.conf(5)).",)
+					)
+					if date is None and self.checkFindTime: continue
 				# we should check all regex (bypass on multi-line, otherwise too complex):
-				if not self.checkAllRegex or self.getMaxLines() > 1:
+				if not self.checkAllRegex or self.__lineBufferSize > 1:
 					self.__lineBuffer, buf = failRegex.getUnmatchedTupleLines(), None
 				# merge data if multi-line failure:
-				raw = returnRawHost
+				cidr = defcidr
+				raw = (defcidr == IPAddr.CIDR_RAW)
 				if preGroups:
 					currFail, fail = fail, preGroups.copy()
 					fail.update(currFail)
@@ -858,44 +925,50 @@ class Filter(JailThread):
 				# failure-id:
 				fid = fail.get('fid')
 				# ip-address or host:
-				host = fail.get('ip4')
-				if host is not None:
-					cidr = IPAddr.FAM_IPv4
+				ip = fail.get('ip4')
+				if ip is not None:
+					cidr = int(fail.get('cidr') or IPAddr.FAM_IPv4)
 					raw = True
 				else:
-					host = fail.get('ip6')
-					if host is not None:
-						cidr = IPAddr.FAM_IPv6
+					ip = fail.get('ip6')
+					if ip is not None:
+						cidr = int(fail.get('cidr') or IPAddr.FAM_IPv6)
 						raw = True
-				if host is None:
-					host = fail.get('dns')
-					if host is None:
-						# first try to check we have mlfid case (cache connection id):
-						if fid is None and mlfid is None:
-								# if no failure-id also (obscure case, wrong regex), throw error inside getFailID:
-								fid = failRegex.getFailID()
-						host = fid
-						cidr = IPAddr.CIDR_RAW
+					else:
+						ip = fail.get('dns')
+						if ip is None:
+							# first try to check we have mlfid case (cache connection id):
+							if fid is None and mlfid is None:
+									# if no failure-id also (obscure case, wrong regex), throw error inside getFailID:
+									fid = failRegex.getFailID()
+							ip = fid
+							raw = True
 				# if mlfid case (not failure):
-				if host is None:
+				if ip is None:
 					if ll <= 7: logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
 						mlfid, failRegexIndex, fail.get('mlfforget', "waiting for identifier"))
-					if not self.checkAllRegex: return failList
-					ips = [None]
+					fail['mlfpending'] = 1; # mark failure is pending
+					if not self.checkAllRegex and self.ignorePending: return failList
+					fids = [None]
 				# if raw - add single ip or failure-id,
 				# otherwise expand host to multiple ips using dns (or ignore it if not valid):
 				elif raw:
-					ip = IPAddr(host, cidr)
-					# check host equal failure-id, if not - failure with complex id:
-					if fid is not None and fid != host:
-						ip = IPAddr(fid, IPAddr.CIDR_RAW)
-					ips = [ip]
+					# check ip/host equal failure-id, if not - failure with complex id:
+					if fid is None or fid == ip:
+						fid = IPAddr(ip, cidr)
+					else:
+						fail['ip'] = IPAddr(ip, cidr)
+						fid = IPAddr(fid, defcidr)
+					fids = [fid]
 				# otherwise, try to use dns conversion:
 				else:
-					ips = DNSUtils.textToIp(host, self.__useDns)
+					fids = DNSUtils.textToIp(ip, self.__useDns)
+				# if checkAllRegex we must make a copy (to be sure next RE doesn't change merged/cached failure):
+				if self.checkAllRegex and mlfid is not None:
+					fail = fail.copy()
 				# append failure with match to the list:
-				for ip in ips:
-					failList.append([failRegexIndex, ip, date, fail])
+				for fid in fids:
+					failList.append([failRegexIndex, fid, date, fail])
 				if not self.checkAllRegex:
 					break
 			except RegexException as e: # pragma: no cover - unsure if reachable
@@ -938,7 +1011,7 @@ class FileFilter(Filter):
 					log.setPos(lastpos)
 			self.__logs[path] = log
 			logSys.info("Added logfile: %r (pos = %s, hash = %s)" , path, log.getPos(), log.getHash())
-			if autoSeek:
+			if autoSeek and not tail:
 				self.__autoSeek[path] = autoSeek
 			self._addLogPath(path)			# backend specific
 
@@ -957,9 +1030,6 @@ class FileFilter(Filter):
 			log = self.__logs.pop(path)
 		except KeyError:
 			return
-		db = self.jail.database
-		if db is not None:
-			db.updateLog(self.jail, log)
 		logSys.info("Removed logfile: %r", path)
 		self._delLogPath(path)
 		return
@@ -1022,7 +1092,8 @@ class FileFilter(Filter):
 	# MyTime.time()-self.findTime. When a failure is detected, a FailTicket
 	# is created and is added to the FailManager.
 
-	def getFailures(self, filename):
+	def getFailures(self, filename, inOperation=None):
+		if self.idle: return False
 		log = self.getLog(filename)
 		if log is None:
 			logSys.error("Unable to get failures in %s", filename)
@@ -1067,15 +1138,26 @@ class FileFilter(Filter):
 			if has_content:
 				while not self.idle:
 					line = log.readline()
-					if not line or not self.active:
-						# The jail reached the bottom or has been stopped
+					if not self.active: break; # jail has been stopped
+					if line is None:
+						# The jail reached the bottom, simply set in operation for this log
+						# (since we are first time at end of file, growing is only possible after modifications):
+						log.inOperation = True
 						break
+					# acquire in operation from log and process:
+					self.inOperation = inOperation if inOperation is not None else log.inOperation
 					self.processLineAndAdd(line)
 		finally:
 			log.close()
-		db = self.jail.database
-		if db is not None:
-			db.updateLog(self.jail, log)
+		if self.jail.database is not None:
+			self._pendDBUpdates[log] = 1
+			if (
+				self.ticks % 100 == 0
+				or MyTime.time() >= self._nextUpdateTM
+				or not self.active
+			):
+				self._updateDBPending()
+				self._nextUpdateTM = MyTime.time() + Utils.DEFAULT_SLEEP_TIME * 5
 		return True
 
 	##
@@ -1086,7 +1168,9 @@ class FileFilter(Filter):
 		fs = container.getFileSize()
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
 			logSys.debug("Seek to find time %s (%s), file size %s", date, 
-				datetime.datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S"), fs)
+				MyTime.time2str(date), fs)
+		if not fs:
+			return
 		minp = container.getPos()
 		maxp = fs
 		tryPos = minp
@@ -1110,8 +1194,8 @@ class FileFilter(Filter):
 			dateTimeMatch = None
 			nextp = None
 			while True:
-				line = container.readline()
-				if not line:
+				line = container.readline(False)
+				if line is None:
 					break
 				(timeMatch, template) = self.dateDetector.matchTime(line)
 				if timeMatch:
@@ -1165,7 +1249,7 @@ class FileFilter(Filter):
 		container.setPos(foundPos)
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
 			logSys.debug("Position %s from %s, found time %s (%s) within %s seeks", lastPos, fs, foundTime, 
-				(datetime.datetime.fromtimestamp(foundTime).strftime("%Y-%m-%d %H:%M:%S") if foundTime is not None else ''), cntr)
+				(MyTime.time2str(foundTime) if foundTime is not None else ''), cntr)
 		
 	def status(self, flavor="basic"):
 		"""Status of Filter plus files being monitored.
@@ -1175,12 +1259,33 @@ class FileFilter(Filter):
 		ret.append(("File list", path))
 		return ret
 
-	def stop(self):
-		"""Stop monitoring of log-file(s)
+	def _updateDBPending(self):
+		"""Apply pending updates (log position) to database.
 		"""
+		db = self.jail.database
+		while True:
+			try:
+				log, args = self._pendDBUpdates.popitem()
+			except KeyError:
+				break
+			db.updateLog(self.jail, log)
+			
+	def onStop(self):
+		"""Stop monitoring of log-file(s). Invoked after run method.
+		"""
+		# ensure positions of pending logs are up-to-date:
+		if self._pendDBUpdates and self.jail.database:
+			self._updateDBPending()
 		# stop files monitoring:
 		for path in self.__logs.keys():
 			self.delLogPath(path)
+
+	def stop(self):
+		"""Stop filter
+		"""
+		# normally onStop will be called automatically in thread after its run ends, 
+		# but for backwards compatibilities we'll invoke it in caller of stop method.
+		self.onStop()
 		# stop thread:
 		super(Filter, self).stop()
 
@@ -1208,32 +1313,56 @@ except ImportError: # pragma: no cover
 
 class FileContainer:
 
-	def __init__(self, filename, encoding, tail = False):
+	def __init__(self, filename, encoding, tail=False, doOpen=False):
 		self.__filename = filename
+		self.waitForLineEnd = True
 		self.setEncoding(encoding)
 		self.__tail = tail
 		self.__handler = None
+		self.__pos = 0
+		self.__pos4hash = 0
+		self.__hash = ''
+		self.__hashNextTime = time.time() + 30
 		# Try to open the file. Raises an exception if an error occurred.
 		handler = open(filename, 'rb')
-		stats = os.fstat(handler.fileno())
-		self.__ino = stats.st_ino
+		if doOpen: # fail2ban-regex only (don't need to reopen it and check for rotation)
+			self.__handler = handler
+			return
 		try:
-			firstLine = handler.readline()
-			# Computes the MD5 of the first line.
-			self.__hash = md5sum(firstLine).hexdigest()
-			# Start at the beginning of file if tail mode is off.
-			if tail:
-				handler.seek(0, 2)
-				self.__pos = handler.tell()
-			else:
-				self.__pos = 0
+			stats = os.fstat(handler.fileno())
+			self.__ino = stats.st_ino
+			if stats.st_size:
+				firstLine = handler.readline()
+				# first line available and contains new-line:
+				if firstLine != firstLine.rstrip(b'\r\n'):
+					# Computes the MD5 of the first line.
+					self.__hash = md5sum(firstLine).hexdigest()
+				# if tail mode scroll to the end of file
+				if tail:
+					handler.seek(0, 2)
+					self.__pos = handler.tell()
 		finally:
 			handler.close()
+		## shows that log is in operation mode (expecting new messages only from here):
+		self.inOperation = tail
+
+	def __hash__(self):
+		return hash(self.__filename)
+	def __eq__(self, other):
+		return (id(self) == id(other) or
+			self.__filename == (other.__filename if isinstance(other, FileContainer) else other)
+		)
+	def __repr__(self):
+		return 'file-log:'+self.__filename
 
 	def getFileName(self):
 		return self.__filename
 
 	def getFileSize(self):
+		h = self.__handler
+		if h is not None:
+			stats = os.fstat(h.fileno())
+			return stats.st_size
 		return os.path.getsize(self.__filename);
 
 	def setEncoding(self, encoding):
@@ -1252,38 +1381,54 @@ class FileContainer:
 	def setPos(self, value):
 		self.__pos = value
 
-	def open(self):
-		self.__handler = open(self.__filename, 'rb')
-		# Set the file descriptor to be FD_CLOEXEC
-		fd = self.__handler.fileno()
-		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
-		fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
-		# Stat the file before even attempting to read it
-		stats = os.fstat(self.__handler.fileno())
-		if not stats.st_size:
-			# yoh: so it is still an empty file -- nothing should be
-			#      read from it yet
-			# print "D: no content -- return"
-			return False
-		firstLine = self.__handler.readline()
-		# Computes the MD5 of the first line.
-		myHash = md5sum(firstLine).hexdigest()
-		## print "D: fn=%s hashes=%s/%s inos=%s/%s pos=%s rotate=%s" % (
-		## 	self.__filename, self.__hash, myHash, stats.st_ino, self.__ino, self.__pos,
-		## 	self.__hash != myHash or self.__ino != stats.st_ino)
-		## sys.stdout.flush()
-		# Compare hash and inode
-		if self.__hash != myHash or self.__ino != stats.st_ino:
-			logSys.log(logging.MSG, "Log rotation detected for %s", self.__filename)
-			self.__hash = myHash
-			self.__ino = stats.st_ino
-			self.__pos = 0
-		# Sets the file pointer to the last position.
-		self.__handler.seek(self.__pos)
+	def open(self, forcePos=None):
+		h = open(self.__filename, 'rb')
+		try:
+			# Set the file descriptor to be FD_CLOEXEC
+			fd = h.fileno()
+			flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+			fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
+			myHash = self.__hash
+			# Stat the file before even attempting to read it
+			stats = os.fstat(h.fileno())
+			rotflg = stats.st_size < self.__pos or stats.st_ino != self.__ino
+			if rotflg or not len(myHash) or time.time() > self.__hashNextTime:
+				myHash = ''
+				firstLine = h.readline()
+				# Computes the MD5 of the first line (if it is complete)
+				if firstLine != firstLine.rstrip(b'\r\n'):
+					myHash = md5sum(firstLine).hexdigest()
+					self.__hashNextTime = time.time() + 30
+			elif stats.st_size == self.__pos:
+				myHash = self.__hash
+			# Compare size, hash and inode
+			if rotflg or myHash != self.__hash:
+				if self.__hash != '':
+					logSys.log(logging.MSG, "Log rotation detected for %s, reason: %r", self.__filename,
+						(stats.st_size, self.__pos, stats.st_ino, self.__ino, myHash, self.__hash))
+					self.__ino = stats.st_ino
+					self.__pos = 0
+				self.__hash = myHash
+			# if nothing to read from file yet (empty or no new data):
+			if forcePos is not None:
+				self.__pos = forcePos
+			elif stats.st_size <= self.__pos:
+				return False
+			# Sets the file pointer to the last position.
+			h.seek(self.__pos)
+			# leave file open (to read content):
+			self.__handler = h; h = None
+		finally:
+			# close (no content or error only)
+			if h:
+				h.close(); h = None
 		return True
 
 	def seek(self, offs, endLine=True):
 		h = self.__handler
+		if h is None:
+			self.open(offs)
+			h = self.__handler
 		# seek to given position
 		h.seek(offs, 0)
 		# goto end of next line
@@ -1301,38 +1446,98 @@ class FileContainer:
 		try:
 			return line.decode(enc, 'strict')
 		except (UnicodeDecodeError, UnicodeEncodeError) as e:
+			# avoid warning if got incomplete end of line (e. g. '\n' in "...[0A" followed by "00]..." for utf-16le:
+			if (e.end == len(line) and line[e.start] in b'\r\n'):
+				return line[0:e.start].decode(enc, 'replace')
 			global _decode_line_warn
-			lev = logging.DEBUG
-			if _decode_line_warn.get(filename, 0) <= MyTime.time():
+			lev = 7
+			if not _decode_line_warn.get(filename, 0):
 				lev = logging.WARNING
-				_decode_line_warn[filename] = MyTime.time() + 24*60*60
+				_decode_line_warn.set(filename, 1)
 			logSys.log(lev,
-				"Error decoding line from '%s' with '%s'."
-				" Consider setting logencoding=utf-8 (or another appropriate"
-				" encoding) for this jail. Continuing"
-				" to process line ignoring invalid characters: %r",
-				filename, enc, line)
+				"Error decoding line from '%s' with '%s'.", filename, enc)
+			if logSys.getEffectiveLevel() <= lev:
+				logSys.log(lev,
+					"Consider setting logencoding to appropriate encoding for this jail. "
+					"Continuing to process line ignoring invalid characters: %r",
+					line)
 			# decode with replacing error chars:
 			line = line.decode(enc, 'replace')
 		return line
 
-	def readline(self):
+	def readline(self, complete=True):
+		"""Read line from file
+
+		In opposite to pythons readline it doesn't return new-line, 
+		so returns either the line if line is complete (and complete=True) or None
+		if line is not complete (and complete=True) or there is no content to read.
+		If line is complete (and complete is True), it also shift current known 
+		position to begin of next line.
+
+		Also it is safe against interim new-line bytes (e. g. part of multi-byte char)
+		in given encoding.
+		"""
 		if self.__handler is None:
 			return ""
-		return FileContainer.decode_line(
-			self.getFileName(), self.getEncoding(), self.__handler.readline())
+		# read raw bytes up to \n char:
+		b = self.__handler.readline()
+		if not b:
+			return None
+		bl = len(b)
+		# convert to log-encoding (new-line char could disappear if it is part of multi-byte sequence):
+		r = FileContainer.decode_line(
+			self.getFileName(), self.getEncoding(), b)
+		# trim new-line at end and check the line was written complete (contains a new-line):
+		l = r.rstrip('\r\n')
+		if complete:
+			if l == r:
+				# try to fill buffer in order to find line-end in log encoding:
+				fnd = 0
+				while 1:
+					r = self.__handler.readline()
+					if not r:
+						break
+					b += r
+					bl += len(r)
+					# convert to log-encoding:
+					r = FileContainer.decode_line(
+						self.getFileName(), self.getEncoding(), b)
+					# ensure new-line is not in the middle (buffered 2 strings, e. g. in utf-16le it is "...[0A"+"00]..."):
+					e = r.find('\n')
+					if e >= 0 and e != len(r)-1:
+						l, r = r[0:e], r[0:e+1]
+						# back to bytes and get offset to seek after NL:
+						r = r.encode(self.getEncoding(), 'replace')
+						self.__handler.seek(-bl+len(r), 1)
+						return l
+					# trim new-line at end and check the line was written complete (contains a new-line):
+					l = r.rstrip('\r\n')
+					if l != r:
+						return l
+				if self.waitForLineEnd:
+					# not fulfilled - seek back and return:
+					self.__handler.seek(-bl, 1)
+					return None
+		return l
 
 	def close(self):
-		if not self.__handler is None:
-			# Saves the last position.
+		if self.__handler is not None:
+			# Saves the last real position.
 			self.__pos = self.__handler.tell()
 			# Closes the file.
 			self.__handler.close()
 			self.__handler = None
-		## print "D: Closed %s with pos %d" % (handler, self.__pos)
-		## sys.stdout.flush()
 
-_decode_line_warn = {}
+	def __iter__(self):
+		return self
+	def next(self):
+		line = self.readline()
+		if line is None:
+			self.close()
+			raise StopIteration
+		return line
+
+_decode_line_warn = Utils.Cache(maxCount=1000, maxTime=24*60*60);
 
 
 ##

@@ -161,6 +161,10 @@ class Jail(object):
 		"""
 		return self.__db
 
+	@database.setter
+	def database(self, value):
+		self.__db = value;
+
 	@property
 	def filter(self):
 		"""The filter which the jail is using to monitor log files.
@@ -191,6 +195,12 @@ class Jail(object):
 			("Filter", self.filter.status(flavor=flavor)),
 			("Actions", self.actions.status(flavor=flavor)),
 			]
+
+	@property
+	def hasFailTickets(self):
+		"""Retrieve whether queue has tickets to ban.
+		"""
+		return not self.__queue.empty()
 
 	def putFailTicket(self, ticket):
 		"""Add a fail ticket to the jail.
@@ -281,11 +291,11 @@ class Jail(object):
 					# use ban time as search time if we have not enabled a increasing:
 					forbantime = self.actions.getBanTime()
 				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime,
-					correctBanTime=correctBanTime
+					correctBanTime=correctBanTime, maxmatches=self.filter.failManager.maxMatches
 				):
 					try:
 						#logSys.debug('restored ticket: %s', ticket)
-						if self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True): continue
+						if self.filter.inIgnoreIPList(ticket.getID(), log_ignore=True): continue
 						# mark ticked was restored from database - does not put it again into db:
 						ticket.restored = True
 						# correct start time / ban time (by the same end of ban):

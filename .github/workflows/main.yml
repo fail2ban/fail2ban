@@ -1,0 +1,100 @@
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    paths-ignore:
+    - 'doc/**'
+    - 'files/**'
+    - 'man/**'
+  pull_request:
+    paths-ignore:
+    - 'doc/**'
+    - 'files/**'
+    - 'man/**'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: [2.7, 3.6, 3.7, 3.8, 3.9, '3.10', '3.11.0-beta.3', pypy2, pypy3]
+      fail-fast: false
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Grant systemd-journal access
+        run: sudo usermod -a -G systemd-journal "$USER" || echo 'no systemd-journal access'
+
+      - name: Python version
+        run: |
+          F2B_PY=$(python -c "import sys; print(sys.version)")
+          echo "Python: ${{ matrix.python-version }} -- ${F2B_PY/$'\n'/ }"
+          F2B_PYV=$(echo "${F2B_PY}" | grep -oP '^\d+(?:\.\d+)')
+          F2B_PY=${F2B_PY:0:1}
+          echo "Set F2B_PY=$F2B_PY, F2B_PYV=$F2B_PYV"
+          echo "F2B_PY=$F2B_PY" >> $GITHUB_ENV
+          echo "F2B_PYV=$F2B_PYV" >> $GITHUB_ENV
+          # for GHA we need to monitor all journals, since it cannot be found using SYSTEM_ONLY(4):
+          echo "F2B_SYSTEMD_DEFAULT_FLAGS=0" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          if [[ "$F2B_PY" = 3 ]]; then python -m pip install --upgrade pip || echo "can't upgrade pip"; fi
+          if [[ "$F2B_PY" = 3 ]] && ! command -v 2to3x -v 2to3 > /dev/null; then
+            #pip install 2to3
+            sudo apt-get -y install 2to3
+          fi
+          #sudo apt-get -y install python${F2B_PY/2/}-pyinotify || echo 'inotify not available'
+          python -m pip install pyinotify || echo 'inotify not available'
+          #sudo apt-get -y install python${F2B_PY/2/}-systemd || echo 'systemd not available'
+          sudo apt-get -y install libsystemd-dev || echo 'systemd dependencies seems to be unavailable'
+          python -m pip install systemd-python || echo 'systemd not available'
+          #readline if available as module:
+          python -c 'import readline' 2> /dev/null || python -m pip install readline || echo 'readline not available'
+
+      - name: Before scripts
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          # Manually execute 2to3 for now
+          if [[ "$F2B_PY" = 3 ]]; then echo "2to3 ..." && ./fail2ban-2to3; fi
+          _debug() { echo -n "$1 "; err=$("${@:2}" 2>&1) && echo 'OK' || echo -e "FAIL\n$err"; }
+          # (debug) output current preferred encoding:
+          _debug 'Encodings:' python -c 'import locale, sys; from fail2ban.helpers import PREFER_ENC; print(PREFER_ENC, locale.getpreferredencoding(), (sys.stdout and sys.stdout.encoding))'
+          # (debug) backend availabilities:
+          echo 'Backends:'
+          _debug '- systemd:' python -c 'from fail2ban.server.filtersystemd import FilterSystemd'
+          #_debug '- systemd (root): ' sudo python -c 'from fail2ban.server.filtersystemd import FilterSystemd'
+          _debug '- pyinotify:' python -c 'from fail2ban.server.filterpyinotify import FilterPyinotify'
+
+      - name: Test suite
+        run: |
+          if [[ "$F2B_PY" = 2 ]]; then
+            python setup.py test
+          elif dpkg --compare-versions "$F2B_PYV" lt 3.10; then 
+            python bin/fail2ban-testcases --verbosity=2
+          else
+            echo "Skip systemd backend since systemd-python module must be fixed for python >= v.3.10 in GHA ..."
+            python bin/fail2ban-testcases --verbosity=2 -i "[sS]ystemd|[jJ]ournal"
+          fi
+
+      #- name: Test suite (debug some systemd tests only)
+         #run: python bin/fail2ban-testcases --verbosity=2 "[sS]ystemd|[jJ]ournal"
+         #run: python bin/fail2ban-testcases --verbosity=2 -l 5 "test_WrongChar"
+
+      - name: Build
+        run: python setup.py build
+
+      #- name: Test initd scripts
+      #  run: shellcheck -s bash -e SC1090,SC1091 files/debian-initd

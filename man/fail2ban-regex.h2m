@@ -8,3 +8,4 @@ fail2ban-regex \- test Fail2ban "failregex" option
 .br 
 fail2ban-client(1)
 fail2ban-server(1)
+jail.conf(5)

@@ -103,7 +103,7 @@ class DateDetectorTest(LogCaptureTestCase):
 
 	def testGetEpochPattern(self):
 		self.__datedetector = DateDetector()
-		self.__datedetector.appendTemplate('(?<=\|\s){LEPOCH}(?=\s\|)')
+		self.__datedetector.appendTemplate(r'(?<=\|\s){LEPOCH}(?=\s\|)')
 		# correct short/long epoch time, using all variants:
 		for fact in (1, 1000, 1000000):
 			for dateUnix in (1138049999, 32535244799):
@@ -119,6 +119,15 @@ class DateDetectorTest(LogCaptureTestCase):
 			log = log % dateLong
 			datelog = self.datedetector.getTime(log)
 			self.assertFalse(datelog)
+
+	def testGetEpochPatternCut(self):
+		self.__datedetector = DateDetector()
+		self.__datedetector.appendTemplate(r'^type=\S+ msg=audit\(({EPOCH})')
+		# correct epoch time and cut out epoch string only (captured group only, not the whole match):
+		line = "type=USER_AUTH msg=audit(1106513999.000:987)"
+		datelog = self.datedetector.getTime(line)
+		timeMatch = datelog[1]
+		self.assertEqual([int(datelog[0]), line[timeMatch.start(1):timeMatch.end(1)]], [1106513999, '1106513999.000'])
 	
 	def testGetTime(self):
 		log = "Jan 23 21:59:59 [sshd] error: PAM: Authentication failure"
@@ -330,6 +339,27 @@ class DateDetectorTest(LogCaptureTestCase):
 		dt = '2005 Jun 03'; self.assertEqual(t.matchDate(dt).group(1), dt)
 		dt = '2005 JUN 03'; self.assertEqual(t.matchDate(dt).group(1), dt)
 
+	def testNotAnchoredCollision(self):
+		# try for patterns with and without word boundaries:
+		for dp in (r'%H:%M:%S', r'{UNB}%H:%M:%S'):
+			dd = DateDetector()
+			dd.appendTemplate(dp)
+			# boundary of timestamp changes right and left (and time is left and right in line):
+			for fmt in ('%s test', '%8s test', 'test %s', 'test %8s'):
+				for dt in (
+					'00:01:02',
+					'00:01:2',
+					'00:1:2',
+					'0:1:2',
+					'00:1:2',
+					'00:01:2',
+					'00:01:02',
+					'0:1:2',
+					'00:01:02',
+				):
+					t = dd.getTime(fmt % dt)
+					self.assertEqual((t[0], t[1].group()), (1123970462.0, dt))
+
 	def testAmbiguousInOrderedTemplates(self):
 		dd = self.datedetector
 		for (debit, line, cnt) in (
@@ -385,7 +415,7 @@ class DateDetectorTest(LogCaptureTestCase):
 		self.assertRaises(Exception, t.getDate, 'no date line')
 
 
-iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
+iso8601 = DatePatternRegex(r"%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
 
 class CustomDateFormatsTest(unittest.TestCase):
 
@@ -495,6 +525,9 @@ class CustomDateFormatsTest(unittest.TestCase):
 			(1072746123.0 - 3600, "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %Z)?", "[2003-12-30 01:02:03] server ..."),
 			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %z)?", "[2003-12-30 01:02:03 UTC] server ..."),
 			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %Z)?", "[2003-12-30 01:02:03 UTC] server ..."),
+			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %z)?", "[2003-12-30 01:02:03 Z] server ..."),
+			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %z)?", "[2003-12-30 01:02:03 +0000] server ..."),
+			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %Z)?", "[2003-12-30 01:02:03 Z] server ..."),
 		):
 			logSys.debug('== test: %r', (matched, dp, line))
 			if dp is None:
@@ -530,6 +563,9 @@ class CustomDateFormatsTest(unittest.TestCase):
 			(1123970401.0,  "^%ExH:%ExM:%ExS**", '00:00:01'),
 			# cover date with current year, in test cases now == Aug 2005 -> back to last year (Sep 2004):
 			(1094068799.0,  "^%m/%d %ExH:%ExM:%ExS**", '09/01 21:59:59'),
+			# no time (only date) in pattern, assume local 00:00:00 for H:M:S :
+			(1093989600.0,  "^%Y-%m-%d**",   '2004-09-01'),
+			(1093996800.0,  "^%Y-%m-%d%z**", '2004-09-01Z'),
 		):
 			logSys.debug('== test: %r', (matched, dp, line))
 			dd = DateDetector()

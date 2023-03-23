@@ -37,25 +37,28 @@ R_HOST = [
 		r"""(?:::f{4,6}:)?(?P<ip4>%s)""" % (IPAddr.IP_4_RE,),
 		# separated ipv6:
 		r"""(?P<ip6>%s)""" % (IPAddr.IP_6_RE,),
-		# place-holder for ipv6 enclosed in optional [] (used in addr-, host-regex)
-		"",
 		# separated dns:
 		r"""(?P<dns>[\w\-.^_]*\w)""",
 		# place-holder for ADDR tag-replacement (joined):
 		"",
 		# place-holder for HOST tag replacement (joined):
-		""
+		"",
+		# CIDR in simplest integer form:
+		r"(?P<cidr>\d+)",
+		# place-holder for SUBNET tag-replacement
+		"",
 ]
 RI_IPV4 =		0
 RI_IPV6 =		1
-RI_IPV6BR =	2
-RI_DNS =		3
-RI_ADDR =		4
-RI_HOST =		5
+RI_DNS =		2
+RI_ADDR =		3
+RI_HOST =		4
+RI_CIDR =		5
+RI_SUBNET =	6
 
-R_HOST[RI_IPV6BR] =	r"""\[?%s\]?""" % (R_HOST[RI_IPV6],)
-R_HOST[RI_ADDR] =		"(?:%s)" % ("|".join((R_HOST[RI_IPV4], R_HOST[RI_IPV6BR])),)
-R_HOST[RI_HOST] =		"(?:%s)" % ("|".join((R_HOST[RI_IPV4], R_HOST[RI_IPV6BR], R_HOST[RI_DNS])),)
+R_HOST[RI_ADDR] =		r"\[?(?:%s|%s)\]?" % (R_HOST[RI_IPV4], R_HOST[RI_IPV6],)
+R_HOST[RI_HOST] =		r"(?:%s|%s)" % (R_HOST[RI_ADDR], R_HOST[RI_DNS],)
+R_HOST[RI_SUBNET] =	r"\[?(?:%s|%s)(?:/%s)?\]?" % (R_HOST[RI_IPV4], R_HOST[RI_IPV6], R_HOST[RI_CIDR],)
 
 RH4TAG = {
 	# separated ipv4 (self closed, closed):
@@ -68,6 +71,11 @@ RH4TAG = {
 	# for separate usage of 2 address groups only (regardless of `usedns`), `ip4` and `ip6` together
 	"ADDR":			R_HOST[RI_ADDR],
 	"F-ADDR/":	R_HOST[RI_ADDR],
+	# subnet tags for usage as `<ADDR>/<CIDR>` or `<SUBNET>`:
+	"CIDR":			R_HOST[RI_CIDR],
+	"F-CIDR/":	R_HOST[RI_CIDR],
+	"SUBNET":		R_HOST[RI_SUBNET],
+	"F-SUBNET/":R_HOST[RI_SUBNET],
 	# separated dns (self closed, closed):
 	"DNS":			R_HOST[RI_DNS],
 	"F-DNS/":		R_HOST[RI_DNS],
@@ -79,20 +87,31 @@ RH4TAG = {
 
 # default failure groups map for customizable expressions (with different group-id):
 R_MAP = {
-	"ID": "fid",
-	"PORT": "fport",
+	"id": "fid",
+	"port": "fport",
 }
 
+# map global flags like ((?i)xxx) or (?:(?i)xxx) to local flags (?i:xxx) if supported by RE-engine in this python version:
+try:
+	re.search("^re(?i:val)$", "reVAL")
+	R_GLOB2LOCFLAGS = ( re.compile(r"(?<!\\)\((?:\?:)?(\(\?[a-z]+)\)"), r"\1:" )
+except:
+	R_GLOB2LOCFLAGS = ()
+
 def mapTag2Opt(tag):
-	try: # if should be mapped:
-		return R_MAP[tag]
-	except KeyError:
-		return tag.lower()
+	tag = tag.lower()
+	return R_MAP.get(tag, tag)
 
 
-# alternate names to be merged, e. g. alt_user_1 -> user ...
+# complex names:
+# ALT_   - alternate names to be merged, e. g. alt_user_1 -> user ...
 ALTNAME_PRE = 'alt_'
-ALTNAME_CRE = re.compile(r'^' + ALTNAME_PRE + r'(.*)(?:_\d+)?$')
+# TUPLE_ - names of parts to be combined to single value as tuple
+TUPNAME_PRE = 'tuple_'
+
+COMPLNAME_PRE = (ALTNAME_PRE, TUPNAME_PRE)
+COMPLNAME_CRE = re.compile(r'^(' + '|'.join(COMPLNAME_PRE) + r')(.*?)(?:_\d+)?$')
+
 
 ##
 # Regular expression class.
@@ -116,20 +135,33 @@ class Regex:
 		#
 		if regex.lstrip() == '':
 			raise RegexException("Cannot add empty regex")
+		# special handling wrapping global flags to local flags:
+		if R_GLOB2LOCFLAGS:
+			regex = R_GLOB2LOCFLAGS[0].sub(R_GLOB2LOCFLAGS[1], regex)
 		try:
 			self._regexObj = re.compile(regex, re.MULTILINE if multiline else 0)
 			self._regex = regex
-			self._altValues = {}
+			self._altValues = []
+			self._tupleValues = []
 			for k in filter(
-				lambda k: len(k) > len(ALTNAME_PRE) and k.startswith(ALTNAME_PRE),
-				self._regexObj.groupindex
+				lambda k: len(k) > len(COMPLNAME_PRE[0]), self._regexObj.groupindex
 			):
-				n = ALTNAME_CRE.match(k).group(1)
-				self._altValues[k] = n
-			self._altValues = list(self._altValues.items()) if len(self._altValues) else None
-		except sre_constants.error:
-			raise RegexException("Unable to compile regular expression '%s'" %
-								 regex)
+				n = COMPLNAME_CRE.match(k)
+				if n:
+					g, n = n.group(1), mapTag2Opt(n.group(2))
+					if g == ALTNAME_PRE:
+						self._altValues.append((k,n))
+					else:
+						self._tupleValues.append((k,n))
+			self._altValues.sort()
+			self._tupleValues.sort()
+			self._altValues = self._altValues if len(self._altValues) else None
+			self._tupleValues = self._tupleValues if len(self._tupleValues) else None
+		except sre_constants.error as e:
+			raise RegexException("Unable to compile regular expression '%s':\n%s" %
+								 (regex, e))
+		# set fetch handler depending on presence of alternate (or tuple) tags:
+		self.getGroups = self._getGroupsWithAlt if (self._altValues or self._tupleValues) else self._getGroups
 
 	def __str__(self):
 		return "%s(%r)" % (self.__class__.__name__, self._regex)
@@ -269,17 +301,32 @@ class Regex:
 	# Returns all matched groups.
 	#
 
-	def getGroups(self):
-		if not self._altValues:
-			return self._matchCache.groupdict()
-		# merge alternate values (e. g. 'alt_user_1' -> 'user' or 'alt_host' -> 'host'):
+	def _getGroups(self):
+		return self._matchCache.groupdict()
+
+	def _getGroupsWithAlt(self):
 		fail = self._matchCache.groupdict()
 		#fail = fail.copy()
-		for k,n in self._altValues:
-			v = fail.get(k)
-			if v and not fail.get(n):
-				fail[n] = v
+		# merge alternate values (e. g. 'alt_user_1' -> 'user' or 'alt_host' -> 'host'):
+		if self._altValues:
+			for k,n in self._altValues:
+				v = fail.get(k)
+				if v and not fail.get(n):
+					fail[n] = v
+		# combine tuple values (e. g. 'id', 'tuple_id' ... 'tuple_id_N' -> 'id'):
+		if self._tupleValues:
+			for k,n in self._tupleValues:
+				v = fail.get(k)
+				t = fail.get(n)
+				if isinstance(t, tuple):
+					t += (v,)
+				else:
+					t = (t,v,)
+				fail[n] = t
 		return fail
+
+	def getGroups(self): # pragma: no cover - abstract function (replaced in __init__)
+		pass
 
 	##
 	# Returns skipped lines.
@@ -416,3 +463,7 @@ class FailRegex(Regex):
 	
 	def getHost(self):
 		return self.getFailID(("ip4", "ip6", "dns"))
+
+	def getIP(self):
+		fail = self.getGroups()
+		return IPAddr(self.getFailID(("ip4", "ip6")), int(fail.get("cidr") or IPAddr.CIDR_UNSPEC))

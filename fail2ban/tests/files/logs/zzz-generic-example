@@ -30,8 +30,8 @@ Jun 21 16:55:02   <auth.info> machine kernel: [  970.699396] @vserver_demo test-
 # failJSON: { "time": "2005-06-21T16:55:03", "match": true , "host": "192.0.2.3" }
 [Jun 21 16:55:03] <auth.info> machine kernel: [  970.699396] @vserver_demo test-demo(pam_unix)[13709] [ID 255 test] F2B: failure from 192.0.2.3
 
-# -- wrong time direct in journal-line (used last known date):
-# failJSON: { "time": "2005-06-21T16:55:03", "match": true , "host": "192.0.2.1" }
+# -- wrong time direct in journal-line (used last known date or now, but null because no checkFindTime in samples test factory):
+# failJSON: { "time": null, "match": true , "host": "192.0.2.1" }
 0000-12-30 00:00:00 server test-demo[47831]:  F2B: failure from 192.0.2.1
 # -- wrong time after newline in message (plist without escaped newlines):
 # failJSON: { "match": false }
@@ -42,8 +42,8 @@ Jun 22 20:37:04 server test-demo[402]: writeToStorage plist={
              applicationDate = "0000-12-30 00:00:00 +0000";
 # failJSON: { "match": false }
 }
-# -- wrong time direct in journal-line (used last known date):
-# failJSON: { "time": "2005-06-22T20:37:04", "match": true , "host": "192.0.2.2" }
+# -- wrong time direct in journal-line (used last known date, but null because no checkFindTime in samples test factory):
+# failJSON: { "time": null, "match": true , "host": "192.0.2.2" }
 0000-12-30 00:00:00 server test-demo[47831]:  F2B: failure from 192.0.2.2
 
 # -- test no zone and UTC/GMT named zone "2005-06-21T14:55:10 UTC" == "2005-06-21T16:55:10 CEST" (diff +2h in CEST):
@@ -60,3 +60,6 @@ Jun 22 20:37:04 server test-demo[402]: writeToStorage plist={
 [Jun 21 16:56:03] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.251
 # failJSON: { "match": false, "desc": "test 2nd ignoreregex" }
 [Jun 21 16:56:04] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.252
+
+# failJSON: { "match": false, "desc": "ignore other daemon" }
+[Jun 21 16:56:04] machine captain-nemo(pam_unix)[55555] F2B: error from 192.0.2.2

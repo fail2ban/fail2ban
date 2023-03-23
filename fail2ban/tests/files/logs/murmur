@@ -3,3 +3,8 @@
 
 # failJSON: { "time": "2015-11-29T17:18:20", "match": true , "host": "192.168.1.2" }
 <W>2015-11-29 17:18:20.962 1 => <8:testUsernameTwo(-1)> Rejected connection from 192.168.1.2:29761: Wrong certificate or password for existing user
+
+# filterOptions: {"logtype": "journal"}
+
+# failJSON: { "match": true , "host": "192.0.2.1", "desc": "systemd-journal entry" }
+Test murmurd[2064]: <W>2019-09-08 13:00:05.615 1 => <10:Test(-1)> Rejected connection from 192.0.2.1:31752: Invalid server password

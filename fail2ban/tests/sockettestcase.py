@@ -87,7 +87,7 @@ class Socket(LogCaptureTestCase):
 	def _stopServerThread(self):
 		serverThread = self.serverThread
 		# wait for end of thread :
-		Utils.wait_for(lambda: not serverThread.isAlive() 
+		Utils.wait_for(lambda: not serverThread.is_alive() 
 			or serverThread.join(Utils.DEFAULT_SLEEP_TIME), unittest.F2B.maxWaitTime(10))
 		self.serverThread = None
 
@@ -98,7 +98,7 @@ class Socket(LogCaptureTestCase):
 		self.server.close()
 		# wait for end of thread :
 		self._stopServerThread()
-		self.assertFalse(serverThread.isAlive())
+		self.assertFalse(serverThread.is_alive())
 		# clean :
 		self.server.stop()
 		self.assertFalse(self.server.isActive())
@@ -139,7 +139,7 @@ class Socket(LogCaptureTestCase):
 		self.server.stop()
 		# wait for end of thread :
 		self._stopServerThread()
-		self.assertFalse(serverThread.isAlive())
+		self.assertFalse(serverThread.is_alive())
 		self.assertFalse(self.server.isActive())
 		self.assertFalse(os.path.exists(self.sock_name))
 
@@ -153,7 +153,7 @@ class Socket(LogCaptureTestCase):
 		org_handler = RequestHandler.found_terminator
 		try:
 			RequestHandler.found_terminator = lambda self: self.close()
-			self.assertRaisesRegexp(RuntimeError, r"socket connection broken", 
+			self.assertRaisesRegexp(Exception, r"reset by peer|Broken pipe",
 				lambda: client.send(testMessage, timeout=unittest.F2B.maxWaitTime(10)))
 		finally:
 			RequestHandler.found_terminator = org_handler
@@ -169,7 +169,7 @@ class Socket(LogCaptureTestCase):
 		org_handler = RequestHandler.found_terminator
 		try:
 			RequestHandler.found_terminator = lambda self: TestMsgError()
-			#self.assertRaisesRegexp(RuntimeError, r"socket connection broken", client.send, testMessage)
+			#self.assertRaisesRegexp(Exception, r"reset by peer|Broken pipe", client.send, testMessage)
 			self.assertEqual(client.send(testMessage), 'ERROR: test unpickle error')
 		finally:
 			RequestHandler.found_terminator = org_handler
@@ -180,7 +180,7 @@ class Socket(LogCaptureTestCase):
 		self.server.stop()
 		# wait for end of thread :
 		self._stopServerThread()
-		self.assertFalse(serverThread.isAlive())
+		self.assertFalse(serverThread.is_alive())
 
 	def testLoopErrors(self):
 		# replace poll handler to produce error in loop-cycle:
@@ -216,7 +216,7 @@ class Socket(LogCaptureTestCase):
 		self.server.stop()
 		# wait for end of thread :
 		self._stopServerThread()
-		self.assertFalse(serverThread.isAlive())
+		self.assertFalse(serverThread.is_alive())
 		self.assertFalse(self.server.isActive())
 		self.assertFalse(os.path.exists(self.sock_name))
 

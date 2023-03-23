@@ -1,0 +1,4 @@
+# Access of unauthorized host in /var/log/centreon/login.log
+# failJSON: { "time": "2019-10-21T18:55:15", "match": true , "host": "50.97.225.132" }
+2019-10-21 18:55:15|-1|0|0|[WEB] [50.97.225.132] Authentication failed for 'admin' : password mismatch
+

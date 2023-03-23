@@ -69,9 +69,9 @@ class AddFailure(unittest.TestCase):
 		self.assertEqual(self.__failManager.getFailTotal(), 0)
 		self.__failManager.setFailTotal(13)
 	
-	def testFailManagerAdd_MaxEntries(self):
-		maxEntries = 2
-		self.__failManager.maxEntries = maxEntries
+	def testFailManagerAdd_MaxMatches(self):
+		maxMatches = 2
+		self.__failManager.maxMatches = maxMatches
 		failures = ["abc\n", "123\n", "ABC\n", "1234\n"]
 		# add failures sequential:
 		i = 80
@@ -86,8 +86,8 @@ class AddFailure(unittest.TestCase):
 		ticket = manFailList["127.0.0.1"]
 		# should retrieve 2 matches only, but count of all attempts (4):
 		self.assertEqual(ticket.getAttempt(), len(failures))
-		self.assertEqual(len(ticket.getMatches()), maxEntries)
-		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxEntries:])
+		self.assertEqual(len(ticket.getMatches()), maxMatches)
+		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxMatches:])
     # add more failures at once:
 		ticket = FailTicket("127.0.0.1", 1000002000 - 10, failures)
 		ticket.setAttempt(len(failures))
@@ -98,8 +98,8 @@ class AddFailure(unittest.TestCase):
 		ticket = manFailList["127.0.0.1"]
 		# should retrieve 2 matches only, but count of all attempts (8):
 		self.assertEqual(ticket.getAttempt(), 2 * len(failures))
-		self.assertEqual(len(ticket.getMatches()), maxEntries)
-		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxEntries:])
+		self.assertEqual(len(ticket.getMatches()), maxMatches)
+		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxMatches:])
 		# add self ticket again:
 		self.__failManager.addFailure(ticket)
 		#
@@ -108,8 +108,16 @@ class AddFailure(unittest.TestCase):
 		ticket = manFailList["127.0.0.1"]
 		# same matches, but +1 attempt (9)
 		self.assertEqual(ticket.getAttempt(), 2 * len(failures) + 1)
-		self.assertEqual(len(ticket.getMatches()), maxEntries)
-		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxEntries:])
+		self.assertEqual(len(ticket.getMatches()), maxMatches)
+		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxMatches:])
+		# no matches by maxMatches == 0 :
+		self.__failManager.maxMatches = 0
+		self.__failManager.addFailure(ticket)
+		manFailList = self.__failManager._FailManager__failList
+		ticket = manFailList["127.0.0.1"]
+		self.assertEqual(len(ticket.getMatches()), 0)
+		# test set matches None to None:
+		ticket.setMatches(None)
 	
 	def testFailManagerMaxTime(self):
 		self._addDefItems()
@@ -142,8 +150,8 @@ class AddFailure(unittest.TestCase):
 		self.__failManager.setMaxRetry(5)
 		#ticket = FailTicket('193.168.0.128', None)
 		ticket = self.__failManager.toBan()
-		self.assertEqual(ticket.getIP(), "193.168.0.128")
-		self.assertTrue(isinstance(ticket.getIP(), (str, IPAddr)))
+		self.assertEqual(ticket.getID(), "193.168.0.128")
+		self.assertTrue(isinstance(ticket.getID(), (str, IPAddr)))
 
 		# finish with rudimentary tests of the ticket
 		# verify consistent str
@@ -172,9 +180,9 @@ class AddFailure(unittest.TestCase):
 	def testWindow(self):
 		self._addDefItems()
 		ticket = self.__failManager.toBan()
-		self.assertNotEqual(ticket.getIP(), "100.100.10.10")
+		self.assertNotEqual(ticket.getID(), "100.100.10.10")
 		ticket = self.__failManager.toBan()
-		self.assertNotEqual(ticket.getIP(), "100.100.10.10")
+		self.assertNotEqual(ticket.getID(), "100.100.10.10")
 		self.assertRaises(FailManagerEmpty, self.__failManager.toBan)
 
 	def testBgService(self):

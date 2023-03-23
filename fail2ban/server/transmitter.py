@@ -43,6 +43,7 @@ class Transmitter:
 	
 	def __init__(self, server):
 		self.__server = server
+		self.__quiet = 0
 		
 	##
 	# Proceeds a command.
@@ -57,7 +58,7 @@ class Transmitter:
 			ret = self.__commandHandler(command)
 			ack = 0, ret
 		except Exception as e:
-			logSys.warning("Command %r has failed. Received %r",
+			logSys.error("Command %r has failed. Received %r",
 						command, e, 
 						exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 			ack = 1, e
@@ -69,9 +70,10 @@ class Transmitter:
 	# 
 	
 	def __commandHandler(self, command):
-		if command[0] == "ping":
+		name = command[0]
+		if name == "ping":
 			return "pong"
-		elif command[0] == "add":
+		elif name == "add":
 			name = command[1]
 			if name == "--all":
 				raise Exception("Reserved name %r" % (name,))
@@ -81,11 +83,15 @@ class Transmitter:
 				backend = "auto"
 			self.__server.addJail(name, backend)
 			return name
-		elif command[0] == "start":
+		elif name == "multi-set":
+			return self.__commandSet(command[1:], True)
+		elif name == "set":
+			return self.__commandSet(command[1:])
+		elif name == "start":
 			name = command[1]
 			self.__server.startJail(name)
 			return None
-		elif command[0] == "stop":
+		elif name == "stop":
 			if len(command) == 1:
 				self.__server.quit()
 			elif command[1] == "--all":
@@ -94,47 +100,53 @@ class Transmitter:
 				name = command[1]
 				self.__server.stopJail(name)
 			return None
-		elif command[0] == "reload":
+		elif name == "reload":
 			opts = command[1:3]
+			self.__quiet = 1
 			try:
 				self.__server.reloadJails(*opts, begin=True)
 				for cmd in command[3]:
 					self.__commandHandler(cmd)
 			finally:
+				self.__quiet = 0
 				self.__server.reloadJails(*opts, begin=False)
 			return 'OK'
-		elif len(command) >= 2 and command[0] == "unban":
+		elif name == "unban" and len(command) >= 2:
 			# unban in all jails:
 			value = command[1:]
 			# if all ips:
 			if len(value) == 1 and value[0] == "--all":
 				return self.__server.setUnbanIP()
-			cnt = 0
-			for value in value:
-				cnt += self.__server.setUnbanIP(None, value)
-			return cnt
-		elif command[0] == "echo":
+			return self.__server.setUnbanIP(None, value)
+		elif name == "banned":
+			# check IP is banned in all jails:
+			return self.__server.banned(None, command[1:])
+		elif name == "echo":
 			return command[1:]
-		elif command[0] == "server-status":
+		elif name == "server-status":
 			logSys.debug("Status: ready")
 			return "Server ready"
-		elif command[0] == "sleep":
+		elif name == "server-stream":
+			self.__quiet = 1
+			try:
+				for cmd in command[1]:
+					self.__commandHandler(cmd)
+			finally:
+				self.__quiet = 0
+			return None
+		elif name == "sleep":
 			value = command[1]
 			time.sleep(float(value))
 			return None
-		elif command[0] == "flushlogs":
+		elif name == "flushlogs":
 			return self.__server.flushLogs()
-		elif command[0] == "multi-set":
-			return self.__commandSet(command[1:], True)
-		elif command[0] == "set":
-			return self.__commandSet(command[1:])
-		elif command[0] == "get":
+		elif name == "get":
 			return self.__commandGet(command[1:])
-		elif command[0] == "status":
+		elif name == "status":
 			return self.status(command[1:])
-		elif command[0] == "version":
+		elif name == "version":
 			return version.version
-		elif command[0] == "config-error":
+		elif name == "config-error":
 			logSys.error(command[1])
 			return None
 		raise Exception("Invalid command")
@@ -145,19 +157,31 @@ class Transmitter:
 		if name == "loglevel":
 			value = command[1]
 			self.__server.setLogLevel(value)
+			if self.__quiet: return
 			return self.__server.getLogLevel()
 		elif name == "logtarget":
 			value = command[1]
 			if self.__server.setLogTarget(value):
+				if self.__quiet: return
 				return self.__server.getLogTarget()
 			else:
 				raise Exception("Failed to change log target")
 		elif name == "syslogsocket":
 			value = command[1]
 			if self.__server.setSyslogSocket(value):
+				if self.__quiet: return
 				return self.__server.getSyslogSocket()
 			else:
 				raise Exception("Failed to change syslog socket")
+		elif name == "allowipv6":
+			value = command[1]
+			self.__server.setIPv6IsAllowed(value)
+			if self.__quiet: return
+			return value
+		#Thread
+		elif name == "thread":
+			value = command[1]
+			return self.__server.setThreadOptions(value)
 		#Database
 		elif name == "dbfile":
 			self.__server.setDatabase(command[1])
@@ -165,14 +189,25 @@ class Transmitter:
 			if db is None:
 				return None
 			else:
+				if self.__quiet: return
 				return db.filename
+		elif name == "dbmaxmatches":
+			db = self.__server.getDatabase()
+			if db is None:
+				logSys.log(logging.MSG, "dbmaxmatches setting was not in effect since no db yet")
+				return None
+			else:
+				db.maxMatches = int(command[1])
+				if self.__quiet: return
+				return db.maxMatches
 		elif name == "dbpurgeage":
 			db = self.__server.getDatabase()
 			if db is None:
-				logSys.warning("dbpurgeage setting was not in effect since no db yet")
+				logSys.log(logging.MSG, "dbpurgeage setting was not in effect since no db yet")
 				return None
 			else:
 				db.purgeage = command[1]
+				if self.__quiet: return
 				return db.purgeage
 		# Jail
 		elif command[1] == "idle":
@@ -182,27 +217,33 @@ class Transmitter:
 				self.__server.setIdleJail(name, False)
 			else:
 				raise Exception("Invalid idle option, must be 'on' or 'off'")
+			if self.__quiet: return
 			return self.__server.getIdleJail(name)
 		# Filter
 		elif command[1] == "ignoreself":
 			value = command[2]
 			self.__server.setIgnoreSelf(name, value)
+			if self.__quiet: return
 			return self.__server.getIgnoreSelf(name)
 		elif command[1] == "addignoreip":
-			value = command[2]
-			self.__server.addIgnoreIP(name, value)
+			for value in command[2:]:
+				self.__server.addIgnoreIP(name, value)
+			if self.__quiet: return
 			return self.__server.getIgnoreIP(name)
 		elif command[1] == "delignoreip":
 			value = command[2]
 			self.__server.delIgnoreIP(name, value)
+			if self.__quiet: return
 			return self.__server.getIgnoreIP(name)
 		elif command[1] == "ignorecommand":
 			value = command[2]
 			self.__server.setIgnoreCommand(name, value)
+			if self.__quiet: return
 			return self.__server.getIgnoreCommand(name)
 		elif command[1] == "ignorecache":
 			value = command[2]
 			self.__server.setIgnoreCache(name, value)
+			if self.__quiet: return
 			return self.__server.getIgnoreCache(name)
 		elif command[1] == "addlogpath":
 			value = command[2]
@@ -215,93 +256,126 @@ class Transmitter:
 			elif len(command) > 4:
 				raise ValueError("Only one file can be added at a time")
 			self.__server.addLogPath(name, value, tail)
+			if self.__quiet: return
 			return self.__server.getLogPath(name)
 		elif command[1] == "dellogpath":
 			value = command[2]
 			self.__server.delLogPath(name, value)
+			if self.__quiet: return
 			return self.__server.getLogPath(name)
 		elif command[1] == "logencoding":
 			value = command[2]
 			self.__server.setLogEncoding(name, value)
+			if self.__quiet: return
 			return self.__server.getLogEncoding(name)
 		elif command[1] == "addjournalmatch": # pragma: systemd no cover
 			value = command[2:]
 			self.__server.addJournalMatch(name, value)
+			if self.__quiet: return
 			return self.__server.getJournalMatch(name)
 		elif command[1] == "deljournalmatch": # pragma: systemd no cover
 			value = command[2:]
 			self.__server.delJournalMatch(name, value)
+			if self.__quiet: return
 			return self.__server.getJournalMatch(name)
 		elif command[1] == "prefregex":
 			value = command[2]
 			self.__server.setPrefRegex(name, value)
-			return self.__server.getPrefRegex(name)
+			if self.__quiet: return
+			v = self.__server.getPrefRegex(name)
+			return v.getRegex() if v else ""
 		elif command[1] == "addfailregex":
 			value = command[2]
 			self.__server.addFailRegex(name, value, multiple=multiple)
 			if multiple:
 				return True
+			if self.__quiet: return
 			return self.__server.getFailRegex(name)
 		elif command[1] == "delfailregex":
 			value = int(command[2])
 			self.__server.delFailRegex(name, value)
+			if self.__quiet: return
 			return self.__server.getFailRegex(name)
 		elif command[1] == "addignoreregex":
 			value = command[2]
 			self.__server.addIgnoreRegex(name, value, multiple=multiple)
 			if multiple:
 				return True
+			if self.__quiet: return
 			return self.__server.getIgnoreRegex(name)
 		elif command[1] == "delignoreregex":
 			value = int(command[2])
 			self.__server.delIgnoreRegex(name, value)
+			if self.__quiet: return
 			return self.__server.getIgnoreRegex(name)
 		elif command[1] == "usedns":
 			value = command[2]
 			self.__server.setUseDns(name, value)
+			if self.__quiet: return
 			return self.__server.getUseDns(name)
 		elif command[1] == "findtime":
 			value = command[2]
 			self.__server.setFindTime(name, value)
+			if self.__quiet: return
 			return self.__server.getFindTime(name)
 		elif command[1] == "datepattern":
 			value = command[2]
 			self.__server.setDatePattern(name, value)
+			if self.__quiet: return
 			return self.__server.getDatePattern(name)
 		elif command[1] == "logtimezone":
 			value = command[2]
 			self.__server.setLogTimeZone(name, value)
+			if self.__quiet: return
 			return self.__server.getLogTimeZone(name)
+		elif command[1] == "maxmatches":
+			value = command[2]
+			self.__server.setMaxMatches(name, int(value))
+			if self.__quiet: return
+			return self.__server.getMaxMatches(name)
 		elif command[1] == "maxretry":
 			value = command[2]
 			self.__server.setMaxRetry(name, int(value))
+			if self.__quiet: return
 			return self.__server.getMaxRetry(name)
 		elif command[1] == "maxlines":
 			value = command[2]
 			self.__server.setMaxLines(name, int(value))
+			if self.__quiet: return
 			return self.__server.getMaxLines(name)
 		# command
 		elif command[1] == "bantime":
 			value = command[2]
 			self.__server.setBanTime(name, value)
+			if self.__quiet: return
 			return self.__server.getBanTime(name)
+		elif command[1] == "attempt":
+			value = command[2:]
+			if self.__quiet: return
+			return self.__server.addAttemptIP(name, *value)
 		elif command[1].startswith("bantime."):
 			value = command[2]
 			opt = command[1][len("bantime."):]
 			self.__server.setBanTimeExtra(name, opt, value)
+			if self.__quiet: return
 			return self.__server.getBanTimeExtra(name, opt)
 		elif command[1] == "banip":
-			value = command[2]
+			value = command[2:]
 			return self.__server.setBanIP(name,value)
 		elif command[1] == "unbanip":
-			value = command[2]
-			self.__server.setUnbanIP(name, value)
-			return value
+			ifexists = True
+			if command[2] != "--report-absent":
+				value = command[2:]
+			else:
+				ifexists = False
+				value = command[3:]
+			return self.__server.setUnbanIP(name, value, ifexists=ifexists)
 		elif command[1] == "addaction":
 			args = [command[2]]
 			if len(command) > 3:
 				args.extend([command[3], json.loads(command[4])])
 			self.__server.addAction(name, *args)
+			if self.__quiet: return
 			return args[0]
 		elif command[1] == "delaction":
 			value = command[2]
@@ -325,10 +399,12 @@ class Transmitter:
 				actionkey = command[3]
 				if callable(getattr(action, actionkey, None)):
 					actionvalue = json.loads(command[4]) if len(command)>4 else {}
+					if self.__quiet: return
 					return getattr(action, actionkey)(**actionvalue)
 				else:
 					actionvalue = command[4]
 					setattr(action, actionkey, actionvalue)
+					if self.__quiet: return
 					return getattr(action, actionkey)
 		raise Exception("Invalid command %r (no set action or not yet implemented)" % (command[1],))
 	
@@ -341,6 +417,9 @@ class Transmitter:
 			return self.__server.getLogTarget()
 		elif name == "syslogsocket":
 			return self.__server.getSyslogSocket()
+		#Thread
+		elif name == "thread":
+			return self.__server.getThreadOptions()
 		#Database
 		elif name == "dbfile":
 			db = self.__server.getDatabase()
@@ -348,13 +427,22 @@ class Transmitter:
 				return None
 			else:
 				return db.filename
+		elif name == "dbmaxmatches":
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.maxMatches
 		elif name == "dbpurgeage":
 			db = self.__server.getDatabase()
 			if db is None:
 				return None
 			else:
 				return db.purgeage
-		# Filter
+		# Jail, Filter
+		elif command[1] == "banned":
+			# check IP is banned in all jails:
+			return self.__server.banned(name, command[2:])
 		elif command[1] == "logpath":
 			return self.__server.getLogPath(name)
 		elif command[1] == "logencoding":
@@ -370,7 +458,8 @@ class Transmitter:
 		elif command[1] == "ignorecache":
 			return self.__server.getIgnoreCache(name)
 		elif command[1] == "prefregex":
-			return self.__server.getPrefRegex(name)
+			v = self.__server.getPrefRegex(name)
+			return v.getRegex() if v else ""
 		elif command[1] == "failregex":
 			return self.__server.getFailRegex(name)
 		elif command[1] == "ignoreregex":
@@ -383,6 +472,8 @@ class Transmitter:
 			return self.__server.getDatePattern(name)
 		elif command[1] == "logtimezone":
 			return self.__server.getLogTimeZone(name)
+		elif command[1] == "maxmatches":
+			return self.__server.getMaxMatches(name)
 		elif command[1] == "maxretry":
 			return self.__server.getMaxRetry(name)
 		elif command[1] == "maxlines":
@@ -390,6 +481,9 @@ class Transmitter:
 		# Action
 		elif command[1] == "bantime":
 			return self.__server.getBanTime(name)
+		elif command[1] == "banip":
+			return self.__server.getBanList(name,
+				withTime=len(command) > 2 and command[2] == "--with-time")
 		elif command[1].startswith("bantime."):
 			opt = command[1][len("bantime."):]
 			return self.__server.getBanTimeExtra(name, opt)

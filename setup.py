@@ -39,14 +39,6 @@ from distutils.command.build_scripts import build_scripts
 if setuptools is None:
 	from distutils.command.install import install
 	from distutils.command.install_scripts import install_scripts
-try:
-	# python 3.x
-	from distutils.command.build_py import build_py_2to3
-	from distutils.command.build_scripts import build_scripts_2to3
-	_2to3 = True
-except ImportError:
-	# python 2.x
-	_2to3 = False
 
 import os
 from os.path import isfile, join, isdir, realpath
@@ -56,12 +48,14 @@ import warnings
 from glob import glob
 
 from fail2ban.setup import updatePyExec
-
+from fail2ban.version import version
 
 source_dir = os.path.realpath(os.path.dirname(
 	# __file__ seems to be overwritten sometimes on some python versions (e.g. bug of 2.6 by running under cProfile, etc.):
 	sys.argv[0] if os.path.basename(sys.argv[0]) == 'setup.py' else __file__
 ))
+
+with_tests = True
 
 # Wrapper to install python binding (to current python version):
 class install_scripts_f2b(install_scripts):
@@ -95,43 +89,45 @@ class install_scripts_f2b(install_scripts):
 			if install_dir.startswith(root):
 				install_dir = install_dir[len(root):]
 		except: # pragma: no cover
-			print('WARNING: Cannot find root-base option, check the bin-path to fail2ban-scripts in "fail2ban.service".')
-		print('Creating %s/fail2ban.service (from fail2ban.service.in): @BINDIR@ -> %s' % (buildroot, install_dir))
-		with open(os.path.join(source_dir, 'files/fail2ban.service.in'), 'r') as fn:
-			lines = fn.readlines()
-		fn = None
-		if not dry_run:
-			fn = open(os.path.join(buildroot, 'fail2ban.service'), 'w')
-		try:
-			for ln in lines:
-				ln = re.sub(r'@BINDIR@', lambda v: install_dir, ln)
-				if dry_run:
-					sys.stdout.write(' | ' + ln)
-					continue
-				fn.write(ln)
-		finally:
-			if fn: fn.close()
-		if dry_run:
-			print(' `')
+			print('WARNING: Cannot find root-base option, check the bin-path to fail2ban-scripts in "fail2ban.service" and "fail2ban-openrc.init".')
+
+		scripts = ['fail2ban.service', 'fail2ban-openrc.init']
+		for script in scripts:
+			print('Creating %s/%s (from %s.in): @BINDIR@ -> %s' % (buildroot, script, script, install_dir))
+			with open(os.path.join(source_dir, 'files/%s.in' % script), 'r') as fn:
+				lines = fn.readlines()
+			fn = None
+			if not dry_run:
+				fn = open(os.path.join(buildroot, script), 'w')
+			try:
+				for ln in lines:
+					ln = re.sub(r'@BINDIR@', lambda v: install_dir, ln)
+					if dry_run:
+						sys.stdout.write(' | ' + ln)
+						continue
+					fn.write(ln)
+			finally:
+				if fn: fn.close()
+			if dry_run:
+				print(' `')
 
 
 # Wrapper to specify fail2ban own options:
 class install_command_f2b(install):
 	user_options = install.user_options + [
-		('disable-2to3', None, 'Specify to deactivate 2to3, e.g. if the install runs from fail2ban test-cases.'),
+		('without-tests', None, 'without tests files installation'),
 	]
 	def initialize_options(self):
-		self.disable_2to3 = None
+		self.without_tests = not with_tests
 		install.initialize_options(self)
 	def finalize_options(self):
-		global _2to3
-		## in the test cases 2to3 should be already done (fail2ban-2to3):
-		if self.disable_2to3:
-			_2to3 = False
-		if _2to3:
-			cmdclass = self.distribution.cmdclass
-			cmdclass['build_py'] = build_py_2to3
-			cmdclass['build_scripts'] = build_scripts_2to3
+		if self.without_tests:
+			self.distribution.scripts.remove('bin/fail2ban-testcases')
+
+			self.distribution.packages.remove('fail2ban.tests')
+			self.distribution.packages.remove('fail2ban.tests.action_d')
+
+			del self.distribution.package_data['fail2ban.tests']
 		install.finalize_options(self)
 	def run(self):
 		install.run(self)
@@ -159,6 +155,12 @@ elif "test" in sys.argv:
 	print("python distribute required to execute fail2ban tests")
 	print("")
 
+# if build without tests:
+if "build" in sys.argv:
+	if "--without-tests" in sys.argv:
+		with_tests = False
+		sys.argv.remove("--without-tests")
+
 longdesc = '''
 Fail2Ban scans log files like /var/log/pwdfail or
 /var/log/apache/error_log and bans IP that makes
@@ -169,7 +171,6 @@ commands.'''
 if setuptools:
 	setup_extra = {
 		'test_suite': "fail2ban.tests.utils.gatherTests",
-		'use_2to3': True,
 	}
 else:
 	setup_extra = {}
@@ -193,9 +194,6 @@ if platform_system in ('linux', 'solaris', 'sunos') or platform_system.startswit
 		('/usr/share/doc/fail2ban', doc_files)
 	)
 
-# Get version number, avoiding importing fail2ban.
-# This is due to tests not functioning for python3 as 2to3 takes place later
-exec(open(join("fail2ban", "version.py")).read())
 
 setup(
 	name = "fail2ban",
@@ -208,23 +206,25 @@ setup(
 	license = "GPL",
 	platforms = "Posix",
 	cmdclass = {
-		'build_py': build_py, 'build_scripts': build_scripts, 
+		'build_py': build_py, 'build_scripts': build_scripts,
 		'install_scripts': install_scripts_f2b, 'install': install_command_f2b
 	},
 	scripts = [
 		'bin/fail2ban-client',
 		'bin/fail2ban-server',
 		'bin/fail2ban-regex',
-		'bin/fail2ban-testcases',
 		# 'bin/fail2ban-python', -- link (binary), will be installed via install_scripts_f2b wrapper
-	],
+	] + [
+		'bin/fail2ban-testcases',
+	] if with_tests else [],
 	packages = [
 		'fail2ban',
 		'fail2ban.client',
 		'fail2ban.server',
+	] + [
 		'fail2ban.tests',
 		'fail2ban.tests.action_d',
-	],
+	]  if with_tests else [],
 	package_data = {
 		'fail2ban.tests':
 			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
@@ -236,7 +236,7 @@ setup(
 			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
 				for w in os.walk('fail2ban/tests/action_d')
 				for f in w[2]]
-	},
+	} if with_tests else {},
 	data_files = [
 		('/etc/fail2ban',
 			glob("config/*.conf")

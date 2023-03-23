@@ -29,7 +29,7 @@ import tempfile
 import sqlite3
 import shutil
 
-from ..server.filter import FileContainer
+from ..server.filter import FileContainer, Filter
 from ..server.mytime import MyTime
 from ..server.ticket import FailTicket
 from ..server.actions import Actions, Utils
@@ -192,7 +192,7 @@ class DatabaseTest(LogCaptureTestCase):
 		ticket.setAttempt(3)
 		self.assertEqual(bans[0], ticket)
 		# second ban found also:
-		self.assertEqual(bans[1].getIP(), "1.2.3.8")
+		self.assertEqual(bans[1].getID(), "1.2.3.8")
 		# updated ?
 		self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
 		# check current bans (should find 2 tickets after upgrade):
@@ -212,19 +212,20 @@ class DatabaseTest(LogCaptureTestCase):
 			self.jail.name in self.db.getJailNames(True),
 			"Jail not added to database")
 
-	def testAddLog(self):
+	def _testAddLog(self):
 		self.testAddJail() # Jail required
 
 		_, filename = tempfile.mkstemp(".log", "Fail2BanDb_")
 		self.fileContainer = FileContainer(filename, "utf-8")
 
-		self.db.addLog(self.jail, self.fileContainer)
+		pos = self.db.addLog(self.jail, self.fileContainer)
+		self.assertTrue(pos is None); # unknown previously
 
 		self.assertIn(filename, self.db.getLogPaths(self.jail))
 		os.remove(filename)
 
 	def testUpdateLog(self):
-		self.testAddLog() # Add log file
+		self._testAddLog() # Add log file
 
 		# Write some text
 		filename = self.fileContainer.getFileName()
@@ -261,6 +262,15 @@ class DatabaseTest(LogCaptureTestCase):
 		self.assertEqual(
 			self.db.addLog(self.jail, self.fileContainer), None)
 		os.remove(filename)
+
+	def testUpdateJournal(self):
+		self.testAddJail() # Jail required
+		# not yet updated:
+		self.assertEqual(self.db.getJournalPos(self.jail, 'systemd-journal'), None)
+		# update 3 times (insert and 2 updates) and check it was set (and overwritten):
+		for t in (1500000000, 1500000001, 1500000002):
+			self.db.updateJournal(self.jail, 'systemd-journal', t, 'TEST'+str(t))
+			self.assertEqual(self.db.getJournalPos(self.jail, 'systemd-journal'), t)
 
 	def testAddBan(self):
 		self.testAddJail()
@@ -302,7 +312,7 @@ class DatabaseTest(LogCaptureTestCase):
 		for i, ticket in enumerate(tickets):
 			DefLogSys.debug('readtickets[%d]: %r', i, readtickets[i].getData())
 			DefLogSys.debug(' == tickets[%d]: %r', i, ticket.getData())
-			self.assertEqual(readtickets[i].getIP(), ticket.getIP())
+			self.assertEqual(readtickets[i].getID(), ticket.getID())
 			self.assertEqual(len(readtickets[i].getMatches()), len(ticket.getMatches()))
 
 		self.pruneLog('[test-phase 2] simulate errors')
@@ -344,10 +354,10 @@ class DatabaseTest(LogCaptureTestCase):
 	def testDelBan(self):
 		tickets = self._testAdd3Bans()
 		# delete single IP:
-		self.db.delBan(self.jail, tickets[0].getIP())
+		self.db.delBan(self.jail, tickets[0].getID())
 		self.assertEqual(len(self.db.getBans(jail=self.jail)), 2)
 		# delete two IPs:
-		self.db.delBan(self.jail, tickets[1].getIP(), tickets[2].getIP())
+		self.db.delBan(self.jail, tickets[1].getID(), tickets[2].getID())
 		self.assertEqual(len(self.db.getBans(jail=self.jail)), 0)
 
 	def testFlushBans(self):
@@ -368,9 +378,9 @@ class DatabaseTest(LogCaptureTestCase):
 		# be returned
 		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=-1)), 2)
 
-	def testGetBansMerged_MaxEntries(self):
+	def testGetBansMerged_MaxMatches(self):
 		self.testAddJail()
-		maxEntries = 2
+		maxMatches = 2
 		failures = [
 			{"matches": ["abc\n"], "user": set(['test'])},
 			{"matches": ["123\n"], "user": set(['test'])},
@@ -386,29 +396,44 @@ class DatabaseTest(LogCaptureTestCase):
 			ticket.setAttempt(1)
 			self.db.addBan(self.jail, ticket)
 		# should retrieve 2 matches only, but count of all attempts:
-		self.db.maxEntries = maxEntries;
+		self.db.maxMatches = maxMatches;
 		ticket = self.db.getBansMerged("127.0.0.1")
-		self.assertEqual(ticket.getIP(), "127.0.0.1")
+		self.assertEqual(ticket.getID(), "127.0.0.1")
 		self.assertEqual(ticket.getAttempt(), len(failures))
-		self.assertEqual(len(ticket.getMatches()), maxEntries)
-		self.assertEqual(ticket.getMatches(), matches2find[-maxEntries:])
+		self.assertEqual(len(ticket.getMatches()), maxMatches)
+		self.assertEqual(ticket.getMatches(), matches2find[-maxMatches:])
     # add more failures at once:
 		ticket = FailTicket("127.0.0.1", MyTime.time() - 10, matches2find,
 			data={"user": set(['test', 'root'])})
 		ticket.setAttempt(len(failures))
 		self.db.addBan(self.jail, ticket)
 		# should retrieve 2 matches only, but count of all attempts:
-		self.db.maxEntries = maxEntries;
 		ticket = self.db.getBansMerged("127.0.0.1")
 		self.assertEqual(ticket.getAttempt(), 2 * len(failures))
-		self.assertEqual(len(ticket.getMatches()), maxEntries)
-		self.assertEqual(ticket.getMatches(), matches2find[-maxEntries:])
+		self.assertEqual(len(ticket.getMatches()), maxMatches)
+		self.assertEqual(ticket.getMatches(), matches2find[-maxMatches:])
 		# also using getCurrentBans:
 		ticket = self.db.getCurrentBans(self.jail, "127.0.0.1", fromtime=MyTime.time()-100)
 		self.assertTrue(ticket is not None)
 		self.assertEqual(ticket.getAttempt(), len(failures))
-		self.assertEqual(len(ticket.getMatches()), maxEntries)
-		self.assertEqual(ticket.getMatches(), matches2find[-maxEntries:])
+		self.assertEqual(len(ticket.getMatches()), maxMatches)
+		self.assertEqual(ticket.getMatches(), matches2find[-maxMatches:])
+		# maxmatches of jail < dbmaxmatches (so read 1 match and 0 matches):
+		ticket = self.db.getCurrentBans(self.jail, "127.0.0.1", fromtime=MyTime.time()-100,
+			maxmatches=1)
+		self.assertEqual(len(ticket.getMatches()), 1)
+		self.assertEqual(ticket.getMatches(), failures[3]['matches'])
+		ticket = self.db.getCurrentBans(self.jail, "127.0.0.1", fromtime=MyTime.time()-100,
+			maxmatches=0)
+		self.assertEqual(len(ticket.getMatches()), 0)
+		# dbmaxmatches = 0, should retrieve 0 matches by last ban:
+		ticket.setMatches(["1","2","3"])
+		self.db.maxMatches = 0;
+		self.db.addBan(self.jail, ticket)
+		ticket = self.db.getCurrentBans(self.jail, "127.0.0.1", fromtime=MyTime.time()-100)
+		self.assertTrue(ticket is not None)
+		self.assertEqual(ticket.getAttempt(), len(failures))
+		self.assertEqual(len(ticket.getMatches()), 0)
 
 	def testGetBansMerged(self):
 		self.testAddJail()
@@ -431,13 +456,13 @@ class DatabaseTest(LogCaptureTestCase):
 
 		# All for IP 127.0.0.1
 		ticket = self.db.getBansMerged("127.0.0.1")
-		self.assertEqual(ticket.getIP(), "127.0.0.1")
+		self.assertEqual(ticket.getID(), "127.0.0.1")
 		self.assertEqual(ticket.getAttempt(), 70)
 		self.assertEqual(ticket.getMatches(), ["abc\n", "123\n", "ABC\n"])
 
 		# All for IP 127.0.0.1 for single jail
 		ticket = self.db.getBansMerged("127.0.0.1", jail=self.jail)
-		self.assertEqual(ticket.getIP(), "127.0.0.1")
+		self.assertEqual(ticket.getID(), "127.0.0.1")
 		self.assertEqual(ticket.getAttempt(), 30)
 		self.assertEqual(ticket.getMatches(), ["abc\n", "123\n"])
 
@@ -465,8 +490,8 @@ class DatabaseTest(LogCaptureTestCase):
 		tickets = self.db.getBansMerged()
 		self.assertEqual(len(tickets), 2)
 		self.assertSortedEqual(
-			list(set(ticket.getIP() for ticket in tickets)),
-			[ticket.getIP() for ticket in tickets])
+			list(set(ticket.getID() for ticket in tickets)),
+			[ticket.getID() for ticket in tickets])
 
 		tickets = self.db.getBansMerged(jail=jail2)
 		self.assertEqual(len(tickets), 1)
@@ -485,7 +510,7 @@ class DatabaseTest(LogCaptureTestCase):
 		tickets = self.db.getCurrentBans(jail=self.jail)
 		self.assertEqual(len(tickets), 2)
 		ticket = self.db.getCurrentBans(jail=None, ip="127.0.0.1");
-		self.assertEqual(ticket.getIP(), "127.0.0.1")
+		self.assertEqual(ticket.getID(), "127.0.0.1")
 		
 		# positive case (1 ticket not yet expired):
 		tickets = self.db.getCurrentBans(jail=self.jail, forbantime=15,
@@ -519,17 +544,22 @@ class DatabaseTest(LogCaptureTestCase):
 		# test action together with database functionality
 		self.testAddJail() # Jail required
 		self.jail.database = self.db
-		actions = Actions(self.jail)
+		self.db.addJail(self.jail)
+		actions = self.jail.actions
 		actions.add(
 			"action_checkainfo",
 			os.path.join(TEST_FILES_DIR, "action.d/action_checkainfo.py"),
 			{})
+		actions.banManager.setBanTotal(20)
+		self.jail._Jail__filter = flt = Filter(self.jail)
+		flt.failManager.setFailTotal(50)
 		ticket = FailTicket("1.2.3.4")
 		ticket.setAttempt(5)
 		ticket.setMatches(['test', 'test'])
 		self.jail.putFailTicket(ticket)
 		actions._Actions__checkBan()
 		self.assertLogged("ban ainfo %s, %s, %s, %s" % (True, True, True, True))
+		self.assertLogged("jail info %d, %d, %d, %d" % (1, 21, 0, 50))
 
 	def testDelAndAddJail(self):
 		self.testAddJail() # Add jail

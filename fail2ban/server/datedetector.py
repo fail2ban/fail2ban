@@ -35,7 +35,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
-logLevel = 6
+logLevel = 5
 
 RE_DATE_PREMATCH = re.compile(r"(?<!\\)\{DATE\}", re.IGNORECASE)
 DD_patternCache = Utils.Cache(maxCount=1000, maxTime=60*60)
@@ -128,52 +128,52 @@ class DateDetectorCache(object):
 		# 2005-01-23T21:59:59.981746, 2005-01-23 21:59:59, 2005-01-23  8:59:59
 		# simple date: 2005/01/23 21:59:59 
 		# custom for syslog-ng 2006.12.21 06:43:20
-		"%ExY(?P<_sep>[-/.])%m(?P=_sep)%d(?:T|  ?)%H:%M:%S(?:[.,]%f)?(?:\s*%z)?",
+		r"%ExY(?P<_sep>[-/.])%m(?P=_sep)%d(?:T|  ?)%H:%M:%S(?:[.,]%f)?(?:\s*%z)?",
 		# asctime with optional day, subsecond and/or year:
 		# Sun Jan 23 21:59:59.011 2005 
-		"(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
+		r"(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
 		# asctime with optional day, subsecond and/or year coming after day
 		# http://bugs.debian.org/798923
 		# Sun Jan 23 2005 21:59:59.011
-		"(?:%a )?%b %d %ExY %k:%M:%S(?:\.%f)?",
+		r"(?:%a )?%b %d %ExY %k:%M:%S(?:\.%f)?",
 		# simple date too (from x11vnc): 23/01/2005 21:59:59 
 		# and with optional year given by 2 digits: 23/01/05 21:59:59 
 		# (See http://bugs.debian.org/537610)
 		# 17-07-2008 17:23:25
-		"%d(?P<_sep>[-/])%m(?P=_sep)(?:%ExY|%Exy) %k:%M:%S",
+		r"%d(?P<_sep>[-/])%m(?P=_sep)(?:%ExY|%Exy) %k:%M:%S",
 		# Apache format optional time zone:
 		# [31/Oct/2006:09:22:55 -0000]
 		# 26-Jul-2007 15:20:52
 		# named 26-Jul-2007 15:20:52.252
 		# roundcube 26-Jul-2007 15:20:52 +0200
-		"%d(?P<_sep>[-/])%b(?P=_sep)%ExY[ :]?%H:%M:%S(?:\.%f)?(?: %z)?",
+		r"%d(?P<_sep>[-/])%b(?P=_sep)%ExY[ :]?%H:%M:%S(?:\.%f)?(?: %z)?",
 		# CPanel 05/20/2008:01:57:39
-		"%m/%d/%ExY:%H:%M:%S",
+		r"%m/%d/%ExY:%H:%M:%S",
 		# 01-27-2012 16:22:44.252
 		# subseconds explicit to avoid possible %m<->%d confusion
 		# with previous ("%d-%m-%ExY %k:%M:%S" by "%d(?P<_sep>[-/])%m(?P=_sep)(?:%ExY|%Exy) %k:%M:%S")
-		"%m-%d-%ExY %k:%M:%S(?:\.%f)?",
+		r"%m-%d-%ExY %k:%M:%S(?:\.%f)?",
 		# Epoch
-		"EPOCH",
+		r"EPOCH",
 		# Only time information in the log
-		"{^LN-BEG}%H:%M:%S",
+		r"{^LN-BEG}%H:%M:%S",
 		# <09/16/08@05:03:30>
-		"^<%m/%d/%Exy@%H:%M:%S>",
+		r"^<%m/%d/%Exy@%H:%M:%S>",
 		# MySQL: 130322 11:46:11
-		"%Exy%Exm%Exd  ?%H:%M:%S",
+		r"%Exy%Exm%Exd  ?%H:%M:%S",
 		# Apache Tomcat
-		"%b %d, %ExY %I:%M:%S %p",
+		r"%b %d, %ExY %I:%M:%S %p",
 		# ASSP: Apr-27-13 02:33:06
-		"^%b-%d-%Exy %k:%M:%S",
+		r"^%b-%d-%Exy %k:%M:%S",
 		# 20050123T215959, 20050123 215959, 20050123  85959
-		"%ExY%Exm%Exd(?:T|  ?)%ExH%ExM%ExS(?:[.,]%f)?(?:\s*%z)?",
+		r"%ExY%Exm%Exd(?:T|  ?)%ExH%ExM%ExS(?:[.,]%f)?(?:\s*%z)?",
 		# prefixed with optional named time zone (monit):
 		# PDT Apr 16 21:05:29
-		"(?:%Z )?(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
+		r"(?:%Z )?(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
 		# +00:00 Jan 23 21:59:59.011 2005 
-		"(?:%z )?(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
+		r"(?:%z )?(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
 		# TAI64N
-		"TAI64N",
+		r"TAI64N",
 	]
 
 	@property
@@ -282,6 +282,8 @@ class DateDetector(object):
 				elif "{DATE}" in key:
 					self.addDefaultTemplate(preMatch=pattern, allDefaults=False)
 					return
+				elif key == "{NONE}":
+					template = _getPatternTemplate('{UNB}^', key)
 				else:
 					template = _getPatternTemplate(pattern, key)
 
@@ -337,65 +339,76 @@ class DateDetector(object):
 		# if no templates specified - default templates should be used:
 		if not len(self.__templates):
 			self.addDefaultTemplate()
-		logSys.log(logLevel-1, "try to match time for line: %.120s", line)
-		match = None
+		log = logSys.log if logSys.getEffectiveLevel() <= logLevel else lambda *args: None
+		log(logLevel-1, "try to match time for line: %.120s", line)
+
 		# first try to use last template with same start/end position:
+		match = None
+		found = None, 0x7fffffff, 0x7fffffff, -1
 		ignoreBySearch = 0x7fffffff
 		i = self.__lastTemplIdx
 		if i < len(self.__templates):
 			ddtempl = self.__templates[i]
 			template = ddtempl.template
 			if template.flags & (DateTemplate.LINE_BEGIN|DateTemplate.LINE_END):
-				if logSys.getEffectiveLevel() <= logLevel-1: # pragma: no cover - very-heavy debug
-					logSys.log(logLevel-1, "  try to match last anchored template #%02i ...", i)
+				log(logLevel-1, "  try to match last anchored template #%02i ...", i)
 				match = template.matchDate(line)
 				ignoreBySearch = i
 			else:
 				distance, endpos = self.__lastPos[0], self.__lastEndPos[0]
-				if logSys.getEffectiveLevel() <= logLevel-1:
-					logSys.log(logLevel-1, "  try to match last template #%02i (from %r to %r): ...%r==%r %s %r==%r...",
-						i, distance, endpos, 
-						line[distance-1:distance], self.__lastPos[1],
-						line[distance:endpos],
-						line[endpos:endpos+1], self.__lastEndPos[1])
-				# check same boundaries left/right, otherwise possible collision/pattern switch:
-				if (line[distance-1:distance] == self.__lastPos[1] and 
-						line[endpos:endpos+1] == self.__lastEndPos[1]
-				):
+				log(logLevel-1, "  try to match last template #%02i (from %r to %r): ...%r==%r %s %r==%r...",
+					i, distance, endpos,
+					line[distance-1:distance], self.__lastPos[1],
+					line[distance:endpos],
+					line[endpos:endpos+1], self.__lastEndPos[2])
+				# check same boundaries left/right, outside fully equal, inside only if not alnum (e. g. bound RE
+				# with space or some special char), otherwise possible collision/pattern switch:
+				if ((
+					line[distance-1:distance] == self.__lastPos[1] or
+						(line[distance:distance+1] == self.__lastPos[2] and not self.__lastPos[2].isalnum())
+					) and (
+					line[endpos:endpos+1] == self.__lastEndPos[2] or
+						(line[endpos-1:endpos] == self.__lastEndPos[1] and not self.__lastEndPos[1].isalnum())
+				)):
+					# search in line part only:
+					log(logLevel-1, "  boundaries are correct, search in part %r", line[distance:endpos])
 					match = template.matchDate(line, distance, endpos)
+				else:
+					log(logLevel-1, "  boundaries show conflict, try whole search")
+					match = template.matchDate(line)
+					ignoreBySearch = i
 			if match:
 				distance = match.start()
 				endpos = match.end()
 				# if different position, possible collision/pattern switch:
 				if (
+					len(self.__templates) == 1 or # single template:
 					template.flags & (DateTemplate.LINE_BEGIN|DateTemplate.LINE_END) or 
 					(distance == self.__lastPos[0] and endpos == self.__lastEndPos[0])
 				):
-					logSys.log(logLevel, "  matched last time template #%02i", i)
+					log(logLevel, "  matched last time template #%02i", i)
 				else:
-					logSys.log(logLevel, "  ** last pattern collision - pattern change, search ...")
+					log(logLevel, "  ** last pattern collision - pattern change, reserve & search ...")
+					found = match, distance, endpos, i; # save current best alternative
 					match = None
 			else:
-				logSys.log(logLevel, "  ** last pattern not found - pattern change, search ...")
+				log(logLevel, "  ** last pattern not found - pattern change, search ...")
 		# search template and better match:
 		if not match:
-			logSys.log(logLevel, " search template (%i) ...", len(self.__templates))
-			found = None, 0x7fffffff, 0x7fffffff, -1
+			log(logLevel, " search template (%i) ...", len(self.__templates))
 			i = 0
 			for ddtempl in self.__templates:
-				if logSys.getEffectiveLevel() <= logLevel-1:
-					logSys.log(logLevel-1, "  try template #%02i: %s", i, ddtempl.name)
 				if i == ignoreBySearch:
 					i += 1
 					continue
+				log(logLevel-1, "  try template #%02i: %s", i, ddtempl.name)
 				template = ddtempl.template
 				match = template.matchDate(line)
 				if match:
 					distance = match.start()
 					endpos = match.end()
-					if logSys.getEffectiveLevel() <= logLevel:
-						logSys.log(logLevel, "  matched time template #%02i (at %r <= %r, %r) %s",
-							i, distance, ddtempl.distance, self.__lastPos[0], template.name)
+					log(logLevel, "  matched time template #%02i (at %r <= %r, %r) %s",
+						i, distance, ddtempl.distance, self.__lastPos[0], template.name)
 					## last (or single) template - fast stop:
 					if i+1 >= len(self.__templates):
 						break
@@ -408,7 +421,7 @@ class DateDetector(object):
 					## [grave] if distance changed, possible date-match was found somewhere 
 					## in body of message, so save this template, and search further:
 					if distance > ddtempl.distance or distance > self.__lastPos[0]:
-						logSys.log(logLevel, "  ** distance collision - pattern change, reserve")
+						log(logLevel, "  ** distance collision - pattern change, reserve")
 						## shortest of both:
 						if distance < found[1]:
 							found = match, distance, endpos, i
@@ -422,7 +435,7 @@ class DateDetector(object):
 			# check other template was found (use this one with shortest distance):
 			if not match and found[0]:
 				match, distance, endpos, i = found
-				logSys.log(logLevel, "  use best time template #%02i", i)
+				log(logLevel, "  use best time template #%02i", i)
 				ddtempl = self.__templates[i]
 				template = ddtempl.template
 		# we've winner, incr hits, set distance, usage, reorder, etc:
@@ -432,8 +445,8 @@ class DateDetector(object):
 			ddtempl.distance = distance
 			if self.__firstUnused == i:
 				self.__firstUnused += 1
-			self.__lastPos = distance, line[distance-1:distance]
-			self.__lastEndPos = endpos, line[endpos:endpos+1]
+			self.__lastPos = distance, line[distance-1:distance], line[distance]
+			self.__lastEndPos = endpos, line[endpos-1], line[endpos:endpos+1]
 			# if not first - try to reorder current template (bubble up), they will be not sorted anymore:
 			if i and i != self.__lastTemplIdx:
 				i = self._reorderTemplate(i)
@@ -442,7 +455,7 @@ class DateDetector(object):
 			return (match, template)
 
 		# not found:
-		logSys.log(logLevel, " no template.")
+		log(logLevel, " no template.")
 		return (None, None)
 
 	@property

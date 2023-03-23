@@ -39,6 +39,7 @@ class TicketTests(unittest.TestCase):
 
     # Ticket
     t = Ticket('193.168.0.128', tm, matches)
+    self.assertEqual(t.getID(), '193.168.0.128')
     self.assertEqual(t.getIP(), '193.168.0.128')
     self.assertEqual(t.getTime(), tm)
     self.assertEqual(t.getMatches(), matches2)
@@ -65,14 +66,15 @@ class TicketTests(unittest.TestCase):
     matches = ['first', 'second']
     ft = FailTicket('193.168.0.128', tm, matches)
     ft.setBanTime(60*60)
+    self.assertEqual(ft.getID(), '193.168.0.128')
     self.assertEqual(ft.getIP(), '193.168.0.128')
     self.assertEqual(ft.getTime(), tm)
     self.assertEqual(ft.getMatches(), matches2)
     ft.setAttempt(2)
-    self.assertEqual(ft.getAttempt(), 2)
-    # retry is max of set retry and failures:
-    self.assertEqual(ft.getRetry(), 2)
     ft.setRetry(1)
+    self.assertEqual(ft.getAttempt(), 2)
+    self.assertEqual(ft.getRetry(), 1)
+    ft.setRetry(2)
     self.assertEqual(ft.getRetry(), 2)
     ft.setRetry(3)
     self.assertEqual(ft.getRetry(), 3)
@@ -86,13 +88,21 @@ class TicketTests(unittest.TestCase):
     self.assertEqual(ft.getRetry(), 14)
     self.assertEqual(ft.getMatches(), matches3)
     # last time (ignore if smaller as time):
-    self.assertEqual(ft.getLastTime(), tm)
-    ft.setLastTime(tm-60)
     self.assertEqual(ft.getTime(), tm)
-    self.assertEqual(ft.getLastTime(), tm)
-    ft.setLastTime(tm+60)
+    ft.adjustTime(tm-60, 3600)
+    self.assertEqual(ft.getTime(), tm)
+    self.assertEqual(ft.getRetry(), 14)
+    ft.adjustTime(tm+60, 3600)
     self.assertEqual(ft.getTime(), tm+60)
-    self.assertEqual(ft.getLastTime(), tm+60)
+    self.assertEqual(ft.getRetry(), 14)
+    ft.adjustTime(tm+3600, 3600)
+    self.assertEqual(ft.getTime(), tm+3600)
+    self.assertEqual(ft.getRetry(), 14)
+    # adjust time so interval is larger than find time (3600), so reset retry count:
+    ft.adjustTime(tm+7200, 3600)
+    self.assertEqual(ft.getTime(), tm+7200)
+    self.assertEqual(ft.getRetry(), 7); # estimated attempts count
+    self.assertEqual(ft.getAttempt(), 4); # real known failure count
     ft.setData('country', 'DE')
     self.assertEqual(ft.getData(),  
       {'matches': ['first', 'second', 'third'], 'failures': 4, 'country': 'DE'})
@@ -102,11 +112,22 @@ class TicketTests(unittest.TestCase):
     self.assertEqual(ft, ft2)
     self.assertEqual(ft.getData(), ft2.getData())
     self.assertEqual(ft2.getAttempt(), 4)
-    self.assertEqual(ft2.getRetry(), 14)
+    self.assertEqual(ft2.getRetry(), 7)
     self.assertEqual(ft2.getMatches(), matches3)
     self.assertEqual(ft2.getTime(), ft.getTime())
-    self.assertEqual(ft2.getLastTime(), ft.getLastTime())
+    self.assertEqual(ft2.getTime(), ft.getTime())
     self.assertEqual(ft2.getBanTime(), ft.getBanTime())
+
+  def testDiffIDAndIPTicket(self):
+    tm = MyTime.time()
+    # different ID (string) and IP:
+    t = Ticket('123-456-678', tm, data={'ip':'192.0.2.1'})
+    self.assertEqual(t.getID(), '123-456-678')
+    self.assertEqual(t.getIP(), '192.0.2.1')
+    # different ID (tuple) and IP:
+    t = Ticket(('192.0.2.1', '5000'), tm, data={'ip':'192.0.2.1'})
+    self.assertEqual(t.getID(), ('192.0.2.1', '5000'))
+    self.assertEqual(t.getIP(), '192.0.2.1')
 
   def testTicketFlags(self):
     flags = ('restored', 'banned')

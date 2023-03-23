@@ -1,0 +1,15 @@
+# failJSON: { "time": "2018-10-27T01:40:55", "match": true , "host": "1.2.3.4" }
+[2018-10-27 01:40:55] [girst] failed to login from 1.2.3.4
+
+# failJSON: { "match": false }
+[2018-10-27 01:40:17] [girst] connected to ZNC from 1.2.3.4
+# failJSON: { "match": false }
+[2018-10-27 01:40:21] [girst] disconnected from ZNC from 1.2.3.4
+
+# failJSON: { "time": "2019-09-08T15:53:19", "match": true , "host": "192.0.2.1", "desc": "port after IP" }
+[2019-09-08 15:53:19] [admin] failed to login from 192.0.2.1:65001
+
+# filterOptions: {"logtype": "journal"}
+
+# failJSON: { "match": true , "host": "192.0.2.2", "desc": "systemd-journal entry, port after IP" }
+Test znc[37232]: [admin] failed to login from 192.0.2.2:65009

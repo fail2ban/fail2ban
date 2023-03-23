@@ -38,26 +38,32 @@ class ActionReader(DefinitionInitConfigReader):
 
 	_configOpts = {
 		"actionstart": ["string", None],
-		"actionstart_on_demand": ["string", None],
+		"actionstart_on_demand": ["bool", None],
 		"actionstop": ["string", None],
 		"actionflush": ["string", None],
 		"actionreload": ["string", None],
 		"actioncheck": ["string", None],
 		"actionrepair": ["string", None],
+		"actionrepair_on_unban": ["bool", None],
 		"actionban": ["string", None],
 		"actionprolong": ["string", None],
+		"actionreban": ["string", None],
 		"actionunban": ["string", None],
-		"norestored": ["string", None],
+		"norestored": ["bool", None],
 	}
 
 	def __init__(self, file_, jailName, initOpts, **kwargs):
+		# always supply jail name as name parameter if not specified in options:
+		n = initOpts.get("name")
+		if n is None:
+			initOpts["name"] = n = jailName
 		actname = initOpts.get("actname")
 		if actname is None:
 			actname = file_
+			# ensure we've unique action name per jail:
+			if n != jailName:
+				actname += n[len(jailName):] if n.startswith(jailName) else '-' + n
 			initOpts["actname"] = actname
-		# always supply jail name as name parameter if not specified in options:
-		if initOpts.get("name") is None:
-			initOpts["name"] = jailName
 		self._name = actname
 		DefinitionInitConfigReader.__init__(
 			self, file_, jailName, initOpts, **kwargs)
@@ -78,11 +84,6 @@ class ActionReader(DefinitionInitConfigReader):
 	def convert(self):
 		opts = self.getCombined(
 			ignore=CommandAction._escapedTags | set(('timeout', 'bantime')))
-		# type-convert only after combined (otherwise boolean converting prevents substitution):
-		for o in ('norestored', 'actionstart_on_demand'):
-			if opts.get(o):
-				opts[o] = self._convert_to_boolean(opts[o])
-		
 		# stream-convert:
 		head = ["set", self._jailName]
 		stream = list()

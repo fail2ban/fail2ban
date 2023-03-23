@@ -55,7 +55,6 @@ class FilterGamin(FileFilter):
 
 	def __init__(self, jail):
 		FileFilter.__init__(self, jail)
-		self.__modified = False
 		# Gamin monitor
 		self.monitor = gamin.WatchMonitor()
 		fd = self.monitor.get_fd()
@@ -64,28 +63,12 @@ class FilterGamin(FileFilter):
 		logSys.debug("Created FilterGamin")
 
 	def callback(self, path, event):
-		logSys.debug("Got event: " + repr(event) + " for " + path)
+		logSys.log(4, "Got event: " + repr(event) + " for " + path)
 		if event in (gamin.GAMCreated, gamin.GAMChanged, gamin.GAMExists):
 			logSys.debug("File changed: " + path)
-			self.__modified = True
 
 		self.ticks += 1
-		self._process_file(path)
-
-	def _process_file(self, path):
-		"""Process a given file
-
-		TODO -- RF:
-		this is a common logic and must be shared/provided by FileFilter
-		"""
 		self.getFailures(path)
-		try:
-			while True:
-				ticket = self.failManager.toBan()
-				self.jail.putFailTicket(ticket)
-		except FailManagerEmpty:
-			self.failManager.cleanup(MyTime.time())
-		self.__modified = False
 
 	##
 	# Add a log file path
@@ -132,6 +115,9 @@ class FilterGamin(FileFilter):
 			Utils.wait_for(lambda: not self.active or self._handleEvents(),
 				self.sleeptime)
 			self.ticks += 1
+			if self.ticks % 10 == 0:
+				self.performSvc()
+
 		logSys.debug("[%s] filter terminated", self.jailName)
 		return True
 

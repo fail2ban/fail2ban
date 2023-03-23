@@ -35,13 +35,13 @@ import platform
 from ..server.failregex import Regex, FailRegex, RegexException
 from ..server import actions as _actions
 from ..server.server import Server
-from ..server.ipdns import IPAddr
+from ..server.ipdns import DNSUtils, IPAddr
 from ..server.jail import Jail
 from ..server.jailthread import JailThread
 from ..server.ticket import BanTicket
 from ..server.utils import Utils
 from .dummyjail import DummyJail
-from .utils import LogCaptureTestCase
+from .utils import LogCaptureTestCase, with_alt_time, MyTime
 from ..helpers import getLogger, extractOptions, PREFER_ENC
 from .. import version
 
@@ -64,11 +64,14 @@ class TestServer(Server):
 		pass
 
 
-class TransmitterBase(unittest.TestCase):
+class TransmitterBase(LogCaptureTestCase):
 	
+	TEST_SRV_CLASS = TestServer
+
 	def setUp(self):
 		"""Call before every test case."""
 		super(TransmitterBase, self).setUp()
+		self.server = self.TEST_SRV_CLASS()
 		self.transm = self.server._Server__transm
 		# To test thransmitter we don't need to start server...
 		#self.server.start('/dev/null', '/dev/null', force=False)
@@ -157,10 +160,6 @@ class TransmitterBase(unittest.TestCase):
 
 class Transmitter(TransmitterBase):
 
-	def setUp(self):
-		self.server = TestServer()
-		super(Transmitter, self).setUp()
-
 	def testServerIsNotStarted(self):
 		# so far isStarted only tested but not used otherwise
 		# and here we don't really .start server
@@ -174,6 +173,19 @@ class Transmitter(TransmitterBase):
 
 	def testVersion(self):
 		self.assertEqual(self.transm.proceed(["version"]), (0, version.version))
+
+	def testSetIPv6(self):
+		try:
+			self.assertEqual(self.transm.proceed(["set", "allowipv6", 'yes']), (0, 'yes'))
+			self.assertTrue(DNSUtils.IPv6IsAllowed())
+			self.assertLogged("IPv6 is on"); self.pruneLog()
+			self.assertEqual(self.transm.proceed(["set", "allowipv6", 'no']), (0, 'no'))
+			self.assertFalse(DNSUtils.IPv6IsAllowed())
+			self.assertLogged("IPv6 is off"); self.pruneLog()
+		finally:
+			# restore back to auto:
+			self.assertEqual(self.transm.proceed(["set", "allowipv6", "auto"]), (0, "auto"))
+			self.assertLogged("IPv6 is auto"); self.pruneLog()
 
 	def testSleep(self):
 		if not unittest.F2B.fast:
@@ -197,6 +209,8 @@ class Transmitter(TransmitterBase):
 		self.setGetTest("dbfile", tmpFilename)
 		# the same file name (again no jails / not changed):
 		self.setGetTest("dbfile", tmpFilename)
+		self.setGetTest("dbmaxmatches", "100", 100)
+		self.setGetTestNOK("dbmaxmatches", "LIZARD")
 		self.setGetTest("dbpurgeage", "600", 600)
 		self.setGetTestNOK("dbpurgeage", "LIZARD")
 		# the same file name (again with jails / not changed):
@@ -210,6 +224,12 @@ class Transmitter(TransmitterBase):
 			(0, None))
 		self.assertEqual(self.transm.proceed(
 			["get", "dbfile"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["set", "dbmaxmatches", "100"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["get", "dbmaxmatches"]),
 			(0, None))
 		self.assertEqual(self.transm.proceed(
 			["set", "dbpurgeage", "500"]),
@@ -330,22 +350,99 @@ class Transmitter(TransmitterBase):
 		self.server.startJail(self.jailName) # Jail must be started
 
 		self.assertEqual(
-			self.transm.proceed(["set", self.jailName, "banip", "127.0.0.1"]),
-			(0, "127.0.0.1"))
-		time.sleep(Utils.DEFAULT_SLEEP_TIME) # Give chance to ban
+			self.transm.proceed(["set", self.jailName, "banip", "192.0.2.1", "192.0.2.1", "192.0.2.2"]),
+			(0, 2))
+		self.assertLogged("Ban 192.0.2.1", "Ban 192.0.2.2", all=True, wait=True) # Give chance to ban
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "banip", "Badger"]),
-			(0, "Badger")) #NOTE: Is IP address validated? Is DNS Lookup done?
-		time.sleep(Utils.DEFAULT_SLEEP_TIME) # Give chance to ban
-		# Unban IP
+			(0, 1)) #NOTE: Is IP address validated? Is DNS Lookup done?
+		self.assertLogged("Ban Badger", wait=True) # Give chance to ban
+		# Unban IP (first/last are not banned, so checking unban of both other succeeds):
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "unbanip", "127.0.0.1"]),
-			(0, "127.0.0.1"))
-		# Unban IP which isn't banned
+				["set", self.jailName, "unbanip", "192.0.2.255", "192.0.2.1", "192.0.2.2", "192.0.2.254"]),
+			(0, 2))
+		self.assertLogged("Unban 192.0.2.1", "Unban 192.0.2.2", all=True, wait=True)
+		self.assertLogged("192.0.2.255 is not banned", "192.0.2.254 is not banned", all=True, wait=True)
+		self.pruneLog()
+		# Unban IP which isn't banned (error):
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "unbanip", "192.168.1.1"])[0],1)
+				["set", self.jailName, "unbanip", "--report-absent", "192.0.2.255"])[0],1)
+		# ... (no error, IPs logged only):
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "unbanip", "192.0.2.255", "192.0.2.254"]),(0, 0))
+		self.assertLogged("192.0.2.255 is not banned", "192.0.2.254 is not banned", all=True, wait=True)
+
+	def testJailAttemptIP(self):
+		self.server.startJail(self.jailName) # Jail must be started
+
+		def attempt(ip, matches):
+			return self.transm.proceed(["set", self.jailName, "attempt", ip] + matches)
+
+		self.setGetTest("maxretry", "5", 5, jail=self.jailName)
+		# produce 2 single attempts per IP:
+		for i in (1, 2):
+			for ip in ("192.0.2.1", "192.0.2.2"):
+				self.assertEqual(attempt(ip, ["test failure %d" % i]), (0, 1))
+		self.assertLogged("192.0.2.1:2", "192.0.2.2:2", all=True, wait=True)
+		# this 3 attempts at once should cause a ban:
+		self.assertEqual(attempt(ip, ["test failure %d" % i for i in (3,4,5)]), (0, 1))
+		self.assertLogged("192.0.2.2:5", wait=True)
+		# resulted to ban for "192.0.2.2" but not for "192.0.2.1":
+		self.assertLogged("Ban 192.0.2.2", wait=True)
+		self.assertNotLogged("Ban 192.0.2.1")
+
+	@with_alt_time
+	def testJailBanList(self):
+		jail = "TestJailBanList"
+		self.server.addJail(jail, FAST_BACKEND)
+		self.server.startJail(jail)
+
+		# Helper to process set banip/set unbanip commands and compare the list of
+		# banned IP addresses with outList.
+		def _getBanListTest(jail, banip=None, unbanip=None, args=(), outList=[]):
+			# Ban IP address
+			if banip is not None:
+				self.assertEqual(
+					self.transm.proceed(["set", jail, "banip", banip]),
+					(0, 1))
+				self.assertLogged("Ban %s" % banip, wait=True) # Give chance to ban
+			# Unban IP address
+			if unbanip is not None:
+				self.assertEqual(
+					self.transm.proceed(["set", jail, "unbanip", unbanip]),
+					(0, 1))
+				self.assertLogged("Unban %s" % unbanip, wait=True) # Give chance to unban
+			# Compare the list of banned IP addresses with outList
+			self.assertSortedEqual(
+				self.transm.proceed(["get", jail, "banip"]+list(args)),
+				(0, outList), nestedOnly=False)
+			MyTime.setTime(MyTime.time() + 1)
+
+		_getBanListTest(jail,
+			outList=[])
+		_getBanListTest(jail, banip="127.0.0.1", args=('--with-time',), 
+			outList=["127.0.0.1 \t2005-08-14 12:00:01 + 600 = 2005-08-14 12:10:01"])
+		_getBanListTest(jail, banip="192.168.0.1", args=('--with-time',), 
+			outList=[
+				"127.0.0.1 \t2005-08-14 12:00:01 + 600 = 2005-08-14 12:10:01",
+				"192.168.0.1 \t2005-08-14 12:00:02 + 600 = 2005-08-14 12:10:02"])
+		_getBanListTest(jail, banip="192.168.1.10",
+			outList=["127.0.0.1", "192.168.0.1", "192.168.1.10"])
+		_getBanListTest(jail, unbanip="127.0.0.1",
+			outList=["192.168.0.1", "192.168.1.10"])
+		_getBanListTest(jail, unbanip="192.168.1.10",
+			outList=["192.168.0.1"])
+		_getBanListTest(jail, unbanip="192.168.0.1",
+			outList=[])
+
+	def testJailMaxMatches(self):
+		self.setGetTest("maxmatches", "5", 5, jail=self.jailName)
+		self.setGetTest("maxmatches", "2", 2, jail=self.jailName)
+		self.setGetTest("maxmatches", "-2", -2, jail=self.jailName)
+		self.setGetTestNOK("maxmatches", "Duck", jail=self.jailName)
 
 	def testJailMaxRetry(self):
 		self.setGetTest("maxretry", "5", 5, jail=self.jailName)
@@ -471,6 +568,9 @@ class Transmitter(TransmitterBase):
 			["<ip>", 9999, 24*60*60],
 			jail=self.jailName)
 		self.setGetTest("ignorecache", '', None, jail=self.jailName)
+
+	def testJailPrefRegex(self):
+		self.setGetTest("prefregex", "^Test", jail=self.jailName)
 
 	def testJailRegex(self):
 		self.jailAddDelRegexTest("failregex",
@@ -661,11 +761,11 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(
 				["set", self.jailName, "action", action, "timeout", "10"]),
-			(0, "10"))
+			(0, 10))
 		self.assertEqual(
 			self.transm.proceed(
 				["get", self.jailName, "action", action, "timeout"]),
-			(0, "10"))
+			(0, 10))
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "delaction", action]),
 			(0, None))
@@ -675,27 +775,11 @@ class Transmitter(TransmitterBase):
 
 	def testPythonActionMethodsAndProperties(self):
 		action = "TestCaseAction"
-		try:
-			out = self.transm.proceed(
-				["set", self.jailName, "addaction", action,
-				 os.path.join(TEST_FILES_DIR, "action.d", "action.py"),
-				'{"opt1": "value"}'])
-			self.assertEqual(out, (0, action))
-		except AssertionError:
-			if ((2, 6) <= sys.version_info < (2, 6, 5)) \
-				and '__init__() keywords must be strings' in out[1]:
-				# known issue http://bugs.python.org/issue2646 in 2.6 series
-				# since general Fail2Ban warnings are suppressed in normal
-				# operation -- let's issue Python's native warning here
-				import warnings
-				warnings.warn(
-					"Your version of Python %s seems to experience a known "
-					"issue forbidding correct operation of Fail2Ban: "
-					"http://bugs.python.org/issue2646  Upgrade your Python and "
-					"meanwhile other intestPythonActionMethodsAndProperties will "
-					"be skipped" % (sys.version))
-				return
-			raise
+		out = self.transm.proceed(
+			["set", self.jailName, "addaction", action,
+			 os.path.join(TEST_FILES_DIR, "action.d", "action.py"),
+			'{"opt1": "value"}'])
+		self.assertEqual(out, (0, action))
 		self.assertSortedEqual(
 			self.transm.proceed(["get", self.jailName,
 				"actionproperties", action])[1],
@@ -711,7 +795,7 @@ class Transmitter(TransmitterBase):
 		self.assertSortedEqual(
 			self.transm.proceed(["get", self.jailName, "actionmethods",
 				action])[1],
-			['ban', 'start', 'stop', 'testmethod', 'unban'])
+			['ban', 'reban', 'start', 'stop', 'testmethod', 'unban'])
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "action", action,
 				"testmethod", '{"text": "world!"}']),
@@ -836,8 +920,9 @@ class Transmitter(TransmitterBase):
 
 class TransmitterLogging(TransmitterBase):
 
+	TEST_SRV_CLASS = Server
+
 	def setUp(self):
-		self.server = Server()
 		super(TransmitterLogging, self).setUp()
 		self.server.setLogTarget("/dev/null")
 		self.server.setLogLevel("CRITICAL")
@@ -985,28 +1070,28 @@ class RegexTests(unittest.TestCase):
 	def testHost(self):
 		self.assertRaises(RegexException, FailRegex, '')
 		self.assertRaises(RegexException, FailRegex, '^test no group$')
-		self.assertTrue(FailRegex('^test <HOST> group$'))
-		self.assertTrue(FailRegex('^test <IP4> group$'))
-		self.assertTrue(FailRegex('^test <IP6> group$'))
-		self.assertTrue(FailRegex('^test <DNS> group$'))
-		self.assertTrue(FailRegex('^test id group: ip:port = <F-ID><IP4>(?::<F-PORT/>)?</F-ID>$'))
-		self.assertTrue(FailRegex('^test id group: user:\(<F-ID>[^\)]+</F-ID>\)$'))
-		self.assertTrue(FailRegex('^test id group: anything = <F-ID/>$'))
+		self.assertTrue(FailRegex(r'^test <HOST> group$'))
+		self.assertTrue(FailRegex(r'^test <IP4> group$'))
+		self.assertTrue(FailRegex(r'^test <IP6> group$'))
+		self.assertTrue(FailRegex(r'^test <DNS> group$'))
+		self.assertTrue(FailRegex(r'^test id group: ip:port = <F-ID><IP4>(?::<F-PORT/>)?</F-ID>$'))
+		self.assertTrue(FailRegex(r'^test id group: user:\(<F-ID>[^\)]+</F-ID>\)$'))
+		self.assertTrue(FailRegex(r'^test id group: anything = <F-ID/>$'))
 		# Testing obscure case when host group might be missing in the matched pattern,
 		# e.g. if we made it optional.
-		fr = FailRegex('%%<HOST>?')
+		fr = FailRegex(r'%%<HOST>?')
 		self.assertFalse(fr.hasMatched())
 		fr.search([('%%',"","")])
 		self.assertTrue(fr.hasMatched())
 		self.assertRaises(RegexException, fr.getHost)
 		# The same as above but using separated IPv4/IPv6 expressions
-		fr = FailRegex('%%inet(?:=<F-IP4/>|inet6=<F-IP6/>)?')
+		fr = FailRegex(r'%%inet(?:=<F-IP4/>|inet6=<F-IP6/>)?')
 		self.assertFalse(fr.hasMatched())
 		fr.search([('%%inet=test',"","")])
 		self.assertTrue(fr.hasMatched())
 		self.assertRaises(RegexException, fr.getHost)
 		# Success case: using separated IPv4/IPv6 expressions (no HOST)
-		fr = FailRegex('%%(?:inet(?:=<IP4>|6=<IP6>)?|dns=<DNS>?)')
+		fr = FailRegex(r'%%(?:inet(?:=<IP4>|6=<IP6>)?|dns=<DNS>?)')
 		self.assertFalse(fr.hasMatched())
 		fr.search([('%%inet=192.0.2.1',"","")])
 		self.assertTrue(fr.hasMatched())
@@ -1018,11 +1103,39 @@ class RegexTests(unittest.TestCase):
 		self.assertTrue(fr.hasMatched())
 		self.assertEqual(fr.getHost(), 'example.com')
 		# Success case: using user as failure-id
-		fr = FailRegex('^test id group: user:\(<F-ID>[^\)]+</F-ID>\)$')
+		fr = FailRegex(r'^test id group: user:\(<F-ID>[^\)]+</F-ID>\)$')
 		self.assertFalse(fr.hasMatched())
 		fr.search([('test id group: user:(test login name)',"","")])
 		self.assertTrue(fr.hasMatched())
 		self.assertEqual(fr.getFailID(), 'test login name')
+		# Success case: subnet with IPAddr (IP and subnet) conversion:
+		fr = FailRegex(r'%%net=<SUBNET>')
+		fr.search([('%%net=192.0.2.1',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('192.0.2.1', 'inet4'))
+		fr.search([('%%net=192.0.2.1/24',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('192.0.2.0/24', 'inet4'))
+		fr.search([('%%net=2001:DB8:FF:FF::1',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('2001:db8:ff:ff::1', 'inet6'))
+		fr.search([('%%net=2001:DB8:FF:FF::1/60',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('2001:db8:ff:f0::/60', 'inet6'))
+		# CIDR:
+		fr = FailRegex(r'%%ip="<ADDR>", mask="<CIDR>?"')
+		fr.search([('%%ip="192.0.2.2", mask=""',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('192.0.2.2', 'inet4'))
+		fr.search([('%%ip="192.0.2.2", mask="24"',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('192.0.2.0/24', 'inet4'))
+		fr.search([('%%ip="2001:DB8:2FF:FF::1", mask=""',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('2001:db8:2ff:ff::1', 'inet6'))
+		fr.search([('%%ip="2001:DB8:2FF:FF::1", mask="60"',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('2001:db8:2ff:f0::/60', 'inet6'))
 
 
 class _BadThread(JailThread):
@@ -1236,10 +1349,106 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 		#   'start', 'stop' - should be found (logged) on action start/stop,
 		#   etc.
 		testJailsActions = (
+			# nftables-multiport --
+			('j-w-nft-mp', 'nftables-multiport[name=%(__name__)s, port="http,https", protocol="tcp,udp,sctp"]', {
+				'ip4': ('ip ', 'ipv4_addr', 'addr-'), 'ip6': ('ip6 ', 'ipv6_addr', 'addr6-'),
+				'*-start': (
+					r"`nft add table inet f2b-table`",
+					r"`nft -- add chain inet f2b-table f2b-chain \{ type filter hook input priority -1 \; \}`",
+					# iterator over protocol is same for both families:
+					r"`for proto in $(echo 'tcp,udp,sctp' | sed 's/,/ /g'); do`",
+					r"`done`",
+				),
+				'ip4-start': (
+					r"`nft add set inet f2b-table addr-set-j-w-nft-mp \{ type ipv4_addr\; \}`",
+					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ $(echo 'http,https' | sed s/:/-/g) \} ip saddr @addr-set-j-w-nft-mp reject`",
+				), 
+				'ip6-start': (
+					r"`nft add set inet f2b-table addr6-set-j-w-nft-mp \{ type ipv6_addr\; \}`",
+					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ $(echo 'http,https' | sed s/:/-/g) \} ip6 saddr @addr6-set-j-w-nft-mp reject`",
+				),
+				'flush': (
+					"`{ nft flush set inet f2b-table addr-set-j-w-nft-mp 2> /dev/null; } || ",
+					"`{ nft flush set inet f2b-table addr6-set-j-w-nft-mp 2> /dev/null; } || ",
+				),
+				'stop': (
+					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-mp\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
+					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
+					"`nft delete set inet f2b-table addr-set-j-w-nft-mp`",
+					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-mp\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
+					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
+					"`nft delete set inet f2b-table addr6-set-j-w-nft-mp`",
+				),
+				'ip4-check': (
+					r"`nft list chain inet f2b-table f2b-chain | grep -q '@addr-set-j-w-nft-mp[ \t]'`",
+				),
+				'ip6-check': (
+					r"`nft list chain inet f2b-table f2b-chain | grep -q '@addr6-set-j-w-nft-mp[ \t]'`",
+				),
+				'ip4-ban': (
+					r"`nft add element inet f2b-table addr-set-j-w-nft-mp \{ 192.0.2.1 \}`",
+				),
+				'ip4-unban': (
+					r"`nft delete element inet f2b-table addr-set-j-w-nft-mp \{ 192.0.2.1 \}`",
+				),
+				'ip6-ban': (
+					r"`nft add element inet f2b-table addr6-set-j-w-nft-mp \{ 2001:db8:: \}`",
+				),
+				'ip6-unban': (
+					r"`nft delete element inet f2b-table addr6-set-j-w-nft-mp \{ 2001:db8:: \}`",
+				),					
+			}),
+			# nft-allports --
+			('j-w-nft-ap', 'nftables-allports[name=%(__name__)s, protocol="tcp,udp"]', {
+				'ip4': ('ip ', 'ipv4_addr', 'addr-'), 'ip6': ('ip6 ', 'ipv6_addr', 'addr6-'),
+				'*-start': (
+					r"`nft add table inet f2b-table`",
+					r"`nft -- add chain inet f2b-table f2b-chain \{ type filter hook input priority -1 \; \}`",
+				),
+				'ip4-start': (
+					r"`nft add set inet f2b-table addr-set-j-w-nft-ap \{ type ipv4_addr\; \}`",
+					r"`nft add rule inet f2b-table f2b-chain meta l4proto \{ tcp,udp \} ip saddr @addr-set-j-w-nft-ap reject`",
+				), 
+				'ip6-start': (
+					r"`nft add set inet f2b-table addr6-set-j-w-nft-ap \{ type ipv6_addr\; \}`",
+					r"`nft add rule inet f2b-table f2b-chain meta l4proto \{ tcp,udp \} ip6 saddr @addr6-set-j-w-nft-ap reject`",
+				),
+				'flush': (
+					"`{ nft flush set inet f2b-table addr-set-j-w-nft-ap 2> /dev/null; } || ",
+					"`{ nft flush set inet f2b-table addr6-set-j-w-nft-ap 2> /dev/null; } || ",
+				),
+				'stop': (
+					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-ap\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
+					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
+					"`nft delete set inet f2b-table addr-set-j-w-nft-ap`",
+					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-ap\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
+					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
+					"`nft delete set inet f2b-table addr6-set-j-w-nft-ap`",
+				),
+				'ip4-check': (
+					r"""`nft list chain inet f2b-table f2b-chain | grep -q '@addr-set-j-w-nft-ap[ \t]'`""",
+				),
+				'ip6-check': (
+					r"""`nft list chain inet f2b-table f2b-chain | grep -q '@addr6-set-j-w-nft-ap[ \t]'`""",
+				),
+				'ip4-ban': (
+					r"`nft add element inet f2b-table addr-set-j-w-nft-ap \{ 192.0.2.1 \}`",
+				),
+				'ip4-unban': (
+					r"`nft delete element inet f2b-table addr-set-j-w-nft-ap \{ 192.0.2.1 \}`",
+				),
+				'ip6-ban': (
+					r"`nft add element inet f2b-table addr6-set-j-w-nft-ap \{ 2001:db8:: \}`",
+				),
+				'ip6-unban': (
+					r"`nft delete element inet f2b-table addr6-set-j-w-nft-ap \{ 2001:db8:: \}`",
+				),					
+			}),
 			# dummy --
-			('j-dummy', 'dummy[name=%(__name__)s, init="==", target="/tmp/fail2ban.dummy"]', {
+			('j-dummy', '''dummy[name=%(__name__)s, init="=='<family>/<ip>'==bt:<bantime>==bc:<bancount>==", target="/tmp/fail2ban.dummy"]''', {
 				'ip4': ('family: inet4',), 'ip6': ('family: inet6',),
 				'start': (
+					'''`printf %b "=='/'==bt:600==bc:0==\\n"''', ## empty family (independent in this action, same for both), no ip on start, initial bantime and bancount
 					'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- started"`',
 				), 
 				'flush': (
@@ -1278,35 +1487,42 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),					
 			}),
 			# iptables-multiport --
-			('j-w-iptables-mp', 'iptables-multiport[name=%(__name__)s, bantime="10m", port="http,https", protocol="tcp", chain="<known/chain>"]', {
+			('j-w-iptables-mp', 'iptables-multiport[name=%(__name__)s, bantime="10m", port="http,https", protocol="tcp,udp,sctp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					r"`for proto in $(echo 'tcp,udp,sctp' | sed 's/,/ /g'); do`",
+					r"`done`",
+				),
 				'ip4-start': (
-					"`iptables -w -N f2b-j-w-iptables-mp`",
-					"`iptables -w -A f2b-j-w-iptables-mp -j RETURN`",
-					"`iptables -w -I INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
+					"`{ iptables -w -C f2b-j-w-iptables-mp -j RETURN >/dev/null 2>&1; } || "
+					 "{ iptables -w -N f2b-j-w-iptables-mp || true; iptables -w -A f2b-j-w-iptables-mp -j RETURN; }`",
+					"`{ iptables -w -C INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp; }`",
 				), 
 				'ip6-start': (
-					"`ip6tables -w -N f2b-j-w-iptables-mp`",
-					"`ip6tables -w -A f2b-j-w-iptables-mp -j RETURN`",
-					"`ip6tables -w -I INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
+					"`{ ip6tables -w -C f2b-j-w-iptables-mp -j RETURN >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -N f2b-j-w-iptables-mp || true; ip6tables -w -A f2b-j-w-iptables-mp -j RETURN; }`",
+					"`{ ip6tables -w -C INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp >/dev/null 2>&1; } || ",
+					 "{ ip6tables -w -I INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp; }`",
 				),
 				'flush': (
 					"`iptables -w -F f2b-j-w-iptables-mp`",
 					"`ip6tables -w -F f2b-j-w-iptables-mp`",
 				),
 				'stop': (
-					"`iptables -w -D INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
+					"`iptables -w -D INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
 					"`iptables -w -F f2b-j-w-iptables-mp`",
 					"`iptables -w -X f2b-j-w-iptables-mp`",
-					"`ip6tables -w -D INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
+					"`ip6tables -w -D INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
 					"`ip6tables -w -F f2b-j-w-iptables-mp`",
 					"`ip6tables -w -X f2b-j-w-iptables-mp`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-mp[ \t]'`""",
+					r"""`iptables -w -C INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-mp[ \t]'`""",
+					r"""`ip6tables -w -C INPUT -p $proto -m multiport --dports http,https -j f2b-j-w-iptables-mp`""",
 				),
 				'ip4-ban': (
 					r"`iptables -w -I f2b-j-w-iptables-mp 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
@@ -1322,35 +1538,42 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),					
 			}),
 			# iptables-allports --
-			('j-w-iptables-ap', 'iptables-allports[name=%(__name__)s, bantime="10m", protocol="tcp", chain="<known/chain>"]', {
+			('j-w-iptables-ap', 'iptables-allports[name=%(__name__)s, bantime="10m", protocol="tcp,udp,sctp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					r"`for proto in $(echo 'tcp,udp,sctp' | sed 's/,/ /g'); do`",
+					r"`done`",
+				),
 				'ip4-start': (
-					"`iptables -w -N f2b-j-w-iptables-ap`",
-					"`iptables -w -A f2b-j-w-iptables-ap -j RETURN`",
-					"`iptables -w -I INPUT -p tcp -j f2b-j-w-iptables-ap`",
+					"`{ iptables -w -C f2b-j-w-iptables-ap -j RETURN >/dev/null 2>&1; } || "
+					 "{ iptables -w -N f2b-j-w-iptables-ap || true; iptables -w -A f2b-j-w-iptables-ap -j RETURN; }`",
+					"`{ iptables -w -C INPUT -p $proto -j f2b-j-w-iptables-ap >/dev/null 2>&1; } || ",
+					 "{ iptables -w -I INPUT -p $proto -j f2b-j-w-iptables-ap; }`",
 				), 
 				'ip6-start': (
-					"`ip6tables -w -N f2b-j-w-iptables-ap`",
-					"`ip6tables -w -A f2b-j-w-iptables-ap -j RETURN`",
-					"`ip6tables -w -I INPUT -p tcp -j f2b-j-w-iptables-ap`",
+					"`{ ip6tables -w -C f2b-j-w-iptables-ap -j RETURN >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -N f2b-j-w-iptables-ap || true; ip6tables -w -A f2b-j-w-iptables-ap -j RETURN; }`",
+					"`{ ip6tables -w -C INPUT -p $proto -j f2b-j-w-iptables-ap >/dev/null 2>&1; } || ",
+					 "{ ip6tables -w -I INPUT -p $proto -j f2b-j-w-iptables-ap; }`",
 				),
 				'flush': (
 					"`iptables -w -F f2b-j-w-iptables-ap`",
 					"`ip6tables -w -F f2b-j-w-iptables-ap`",
 				),
 				'stop': (
-					"`iptables -w -D INPUT -p tcp -j f2b-j-w-iptables-ap`",
+					"`iptables -w -D INPUT -p $proto -j f2b-j-w-iptables-ap`",
 					"`iptables -w -F f2b-j-w-iptables-ap`",
 					"`iptables -w -X f2b-j-w-iptables-ap`",
-					"`ip6tables -w -D INPUT -p tcp -j f2b-j-w-iptables-ap`",
+					"`ip6tables -w -D INPUT -p $proto -j f2b-j-w-iptables-ap`",
 					"`ip6tables -w -F f2b-j-w-iptables-ap`",
 					"`ip6tables -w -X f2b-j-w-iptables-ap`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-ap[ \t]'`""",
+					r"""`iptables -w -C INPUT -p $proto -j f2b-j-w-iptables-ap`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-ap[ \t]'`""",
+					r"""`ip6tables -w -C INPUT -p $proto -j f2b-j-w-iptables-ap`""",
 				),
 				'ip4-ban': (
 					r"`iptables -w -I f2b-j-w-iptables-ap 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
@@ -1366,107 +1589,140 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),					
 			}),
 			# iptables-ipset-proto6 --
-			('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, bantime="10m", default-timeout=0, port="http", protocol="tcp", chain="<known/chain>"]', {
+			('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': (' f2b-j-w-iptables-ipset ',), 'ip6': (' f2b-j-w-iptables-ipset6 ',),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					"`for proto in $(echo 'tcp' | sed 's/,/ /g'); do`",
+					"`done`",
+				),
 				'ip4-start': (
-					"`ipset create f2b-j-w-iptables-ipset hash:ip timeout 0`",
-					"`iptables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`",
+					"`ipset -exist create f2b-j-w-iptables-ipset hash:ip timeout 0 `",
+					"`{ iptables -w -C INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable; }`",
 				), 
 				'ip6-start': (
-					"`ipset create f2b-j-w-iptables-ipset6 hash:ip timeout 0 family inet6`",
-					"`ip6tables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
+					"`ipset -exist create f2b-j-w-iptables-ipset6 hash:ip timeout 0 family inet6`",
+					"`{ ip6tables -w -C INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable; }`",
 				),
 				'flush': (
 					"`ipset flush f2b-j-w-iptables-ipset`",
 					"`ipset flush f2b-j-w-iptables-ipset6`",
 				),
 				'stop': (
-					"`iptables -w -D INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`",
+					"`iptables -w -D INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset`",
 					"`ipset destroy f2b-j-w-iptables-ipset`",
-					"`ip6tables -w -D INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
+					"`ip6tables -w -D INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset6`",
 					"`ipset destroy f2b-j-w-iptables-ipset6`",
 				),
+				'ip4-check': (
+					r"""`iptables -w -C INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`""",
+				),
+				'ip6-check': (
+					r"""`ip6tables -w -C INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`""",
+				),
 				'ip4-ban': (
-					r"`ipset add f2b-j-w-iptables-ipset 192.0.2.1 timeout 600 -exist`",
+					r"`ipset -exist add f2b-j-w-iptables-ipset 192.0.2.1 timeout 0`",
 				),
 				'ip4-unban': (
-					r"`ipset del f2b-j-w-iptables-ipset 192.0.2.1 -exist`",
+					r"`ipset -exist del f2b-j-w-iptables-ipset 192.0.2.1`",
 				),
 				'ip6-ban': (
-					r"`ipset add f2b-j-w-iptables-ipset6 2001:db8:: timeout 600 -exist`",
+					r"`ipset -exist add f2b-j-w-iptables-ipset6 2001:db8:: timeout 0`",
 				),
 				'ip6-unban': (
-					r"`ipset del f2b-j-w-iptables-ipset6 2001:db8:: -exist`",
+					r"`ipset -exist del f2b-j-w-iptables-ipset6 2001:db8::`",
 				),					
 			}),
 			# iptables-ipset-proto6-allports --
-			('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, bantime="10m", default-timeout=0, chain="<known/chain>"]', {
+			('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, chain="<known/chain>"]', {
 				'ip4': (' f2b-j-w-iptables-ipset-ap ',), 'ip6': (' f2b-j-w-iptables-ipset-ap6 ',),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					"`for proto in $(echo 'tcp' | sed 's/,/ /g'); do`",
+					"`done`",
+				),
 				'ip4-start': (
-					"`ipset create f2b-j-w-iptables-ipset-ap hash:ip timeout 0`",
-					"`iptables -w -I INPUT -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
+					"`ipset -exist create f2b-j-w-iptables-ipset-ap hash:ip timeout 0 `",
+					"`{ iptables -w -C INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable; }",
 				), 
 				'ip6-start': (
-					"`ipset create f2b-j-w-iptables-ipset-ap6 hash:ip timeout 0 family inet6`",
-					"`ip6tables -w -I INPUT -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
+					"`ipset -exist create f2b-j-w-iptables-ipset-ap6 hash:ip timeout 0 family inet6`",
+					"`{ ip6tables -w -C INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable; }",
 				),
 				'flush': (
 					"`ipset flush f2b-j-w-iptables-ipset-ap`",
 					"`ipset flush f2b-j-w-iptables-ipset-ap6`",
 				),
 				'stop': (
-					"`iptables -w -D INPUT -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
+					"`iptables -w -D INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset-ap`",
 					"`ipset destroy f2b-j-w-iptables-ipset-ap`",
-					"`ip6tables -w -D INPUT -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
+					"`ip6tables -w -D INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset-ap6`",
 					"`ipset destroy f2b-j-w-iptables-ipset-ap6`",
 				),
+				'ip4-check': (
+					r"""`iptables -w -C INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`""",
+				),
+				'ip6-check': (
+					r"""`ip6tables -w -C INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`""",
+				),
 				'ip4-ban': (
-					r"`ipset add f2b-j-w-iptables-ipset-ap 192.0.2.1 timeout 600 -exist`",
+					r"`ipset -exist add f2b-j-w-iptables-ipset-ap 192.0.2.1 timeout 0`",
 				),
 				'ip4-unban': (
-					r"`ipset del f2b-j-w-iptables-ipset-ap 192.0.2.1 -exist`",
+					r"`ipset -exist del f2b-j-w-iptables-ipset-ap 192.0.2.1`",
 				),
 				'ip6-ban': (
-					r"`ipset add f2b-j-w-iptables-ipset-ap6 2001:db8:: timeout 600 -exist`",
+					r"`ipset -exist add f2b-j-w-iptables-ipset-ap6 2001:db8:: timeout 0`",
 				),
 				'ip6-unban': (
-					r"`ipset del f2b-j-w-iptables-ipset-ap6 2001:db8:: -exist`",
+					r"`ipset -exist del f2b-j-w-iptables-ipset-ap6 2001:db8::`",
 				),					
 			}),
-			# iptables --
+			# iptables (oneport) --
 			('j-w-iptables', 'iptables[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					"`for proto in $(echo 'tcp' | sed 's/,/ /g'); do`",
+					"`done`",
+				),
 				'ip4-start': (
-					"`iptables -w -N f2b-j-w-iptables`",
-					"`iptables -w -A f2b-j-w-iptables -j RETURN`",
-					"`iptables -w -I INPUT -p tcp --dport http -j f2b-j-w-iptables`",
+					"`{ iptables -w -C f2b-j-w-iptables -j RETURN >/dev/null 2>&1; } || "
+					 "{ iptables -w -N f2b-j-w-iptables || true; iptables -w -A f2b-j-w-iptables -j RETURN; }",
+					"`{ iptables -w -C INPUT -p $proto --dport http -j f2b-j-w-iptables >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -p $proto --dport http -j f2b-j-w-iptables; }`",
 				), 
 				'ip6-start': (
-					"`ip6tables -w -N f2b-j-w-iptables`",
-					"`ip6tables -w -A f2b-j-w-iptables -j RETURN`",
-					"`ip6tables -w -I INPUT -p tcp --dport http -j f2b-j-w-iptables`",
+					"`{ ip6tables -w -C f2b-j-w-iptables -j RETURN >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -N f2b-j-w-iptables || true; ip6tables -w -A f2b-j-w-iptables -j RETURN; }",
+					"`{ ip6tables -w -C INPUT -p $proto --dport http -j f2b-j-w-iptables >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I INPUT -p $proto --dport http -j f2b-j-w-iptables; }`",
 				),
 				'flush': (
 					"`iptables -w -F f2b-j-w-iptables`",
 					"`ip6tables -w -F f2b-j-w-iptables`",
 				),
 				'stop': (
-					"`iptables -w -D INPUT -p tcp --dport http -j f2b-j-w-iptables`",
+					"`iptables -w -D INPUT -p $proto --dport http -j f2b-j-w-iptables`",
 					"`iptables -w -F f2b-j-w-iptables`",
 					"`iptables -w -X f2b-j-w-iptables`",
-					"`ip6tables -w -D INPUT -p tcp --dport http -j f2b-j-w-iptables`",
+					"`ip6tables -w -D INPUT -p $proto --dport http -j f2b-j-w-iptables`",
 					"`ip6tables -w -F f2b-j-w-iptables`",
 					"`ip6tables -w -X f2b-j-w-iptables`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -n -L INPUT | grep -q 'f2b-j-w-iptables[ \t]'`""",
+					r"""`iptables -w -C INPUT -p $proto --dport http -j f2b-j-w-iptables`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -n -L INPUT | grep -q 'f2b-j-w-iptables[ \t]'`""",
+					r"""`ip6tables -w -C INPUT -p $proto --dport http -j f2b-j-w-iptables`""",
 				),
 				'ip4-ban': (
 					r"`iptables -w -I f2b-j-w-iptables 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
@@ -1484,33 +1740,40 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			# iptables-new --
 			('j-w-iptables-new', 'iptables-new[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					"`for proto in $(echo 'tcp' | sed 's/,/ /g'); do`",
+					"`done`",
+				),
 				'ip4-start': (
-					"`iptables -w -N f2b-j-w-iptables-new`",
-					"`iptables -w -A f2b-j-w-iptables-new -j RETURN`",
-					"`iptables -w -I INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
+					"`{ iptables -w -C f2b-j-w-iptables-new -j RETURN >/dev/null 2>&1; } || "
+					 "{ iptables -w -N f2b-j-w-iptables-new || true; iptables -w -A f2b-j-w-iptables-new -j RETURN; }`",
+					"`{ iptables -w -C INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new >/dev/null 2>&1; } || "
+					 "{ iptables -w -I INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new; }`",
 				), 
 				'ip6-start': (
-					"`ip6tables -w -N f2b-j-w-iptables-new`",
-					"`ip6tables -w -A f2b-j-w-iptables-new -j RETURN`",
-					"`ip6tables -w -I INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
+					"`{ ip6tables -w -C f2b-j-w-iptables-new -j RETURN >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -N f2b-j-w-iptables-new || true; ip6tables -w -A f2b-j-w-iptables-new -j RETURN; }`",
+					"`{ ip6tables -w -C INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new; }`",
 				),
 				'flush': (
 					"`iptables -w -F f2b-j-w-iptables-new`",
 					"`ip6tables -w -F f2b-j-w-iptables-new`",
 				),
 				'stop': (
-					"`iptables -w -D INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
+					"`iptables -w -D INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new`",
 					"`iptables -w -F f2b-j-w-iptables-new`",
 					"`iptables -w -X f2b-j-w-iptables-new`",
-					"`ip6tables -w -D INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
+					"`ip6tables -w -D INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new`",
 					"`ip6tables -w -F f2b-j-w-iptables-new`",
 					"`ip6tables -w -X f2b-j-w-iptables-new`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-new[ \t]'`""",
+					r"""`iptables -w -C INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-new[ \t]'`""",
+					r"""`ip6tables -w -C INPUT -m state --state NEW -p $proto --dport http -j f2b-j-w-iptables-new`""",
 				),
 				'ip4-ban': (
 					r"`iptables -w -I f2b-j-w-iptables-new 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
@@ -1529,22 +1792,26 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			('j-w-iptables-xtre', 'iptables-xt_recent-echo[name=%(__name__)s, bantime="10m", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', '/f2b-j-w-iptables-xtre`'), 'ip6': ('`ip6tables ', '/f2b-j-w-iptables-xtre6`'),
 				'ip4-start': (
-					"`if [ `id -u` -eq 0 ];then iptables -w -I INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable;fi`",
+					"`{ iptables -w -C INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable >/dev/null 2>&1; } || { iptables -w -I INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable; }`",
 				), 
 				'ip6-start': (
-					"`if [ `id -u` -eq 0 ];then ip6tables -w -I INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable;fi`",
+					"`{ ip6tables -w -C INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable >/dev/null 2>&1; } || { ip6tables -w -I INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable; }`",
 				),
 				'stop': (
 					"`echo / > /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
-					"`if [ `id -u` -eq 0 ];then iptables -w -D INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable;fi`",
+					"`if [ `id -u` -eq 0 ];then`",
+					"`iptables -w -D INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable;`",
+					"`fi`",
 					"`echo / > /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
-					"`if [ `id -u` -eq 0 ];then ip6tables -w -D INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable;fi`",
+					"`if [ `id -u` -eq 0 ];then`",
+					"`ip6tables -w -D INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable;`",
+					"`fi`",
 				),
 				'ip4-check': (
-					r"`test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
+					r"`{ iptables -w -C INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable; } && test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
 				),
 				'ip6-check': (
-					r"`test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
+					r"`{ ip6tables -w -C INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable; } && test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
 				),
 				'ip4-ban': (
 					r"`echo +192.0.2.1 > /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
@@ -1709,14 +1976,14 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),					
 			}),
 			# firewallcmd-ipset (multiport) --
-			('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, bantime="10m", default-timeout=0, port="http", protocol="tcp", chain="<known/chain>"]', {
+			('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': (' f2b-j-w-fwcmd-ipset ',), 'ip6': (' f2b-j-w-fwcmd-ipset6 ',),
 				'ip4-start': (
-					"`ipset create f2b-j-w-fwcmd-ipset hash:ip timeout 0`",
+					"`ipset -exist create f2b-j-w-fwcmd-ipset hash:ip timeout 0 `",
 					"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 				), 
 				'ip6-start': (
-					"`ipset create f2b-j-w-fwcmd-ipset6 hash:ip timeout 0 family inet6`",
+					"`ipset -exist create f2b-j-w-fwcmd-ipset6 hash:ip timeout 0 family inet6`",
 					"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 				),
 				'flush': (
@@ -1732,27 +1999,27 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`ipset destroy f2b-j-w-fwcmd-ipset6`",
 				),
 				'ip4-ban': (
-					r"`ipset add f2b-j-w-fwcmd-ipset 192.0.2.1 timeout 600 -exist`",
+					r"`ipset -exist add f2b-j-w-fwcmd-ipset 192.0.2.1 timeout 0`",
 				),
 				'ip4-unban': (
-					r"`ipset del f2b-j-w-fwcmd-ipset 192.0.2.1 -exist`",
+					r"`ipset -exist del f2b-j-w-fwcmd-ipset 192.0.2.1`",
 				),
 				'ip6-ban': (
-					r"`ipset add f2b-j-w-fwcmd-ipset6 2001:db8:: timeout 600 -exist`",
+					r"`ipset -exist add f2b-j-w-fwcmd-ipset6 2001:db8:: timeout 0`",
 				),
 				'ip6-unban': (
-					r"`ipset del f2b-j-w-fwcmd-ipset6 2001:db8:: -exist`",
+					r"`ipset -exist del f2b-j-w-fwcmd-ipset6 2001:db8::`",
 				),					
 			}),
 			# firewallcmd-ipset (allports) --
-			('j-w-fwcmd-ipset-ap', 'firewallcmd-ipset[name=%(__name__)s, bantime="10m", actiontype=<allports>, protocol="tcp", chain="<known/chain>"]', {
+			('j-w-fwcmd-ipset-ap', 'firewallcmd-ipset[name=%(__name__)s, actiontype=<allports>, protocol="tcp", chain="<known/chain>"]', {
 				'ip4': (' f2b-j-w-fwcmd-ipset-ap ',), 'ip6': (' f2b-j-w-fwcmd-ipset-ap6 ',),
 				'ip4-start': (
-					"`ipset create f2b-j-w-fwcmd-ipset-ap hash:ip timeout 600`",
+					"`ipset -exist create f2b-j-w-fwcmd-ipset-ap hash:ip timeout 0 `",
 					"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -p tcp -m set --match-set f2b-j-w-fwcmd-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
 				), 
 				'ip6-start': (
-					"`ipset create f2b-j-w-fwcmd-ipset-ap6 hash:ip timeout 600 family inet6`",
+					"`ipset -exist create f2b-j-w-fwcmd-ipset-ap6 hash:ip timeout 0 family inet6`",
 					"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -p tcp -m set --match-set f2b-j-w-fwcmd-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
 				),
 				'flush': (
@@ -1768,16 +2035,48 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`ipset destroy f2b-j-w-fwcmd-ipset-ap6`",
 				),
 				'ip4-ban': (
-					r"`ipset add f2b-j-w-fwcmd-ipset-ap 192.0.2.1 timeout 600 -exist`",
+					r"`ipset -exist add f2b-j-w-fwcmd-ipset-ap 192.0.2.1 timeout 0`",
 				),
 				'ip4-unban': (
-					r"`ipset del f2b-j-w-fwcmd-ipset-ap 192.0.2.1 -exist`",
+					r"`ipset -exist del f2b-j-w-fwcmd-ipset-ap 192.0.2.1`",
 				),
 				'ip6-ban': (
-					r"`ipset add f2b-j-w-fwcmd-ipset-ap6 2001:db8:: timeout 600 -exist`",
+					r"`ipset -exist add f2b-j-w-fwcmd-ipset-ap6 2001:db8:: timeout 0`",
 				),
 				'ip6-unban': (
-					r"`ipset del f2b-j-w-fwcmd-ipset-ap6 2001:db8:: -exist`",
+					r"`ipset -exist del f2b-j-w-fwcmd-ipset-ap6 2001:db8::`",
+				),					
+			}),
+			# firewallcmd-rich-rules --
+			('j-fwcmd-rr', 'firewallcmd-rich-rules[port="22:24", protocol="tcp"]', {
+				'ip4': ("family='ipv4'", "icmp-port-unreachable",), 'ip6': ("family='ipv6'", 'icmp6-port-unreachable',),
+				'ip4-ban': (
+					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' reject type='icmp-port-unreachable'"; done`""",
+				),
+				'ip4-unban': (
+					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' reject type='icmp-port-unreachable'"; done`""",
+				),
+				'ip6-ban': (
+					""" `ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' reject type='icmp6-port-unreachable'"; done`""",
+				),
+				'ip6-unban': (
+					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' reject type='icmp6-port-unreachable'"; done`""",
+				),					
+			}),
+			# firewallcmd-rich-logging --
+			('j-fwcmd-rl', 'firewallcmd-rich-logging[port="22:24", protocol="tcp"]', {
+				'ip4': ("family='ipv4'", "icmp-port-unreachable",), 'ip6': ("family='ipv6'", 'icmp6-port-unreachable',),
+				'ip4-ban': (
+					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp-port-unreachable'"; done`""",
+				),
+				'ip4-unban': (
+					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp-port-unreachable'"; done`""",
+				),
+				'ip6-ban': (
+					""" `ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp6-port-unreachable'"; done`""",
+				),
+				'ip6-unban': (
+					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp6-port-unreachable'"; done`""",
 				),					
 			}),
 		)
@@ -1820,27 +2119,40 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				# test ban ip4 :
 				self.pruneLog('# === ban-ipv4 ===')
 				action.ban(aInfos['ipv4'])
-				if tests.get('ip4-start'): self.assertLogged(*tests['ip4-start'], all=True)
+				if tests.get('ip4-start'): self.assertLogged(*tests.get('*-start', tests.get('*-start-stop-check', ()))+tests['ip4-start'], all=True)
 				if tests.get('ip6-start'): self.assertNotLogged(*tests['ip6-start'], all=True)
-				self.assertLogged(*tests.get('ip4-check',())+tests['ip4-ban'], all=True)
+				self.assertLogged(*tests['ip4-ban'], all=True)
 				self.assertNotLogged(*tests['ip6'], all=True)
 				# test unban ip4 :
 				self.pruneLog('# === unban ipv4 ===')
 				action.unban(aInfos['ipv4'])
-				self.assertLogged(*tests.get('ip4-check',())+tests['ip4-unban'], all=True)
+				self.assertLogged(*tests['ip4-unban'], all=True)
 				self.assertNotLogged(*tests['ip6'], all=True)
 				# test ban ip6 :
 				self.pruneLog('# === ban ipv6 ===')
 				action.ban(aInfos['ipv6'])
-				if tests.get('ip6-start'): self.assertLogged(*tests['ip6-start'], all=True)
+				if tests.get('ip6-start'): self.assertLogged(*tests.get('*-start', tests.get('*-start-stop-check', ()))+tests['ip6-start'], all=True)
 				if tests.get('ip4-start'): self.assertNotLogged(*tests['ip4-start'], all=True)
-				self.assertLogged(*tests.get('ip6-check',())+tests['ip6-ban'], all=True)
+				self.assertLogged(*tests['ip6-ban'], all=True)
 				self.assertNotLogged(*tests['ip4'], all=True)
 				# test unban ip6 :
 				self.pruneLog('# === unban ipv6 ===')
 				action.unban(aInfos['ipv6'])
-				self.assertLogged(*tests.get('ip6-check',())+tests['ip6-unban'], all=True)
+				self.assertLogged(*tests['ip6-unban'], all=True)
 				self.assertNotLogged(*tests['ip4'], all=True)
+				# test invariant check (normally on demand in error case only):
+				if tests.get('ip4-check'):
+					self.pruneLog('# === check ipv4 ===')
+					action._invariantCheck(aInfos['ipv4']['family'])
+					self.assertLogged(*tests.get('*-check', tests.get('*-start-stop-check', ()))+tests['ip4-check'], all=True)
+					if tests.get('ip6-check') and tests['ip6-check'] != tests['ip4-check']:
+						self.assertNotLogged(*tests['ip6-check'], all=True)
+				if tests.get('ip6-check'):
+					self.pruneLog('# === check ipv6 ===')
+					action._invariantCheck(aInfos['ipv6']['family'])
+					self.assertLogged(*tests.get('*-check', tests.get('*-start-stop-check', ()))+tests['ip6-check'], all=True)
+					if tests.get('ip4-check') and tests['ip4-check'] != tests['ip6-check']:
+						self.assertNotLogged(*tests['ip4-check'], all=True)
 				# test flush for actions should supported this:
 				if tests.get('flush'):
 					self.pruneLog('# === flush ===')
@@ -1849,16 +2161,23 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				# test stop :
 				self.pruneLog('# === stop ===')
 				action.stop()
-				if tests.get('stop'): self.assertLogged(*tests['stop'], all=True)
+				if tests.get('stop'): self.assertLogged(*tests.get('*-start-stop-check', ())+tests['stop'], all=True)
 
 	def _executeMailCmd(self, realCmd, timeout=60):
 		# replace pipe to mail with pipe to cat:
-		realCmd = re.sub(r'\)\s*\|\s*mail\b([^\n]*)',
-			r') | cat; printf "\\n... | "; echo mail \1', realCmd)
+		cmd = realCmd
+		if isinstance(realCmd, list):
+			cmd = realCmd[0]
+		cmd = re.sub(r'\)\s*\|\s*(\S*mail\b[^\n]*)',
+			r') | cat; printf "\\n... | "; echo \1', cmd)
 		# replace abuse retrieving (possible no-network), just replace first occurrence of 'dig...':
-		realCmd = re.sub(r'\bADDRESSES=\$\(dig\s[^\n]+',
+		cmd = re.sub(r'\bADDRESSES=\$\(dig\s[^\n]+',
 			lambda m: 'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"',
-				realCmd, 1)
+				cmd, 1)
+		if isinstance(realCmd, list):
+			realCmd[0] = cmd
+		else:
+			realCmd = cmd
 		# execute action:
 		return _actions.CommandAction.executeCmd(realCmd, timeout=timeout)
 
@@ -1878,6 +2197,26 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'ip4-ban': (
 					'The IP 87.142.124.10 has just been banned by Fail2Ban after',
 					'100 attempts against j-mail-whois-lines.',
+					'Here is more information about 87.142.124.10 :',
+					'-- information about 87.142.124.10 --',
+					'Lines containing failures of 87.142.124.10 (max 2)',
+					'testcase01.log:Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10',
+					'testcase01a.log:Dec 31 11:55:01 [sshd] error: PAM: Authentication failure for test from 87.142.124.10',
+				),
+			}),
+			# sendmail-whois-lines --
+			('j-sendmail-whois-lines', 
+				'sendmail-whois-lines['
+				  '''name=%(__name__)s, grepopts="-m 1", grepmax=2, mailcmd='testmail -f "<sender>" "<dest>"', ''' +
+					# 2 logs to test grep from multiple logs:
+				  'logpath="' + os.path.join(TEST_FILES_DIR, "testcase01.log") + '\n' +
+			    '         ' + os.path.join(TEST_FILES_DIR, "testcase01a.log") + '", '
+				  '_whois_command="echo \'-- information about <ip> --\'"'
+				  ']',
+			{
+				'ip4-ban': (
+					'The IP 87.142.124.10 has just been banned by Fail2Ban after',
+					'100 attempts against j-sendmail-whois-lines.',
 					'Here is more information about 87.142.124.10 :',
 					'-- information about 87.142.124.10 --',
 					'Lines containing failures of 87.142.124.10 (max 2)',
@@ -1911,6 +2250,31 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'Lines containing failures of 2001:db8::1 (max 2)',
 					# both abuse mails should be separated with space:
 					'mail -s Hostname: test-host, family: inet6 - Abuse from 2001:db8::1 abuse-1@abuse-test-server abuse-2@abuse-test-server',
+				),
+			}),
+			# xarf-login-attack --
+			('j-xarf-abuse', 
+				'xarf-login-attack['
+				  'name=%(__name__)s, mailcmd="mail", mailargs="",' +
+				  # test reverse ip:
+				  'debug=1' +
+				  ']',
+			{
+				'ip4-ban': (
+					# test reverse ip:
+					'try to resolve 10.124.142.87.abuse-contacts.abusix.org',
+					'We have detected abuse from the IP address 87.142.124.10',
+					'Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10',
+					'Dec 31 11:55:01 [sshd] error: PAM: Authentication failure for test from 87.142.124.10',
+					# both abuse mails should be separated with space:
+					'mail abuse-1@abuse-test-server abuse-2@abuse-test-server',
+				),
+				'ip6-ban': (
+					# test reverse ip:
+					'try to resolve 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.abuse-contacts.abusix.org',
+					'We have detected abuse from the IP address 2001:db8::1',
+					# both abuse mails should be separated with space:
+					'mail abuse-1@abuse-test-server abuse-2@abuse-test-server',
 				),
 			}),
 		)
@@ -1950,6 +2314,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					self.pruneLog('# === %s ===' % test)
 					ticket = BanTicket(ip)
 					ticket.setAttempt(100)
+					ticket.setMatches([
+						'Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10',
+						'Dec 31 11:55:01 [sshd] error: PAM: Authentication failure for test from 87.142.124.10'
+					])
 					ticket = _actions.Actions.ActionInfo(ticket, dmyjail)
 					action.ban(ticket)
 					self.assertLogged(*tests[test], all=True)
