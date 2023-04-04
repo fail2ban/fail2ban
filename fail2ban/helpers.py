@@ -98,6 +98,8 @@ if sys.version_info >= (3,): # pragma: 2.x no cover
 		if not isinstance(x, bytes):
 			return str(x)
 		return x.decode(PREFER_ENC, 'replace')
+	def uni_bytes(x):
+		return bytes(x, 'UTF-8')
 else: # pragma: 3.x no cover
 	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
 		try:
@@ -115,6 +117,7 @@ else: # pragma: 3.x no cover
 			return x.encode(PREFER_ENC, 'replace')
 	else:
 		uni_string = str
+	uni_bytes = bytes
 
 
 def _as_bool(val):
