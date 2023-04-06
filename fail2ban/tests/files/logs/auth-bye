@@ -1,0 +1,4 @@
+# failJSON: { "match": true , "host": "1.2.3.4" }
+Dec 25 01:16:21 westleyapp sshd[383663]: Received disconnect from 1.2.3.4 port 32817:11: Bye Bye [preauth]
+# failJSON: { "match": false }
+Dec 27 11:39:22 westleyapp sshd[439545]: Disconnected from authenticating user root 1.2.3.4 port 35728 [preauth]
