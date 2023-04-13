@@ -12,13 +12,15 @@ ver. 1.0.3-dev-1 (20??/??/??) - development nightly edition
 
 ### Fixes
 * circumvent SEGFAULT in a python's socket module by getaddrinfo with disabled IPv6 (gh-3438)
+* `action.d/cloudflare-token.conf` - fixes gh-3479, url-encode args by unban
 
 ### New Features and Enhancements
 * better auto-detection for IPv6 support (`allowipv6 = auto` by default), trying to check sysctl net.ipv6.conf.all.disable_ipv6
   (value read from `/proc/sys/net/ipv6/conf/all/disable_ipv6`) if available, otherwise seeks over local IPv6 from network interfaces
   if available for platform and uses DNS to find local IPv6 as a fallback only
 * improve `ignoreself` by considering all local addresses from network interfaces additionally to IPs from hostnames (gh-3132)
-* new action for mikrotik routerOS, adds and removes entries from address lists on the router
+* `action.d/mikrotik.conf` - new action for mikrotik routerOS, adds and removes entries from address lists on the router (gh-2860)
+* `filter.d/nginx-forbidden.conf` - new filter to ban forbidden locations, e. g. using `deny` directive (gh-2226)
 
 
 ver. 1.0.2 (2022/11/09) - finally-war-game-test-tape-not-a-nuclear-alarm

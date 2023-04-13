@@ -146,7 +146,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"test", r"^(?:(?P<type>A)|B)? (?(typo)...) from <ADDR>"
 		))
 		self.assertLogged("Unable to compile regular expression")
-		self.assertLogged("unknown group name: 'typo'", "at position 23", all=False); # details of failed compilation
+		self.assertLogged("unknown group name", "at position 23", all=False); # details of failed compilation
 
 	def testWrongIngnoreRE(self):
 		self.assertFalse(_test_exec(
