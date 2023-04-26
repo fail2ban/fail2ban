@@ -944,7 +944,7 @@ class Filter(JailThread):
 							ip = fid
 							raw = True
 				# if mlfid case (not failure):
-				if ip is None:
+				if fid is None and ip is None:
 					if ll <= 7: logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
 						mlfid, failRegexIndex, fail.get('mlfforget', "waiting for identifier"))
 					fail['mlfpending'] = 1; # mark failure is pending

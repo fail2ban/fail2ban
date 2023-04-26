@@ -304,9 +304,11 @@ class IPAddr(object):
 	"""
 
 	IP_4_RE = r"""(?:\d{1,3}\.){3}\d{1,3}"""
-	IP_6_RE = r"""(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}|(?<=:):)"""
+	IP_6_RE = r"""(?:[0-9a-fA-F]{1,4}::?|:){1,7}(?:[0-9a-fA-F]{1,4}|(?<=:):)"""
 	IP_4_6_CRE = re.compile(
 	  r"""^(?:(?P<IPv4>%s)|\[?(?P<IPv6>%s)\]?)$""" % (IP_4_RE, IP_6_RE))
+	IP_W_CIDR_CRE = re.compile(
+	  r"""^(%s|%s)/(?:(\d+)|(%s|%s))$""" % (IP_4_RE, IP_6_RE, IP_4_RE, IP_6_RE))
 	# An IPv4 compatible IPv6 to be reused (see below)
 	IP6_4COMPAT = None
 
@@ -360,13 +362,17 @@ class IPAddr(object):
 		# test mask:
 		if "/" not in ipstr:
 			return ipstr, IPAddr.CIDR_UNSPEC
-		s = ipstr.split('/', 1)
-		# IP address without CIDR mask
-		if len(s) > 2:
-			raise ValueError("invalid ipstr %r, too many plen representation" % (ipstr,))
-		if "." in s[1] or ":" in s[1]: # 255.255.255.0 resp. ffff:: style mask
-			s[1] = IPAddr.masktoplen(s[1])
-		s[1] = long(s[1])
+		s = IPAddr.IP_W_CIDR_CRE.match(ipstr)
+		if s is None:
+			return ipstr, IPAddr.CIDR_UNSPEC
+		s = list(s.groups())
+		if s[2]: # 255.255.255.0 resp. ffff:: style mask
+			s[1] = IPAddr.masktoplen(s[2])
+		del s[2]
+		try:
+			s[1] = long(s[1])
+		except ValueError:
+			return ipstr, IPAddr.CIDR_UNSPEC
 		return s
 		
 	def __init(self, ipstr, cidr=CIDR_UNSPEC):

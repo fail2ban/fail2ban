@@ -225,6 +225,13 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		))
 		self.assertLogged('Lines: 1 lines, 0 ignored, 1 matched, 0 missed', all=True)
 		self.assertNotLogged('Unable to find a corresponding IP address')
+		# no confusion to IP/CIDR
+		self.pruneLog()
+		self.assertTrue(_test_exec(
+			"-d", "^Epoch", "-o", "id",
+			"1490349000 test this/is/some/path/32", "^\s*test <F-ID>\S+</F-ID>"
+		))
+		self.assertLogged('this/is/some/path/32', all=True)
 
 	def testDirectRE_2(self):
 		self.assertTrue(_test_exec(

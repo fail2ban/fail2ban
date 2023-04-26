@@ -2105,6 +2105,20 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertTrue(ip6.isSingle)
 		self.assertTrue(asip('192.0.2.1').isIPv4)
 		self.assertTrue(id(asip(ip4)) == id(ip4))
+		# ::
+		ip6 = IPAddr('::')
+		self.assertTrue(ip6.isIPv6)
+		self.assertTrue(ip6.isSingle)
+		# ::/32
+		ip6 = IPAddr('::/32')
+		self.assertTrue(ip6.isIPv6)
+		self.assertFalse(ip6.isSingle)
+		# path as ID, conversion as unspecified, fallback to raw (cover confusion with the /CIDR):
+		for s in ('some/path/as/id', 'other-path/24', '1.2.3.4/path'):
+			r = IPAddr(s, IPAddr.CIDR_UNSPEC)
+			self.assertEqual(r.raw, s)
+			self.assertFalse(r.isIPv4)
+			self.assertFalse(r.isIPv6)
 
 	def test_IPAddr_Raw(self):
 		# raw string:
@@ -2243,6 +2257,18 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertFalse(IPAddr('2606:2800:220:1:248:1893:25c8:1', IPAddr.CIDR_RAW).isInNet(ip6net))
 		# invalid not in net:
 		self.assertFalse(IPAddr('xxx').isInNet(ip4net))
+		# different forms in ::/32:
+		ip6net = IPAddr('::/32')
+		self.assertTrue(IPAddr('::').isInNet(ip6net))
+		self.assertTrue(IPAddr('::1').isInNet(ip6net))
+		self.assertTrue(IPAddr('0000::').isInNet(ip6net))
+		self.assertTrue(IPAddr('0000::0000').isInNet(ip6net))
+		self.assertTrue(IPAddr('0000:0000:7777::').isInNet(ip6net))
+		self.assertTrue(IPAddr('0000::7777:7777:7777:7777:7777:7777').isInNet(ip6net))
+		self.assertTrue(IPAddr('0000:0000:ffff::').isInNet(ip6net))
+		self.assertTrue(IPAddr('0000::ffff:ffff:ffff:ffff:ffff:ffff').isInNet(ip6net))
+		self.assertFalse(IPAddr('0000:0001:ffff::').isInNet(ip6net))
+		self.assertFalse(IPAddr('1::').isInNet(ip6net))
 
 	def testIPAddr_Compare(self):
 		ip4 = [
@@ -2315,7 +2341,11 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 
 	def testIPAddr_CIDR_Wrong(self):
 		# too many plen representations:
-		self.assertRaises(ValueError, IPAddr, '2606:28ff:220:1:248:1893:25c8::/ffff::/::1')
+		s = '2606:28ff:220:1:248:1893:25c8::/ffff::/::1'
+		r = IPAddr(s)
+		self.assertEqual(r.raw, s)
+		self.assertFalse(r.isIPv4)
+		self.assertFalse(r.isIPv6)
 
 	def testIPAddr_CIDR_Repr(self):
 		self.assertEqual(["127.0.0.0/8", "::/32", "2001:db8::/32"],
