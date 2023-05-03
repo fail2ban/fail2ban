@@ -22,7 +22,6 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import re
-import sre_constants
 import sys
 
 from .ipdns import IPAddr
@@ -157,7 +156,7 @@ class Regex:
 			self._tupleValues.sort()
 			self._altValues = self._altValues if len(self._altValues) else None
 			self._tupleValues = self._tupleValues if len(self._tupleValues) else None
-		except sre_constants.error as e:
+		except re.error as e:
 			raise RegexException("Unable to compile regular expression '%s':\n%s" %
 								 (regex, e))
 		# set fetch handler depending on presence of alternate (or tuple) tags:
