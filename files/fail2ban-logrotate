@@ -1,7 +1,4 @@
 #
-# Gentoo:
-# http://sources.gentoo.org/cgi-bin/viewvc.cgi/gentoo-x86/net-analyzer/fail2ban/files/fail2ban-logrotate?view=markup
-#
 # Debian:
 # https://github.com/fail2ban/fail2ban/blob/debian/debian/fail2ban.logrotate
 

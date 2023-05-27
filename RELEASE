@@ -13,7 +13,7 @@ Preparation
 * Check distribution patches and see if they can be included
 
   * https://apps.fedoraproject.org/packages/fail2ban/sources
-  * http://sources.gentoo.org/cgi-bin/viewvc.cgi/gentoo-x86/net-analyzer/fail2ban/
+  * https://gitweb.gentoo.org/repo/gentoo.git/tree/net-analyzer/fail2ban
   * http://svnweb.freebsd.org/ports/head/security/py-fail2ban/
   * https://build.opensuse.org/package/show?package=fail2ban&project=openSUSE%3AFactory
   * http://sophie.zarb.org/sources/fail2ban (Mageia)
@@ -134,7 +134,7 @@ Pre Release
 
   * Gentoo: netmon@gentoo.org
 
-    * http://sources.gentoo.org/cgi-bin/viewvc.cgi/gentoo-x86/net-analyzer/fail2ban/metadata.xml?view=markup
+    * https://gitweb.gentoo.org/repo/gentoo.git/tree/net-analyzer/fail2ban/metadata.xml
     * https://bugs.gentoo.org/buglist.cgi?quicksearch=fail2ban
 
   * openSUSE: Stephan Kulow <coolo@suse.com>
