@@ -29,8 +29,97 @@ and the website: https://www.fail2ban.org
 Installation:
 -------------
 
-**It is possible that Fail2Ban is already packaged for your distribution.  In
-this case, you should use that instead.**
+Fail2Ban is likely already packaged for your Linux distribution:
+
+*CentOS/CentOS Stream/RHEL Based Operating Systems*
+
+Ensure your system is up to date and install the EPEL repository:
+
+    yum update -y && yum install epel-release -y
+
+Install Fail2Ban:
+
+    yum install fail2ban
+
+For email support, install Sendmail:
+
+    yum install sendmail
+
+Start and enable Fail2ban and, if needed, Sendmail:
+
+    systemctl start fail2ban
+    systemctl enable fail2ban
+    systemctl start sendmail
+    systemctl enable sendmail
+
+If you encounter the error that there is `no directory /var/run/fail2ban to contain the socket file /var/run/fail2ban/fail2ban.sock`, create the directory manually:
+
+    mkdir /var/run/fail2ban
+
+*Debian*
+
+Ensure your system is up to date:
+
+    apt-get update && apt-get upgrade -y
+Install Fail2ban:
+
+    apt-get install fail2ban
+    
+The service automatically starts.
+
+For email support, install Sendmail:
+
+    apt-get install sendmail-bin sendmail
+
+The current version of Sendmail in Debian Jessie has an upstream bug which causes the following errors when installing sendmail-bin. The installation hangs for a minute, but then complete.
+
+Creating /etc/mail/sendmail.cf...
+ERROR: FEATURE() should be before MAILER() MAILER('local') must appear after FEATURE('always_add_domain')
+ERROR: FEATURE() should be before MAILER() MAILER('local') must appear after FEATURE('allmasquerade')
+
+*Fedora*
+
+Update your system:
+
+    dnf update
+    
+Install Fail2ban:
+
+    dnf install fail2ban
+    
+For email support, install Sendmail:
+
+    dnf install sendmail
+    
+Start and enable Fail2ban and, if needed, Sendmail:
+
+    systemctl start fail2ban
+    systemctl enable fail2ban
+    systemctl start sendmail
+    systemctl enable sendmail
+    
+*Ubuntu*
+
+Ensure your system is up to date:
+
+    apt-get update && apt-get upgrade -y
+
+Install Fail2ban:
+
+    apt-get install fail2ban
+    
+The service automatically starts.
+
+For email support, install Sendmail:
+
+    apt-get install sendmail
+    
+Allow SSH access through UFW and then enable the firewall:
+
+    ufw allow ssh
+    ufw enable
+    
+*If your distribution is not listed, you can install from GitHub:*
 
 Required:
 - [Python2 >= 2.7 or Python >= 3.2](https://www.python.org) or [PyPy](https://pypy.org)
