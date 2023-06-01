@@ -29,8 +29,9 @@ and the website: https://www.fail2ban.org
 Installation:
 -------------
 
-**It is possible that Fail2Ban is already packaged for your distribution.  In
-this case, you should use that instead.**
+Fail2Ban is likely already packaged for your Linux distribution and [can installed with a simple command](https://github.com/fail2ban/fail2ban/wiki/How-to-install-fail2ban-packages).
+
+If your distribution is not listed, you can install from GitHub:
 
 Required:
 - [Python2 >= 2.7 or Python >= 3.2](https://www.python.org) or [PyPy](https://pypy.org)
