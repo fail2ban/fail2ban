@@ -1,3 +1,16 @@
+fail2ban (1.0.2-2) unstable; urgency=medium
+
+  * Team upload.
+
+  [ Pirate Praveen ]
+  * Use systemd for correct /lib/systemd/system path (Closes: #1034230)
+
+  [ Jochen Sprickerhof ]
+  * Drop dependency on lsb-base. It is a transitional package to
+    sysvinit-utils which is essential.
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Fri, 21 Apr 2023 21:54:48 +0200
+
 fail2ban (1.0.2-1) unstable; urgency=medium
 
   * New upstream release
