@@ -1,0 +1,11 @@
+# failJSON: { "time": "2023-06-04T15:42:39", "match": true , "host": "88.130.115.197" }
+1685821252: New connection from 88.130.115.197:58137 on port 1883.
+1685821252: Client <unknown> disconnected, not authorised.
+
+# failJSON: { "time": "2023-06-04T15:43:00", "match": true , "host": "167.94.138.124" }
+1685838539: New connection from 167.94.138.124:48608 on port 1883.
+1685838539: Client <unknown> disconnected, not authorised.
+
+# failJSON: { "time": "2023-06-04T15:43:21", "match": true , "host": "64.62.197.77" }
+1685850159: New connection from 64.62.197.77:17018 on port 1883.
+1685850159: Client <unknown> disconnected, not authorised.
