@@ -223,6 +223,11 @@ Apr 27 13:02:04 host sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal S
 # disable this test-cases block for obsolete multi-line filter (zzz-sshd-obsolete...):
 # filterOptions: [{"test.condition":"name=='sshd'"}]
 
+# failJSON: { "time": "2004-11-23T21:50:38", "match": true , "host": "192.0.2.7", "user": "xxx", "desc": "maximum authentication attempts exceeded for invalid user" }
+Nov 23 21:50:38 myhost sshd[109798]: error: maximum authentication attempts exceeded for invalid user xxx from 192.0.2.7 port 49941 ssh2 [preauth]
+# failJSON: { "time": "2004-11-23T21:50:38", "match": false, "desc": "No failure, helper only (already counted above)" }
+Nov 23 21:50:38 myhost sshd[109798]: Disconnecting invalid user xxx 192.0.2.7 port 49941: Too many authentication failures [preauth]
+
 # 2 methods auth: pam_unix and pam_ldap are used in combination (gh-2070), succeeded after "failure" in first method:
 # failJSON: { "match": false , "desc": "No failure" }
 Mar  7 18:53:20 bar sshd[1556]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.0.2.113  user=rda
