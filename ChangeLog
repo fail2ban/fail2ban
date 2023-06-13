@@ -22,6 +22,9 @@ ver. 1.0.3-dev-1 (20??/??/??) - development nightly edition
 * `action.d/mikrotik.conf` - new action for mikrotik routerOS, adds and removes entries from address lists on the router (gh-2860)
 * `filter.d/exim.conf` - fixed "dropped: too many ..." regex, also matching unrecognized commands now (gh-3502)
 * `filter.d/nginx-forbidden.conf` - new filter to ban forbidden locations, e. g. using `deny` directive (gh-2226)
+* `filter.d/sshd.conf`:
+  - avoid double counting for "maximum authentication attempts exceeded" (gh-3502)
+  - message "Disconnecting ... Too many authentication failures" is not a failure anymore
 
 
 ver. 1.0.2 (2022/11/09) - finally-war-game-test-tape-not-a-nuclear-alarm
