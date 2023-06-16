@@ -2,7 +2,7 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v1.0.3.dev1            20??/??/??
+                       v1.1.0.dev1            20??/??/??
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
