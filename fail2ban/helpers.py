@@ -48,30 +48,6 @@ if PREFER_ENC.startswith('ANSI_'): # pragma: no cover
 	elif all((os.getenv(v) in (None, "") for v in ('LANGUAGE', 'LC_ALL', 'LC_CTYPE', 'LANG'))):
 		PREFER_ENC = 'UTF-8';
 
-# py-2.x: try to minimize influence of sporadic conversion errors on python 2.x,
-# caused by implicit converting of string/unicode (e. g. `str(u"\uFFFD")` produces an error
-# if default encoding is 'ascii');
-if sys.version_info < (3,): # pragma: 3.x no cover
-	# correct default (global system) encoding (mostly UTF-8):
-	def __resetDefaultEncoding(encoding):
-		global PREFER_ENC
-		ode = sys.getdefaultencoding().upper()
-		if ode == 'ASCII' and ode != PREFER_ENC.upper():
-			# setdefaultencoding is normally deleted after site initialized, so hack-in using load of sys-module:
-			_sys = sys
-			if not hasattr(_sys, "setdefaultencoding"):
-				try:
-					from imp import load_dynamic as __ldm
-					_sys = __ldm('_sys', 'sys')
-				except ImportError: # pragma: no cover - only if load_dynamic fails
-					importlib.reload(sys)
-					_sys = sys
-			if hasattr(_sys, "setdefaultencoding"):
-				_sys.setdefaultencoding(encoding)
-	# override to PREFER_ENC:
-	__resetDefaultEncoding(PREFER_ENC)
-	del __resetDefaultEncoding
-
 # todo: rewrite explicit (and implicit) str-conversions via encode/decode with IO-encoding (sys.stdout.encoding),
 # e. g. inside tags-replacement by command-actions, etc.
 
@@ -85,41 +61,21 @@ if sys.version_info < (3,): # pragma: 3.x no cover
 #   [True, True, False]; # -- python2
 #	  [True, False, True]; # -- python3
 #
-if sys.version_info >= (3,): # pragma: 2.x no cover
-	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
-		try:
-			if isinstance(x, bytes):
-				return x.decode(enc, errors)
-			return x
-		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
-			if errors != 'strict': 
-				raise
-			return x.decode(enc, 'replace')
-	def uni_string(x):
-		if not isinstance(x, bytes):
-			return str(x)
-		return x.decode(PREFER_ENC, 'replace')
-	def uni_bytes(x):
-		return bytes(x, 'UTF-8')
-else: # pragma: 3.x no cover
-	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
-		try:
-			if isinstance(x, str):
-				return x.encode(enc, errors)
-			return x
-		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
-			if errors != 'strict':
-				raise
-			return x.encode(enc, 'replace')
-	if sys.getdefaultencoding().upper() != 'UTF-8': # pragma: no cover - utf-8 is default encoding now
-		def uni_string(x):
-			if not isinstance(x, str):
-				return str(x)
-			return x.encode(PREFER_ENC, 'replace')
-	else:
-		uni_string = str
-	uni_bytes = bytes
-
+def uni_decode(x, enc=PREFER_ENC, errors='strict'):
+	try:
+		if isinstance(x, bytes):
+			return x.decode(enc, errors)
+		return x
+	except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
+		if errors != 'strict': 
+			raise
+		return x.decode(enc, 'replace')
+def uni_string(x):
+	if not isinstance(x, bytes):
+		return str(x)
+	return x.decode(PREFER_ENC, 'replace')
+def uni_bytes(x):
+	return bytes(x, 'UTF-8')
 
 def _as_bool(val):
 	return bool(val) if not isinstance(val, str) \
@@ -227,10 +183,7 @@ def __stopOnIOError(logSys=None, logHndlr=None): # pragma: no cover
 			pass
 		sys.exit(0)
 
-try:
-	BrokenPipeError = BrokenPipeError
-except NameError: # pragma: 3.x no cover
-	BrokenPipeError = IOError
+BrokenPipeError = BrokenPipeError
 
 __origLog = logging.Logger._log
 def __safeLog(self, level, msg, args, **kwargs):
@@ -333,36 +286,17 @@ def splitwords(s):
 		return []
 	return list(filter(bool, [v.strip() for v in re.split('[ ,\n]+', s)]))
 
-if sys.version_info >= (3,5):
-	eval(compile(r'''if 1:
-	def _merge_dicts(x, y):
-		"""Helper to merge dicts.
-		"""
-		if y:
-			return {**x, **y}
-		return x
-	
-	def _merge_copy_dicts(x, y):
-		"""Helper to merge dicts to guarantee a copy result (r is never x).
-		"""
+def _merge_dicts(x, y):
+	"""Helper to merge dicts.
+	"""
+	if y:
 		return {**x, **y}
-	''', __file__, 'exec'))
-else:
-	def _merge_dicts(x, y):
-		"""Helper to merge dicts.
-		"""
-		r = x
-		if y:
-			r = x.copy()
-			r.update(y)
-		return r
-	def _merge_copy_dicts(x, y):
-		"""Helper to merge dicts to guarantee a copy result (r is never x).
-		"""
-		r = x.copy()
-		if y:
-			r.update(y)
-		return r
+	return x
+
+def _merge_copy_dicts(x, y):
+	"""Helper to merge dicts to guarantee a copy result (r is never x).
+	"""
+	return {**x, **y}
 
 #
 # Following function used for parse options from parameter (e.g. `name[p1=0, p2="..."][p3='...']`).
@@ -521,10 +455,7 @@ if _libcap:
 		Side effect: name can be silently truncated to 15 bytes (16 bytes with NTS zero)
 		"""
 		try:
-			if sys.version_info >= (3,): # pragma: 2.x no cover
-				name = name.encode()
-			else: # pragma: 3.x no cover
-				name = bytes(name)
+			name = name.encode()
 			_libcap.prctl(15, name) # PR_SET_NAME = 15
 		except: # pragma: no cover
 			pass

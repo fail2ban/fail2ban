@@ -29,14 +29,16 @@ try:
 	from setuptools import setup
 	from setuptools.command.install import install
 	from setuptools.command.install_scripts import install_scripts
+	from setuptools.command.build_py import build_py
+	build_scripts = None
 except ImportError:
 	setuptools = None
 	from distutils.core import setup
 
-# all versions
-from distutils.command.build_py import build_py
-from distutils.command.build_scripts import build_scripts
+# older versions
 if setuptools is None:
+	from distutils.command.build_py import build_py
+	from distutils.command.build_scripts import build_scripts
 	from distutils.command.install import install
 	from distutils.command.install_scripts import install_scripts
 
@@ -205,10 +207,9 @@ setup(
 	url = "http://www.fail2ban.org",
 	license = "GPL",
 	platforms = "Posix",
-	cmdclass = {
-		'build_py': build_py, 'build_scripts': build_scripts,
+	cmdclass = dict({'build_py': build_py, 'build_scripts': build_scripts} if build_scripts else {}, **{
 		'install_scripts': install_scripts_f2b, 'install': install_command_f2b
-	},
+	}),
 	scripts = [
 		'bin/fail2ban-client',
 		'bin/fail2ban-server',

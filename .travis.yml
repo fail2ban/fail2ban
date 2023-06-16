@@ -10,10 +10,6 @@ dist: xenial
 matrix:
   fast_finish: true
   include:
-  - python: 2.7
-  #- python: pypy
-  - python:  3.4
-  - python:  3.5
   - python:  3.6
   - python:  3.7
   - python:  3.8
@@ -39,20 +35,14 @@ install:
   #   codecov:
   - travis_retry pip install codecov
   #   dnspython or dnspython3
-  - if [[ "$F2B_PY" = 2 ]]; then travis_retry pip install dnspython || echo 'not installed'; fi
   - if [[ "$F2B_PY" = 3 ]]; then travis_retry pip install dnspython3 || echo 'not installed'; fi
   #   python systemd bindings:
-  - if [[ "$F2B_PY" = 2 ]]; then travis_retry sudo apt-get install -qq python-systemd || echo 'not installed'; fi
   - if [[ "$F2B_PY" = 3 ]]; then travis_retry sudo apt-get install -qq python3-systemd || echo 'not installed'; fi
-  #   gamin - install manually (not in PyPI) - travis-ci system Python is 2.7
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then (travis_retry sudo apt-get install -qq python-gamin && cp /usr/share/pyshared/gamin.py /usr/lib/pyshared/python2.7/_gamin.so $VIRTUAL_ENV/lib/python2.7/site-packages/) || echo 'not installed'; fi
   #   pyinotify
   - travis_retry pip install pyinotify || echo 'not installed'
   # Install helper tools
   - sudo apt-get install shellcheck
 before_script:
-  # Manually execute 2to3 for now
-  - if [[ "$F2B_PY" = 3 ]]; then ./fail2ban-2to3; fi
   # (debug) output current preferred encoding:
   - python -c 'import locale, sys; from fail2ban.helpers import PREFER_ENC; print(PREFER_ENC, locale.getpreferredencoding(), (sys.stdout and sys.stdout.encoding))'
 script:

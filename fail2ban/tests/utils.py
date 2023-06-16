@@ -73,7 +73,7 @@ class DefaultTestOptions(optparse.Values):
 		self.__dict__ = {
 			'log_level': None, 'verbosity': None, 'log_lazy': True, 
 			'log_traceback': None, 'full_traceback': None,
-			'fast': False, 'memory_db': False, 'no_gamin': False,
+			'fast': False, 'memory_db': False,
 			'no_network': False, 'negate_re': False
 		}
 
@@ -105,9 +105,6 @@ def getOptParser(doc=""):
 		Option('-n', "--no-network", action="store_true",
 			   dest="no_network",
 			   help="Do not run tests that require the network"),
-		Option('-g', "--no-gamin", action="store_true",
-			   dest="no_gamin",
-			   help="Do not run tests that require the gamin"),
 		Option('-m', "--memory-db", action="store_true",
 			   dest="memory_db",
 			   help="Run database tests using memory instead of file"),
@@ -186,7 +183,6 @@ class F2B(DefaultTestOptions):
 		self.__dict__ = opts.__dict__
 		if self.fast: # pragma: no cover - normal mode in travis
 			self.memory_db = True
-			self.no_gamin = True
 		self.__dict__['share_config'] = {}
 	def SkipIfFast(self):
 		pass
@@ -493,16 +489,6 @@ def gatherTests(regexps=None, opts=None):
 	# yoh: Since I do not know better way for parametric tests
 	#      with good old unittest
 	try:
-		# because gamin can be very slow on some platforms (and can produce many failures 
-		# with fast sleep interval) - skip it by fast run:
-		if unittest.F2B.fast or unittest.F2B.no_gamin: # pragma: no cover
-			raise ImportError('Skip, fast: %s, no_gamin: %s' % (unittest.F2B.fast, unittest.F2B.no_gamin))
-		from ..server.filtergamin import FilterGamin
-		filters.append(FilterGamin)
-	except ImportError as e: # pragma: no cover
-		logSys.warning("Skipping gamin backend testing. Got exception '%s'" % e)
-
-	try:
 		from ..server.filterpyinotify import FilterPyinotify
 		filters.append(FilterPyinotify)
 	except ImportError as e: # pragma: no cover
@@ -595,17 +581,6 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=False, key=repr, msg=None)
 		msg = msg or (standardMsg + diff)
 		self.fail(msg)
 unittest.TestCase.assertSortedEqual = assertSortedEqual
-
-if not hasattr(unittest.TestCase, 'assertRaisesRegexp'):
-	def assertRaisesRegexp(self, exccls, regexp, fun, *args, **kwargs):
-		try:
-			fun(*args, **kwargs)
-		except exccls as e:
-			if re.search(regexp, str(e)) is None:
-				self.fail('\"%s\" does not match \"%s\"' % (regexp, e))
-		else:
-			self.fail('%s not raised' % getattr(exccls, '__name__'))
-	unittest.TestCase.assertRaisesRegex = assertRaisesRegexp
 
 # always custom following methods, because we use atm better version of both (support generators)
 if True: ## if not hasattr(unittest.TestCase, 'assertIn'):

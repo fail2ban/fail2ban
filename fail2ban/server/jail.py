@@ -66,7 +66,7 @@ class Jail(object):
 	#Known backends. Each backend should have corresponding __initBackend method
 	# yoh: stored in a list instead of a tuple since only
 	#      list had .index until 2.6
-	_BACKENDS = ['pyinotify', 'gamin', 'polling', 'systemd']
+	_BACKENDS = ['pyinotify', 'polling', 'systemd']
 
 	def __init__(self, name, backend = "auto", db=None):
 		self.__db = db
@@ -130,12 +130,6 @@ class Jail(object):
 		from .filterpoll import FilterPoll
 		logSys.info("Jail '%s' uses poller %r" % (self.name, kwargs))
 		self.__filter = FilterPoll(self, **kwargs)
-
-	def _initGamin(self, **kwargs):
-		# Try to import gamin
-		from .filtergamin import FilterGamin
-		logSys.info("Jail '%s' uses Gamin %r" % (self.name, kwargs))
-		self.__filter = FilterGamin(self, **kwargs)
 
 	def _initPyinotify(self, **kwargs):
 		# Try to import pyinotify

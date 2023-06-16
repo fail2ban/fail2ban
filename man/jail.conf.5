@@ -123,7 +123,7 @@ filter = test[test.method=POST, baduseragents="badagent|<known/baduseragents>"]
 .fi
 .RE
 
-Comments: use '#' for comment lines and '; ' (space is important) for inline comments. When using Python2.X, '; ' can only be used on the first line due to an Python library bug.
+Comments: use '#' for comment lines and '; ' (space is important) for inline comments.
 
 .SH "FAIL2BAN CONFIGURATION FILE(S) (\fIfail2ban.conf\fB)"
 
@@ -276,7 +276,7 @@ number of failures that have to occur in the last \fBfindtime\fR seconds to ban 
 .B backend
 backend to be used to detect changes in the logpath.
 .br
-It defaults to "auto" which will try "pyinotify", "gamin", "systemd" before "polling". Any of these can be specified. "pyinotify" is only valid on Linux systems with the "pyinotify" Python libraries. "gamin" requires the "gamin" libraries.
+It defaults to "auto" which will try "pyinotify", "systemd" before "polling". Any of these can be specified. "pyinotify" is only valid on Linux systems with the "pyinotify" Python libraries.
 .TP
 .B usedns
 use DNS to resolve HOST names that appear in the logs. By default it is "warn" which will resolve hostnames to IPs however it will also log a warning. If you are using DNS here you could be blocking the wrong IPs due to the asymmetric nature of reverse DNS (that the application used to write the domain name to log) compared to forward DNS that fail2ban uses to resolve this back to an IP (but not necessarily the same one). Ideally you should configure your applications to log a real IP. This can be set to "yes" to prevent warnings in the log or "no" to disable DNS resolution altogether (thus ignoring entries where hostname, not an IP is logged)..
@@ -298,9 +298,6 @@ Available options are listed below.
 .TP
 .B pyinotify
 requires pyinotify (a file alteration monitor) to be installed. If pyinotify is not installed, Fail2ban will use auto.
-.TP
-.B gamin
-requires Gamin (a file alteration monitor) to be installed. If Gamin is not installed, Fail2ban will use auto.
 .TP
 .B polling
 uses a polling algorithm which does not require external libraries.

@@ -175,7 +175,6 @@ CONTRIBUTING.md
 COPYING
 .coveragerc
 DEVELOP
-fail2ban-2to3
 fail2ban/client/actionreader.py
 fail2ban/client/beautifier.py
 fail2ban/client/configparserinc.py
@@ -204,7 +203,6 @@ fail2ban/server/datedetector.py
 fail2ban/server/datetemplate.py
 fail2ban/server/failmanager.py
 fail2ban/server/failregex.py
-fail2ban/server/filtergamin.py
 fail2ban/server/filterpoll.py
 fail2ban/server/filter.py
 fail2ban/server/filterpyinotify.py

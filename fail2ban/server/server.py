@@ -58,11 +58,6 @@ except ImportError: # pragma: no cover
 def _thread_name():
 	return threading.current_thread().__class__.__name__
 
-try:
-	FileExistsError
-except NameError: # pragma: 3.x no cover
-	FileExistsError = OSError
-
 def _make_file_path(name):
 	"""Creates path of file (last level only) on demand"""
 	name = os.path.dirname(name)
