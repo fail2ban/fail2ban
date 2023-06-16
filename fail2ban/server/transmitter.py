@@ -488,7 +488,7 @@ class Transmitter:
 			opt = command[1][len("bantime."):]
 			return self.__server.getBanTimeExtra(name, opt)
 		elif command[1] == "actions":
-			return self.__server.getActions(name).keys()
+			return list(self.__server.getActions(name).keys())
 		elif command[1] == "action":
 			actionname = command[2]
 			actionvalue = command[3]

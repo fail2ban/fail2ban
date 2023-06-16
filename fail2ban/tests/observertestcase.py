@@ -68,7 +68,7 @@ class BanTimeIncr(LogCaptureTestCase):
 		a.setBanTimeExtra('multipliers', multipliers)
 		# test algorithm and max time 24 hours :
 		self.assertEqual(
-			[a.calcBanTime(600, i) for i in xrange(1, 11)],
+			[a.calcBanTime(600, i) for i in range(1, 11)],
 			[1200, 2400, 4800, 9600, 19200, 38400, 76800, 86400, 86400, 86400]
 		)
 		# with extra large max time (30 days):
@@ -80,38 +80,38 @@ class BanTimeIncr(LogCaptureTestCase):
 			if multcnt < 11:
 				arr = arr[0:multcnt-1] + ([arr[multcnt-2]] * (11-multcnt))
 		self.assertEqual(
-			[a.calcBanTime(600, i) for i in xrange(1, 11)],
+			[a.calcBanTime(600, i) for i in range(1, 11)],
 			arr
 		)
 		a.setBanTimeExtra('maxtime', '1d')
 		# change factor :
 		a.setBanTimeExtra('factor', '2');
 		self.assertEqual(
-			[a.calcBanTime(600, i) for i in xrange(1, 11)],
+			[a.calcBanTime(600, i) for i in range(1, 11)],
 			[2400, 4800, 9600, 19200, 38400, 76800, 86400, 86400, 86400, 86400]
 		)
 		# factor is float :
 		a.setBanTimeExtra('factor', '1.33');
 		self.assertEqual(
-			[int(a.calcBanTime(600, i)) for i in xrange(1, 11)],
+			[int(a.calcBanTime(600, i)) for i in range(1, 11)],
 			[1596, 3192, 6384, 12768, 25536, 51072, 86400, 86400, 86400, 86400]
 		)
 		a.setBanTimeExtra('factor', None);
 		# change max time :
 		a.setBanTimeExtra('maxtime', '12h')
 		self.assertEqual(
-			[a.calcBanTime(600, i) for i in xrange(1, 11)],
+			[a.calcBanTime(600, i) for i in range(1, 11)],
 			[1200, 2400, 4800, 9600, 19200, 38400, 43200, 43200, 43200, 43200]
 		)
 		a.setBanTimeExtra('maxtime', '24h')
 		## test randomization - not possibe all 10 times we have random = 0:
 		a.setBanTimeExtra('rndtime', '5m')
 		self.assertTrue(
-			False in [1200 in [a.calcBanTime(600, 1) for i in xrange(10)] for c in xrange(10)]
+			False in [1200 in [a.calcBanTime(600, 1) for i in range(10)] for c in range(10)]
 		)
 		a.setBanTimeExtra('rndtime', None)
 		self.assertFalse(
-			False in [1200 in [a.calcBanTime(600, 1) for i in xrange(10)] for c in xrange(10)]
+			False in [1200 in [a.calcBanTime(600, 1) for i in range(10)] for c in range(10)]
 		)
 		# restore default:
 		a.setBanTimeExtra('multipliers', None)
@@ -123,7 +123,7 @@ class BanTimeIncr(LogCaptureTestCase):
 		# this multipliers has the same values as default formula, we test stop growing after count 9:
 		self.testDefault('1 2 4 8 16 32 64 128 256')
 		# this multipliers has exactly the same values as default formula, test endless growing (stops by count 31 only):
-		self.testDefault(' '.join([str(1<<i) for i in xrange(31)]))
+		self.testDefault(' '.join([str(1<<i) for i in range(31)]))
 
 	def testFormula(self):
 		a = self.__jail;
@@ -135,38 +135,38 @@ class BanTimeIncr(LogCaptureTestCase):
 		a.setBanTimeExtra('multipliers', None)
 		# test algorithm and max time 24 hours :
 		self.assertEqual(
-			[int(a.calcBanTime(600, i)) for i in xrange(1, 11)],
+			[int(a.calcBanTime(600, i)) for i in range(1, 11)],
 			[1200, 2400, 4800, 9600, 19200, 38400, 76800, 86400, 86400, 86400]
 		)
 		# with extra large max time (30 days):
 		a.setBanTimeExtra('maxtime', '30d')
 		self.assertEqual(
-			[int(a.calcBanTime(600, i)) for i in xrange(1, 11)],
+			[int(a.calcBanTime(600, i)) for i in range(1, 11)],
 			[1200, 2400, 4800, 9600, 19200, 38400, 76800, 153601, 307203, 614407]
 		)
 		a.setBanTimeExtra('maxtime', '24h')
 		# change factor :
 		a.setBanTimeExtra('factor', '1');
 		self.assertEqual(
-			[int(a.calcBanTime(600, i)) for i in xrange(1, 11)],
+			[int(a.calcBanTime(600, i)) for i in range(1, 11)],
 			[1630, 4433, 12051, 32758, 86400, 86400, 86400, 86400, 86400, 86400]
 		)
 		a.setBanTimeExtra('factor', '2.0 / 2.885385')
 		# change max time :
 		a.setBanTimeExtra('maxtime', '12h')
 		self.assertEqual(
-			[int(a.calcBanTime(600, i)) for i in xrange(1, 11)],
+			[int(a.calcBanTime(600, i)) for i in range(1, 11)],
 			[1200, 2400, 4800, 9600, 19200, 38400, 43200, 43200, 43200, 43200]
 		)
 		a.setBanTimeExtra('maxtime', '24h')
 		## test randomization - not possibe all 10 times we have random = 0:
 		a.setBanTimeExtra('rndtime', '5m')
 		self.assertTrue(
-			False in [1200 in [int(a.calcBanTime(600, 1)) for i in xrange(10)] for c in xrange(10)]
+			False in [1200 in [int(a.calcBanTime(600, 1)) for i in range(10)] for c in range(10)]
 		)
 		a.setBanTimeExtra('rndtime', None)
 		self.assertFalse(
-			False in [1200 in [int(a.calcBanTime(600, 1)) for i in xrange(10)] for c in xrange(10)]
+			False in [1200 in [int(a.calcBanTime(600, 1)) for i in range(10)] for c in range(10)]
 		)
 		# restore default:
 		a.setBanTimeExtra('factor', None);
@@ -229,7 +229,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		ticket = FailTicket(ip, stime, [])
 		# test ticket not yet found
 		self.assertEqual(
-			[self.incrBanTime(ticket, 10) for i in xrange(3)], 
+			[self.incrBanTime(ticket, 10) for i in range(3)], 
 			[10, 10, 10]
 		)
 		# add a ticket banned
@@ -284,7 +284,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		)
 		# increase ban multiple times:
 		lastBanTime = 20
-		for i in xrange(10):
+		for i in range(10):
 			ticket.setTime(stime + lastBanTime + 5)
 			banTime = self.incrBanTime(ticket, 10)
 			self.assertEqual(banTime, lastBanTime * 2)
@@ -483,7 +483,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		ticket = FailTicket(ip, stime-120, [])
 		failManager = jail.filter.failManager = FailManager()
 		failManager.setMaxRetry(3)
-		for i in xrange(3):
+		for i in range(3):
 			failManager.addFailure(ticket)
 			obs.add('failureFound', jail, ticket)
 		obs.wait_empty(5)

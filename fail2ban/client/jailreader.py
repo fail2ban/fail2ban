@@ -117,7 +117,7 @@ class JailReader(ConfigReader):
 	}
 	_configOpts.update(FilterReader._configOpts)
 
-	_ignoreOpts = set(['action', 'filter', 'enabled'] + FilterReader._configOpts.keys())
+	_ignoreOpts = set(['action', 'filter', 'enabled'] + list(FilterReader._configOpts.keys()))
 
 	def getOptions(self):
 
@@ -240,7 +240,7 @@ class JailReader(ConfigReader):
 			stream.extend(self.__filter.convert())
 		# and using options from jail:
 		FilterReader._fillStream(stream, self.__opts, self.__name)
-		for opt, value in self.__opts.iteritems():
+		for opt, value in self.__opts.items():
 			if opt == "logpath":
 				if self.__opts.get('backend', '').startswith("systemd"): continue
 				found_files = 0

@@ -29,14 +29,16 @@ try:
 	from setuptools import setup
 	from setuptools.command.install import install
 	from setuptools.command.install_scripts import install_scripts
+	from setuptools.command.build_py import build_py
+	build_scripts = None
 except ImportError:
 	setuptools = None
 	from distutils.core import setup
 
-# all versions
-from distutils.command.build_py import build_py
-from distutils.command.build_scripts import build_scripts
+# older versions
 if setuptools is None:
+	from distutils.command.build_py import build_py
+	from distutils.command.build_scripts import build_scripts
 	from distutils.command.install import install
 	from distutils.command.install_scripts import install_scripts
 
@@ -68,15 +70,15 @@ class install_scripts_f2b(install_scripts):
 		if dry_run:
 			#bindir = self.install_dir
 			bindir = self.build_dir
-			print('creating fail2ban-python binding -> %s (dry-run, real path can be different)' % (bindir,))
-			print('Copying content of %s to %s' % (self.build_dir, self.install_dir));
+			print(('creating fail2ban-python binding -> %s (dry-run, real path can be different)' % (bindir,)))
+			print(('Copying content of %s to %s' % (self.build_dir, self.install_dir)));
 			return outputs
 		fn = None
 		for fn in outputs:
 			if os.path.basename(fn) == 'fail2ban-server':
 				break
 		bindir = os.path.dirname(fn)
-		print('creating fail2ban-python binding -> %s' % (bindir,))
+		print(('creating fail2ban-python binding -> %s' % (bindir,)))
 		updatePyExec(bindir)
 		return outputs
 
@@ -93,7 +95,7 @@ class install_scripts_f2b(install_scripts):
 
 		scripts = ['fail2ban.service', 'fail2ban-openrc.init']
 		for script in scripts:
-			print('Creating %s/%s (from %s.in): @BINDIR@ -> %s' % (buildroot, script, script, install_dir))
+			print(('Creating %s/%s (from %s.in): @BINDIR@ -> %s' % (buildroot, script, script, install_dir)))
 			with open(os.path.join(source_dir, 'files/%s.in' % script), 'r') as fn:
 				lines = fn.readlines()
 			fn = None
@@ -205,10 +207,9 @@ setup(
 	url = "http://www.fail2ban.org",
 	license = "GPL",
 	platforms = "Posix",
-	cmdclass = {
-		'build_py': build_py, 'build_scripts': build_scripts,
+	cmdclass = dict({'build_py': build_py, 'build_scripts': build_scripts} if build_scripts else {}, **{
 		'install_scripts': install_scripts_f2b, 'install': install_command_f2b
-	},
+	}),
 	scripts = [
 		'bin/fail2ban-client',
 		'bin/fail2ban-server',
@@ -296,7 +297,7 @@ if obsoleteFiles:
 	print("Please delete them:")
 	print("")
 	for f in obsoleteFiles:
-		print("\t" + f)
+		print(("\t" + f))
 	print("")
 
 if isdir("/usr/lib/fail2ban"):

@@ -307,7 +307,7 @@ class Filter(JailThread):
 			dd = DateDetector()
 			dd.default_tz = self.__logtimezone
 			if not isinstance(pattern, (list, tuple)):
-				pattern = filter(bool, map(str.strip, re.split('\n+', pattern)))
+				pattern = list(filter(bool, list(map(str.strip, re.split('\n+', pattern)))))
 			for pattern in pattern:
 				dd.appendTemplate(pattern)
 			self.dateDetector = dd
@@ -800,7 +800,7 @@ class Filter(JailThread):
 			if (nfflgs & 4) == 0 and not mlfidGroups.get('mlfpending', 0):
 				mlfidGroups.pop("matches", None)
 			# overwrite multi-line failure with all values, available in fail:
-			mlfidGroups.update(((k,v) for k,v in fail.iteritems() if v is not None))
+			mlfidGroups.update(((k,v) for k,v in fail.items() if v is not None))
 			# new merged failure data:
 			fail = mlfidGroups
 			# if forget (disconnect/reset) - remove cached entry:
@@ -1045,7 +1045,7 @@ class FileFilter(Filter):
 	# @return log paths
 
 	def getLogPaths(self):
-		return self.__logs.keys()
+		return list(self.__logs.keys())
 
 	##
 	# Get the log containers
@@ -1053,7 +1053,7 @@ class FileFilter(Filter):
 	# @return log containers
 
 	def getLogs(self):
-		return self.__logs.values()
+		return list(self.__logs.values())
 
 	##
 	# Get the count of log containers
@@ -1079,7 +1079,7 @@ class FileFilter(Filter):
 
 	def setLogEncoding(self, encoding):
 		encoding = super(FileFilter, self).setLogEncoding(encoding)
-		for log in self.__logs.itervalues():
+		for log in self.__logs.values():
 			log.setEncoding(encoding)
 
 	def getLog(self, path):
@@ -1255,7 +1255,7 @@ class FileFilter(Filter):
 		"""Status of Filter plus files being monitored.
 		"""
 		ret = super(FileFilter, self).status(flavor=flavor)
-		path = self.__logs.keys()
+		path = list(self.__logs.keys())
 		ret.append(("File list", path))
 		return ret
 
@@ -1277,7 +1277,7 @@ class FileFilter(Filter):
 		if self._pendDBUpdates and self.jail.database:
 			self._updateDBPending()
 		# stop files monitoring:
-		for path in self.__logs.keys():
+		for path in list(self.__logs.keys()):
 			self.delLogPath(path)
 
 	def stop(self):
@@ -1530,7 +1530,7 @@ class FileContainer:
 
 	def __iter__(self):
 		return self
-	def next(self):
+	def __next__(self):
 		line = self.readline()
 		if line is None:
 			self.close()

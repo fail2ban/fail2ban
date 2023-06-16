@@ -2,7 +2,7 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v1.0.3.dev1            20??/??/??
+                       v1.1.0.dev1            20??/??/??
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
@@ -34,13 +34,12 @@ Fail2Ban is likely already packaged for your Linux distribution and [can install
 If your distribution is not listed, you can install from GitHub:
 
 Required:
-- [Python2 >= 2.7 or Python >= 3.2](https://www.python.org) or [PyPy](https://pypy.org)
-- python-setuptools, python-distutils or python3-setuptools for installation from source
+- [Python >= 3.5](https://www.python.org) or [PyPy3](https://pypy.org)
+- python-setuptools, python-distutils (or python3-setuptools) for installation from source
 
 Optional:
 - [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify), may require:
   * Linux >= 2.6.13
-- [gamin >= 0.0.21](http://www.gnome.org/~veillard/gamin)
 - [systemd >= 204](http://www.freedesktop.org/wiki/Software/systemd) and python bindings:
   * [python-systemd package](https://www.freedesktop.org/software/systemd/python-systemd/index.html)
 - [dnspython](http://www.dnspython.org/)

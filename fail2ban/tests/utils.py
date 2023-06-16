@@ -35,7 +35,7 @@ import time
 import threading
 import unittest
 
-from cStringIO import StringIO
+from io import StringIO
 from functools import wraps
 
 from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, uni_decode
@@ -73,7 +73,7 @@ class DefaultTestOptions(optparse.Values):
 		self.__dict__ = {
 			'log_level': None, 'verbosity': None, 'log_lazy': True, 
 			'log_traceback': None, 'full_traceback': None,
-			'fast': False, 'memory_db': False, 'no_gamin': False,
+			'fast': False, 'memory_db': False,
 			'no_network': False, 'negate_re': False
 		}
 
@@ -105,9 +105,6 @@ def getOptParser(doc=""):
 		Option('-n', "--no-network", action="store_true",
 			   dest="no_network",
 			   help="Do not run tests that require the network"),
-		Option('-g', "--no-gamin", action="store_true",
-			   dest="no_gamin",
-			   help="Do not run tests that require the gamin"),
 		Option('-m', "--memory-db", action="store_true",
 			   dest="memory_db",
 			   help="Run database tests using memory instead of file"),
@@ -171,8 +168,8 @@ def initProcess(opts):
 
 	# Let know the version
 	if opts.verbosity != 0:
-		print("Fail2ban %s test suite. Python %s. Please wait..." \
-				% (version, str(sys.version).replace('\n', '')))
+		print(("Fail2ban %s test suite. Python %s. Please wait..." \
+				% (version, str(sys.version).replace('\n', ''))))
 
 	return opts;
 
@@ -186,7 +183,6 @@ class F2B(DefaultTestOptions):
 		self.__dict__ = opts.__dict__
 		if self.fast: # pragma: no cover - normal mode in travis
 			self.memory_db = True
-			self.no_gamin = True
 		self.__dict__['share_config'] = {}
 	def SkipIfFast(self):
 		pass
@@ -303,7 +299,7 @@ def initTests(opts):
 	c.clear = lambda: logSys.warn('clear CACHE_ipToName is disabled in test suite')
 	# increase max count and max time (too many entries, long time testing):
 	c.setOptions(maxCount=10000, maxTime=5*60)
-	for i in xrange(256):
+	for i in range(256):
 		c.set('192.0.2.%s' % i, None)
 		c.set('198.51.100.%s' % i, None)
 		c.set('203.0.113.%s' % i, None)
@@ -493,16 +489,6 @@ def gatherTests(regexps=None, opts=None):
 	# yoh: Since I do not know better way for parametric tests
 	#      with good old unittest
 	try:
-		# because gamin can be very slow on some platforms (and can produce many failures 
-		# with fast sleep interval) - skip it by fast run:
-		if unittest.F2B.fast or unittest.F2B.no_gamin: # pragma: no cover
-			raise ImportError('Skip, fast: %s, no_gamin: %s' % (unittest.F2B.fast, unittest.F2B.no_gamin))
-		from ..server.filtergamin import FilterGamin
-		filters.append(FilterGamin)
-	except ImportError as e: # pragma: no cover
-		logSys.warning("Skipping gamin backend testing. Got exception '%s'" % e)
-
-	try:
 		from ..server.filterpyinotify import FilterPyinotify
 		filters.append(FilterPyinotify)
 	except ImportError as e: # pragma: no cover
@@ -531,8 +517,8 @@ def gatherTests(regexps=None, opts=None):
 import difflib, pprint
 if not hasattr(unittest.TestCase, 'assertDictEqual'):
 	def assertDictEqual(self, d1, d2, msg=None):
-		self.assert_(isinstance(d1, dict), 'First argument is not a dictionary')
-		self.assert_(isinstance(d2, dict), 'Second argument is not a dictionary')
+		self.assertTrue(isinstance(d1, dict), 'First argument is not a dictionary')
+		self.assertTrue(isinstance(d2, dict), 'Second argument is not a dictionary')
 		if d1 != d2:
 			standardMsg = '%r != %r' % (d1, d2)
 			diff = ('\n' + '\n'.join(difflib.ndiff(
@@ -550,7 +536,7 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=False, key=repr, msg=None)
 	# used to recognize having element as nested dict, list or tuple:
 	def _is_nested(v):
 		if isinstance(v, dict):
-			return any(isinstance(v, (dict, list, tuple)) for v in v.itervalues())
+			return any(isinstance(v, (dict, list, tuple)) for v in v.values())
 		return any(isinstance(v, (dict, list, tuple)) for v in v)
 	if nestedOnly:
 		_nest_sorted = sorted
@@ -570,7 +556,7 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=False, key=repr, msg=None)
 				return
 			raise ValueError('%r != %r' % (a, b))
 		if isinstance(a, dict) and isinstance(b, dict): # compare dict's:
-			for k, v1 in a.iteritems():
+			for k, v1 in a.items():
 				v2 = b[k]
 				if isinstance(v1, (dict, list, tuple)) and isinstance(v2, (dict, list, tuple)):
 					_assertSortedEqual(v1, v2, level-1 if level != 0 else 0, nestedOnly, key)
@@ -596,23 +582,12 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=False, key=repr, msg=None)
 		self.fail(msg)
 unittest.TestCase.assertSortedEqual = assertSortedEqual
 
-if not hasattr(unittest.TestCase, 'assertRaisesRegexp'):
-	def assertRaisesRegexp(self, exccls, regexp, fun, *args, **kwargs):
-		try:
-			fun(*args, **kwargs)
-		except exccls as e:
-			if re.search(regexp, str(e)) is None:
-				self.fail('\"%s\" does not match \"%s\"' % (regexp, e))
-		else:
-			self.fail('%s not raised' % getattr(exccls, '__name__'))
-	unittest.TestCase.assertRaisesRegexp = assertRaisesRegexp
-
 # always custom following methods, because we use atm better version of both (support generators)
 if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
 	def assertIn(self, a, b, msg=None):
 		bb = b
 		wrap = False
-		if msg is None and hasattr(b, '__iter__') and not isinstance(b, basestring):
+		if msg is None and hasattr(b, '__iter__') and not isinstance(b, str):
 			b, bb = itertools.tee(b)
 			wrap = True
 		if a not in b:
@@ -623,7 +598,7 @@ if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
 	def assertNotIn(self, a, b, msg=None):
 		bb = b
 		wrap = False
-		if msg is None and hasattr(b, '__iter__') and not isinstance(b, basestring):
+		if msg is None and hasattr(b, '__iter__') and not isinstance(b, str):
 			b, bb = itertools.tee(b)
 			wrap = True
 		if a in b:

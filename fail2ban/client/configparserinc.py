@@ -29,49 +29,36 @@ import re
 import sys
 from ..helpers import getLogger
 
-if sys.version_info >= (3,): # pragma: 2.x no cover
+# SafeConfigParser deprecated from Python 3.2 (renamed to ConfigParser)
+from configparser import ConfigParser as SafeConfigParser, BasicInterpolation, \
+	InterpolationMissingOptionError, NoOptionError, NoSectionError
 
-	# SafeConfigParser deprecated from Python 3.2 (renamed to ConfigParser)
-	from configparser import ConfigParser as SafeConfigParser, BasicInterpolation, \
-		InterpolationMissingOptionError, NoOptionError, NoSectionError
+# And interpolation of __name__ was simply removed, thus we need to
+# decorate default interpolator to handle it
+class BasicInterpolationWithName(BasicInterpolation):
+	"""Decorator to bring __name__ interpolation back.
 
-	# And interpolation of __name__ was simply removed, thus we need to
-	# decorate default interpolator to handle it
-	class BasicInterpolationWithName(BasicInterpolation):
-		"""Decorator to bring __name__ interpolation back.
+	Original handling of __name__ was removed because of
+	functional deficiencies: http://bugs.python.org/issue10489
 
-		Original handling of __name__ was removed because of
-		functional deficiencies: http://bugs.python.org/issue10489
+	commit v3.2a4-105-g61f2761
+	Author: Lukasz Langa <lukasz@langa.pl>
+	Date:	Sun Nov 21 13:41:35 2010 +0000
 
-		commit v3.2a4-105-g61f2761
-		Author: Lukasz Langa <lukasz@langa.pl>
-		Date:	Sun Nov 21 13:41:35 2010 +0000
+	Issue #10489: removed broken `__name__` support from configparser
 
-		Issue #10489: removed broken `__name__` support from configparser
+	But should be fine to reincarnate for our use case
+	"""
+	def _interpolate_some(self, parser, option, accum, rest, section, map,
+						  *args, **kwargs):
+		if section and not (__name__ in map):
+			map = map.copy()		  # just to be safe
+			map['__name__'] = section
+			# try to wrap section options like %(section/option)s:
+			parser._map_section_options(section, option, rest, map)
+			return super(BasicInterpolationWithName, self)._interpolate_some(
+				parser, option, accum, rest, section, map, *args, **kwargs)
 
-		But should be fine to reincarnate for our use case
-		"""
-		def _interpolate_some(self, parser, option, accum, rest, section, map,
-							  *args, **kwargs):
-			if section and not (__name__ in map):
-				map = map.copy()		  # just to be safe
-				map['__name__'] = section
-				# try to wrap section options like %(section/option)s:
-				parser._map_section_options(section, option, rest, map)
-				return super(BasicInterpolationWithName, self)._interpolate_some(
-					parser, option, accum, rest, section, map, *args, **kwargs)
-
-else: # pragma: 3.x no cover
-	from ConfigParser import SafeConfigParser, \
-		InterpolationMissingOptionError, NoOptionError, NoSectionError
-
-	# Interpolate missing known/option as option from default section
-	SafeConfigParser._cp_interpolate_some = SafeConfigParser._interpolate_some
-	def _interpolate_some(self, option, accum, rest, section, map, *args, **kwargs):
-		# try to wrap section options like %(section/option)s:
-		self._map_section_options(section, option, rest, map)
-		return self._cp_interpolate_some(option, accum, rest, section, map, *args, **kwargs)
-	SafeConfigParser._interpolate_some = _interpolate_some
 
 def _expandConfFilesWithLocal(filenames):
 	"""Expands config files with local extension.
@@ -327,7 +314,7 @@ after = 1.conf
 			# mix it with defaults:
 			return set(opts.keys()) | set(self._defaults)
 		# only own option names:
-		return opts.keys()
+		return list(opts.keys())
 
 	def read(self, filenames, get_includes=True):
 		if not isinstance(filenames, list):
@@ -356,7 +343,7 @@ after = 1.conf
 					ret += i
 					# merge defaults and all sections to self:
 					alld.update(cfg.get_defaults())
-					for n, s in cfg.get_sections().iteritems():
+					for n, s in cfg.get_sections().items():
 						# conditional sections
 						cond = SafeConfigParserWithIncludes.CONDITIONAL_RE.match(n)
 						if cond:
@@ -366,14 +353,14 @@ after = 1.conf
 								del(s['__name__'])
 							except KeyError:
 								pass
-							for k in s.keys():
+							for k in list(s.keys()):
 								v = s.pop(k)
 								s[k + cond] = v
 						s2 = alls.get(n)
 						if isinstance(s2, dict):
 							# save previous known values, for possible using in local interpolations later:
 							self.merge_section('KNOWN/'+n, 
-								dict(filter(lambda i: i[0] in s, s2.iteritems())), '')
+								dict([i for i in iter(s2.items()) if i[0] in s]), '')
 							# merge section
 							s2.update(s)
 						else:
@@ -400,7 +387,7 @@ after = 1.conf
 			sec.update(options)
 			return
 		sk = {}
-		for k, v in options.iteritems():
+		for k, v in options.items():
 			if not k.startswith(pref) and k != '__name__':
 				sk[pref+k] = v
 		sec.update(sk)
