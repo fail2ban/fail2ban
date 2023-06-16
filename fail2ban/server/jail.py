@@ -26,7 +26,7 @@ __license__ = "GPL"
 import logging
 import math
 import random
-import Queue
+import queue
 
 from .actions import Actions
 from ..helpers import getLogger, _as_bool, extractOptions, MyTime
@@ -76,7 +76,7 @@ class Jail(object):
 							"might not function correctly. Please shorten"
 							% name)
 		self.__name = name
-		self.__queue = Queue.Queue()
+		self.__queue = queue.Queue()
 		self.__filter = None
 		# Extra parameters for increase ban time
 		self._banExtra = {};
@@ -127,25 +127,25 @@ class Jail(object):
 			"Failed to initialize any backend for Jail %r" % self.name)
 
 	def _initPolling(self, **kwargs):
-		from filterpoll import FilterPoll
+		from .filterpoll import FilterPoll
 		logSys.info("Jail '%s' uses poller %r" % (self.name, kwargs))
 		self.__filter = FilterPoll(self, **kwargs)
 
 	def _initGamin(self, **kwargs):
 		# Try to import gamin
-		from filtergamin import FilterGamin
+		from .filtergamin import FilterGamin
 		logSys.info("Jail '%s' uses Gamin %r" % (self.name, kwargs))
 		self.__filter = FilterGamin(self, **kwargs)
 
 	def _initPyinotify(self, **kwargs):
 		# Try to import pyinotify
-		from filterpyinotify import FilterPyinotify
+		from .filterpyinotify import FilterPyinotify
 		logSys.info("Jail '%s' uses pyinotify %r" % (self.name, kwargs))
 		self.__filter = FilterPyinotify(self, **kwargs)
 
 	def _initSystemd(self, **kwargs): # pragma: systemd no cover
 		# Try to import systemd
-		from filtersystemd import FilterSystemd
+		from .filtersystemd import FilterSystemd
 		logSys.info("Jail '%s' uses systemd %r" % (self.name, kwargs))
 		self.__filter = FilterSystemd(self, **kwargs)
 
@@ -219,7 +219,7 @@ class Jail(object):
 		try:
 			ticket = self.__queue.get(False)
 			return ticket
-		except Queue.Empty:
+		except queue.Empty:
 			return False
 
 	def setBanTimeExtra(self, opt, value):

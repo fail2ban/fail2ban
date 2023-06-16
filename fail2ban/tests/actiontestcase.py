@@ -242,14 +242,14 @@ class CommandActionTest(LogCaptureTestCase):
 		setattr(self.__action, 'ab', "<ac>")
 		setattr(self.__action, 'x?family=inet6', "")
 		# produce self-referencing properties except:
-		self.assertRaisesRegexp(ValueError, r"properties contain self referencing definitions",
+		self.assertRaisesRegex(ValueError, r"properties contain self referencing definitions",
 			lambda: self.__action.replaceTag("<a><b>", 
 				self.__action._properties, conditional="family=inet4")
 		)
 		# remore self-referencing in props:
 		delattr(self.__action, 'ac')
 		# produce self-referencing query except:
-		self.assertRaisesRegexp(ValueError, r"possible self referencing definitions in query",
+		self.assertRaisesRegex(ValueError, r"possible self referencing definitions in query",
 			lambda: self.__action.replaceTag("<x"*30+">"*30,
 				self.__action._properties, conditional="family=inet6")
 		)

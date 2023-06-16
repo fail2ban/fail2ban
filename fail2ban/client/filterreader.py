@@ -71,7 +71,7 @@ class FilterReader(DefinitionInitConfigReader):
 	@staticmethod
 	def _fillStream(stream, opts, jailName):
 		prio0idx = 0
-		for opt, value in opts.iteritems():
+		for opt, value in opts.items():
 			# Do not send a command if the value is not set (empty).
 			if value is None: continue
 			if opt in ("failregex", "ignoreregex"):

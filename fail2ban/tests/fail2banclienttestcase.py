@@ -367,10 +367,10 @@ def with_foreground_server_thread(startextra={}):
 				# several commands to server in body of decorated function:
 				return f(self, tmp, startparams, *args, **kwargs)
 			except Exception as e: # pragma: no cover
-				print('=== Catch an exception: %s' % e)
+				print(('=== Catch an exception: %s' % e))
 				log = self.getLog()
 				if log:
-					print('=== Error of server, log: ===\n%s===' % log)
+					print(('=== Error of server, log: ===\n%s===' % log))
 					self.pruneLog()
 				raise
 			finally:
@@ -440,7 +440,7 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 					)
 		except:  # pragma: no cover
 			if _inherited_log(startparams):
-				print('=== Error by wait fot server, log: ===\n%s===' % self.getLog())
+				print(('=== Error by wait fot server, log: ===\n%s===' % self.getLog()))
 				self.pruneLog()
 			log = pjoin(tmp, "f2b.log")
 			if isfile(log):
@@ -1702,6 +1702,6 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			self.stopAndWaitForServerEnd(SUCCESS)
 
 		def testServerStartStop(self):
-			for i in xrange(2000):
+			for i in range(2000):
 				self._testServerStartStop()
 

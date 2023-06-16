@@ -153,7 +153,7 @@ class Socket(LogCaptureTestCase):
 		org_handler = RequestHandler.found_terminator
 		try:
 			RequestHandler.found_terminator = lambda self: self.close()
-			self.assertRaisesRegexp(Exception, r"reset by peer|Broken pipe",
+			self.assertRaisesRegex(Exception, r"reset by peer|Broken pipe",
 				lambda: client.send(testMessage, timeout=unittest.F2B.maxWaitTime(10)))
 		finally:
 			RequestHandler.found_terminator = org_handler
