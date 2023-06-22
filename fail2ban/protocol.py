@@ -105,7 +105,7 @@ protocol = [
 ["set <JAIL> usedns <VALUE>", "sets the usedns mode for <JAIL>"],
 ["set <JAIL> attempt <IP> [<failure1> ... <failureN>]", "manually notify about <IP> failure"], 
 ["set <JAIL> banip <IP> ... <IP>", "manually Ban <IP> for <JAIL>"], 
-["set <JAIL> unbanip [--report-absent] <IP> ... <IP>", "manually Unban <IP> in <JAIL>"], 
+["set <JAIL> unbanip [--report-absent] [--expr] <IP> ... <IP>", "manually Unban <IP> in <JAIL>"], 
 ["set <JAIL> maxretry <RETRY>", "sets the number of failures <RETRY> before banning the host for <JAIL>"], 
 ["set <JAIL> maxmatches <INT>", "sets the max number of matches stored in memory per ticket in <JAIL>"], 
 ["set <JAIL> maxlines <LINES>", "sets the number of <LINES> to buffer for regex search for <JAIL>"], 

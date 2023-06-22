@@ -31,6 +31,7 @@ import os
 import signal
 import stat
 import sys
+from ast import literal_eval
 
 from .observer import Observers, ObserverThread
 from .jails import Jails
@@ -528,18 +529,26 @@ class Server:
 	def setBanIP(self, name, value):
 		return self.__jails[name].actions.addBannedIP(value)
 
-	def setUnbanIP(self, name=None, value=None, ifexists=True):
+	def setUnbanIP(self, name=None, values=None, ifexists=True, ifexpr=False):
+		def parseExpr(v):
+			try:
+				return literal_eval(v)
+			except SyntaxError:
+				return v
 		if name is not None:
 			# single jail:
 			jails = [self.__jails[name]]
 		else:
 			# in all jails:
 			jails = list(self.__jails.values())
-		# unban given or all (if value is None):
+		# parse values if it contains an expression
+		if values and ifexpr:
+			values = map(parseExpr, values)
+		# unban given or all (if values is None):
 		cnt = 0
 		ifexists |= (name is None)
 		for jail in jails:
-			cnt += jail.actions.removeBannedIP(value, ifexists=ifexists)
+			cnt += jail.actions.removeMultiBannedIP(values, ifexists=ifexists)
 		return cnt
 		
 	def banned(self, name=None, ids=None):

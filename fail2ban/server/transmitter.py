@@ -363,13 +363,17 @@ class Transmitter:
 			value = command[2:]
 			return self.__server.setBanIP(name,value)
 		elif command[1] == "unbanip":
+			ifexpr = False
 			ifexists = True
-			if command[2] != "--report-absent":
-				value = command[2:]
-			else:
+			offset = 2
+			if "--report-absent" in command:
 				ifexists = False
-				value = command[3:]
-			return self.__server.setUnbanIP(name, value, ifexists=ifexists)
+				offset += 1
+			if "--expr" in command:
+				ifexpr = True
+				offset += 1
+			value = command[offset:]
+			return self.__server.setUnbanIP(name, value, ifexists=ifexists, ifexpr=ifexpr)
 		elif command[1] == "addaction":
 			args = [command[2]]
 			if len(command) > 3:

@@ -242,6 +242,33 @@ class Actions(JailThread, Mapping):
 
 		return self.__checkBan(tickets)
 
+	def removeMultiBannedIP(self, ips=None, db=True, ifexists=False):
+		"""Removes multiple banned IPs calling actions' unban method
+
+		Parameters
+		----------
+		ip : list, tuple or None
+			The IPs as list to unban or all IPs if None
+
+		Raises
+		------
+		ValueError
+			If at least one `ip` is not banned
+		"""
+		if ips is None:
+			return self.__flushBan(db)
+		missed = []
+		cnt = 0
+		for ip in ips:
+			try:
+				cnt += self.removeBannedIP(ip, db, ifexists)
+			except ValueError:
+				if not ifexists:
+					missed.append(ip)
+		if missed:
+			raise ValueError("not banned: %r" % missed)
+		return cnt
+
 	def removeBannedIP(self, ip=None, db=True, ifexists=False):
 		"""Removes banned IP calling actions' unban method
 
@@ -250,8 +277,8 @@ class Actions(JailThread, Mapping):
 
 		Parameters
 		----------
-		ip : list, str, IPAddr or None
-			The IP address (or multiple IPs as list) to unban or all IPs if None
+		ip : str, IPAddr, TUPLE_ID representation (tuple/list) or None
+			The ID to unban or all IPs if None
 
 		Raises
 		------
@@ -261,26 +288,6 @@ class Actions(JailThread, Mapping):
 		# Unban all?
 		if ip is None:
 			return self.__flushBan(db)
-		# Multiple IPs:
-		if isinstance(ip, (list, tuple)):
-			missed = []
-			cnt = 0
-			for i in ip:
-				try:
-					cnt += self.removeBannedIP(i, db, ifexists)
-				except ValueError:
-					if not ifexists:
-						missed.append(i)
-			if missed:
-				raise ValueError("not banned: %r" % missed)
-			return cnt
-		# IPs can be represented in string format (e.g.: tuples)
-		is_ip_parsed = True
-		if isinstance(ip, str):
-			try:
-				ip = eval(ip)
-			except Exception:
-				is_ip_parsed = False
 		# Single IP:
 		# Always delete ip from database (also if currently not banned)
 		if db and self._jail.database is not None:
@@ -292,12 +299,12 @@ class Actions(JailThread, Mapping):
 			self.__unBan(ticket)
 		else:
 			# Multiple IPs by subnet or dns:
-			if not is_ip_parsed and not isinstance(ip, IPAddr):
+			if not isinstance(ip, (IPAddr, tuple, list)):
 				ipa = IPAddr(ip)
 				if not ipa.isSingle: # subnet (mask/cidr) or raw (may be dns/hostname):
 					ips = list(filter(ipa.contains, self.banManager.getBanList()))
 					if ips:
-						return self.removeBannedIP(ips, db, ifexists)
+						return self.removeMultiBannedIP(ips, db, ifexists)
 			# not found:
 			msg = "%s is not banned" % str(ip)
 			logSys.log(logging.MSG, msg)
