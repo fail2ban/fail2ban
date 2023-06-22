@@ -24,14 +24,14 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import threading
-from threading import Lock, RLock
+from ast import literal_eval
 import logging
 import os
 import signal
 import stat
 import sys
-from ast import literal_eval
+import threading
+from threading import Lock, RLock
 
 from .observer import Observers, ObserverThread
 from .jails import Jails
@@ -529,7 +529,7 @@ class Server:
 	def setBanIP(self, name, value):
 		return self.__jails[name].actions.addBannedIP(value)
 
-	def setUnbanIP(self, name=None, values=None, ifexists=True, ifexpr=False):
+	def setUnbanIP(self, name=None, values=None, ifexists=True, isexpr=False):
 		def parseExpr(v):
 			try:
 				return literal_eval(v)
@@ -542,7 +542,7 @@ class Server:
 			# in all jails:
 			jails = list(self.__jails.values())
 		# parse values if it contains an expression
-		if values and ifexpr:
+		if values and isexpr:
 			values = map(parseExpr, values)
 		# unban given or all (if values is None):
 		cnt = 0

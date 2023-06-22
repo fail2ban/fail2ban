@@ -24,6 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import getopt
 import time
 import json
 
@@ -113,11 +114,12 @@ class Transmitter:
 			return 'OK'
 		elif name == "unban" and len(command) >= 2:
 			# unban in all jails:
-			value = command[1:]
+			opts, value = getopt.getopt(command[1:], "", ["expr", "all"])
+			opts = dict(opts)
 			# if all ips:
-			if len(value) == 1 and value[0] == "--all":
+			if "--all" in opts:
 				return self.__server.setUnbanIP()
-			return self.__server.setUnbanIP(None, value)
+			return self.__server.setUnbanIP(None, value, isexpr=("--expr" in opts))
 		elif name == "banned":
 			# check IP is banned in all jails:
 			return self.__server.banned(None, command[1:])
@@ -363,17 +365,10 @@ class Transmitter:
 			value = command[2:]
 			return self.__server.setBanIP(name,value)
 		elif command[1] == "unbanip":
-			ifexpr = False
-			ifexists = True
-			offset = 2
-			if "--report-absent" in command:
-				ifexists = False
-				offset += 1
-			if "--expr" in command:
-				ifexpr = True
-				offset += 1
-			value = command[offset:]
-			return self.__server.setUnbanIP(name, value, ifexists=ifexists, ifexpr=ifexpr)
+			opts, value = getopt.getopt(command[2:], "", ["expr", "report-absent"])
+			opts = dict(opts)
+			return self.__server.setUnbanIP(name, value,
+				ifexists=("--report-absent" not in opts), isexpr=("--expr" in opts))
 		elif command[1] == "addaction":
 			args = [command[2]]
 			if len(command) > 3:
