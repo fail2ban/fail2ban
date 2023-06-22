@@ -372,8 +372,13 @@ class Transmitter(TransmitterBase):
 		# ... (no error, IPs logged only):
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "unbanip", "192.0.2.255", "192.0.2.254"]),(0, 0))
+				["set", self.jailName, "unbanip", "--", "192.0.2.255", "192.0.2.254"]),(0, 0))
 		self.assertLogged("192.0.2.255 is not banned", "192.0.2.254 is not banned", all=True, wait=True)
+		# tuple ID:
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "unbanip", "--expr", "(1,2,3)"]),(0, 0))
+		self.assertLogged("%r is not banned" % ((1,2,3),), wait=True)
 
 	def testJailAttemptIP(self):
 		self.server.startJail(self.jailName) # Jail must be started
