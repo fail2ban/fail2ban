@@ -295,7 +295,7 @@ class Jail(object):
 				):
 					try:
 						#logSys.debug('restored ticket: %s', ticket)
-						if self.filter.inIgnoreIPList(ticket.getID(), log_ignore=True): continue
+						if self.filter.inIgnoreIPList(ticket, log_ignore=True): continue
 						# mark ticked was restored from database - does not put it again into db:
 						ticket.restored = True
 						# correct start time / ban time (by the same end of ban):
