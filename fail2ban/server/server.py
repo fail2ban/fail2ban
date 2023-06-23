@@ -24,7 +24,6 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from ast import literal_eval
 import logging
 import os
 import signal
@@ -523,27 +522,19 @@ class Server:
 	def setBanTime(self, name, value):
 		self.__jails[name].actions.setBanTime(value)
 	
-	def addAttemptIP(self, name, *args):
-		return self.__jails[name].filter.addAttempt(*args)
+	def addAttemptIP(self, name, ip, failures):
+		return self.__jails[name].filter.addAttempt(ip, *failures)
 
 	def setBanIP(self, name, value):
 		return self.__jails[name].actions.addBannedIP(value)
 
-	def setUnbanIP(self, name=None, values=None, ifexists=True, isexpr=False):
-		def parseExpr(v):
-			try:
-				return literal_eval(v)
-			except SyntaxError:
-				return v
+	def setUnbanIP(self, name=None, values=None, ifexists=True):
 		if name is not None:
 			# single jail:
 			jails = [self.__jails[name]]
 		else:
 			# in all jails:
 			jails = list(self.__jails.values())
-		# parse values if it contains an expression
-		if values and isexpr:
-			values = map(parseExpr, values)
 		# unban given or all (if values is None):
 		cnt = 0
 		ifexists |= (name is None)
@@ -572,7 +563,6 @@ class Server:
 				ret = jail.actions.getBanned(ids)
 				if name is not None:
 					return ret
-					res.append(ret)
 				else:
 					res.append({jail.name: ret})
 		return res
