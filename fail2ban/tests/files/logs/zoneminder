@@ -1,3 +1,15 @@
+ZM >1.35 Succesful login attemp
+
+2023/06/25 05:36:32.232620 web_php[2716946].INF [127.0.0.1] [Login successful for user "test-user1"] at /usr/share/zoneminder/www/api/app/Controller/AppController.php line 86
+
+ZM >1.35 Failed login
+
+2023/06/25 10:32:02.778987 web_php[2958965].ERR [127.0.0.1] [Could not retrieve user test-user2 details] at /usr/share/zoneminder/www/includes/auth.php line 322
+2023/06/25 10:32:57.008059 web_php[2717014].ERR [127.0.0.1] [Could not retrieve user test-uset2 details] at /usr/share/zoneminder/www/includes/auth.php line 322
+
+
+ZM <1.35 Logs
+
 # failJSON: { "time": "2016-03-28T16:50:49", "match": true , "host": "10.1.1.1" }
 [Mon Mar 28 16:50:49.522240 2016] [:error] [pid 1795] [client 10.1.1.1:50700] WAR [Login denied for user "username1"], referer: https://zoneminder/
 
