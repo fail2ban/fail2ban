@@ -205,19 +205,19 @@ class TestsUtilsTest(LogCaptureTestCase):
 				self.err = err
 			def __repr__(self):
 				if self.err:
-					raise Exception('no represenation for test!')
+					raise Exception('no representation for test!')
 				else:
 					return 'conv-error (\xf2\xf0\xe5\xf2\xe8\xe9), unterminated utf \xcf'
 		test = Test()
 		logSys.log(logging.NOTICE, "test 1a: %r", test)
-		self.assertLogged("Traceback", "no represenation for test!")
+		self.assertLogged("Traceback", "no representation for test!")
 		self.pruneLog()
 		logSys.notice("test 1b: %r", test)
-		self.assertLogged("Traceback", "no represenation for test!")
+		self.assertLogged("Traceback", "no representation for test!")
 
 		self.pruneLog('[phase 2] test error conversion by encoding %s' % sys.getdefaultencoding())
 		test = Test(0)
-		# this may produce coversion error on ascii default encoding:
+		# this may produce conversion error on ascii default encoding:
 		#str(test)
 		logSys.log(logging.NOTICE, "test 2a: %r, %s", test, test)
 		self.assertLogged("test 2a", "Error by logging handler", all=False)
@@ -443,7 +443,7 @@ class MyTimeTest(unittest.TestCase):
 		self.assertEqual(str2sec('2yy 3mo 4ww 10dd 5hh 30mm 20ss'), 74307620)
 		self.assertEqual(str2sec('2 years 3 months 4 weeks 10 days 5 hours 30 minutes 20 seconds'), 74307620)
 		self.assertEqual(str2sec('1 year + 1 month - 1 week + 1 day'), 33669000)
-		self.assertEqual(str2sec('2 * 0.5 yea + 1*1 mon - 3*1/3 wee + 2/2 day - (2*12 hou 3*20 min 80 sec) '), 33578920.0)
+		self.assertEqual(str2sec('2 * 0.5 yea + 1*1 mon - 3*1/3 we + 2/2 day - (2*12 hou 3*20 min 80 sec) '), 33578920.0)
 		self.assertEqual(str2sec('2*.5y+1*1mo-3*1/3w+2/2d-(2*12h3*20m80s) '), 33578920.0)
 		self.assertEqual(str2sec('1ye -2mo -3we -4da -5ho -6mi -7se'), 24119633)
 		# month and year in days :

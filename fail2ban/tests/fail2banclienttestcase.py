@@ -440,7 +440,7 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 					)
 		except:  # pragma: no cover
 			if _inherited_log(startparams):
-				print(('=== Error by wait fot server, log: ===\n%s===' % self.getLog()))
+				print(('=== Error by wait for server, log: ===\n%s===' % self.getLog()))
 				self.pruneLog()
 			log = pjoin(tmp, "f2b.log")
 			if isfile(log):
@@ -859,8 +859,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# Very complicated test-case, that expected running server (foreground in thread).
 		#
 		# In this test-case, each phase is related from previous one, 
-		# so it cannot be splitted in multiple test cases.
-		# Additionaly many log-messages used as ready-sign (to wait for end of phase).
+		# so it cannot be split in multiple test cases.
+		# Additionally many log-messages used as ready-sign (to wait for end of phase).
 		#
 		# Used file database (instead of :memory:), to restore bans and log-file positions,
 		# after restart/reload between phases.

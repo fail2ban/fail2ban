@@ -69,7 +69,7 @@ def debuggexURL(sample, regex, multiline=False, useDns="yes"):
 	if multiline: args['flags'] = 'm'
 	return 'https://www.debuggex.com/?' + urllib.parse.urlencode(args)
 
-def output(args): # pragma: no cover (overriden in test-cases)
+def output(args): # pragma: no cover (overridden in test-cases)
 	print(args)
 
 def shortstr(s, l=53):
@@ -280,7 +280,7 @@ class Fail2banRegex(object):
 			self._filter.setUseDns(opts.usedns)
 		self._filter.returnRawHost = opts.raw
 		self._filter.checkAllRegex = opts.checkAllRegex and not opts.out
-		# ignore pending (without ID/IP), added to matches if it hits later (if ID/IP can be retreved)
+		# ignore pending (without ID/IP), added to matches if it hits later (if ID/IP can be retrieved)
 		self._filter.ignorePending = bool(opts.out)
 		# callback to increment ignored RE's by index (during process):
 		self._filter.onIgnoreRegex = self._onIgnoreRegex
@@ -476,7 +476,7 @@ class Fail2banRegex(object):
 					ret.append(match)
 				else:
 					is_ignored = True
-			if self._opts.out: # (formated) output - don't need stats:
+			if self._opts.out: # (formatted) output - don't need stats:
 				return None, ret, None
 			# prefregex stats:
 			if self._filter.prefRegex:
@@ -595,7 +595,7 @@ class Fail2banRegex(object):
 					continue
 				line_datetimestripped, ret, is_ignored = self.testRegex(line)
 
-			if self._opts.out: # (formated) output:
+			if self._opts.out: # (formatted) output:
 				if len(ret) > 0 and not is_ignored: out(ret)
 				continue
 

@@ -670,7 +670,7 @@ class Actions(JailThread, Mapping):
 					action.consistencyCheck(_beforeRepair)
 					continue
 			# fallback to single unbans:
-			logSys.debug("  Unban tickets each individualy")
+			logSys.debug("  Unban tickets each individually")
 			unbactions[name] = action
 		actions = unbactions
 		# flush the database also:

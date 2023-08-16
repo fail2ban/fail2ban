@@ -552,7 +552,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertNotLogged('failure from == 192.0.2.4 ==')
 
 	def testWrongFilterFile(self):
-		# use test log as filter file to cover eror cases...
+		# use test log as filter file to cover error cases...
 		self.assertFalse(_test_exec(
 			FILENAME_ZZZ_GEN, FILENAME_ZZZ_GEN
 		))

@@ -337,7 +337,7 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertTrue(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
 		stream = jail.convert()
-		# check filter options are overriden with values specified directly in jail:
+		# check filter options are overridden with values specified directly in jail:
 		# prefregex:
 		self.assertEqual([['set', 'sshd-override-flt-opts', 'prefregex', '^Test']],
 			[o for o in stream if len(o) > 2 and o[2] == 'prefregex'])
@@ -563,9 +563,9 @@ class FilterReaderTest(LogCaptureTestCase):
 		self.assertNotEqual(opts['maxlines'], 'X'); # wrong int value 'X' for 'maxlines'
 		self.assertLogged("Wrong int value 'X' for 'maxlines'. Using default one:")
 
-	def testFilterReaderSubstitionDefault(self):
+	def testFilterReaderSubstitutionDefault(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sweet@example.com fromip=<IP>']]
-		filterReader = FilterReader('substition', "jailname", {},
+		filterReader = FilterReader('substitution', "jailname", {},
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
@@ -583,46 +583,46 @@ class FilterReaderTest(LogCaptureTestCase):
 		opts = filterReader.getCombined()
 		self.assertTrue('sshd' in opts['failregex'])
 		
-	def testFilterReaderSubstitionSet(self):
+	def testFilterReaderSubstitutionSet(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sour@example.com fromip=<IP>']]
-		filterReader = FilterReader('substition', "jailname", {'honeypot': 'sour@example.com'},
+		filterReader = FilterReader('substitution', "jailname", {'honeypot': 'sour@example.com'},
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
 		c = filterReader.convert()
 		self.assertSortedEqual(c, output)
 
-	def testFilterReaderSubstitionKnown(self):
+	def testFilterReaderSubstitutionKnown(self):
 		output = [['set', 'jailname', 'addfailregex', '^to=test,sweet@example.com,test2,sweet@example.com fromip=<IP>$']]
 		filterName, filterOpt = extractOptions(
-			'substition[failregex="^<known/failregex>$", honeypot="<sweet>,<known/honeypot>", sweet="test,<known/honeypot>,test2"]')
-		filterReader = FilterReader('substition', "jailname", filterOpt,
+			'substitution[failregex="^<known/failregex>$", honeypot="<sweet>,<known/honeypot>", sweet="test,<known/honeypot>,test2"]')
+		filterReader = FilterReader('substitution', "jailname", filterOpt,
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
 		c = filterReader.convert()
 		self.assertSortedEqual(c, output)
 
-	def testFilterReaderSubstitionSection(self):
+	def testFilterReaderSubstitutionSection(self):
 		output = [['set', 'jailname', 'addfailregex', '^\\s*to=fail2ban@localhost fromip=<IP>\\s*$']]
 		filterName, filterOpt = extractOptions(
-			'substition[failregex="^\\s*<Definition/failregex>\\s*$", honeypot="<default/honeypot>"]')
-		filterReader = FilterReader('substition', "jailname", filterOpt,
+			'substitution[failregex="^\\s*<Definition/failregex>\\s*$", honeypot="<default/honeypot>"]')
+		filterReader = FilterReader('substitution', "jailname", filterOpt,
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
 		c = filterReader.convert()
 		self.assertSortedEqual(c, output)
 
-	def testFilterReaderSubstitionFail(self):
+	def testFilterReaderSubstitutionFail(self):
 		# directly subst the same var :
-		filterReader = FilterReader('substition', "jailname", {'honeypot': '<honeypot>'},
+		filterReader = FilterReader('substitution', "jailname", {'honeypot': '<honeypot>'},
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
 		self.assertRaises(ValueError, FilterReader.convert, filterReader)
 		# cross subst the same var :
-		filterReader = FilterReader('substition', "jailname", {'honeypot': '<sweet>', 'sweet': '<honeypot>'},
+		filterReader = FilterReader('substitution', "jailname", {'honeypot': '<sweet>', 'sweet': '<honeypot>'},
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)

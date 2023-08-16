@@ -230,7 +230,7 @@ class ClientMisc(LogCaptureTestCase):
 		def _poll(*args):
 			phase['cntr'] += 1
 			raise Exception('test *%d*' % phase['cntr'])
-		# test errors "catched" and logged:
+		# test errors "caught" and logged:
 		loop(_active, use_poll=_poll)
 		self.assertLogged("test *1*", "test *10*", "test *20*", all=True)
 		self.assertLogged("Too many errors - stop logging connection errors")
