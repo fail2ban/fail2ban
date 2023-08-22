@@ -284,7 +284,7 @@ def splitwords(s):
 	"""
 	if not s:
 		return []
-	return list(filter(bool, [v.strip() for v in re.split('[ ,\n]+', s)]))
+	return list(filter(bool, [v.strip() for v in re.split('[\s,]+', s)]))
 
 def _merge_dicts(x, y):
 	"""Helper to merge dicts.

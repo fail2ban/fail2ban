@@ -66,8 +66,7 @@ class HelpersTest(unittest.TestCase):
 		self.assertEqual(splitwords(' 1, 2 , '), ['1', '2'])
 		self.assertEqual(splitwords(' 1\n  2'), ['1', '2'])
 		self.assertEqual(splitwords(' 1\n  2, 3'), ['1', '2', '3'])
-		# string as unicode:
-		self.assertEqual(splitwords(' 1\n  2, 3'), ['1', '2', '3'])
+		self.assertEqual(splitwords('\t1\t  2,\r\n 3\n'), ['1', '2', '3']); # other spaces
 
 
 def _sh_call(cmd):
