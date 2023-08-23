@@ -664,7 +664,7 @@ class IPAddr(object):
 		if not match:
 			return None
 		ipstr = match.group('IPv4')
-		if ipstr != '':
+		if ipstr is not None and ipstr != '':
 			return ipstr
 		return match.group('IPv6')
 
