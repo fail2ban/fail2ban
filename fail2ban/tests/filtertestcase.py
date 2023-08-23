@@ -1889,7 +1889,7 @@ class GetFailures(LogCaptureTestCase):
 			_killfile(fout, fname)
 
 	def testGetFailuresUseDNS(self):
-		unittest.F2B.SkipIfNoNetwork()
+		#unittest.F2B.SkipIfNoNetwork() ## without network it is simulated via cache in utils.
 		# We should still catch failures with usedns = no ;-)
 		output_yes = (
 			('93.184.216.34', 1, 1124013299.0,
@@ -1902,6 +1902,8 @@ class GetFailures(LogCaptureTestCase):
 			  ['Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2']
 			),
 		)
+		if not unittest.F2B.no_network and not DNSUtils.IPv6IsAllowed():
+			output_yes = output_yes[0:2]
 
 		output_no = (
 			('93.184.216.34', 1, 1124013539.0,
@@ -2096,6 +2098,12 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		super(DNSUtilsNetworkTests, self).setUp()
 		#unittest.F2B.SkipIfNoNetwork()
 
+	## example.com IPs considering IPv6 support (without network it is simulated via cache in utils).
+	EXAMPLE_ADDRS = (
+		['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'] if unittest.F2B.no_network or DNSUtils.IPv6IsAllowed() else \
+		['93.184.216.34']
+	)
+
 	def test_IPAddr(self):
 		ip4 = IPAddr('192.0.2.1')
 		ip6 = IPAddr('2001:DB8::')
@@ -2157,16 +2165,16 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 	def testUseDns(self):
 		res = DNSUtils.textToIp('www.example.com', 'no')
 		self.assertSortedEqual(res, [])
-		#unittest.F2B.SkipIfNoNetwork()
+		#unittest.F2B.SkipIfNoNetwork() ## without network it is simulated via cache in utils.
 		res = DNSUtils.textToIp('www.example.com', 'warn')
 		# sort ipaddr, IPv4 is always smaller as IPv6
-		self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
+		self.assertSortedEqual(res, self.EXAMPLE_ADDRS)
 		res = DNSUtils.textToIp('www.example.com', 'yes')
 		# sort ipaddr, IPv4 is always smaller as IPv6
-		self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
+		self.assertSortedEqual(res, self.EXAMPLE_ADDRS)
 
 	def testTextToIp(self):
-		#unittest.F2B.SkipIfNoNetwork()
+		#unittest.F2B.SkipIfNoNetwork() ## without network it is simulated via cache in utils.
 		# Test hostnames
 		hostnames = [
 			'www.example.com',
@@ -2177,13 +2185,14 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 			res = DNSUtils.textToIp(s, 'yes')
 			if s == 'www.example.com':
 				# sort ipaddr, IPv4 is always smaller as IPv6
-				self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
+				self.assertSortedEqual(res, self.EXAMPLE_ADDRS)
 			else:
 				self.assertSortedEqual(res, [])
 
 	def testIpToIp(self):
 		# pure ips:
-		for s in ('93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'):
+		for s in self.EXAMPLE_ADDRS:
+			#if DNSUtils.IPv6IsAllowed(): continue
 			ips = DNSUtils.textToIp(s, 'yes')
 			self.assertSortedEqual(ips, [s])
 			for ip in ips:
@@ -2353,10 +2362,11 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		)
 
 	def testIPAddr_CompareDNS(self):
-		#unittest.F2B.SkipIfNoNetwork()
+		#unittest.F2B.SkipIfNoNetwork() ## without network it is simulated via cache in utils.
 		ips = IPAddr('example.com')
 		self.assertTrue(IPAddr("93.184.216.34").isInNet(ips))
-		self.assertTrue(IPAddr("2606:2800:220:1:248:1893:25c8:1946").isInNet(ips))
+		self.assertEqual(IPAddr("2606:2800:220:1:248:1893:25c8:1946").isInNet(ips),
+		                        "2606:2800:220:1:248:1893:25c8:1946" in self.EXAMPLE_ADDRS)
 
 	def testIPAddr_wrongDNS_IP(self):
 		unittest.F2B.SkipIfNoNetwork()
