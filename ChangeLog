@@ -13,6 +13,7 @@ ver. 1.0.3-dev-1 (20??/??/??) - development nightly edition
 ### Fixes
 * circumvent SEGFAULT in a python's socket module by getaddrinfo with disabled IPv6 (gh-3438)
 * `action.d/cloudflare-token.conf` - fixes gh-3479, url-encode args by unban
+* `action.d/*ipset*`: make `maxelem` ipset option configurable through banaction arguments (gh-3564)
 
 ### New Features and Enhancements
 * better auto-detection for IPv6 support (`allowipv6 = auto` by default), trying to check sysctl net.ipv6.conf.all.disable_ipv6
