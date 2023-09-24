@@ -49,7 +49,7 @@ Preparation
 
   ad-hoc bash script to run in a clean clone:
 
-     find -type f | grep -v -e '\.git' -e '/doc/' -e '\.travis' -e MANIFEST | sed -e 's,^\./,,g' | while read f; do grep -ne "^$f\$" MANIFEST >/dev/null || echo "$f" ; done
+     find -type f | grep -v -e '\.git' -e '/doc/' -e MANIFEST | sed -e 's,^\./,,g' | while read f; do grep -ne "^$f\$" MANIFEST >/dev/null || echo "$f" ; done
 
   or an alternative for comparison with previous release
 
