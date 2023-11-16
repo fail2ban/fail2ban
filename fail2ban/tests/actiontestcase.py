@@ -70,7 +70,7 @@ class CommandActionTest(LogCaptureTestCase):
 			lambda: substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
 		self.assertRaises(ValueError,
 			lambda: substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
-		# Unresolveable substition
+		# Unresolveable substitution
 		self.assertRaises(ValueError,
 			lambda: substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
 		self.assertRaises(ValueError,
