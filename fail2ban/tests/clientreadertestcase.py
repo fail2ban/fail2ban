@@ -337,7 +337,7 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertTrue(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
 		stream = jail.convert()
-		# check filter options are overriden with values specified directly in jail:
+		# check filter options are overridden with values specified directly in jail:
 		# prefregex:
 		self.assertEqual([['set', 'sshd-override-flt-opts', 'prefregex', '^Test']],
 			[o for o in stream if len(o) > 2 and o[2] == 'prefregex'])

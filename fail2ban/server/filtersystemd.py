@@ -344,7 +344,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 							except OSError:
 								pass
 				if self.idle:
-					# because journal.wait will returns immediatelly if we have records in journal,
+					# because journal.wait will returns immediately if we have records in journal,
 					# just wait a little bit here for not idle, to prevent hi-load:
 					if not Utils.wait_for(lambda: not self.active or not self.idle, 
 						self.sleeptime * 10, self.sleeptime
@@ -434,7 +434,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		return ret
 
 	def _updateDBPending(self):
-		"""Apply pending updates (jornal position) to database.
+		"""Apply pending updates (journal position) to database.
 		"""
 		db = self.jail.database
 		while True:

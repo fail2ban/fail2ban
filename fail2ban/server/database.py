@@ -104,7 +104,7 @@ class Fail2BanDb(object):
 	sqlite3.OperationalError
 		Error connecting/creating a SQLite3 database.
 	RuntimeError
-		If exisiting database fails to update to new schema.
+		If existing database fails to update to new schema.
 
 	Attributes
 	----------
@@ -494,7 +494,7 @@ class Fail2BanDb(object):
 		Parameters
 		----------
 		jail : Jail
-			If specified, will only reutrn logs belonging to the jail.
+			If specified, will only return logs belonging to the jail.
 
 		Returns
 		-------

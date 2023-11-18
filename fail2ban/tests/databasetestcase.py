@@ -127,7 +127,7 @@ class DatabaseTest(LogCaptureTestCase):
 			self.pruneLog("[test-repair], next phase - file-size: %d" % truncSize)
 			shutil.copyfile(
 				os.path.join(TEST_FILES_DIR, 'database_v1.db'), self.dbFilename)
-			# produce currupt database:
+			# produce corrupt database:
 			f = os.open(self.dbFilename, os.O_RDWR)
 			os.ftruncate(f, truncSize)
 			os.close(f)

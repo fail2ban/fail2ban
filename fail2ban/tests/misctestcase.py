@@ -205,19 +205,19 @@ class TestsUtilsTest(LogCaptureTestCase):
 				self.err = err
 			def __repr__(self):
 				if self.err:
-					raise Exception('no represenation for test!')
+					raise Exception('no representation for test!')
 				else:
 					return 'conv-error (\xf2\xf0\xe5\xf2\xe8\xe9), unterminated utf \xcf'
 		test = Test()
 		logSys.log(logging.NOTICE, "test 1a: %r", test)
-		self.assertLogged("Traceback", "no represenation for test!")
+		self.assertLogged("Traceback", "no representation for test!")
 		self.pruneLog()
 		logSys.notice("test 1b: %r", test)
-		self.assertLogged("Traceback", "no represenation for test!")
+		self.assertLogged("Traceback", "no representation for test!")
 
 		self.pruneLog('[phase 2] test error conversion by encoding %s' % sys.getdefaultencoding())
 		test = Test(0)
-		# this may produce coversion error on ascii default encoding:
+		# this may produce conversion error on ascii default encoding:
 		#str(test)
 		logSys.log(logging.NOTICE, "test 2a: %r, %s", test, test)
 		self.assertLogged("test 2a", "Error by logging handler", all=False)

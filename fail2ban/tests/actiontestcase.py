@@ -246,7 +246,7 @@ class CommandActionTest(LogCaptureTestCase):
 			lambda: self.__action.replaceTag("<a><b>", 
 				self.__action._properties, conditional="family=inet4")
 		)
-		# remore self-referencing in props:
+		# remote self-referencing in props:
 		delattr(self.__action, 'ac')
 		# produce self-referencing query except:
 		self.assertRaisesRegex(ValueError, r"possible self referencing definitions in query",
@@ -276,7 +276,7 @@ class CommandActionTest(LogCaptureTestCase):
 					conditional="family=inet6", cache=cache),
 				"Text 890-567 text 567 '567'")
 		self.assertTrue(len(cache) >= 3)
-		# set one parameter - internal properties and cache should be reseted:
+		# set one parameter - internal properties and cache should be reset:
 		setattr(self.__action, 'xyz', "000-<abc>")
 		self.assertEqual(len(cache), 0)
 		# test againg, should have 000 instead of 890:
