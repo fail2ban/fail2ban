@@ -14,7 +14,6 @@ extend-ignore-re = [
     "\t[0-9.-]+[ A-Z]+",
     "Erreur d'authentification",
     "WebEMailExtrac",
-    "s1NED81M017126",
     "ssh2: RSA 14:ba:xx",
     "\\[Cc\\]lient",
     "\\[Gg\\]ot",
