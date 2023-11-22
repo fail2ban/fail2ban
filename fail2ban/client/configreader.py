@@ -406,7 +406,7 @@ class DefinitionInitConfigReader(ConfigReader):
 			if cond:
 				n, cond = cond.groups()
 				ignore.add(n)
-		# substiture options already specified direct:
+		# substitute options already specified direct:
 		opts = substituteRecursiveTags(combinedopts, 
 			ignore=ignore, addrepl=self.getCombOption)
 		if not opts:
