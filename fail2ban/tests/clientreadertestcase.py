@@ -61,6 +61,7 @@ class ConfigReaderTest(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 		shutil.rmtree(self.d)
+		super(ConfigReaderTest, self).tearDown()
 
 	def _write(self, fname, value=None, content=None):
 		# verify if we don't need to create .d directory
