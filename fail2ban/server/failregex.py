@@ -240,7 +240,7 @@ class Regex:
 	# Sets an internal cache (match object) in order to avoid searching for
 	# the pattern again. This method must be called before calling any other
 	# method of this object.
-	# @param a list of tupples. The tupples are ( prematch, datematch, postdatematch )
+	# @param a list of tuples. The tuples are ( prematch, datematch, postdatematch )
 	
 	def search(self, tupleLines, orgLines=None):
 		buf = tupleLines

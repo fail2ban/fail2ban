@@ -235,7 +235,7 @@ class JailReader(ConfigReader):
 		if e:
 			stream.extend([['config-error', "Jail '%s' skipped, because of wrong configuration: %s" % (self.__name, e)]])
 			return stream
-		# fill jail with filter options, using filter (only not overriden in jail):
+		# fill jail with filter options, using filter (only not overridden in jail):
 		if self.__filter:
 			stream.extend(self.__filter.convert())
 		# and using options from jail:

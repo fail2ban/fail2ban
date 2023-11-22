@@ -45,7 +45,7 @@ class Fail2banServer(Fail2banCmdLine):
 
 	@staticmethod
 	def startServerDirect(conf, daemon=True, setServer=None):
-		logSys.debug("  direct starting of server in %s, deamon: %s", os.getpid(), daemon)
+		logSys.debug("  direct starting of server in %s, daemon: %s", os.getpid(), daemon)
 		from ..server.server import Server
 		server = None
 		try:
@@ -120,7 +120,7 @@ class Fail2banServer(Fail2banCmdLine):
 				if frk: # pragma: no cover
 					os.execv(exe, args)
 				else:
-					# use P_WAIT instead of P_NOWAIT (to prevent defunct-zomby process), it startet as daemon, so parent exit fast after fork):
+					# use P_WAIT instead of P_NOWAIT (to prevent defunct-zomby process), it started as daemon, so parent exit fast after fork):
 					ret = os.spawnv(os.P_WAIT, exe, args)
 					if ret != 0: # pragma: no cover
 						raise OSError(ret, "Unknown error by executing server %r with %r" % (args[1], exe))

@@ -60,7 +60,7 @@ timeRE['H'] = r"(?P<H>[0-1]?\d|2[0-3])"
 timeRE['M'] = r"(?P<M>[0-5]?\d)"
 timeRE['S'] = r"(?P<S>[0-5]?\d|6[0-1])"
 
-# Extend build-in TimeRE with some exact patterns
+# Extend built-in TimeRE with some exact patterns
 # exact two-digit patterns:
 timeRE['Exd'] = r"(?P<d>[1-2]\d|0[1-9]|3[0-1])"
 timeRE['Exm'] = r"(?P<m>0[1-9]|1[0-2])"
@@ -307,7 +307,7 @@ def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
 		day = now.day
 		assume_today = True
 
-	# Actully create date
+	# Actually create date
 	date_result =  datetime.datetime(
 		year, month, day, hour, minute, second, fraction)
 	# Correct timezone if not supplied in the log linge

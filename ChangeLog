@@ -74,7 +74,7 @@ ver. 1.0.1 (2022/09/27) - energy-equals-mass-times-the-speed-of-light-squared
 * [stability] solves race condition with uncontrolled growth of failure list (jail with too many matches,
   that did not cause ban), behavior changed to ban ASAP, gh-2945
 * fixes search for the best datepattern - e. g. if line is too short, boundaries check for previously known
-  unprecise pattern may fail on incomplete lines (logging break-off, no flush, etc), gh-3020
+  imprecise pattern may fail on incomplete lines (logging break-off, no flush, etc), gh-3020
 * [stability, performance] backend `systemd`:
   - fixes error "local variable 'line' referenced before assignment", introduced in 55d7d9e2, gh-3097
   - don't update database too often (every 10 ticks or ~ 10 seconds in production)
@@ -412,7 +412,7 @@ filter = flt[logtype=short]
 * `filter.d/znc-adminlog.conf`: new filter for ZNC (IRC bouncer); requires the adminlog module to be loaded
 
 ### Enhancements
-* introduced new options: `dbmaxmatches` (fail2ban.conf) and `maxmatches` (jail.conf) to contol
+* introduced new options: `dbmaxmatches` (fail2ban.conf) and `maxmatches` (jail.conf) to control
   how many matches per ticket fail2ban can hold in memory and store in database (gh-2402, gh-2118);
 * fail2ban.conf: introduced new section `[Thread]` and option `stacksize` to configure default size
   of the stack for threads running in fail2ban (gh-2356), it could be set in `fail2ban.local` to
@@ -522,7 +522,7 @@ ver. 0.10.3 (2018/04/04) - the-time-is-always-right-to-do-what-is-right
   - fixed root login refused regex (optional port before preauth, gh-2080);
   - avoid banning of legitimate users when pam_unix used in combination with other password method, so
     bypass pam_unix failures if accepted available for this user gh-2070;
-  - amend to gh-1263 with better handling of multiple attempts (failures for different user-names recognized immediatelly);
+  - amend to gh-1263 with better handling of multiple attempts (failures for different user-names recognized immediately);
   - mode `ddos` (and `aggressive`) extended to catch `Connection closed by ... [preauth]`, so in DDOS mode
     it counts failure on closing connection within preauth-stage (gh-2085);
 * `action.d/abuseipdb.conf`: fixed curl cypher errors and comment quote-issue (gh-2044, gh-2101);
@@ -852,7 +852,7 @@ ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
   sane environment in error case of `actioncheck`.
 * Reporting via abuseipdb.com:
   - Bans can now be reported to abuseipdb
-  - Catagories must be set in the config
+  - Categories must be set in the config
   - Relevant log lines included in report
 
 ### Enhancements
@@ -989,7 +989,7 @@ releases.
     - Rewritten without end-anchor ($), because of potential vulnerability on very long URLs.
 * filter.d/apache-badbots.conf - extended to recognize Jorgee Vulnerability Scanner (gh-1882)
 * filter.d/asterisk.conf
-    - fixed failregex AMI Asterisk authentification failed (see gh-1302)
+    - fixed failregex AMI Asterisk authentication failed (see gh-1302)
     - removed invalid (vulnerable) regex blocking IPs using forign data (from header "from")
       thus not the IP-address that really originates the request (see gh-1927)
     - fixed failregex for the SQL-injection attempts with single-quotes in connect-string (see gh-2011)
@@ -1289,7 +1289,7 @@ ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
 * `filter.d/roundcube-auth.conf`
      - Updated regex to work with 'errors' log (1.0.5 and 1.1.1)
      - Added regex to work with 'userlogins' log
-* `action.d/sendmail*.conf` - use LC_ALL (superseeding LC_TIME) to override
+* `action.d/sendmail*.conf` - use LC_ALL (superseding LC_TIME) to override
   locale on systems with customized LC_ALL
 * performance fix: minimizes connection overhead, close socket only at
   communication end (gh-1099)
@@ -1459,7 +1459,7 @@ ver. 0.9.1 (2014/10/29) - better, faster, stronger
 * Ignored IPs are no longer banned when being restored from persistent
   database
 * Manually unbanned IPs are now removed from persistent database, such they
-  wont be banned again when Fail2Ban is restarted
+  won't be banned again when Fail2Ban is restarted
 * Pass "bantime" parameter to the actions in default jail's action
   definition(s)
 * `filters.d/sieve.conf` - fixed typo in _daemon.  Thanks Jisoo Park
@@ -1750,7 +1750,7 @@ those filters were used.
       all platforms to ensure permissions are the same before and after a ban.
       Closes gh-266. hostsdeny supports daemon_list now too.
     * `action.d/bsd-ipfw` - action option unused. Change blocktype to port unreach
-      instead of deny for consistancy.
+      instead of deny for consistency.
     * `filter.d/dovecot` - added to support different dovecot failure
       "..disallowed plaintext auth". Closes Debian bug #709324
     * `filter.d/roundcube-auth` - timezone offset can be positive or negative
@@ -1940,7 +1940,7 @@ fail2ban-users mailing list and IRC.
 ### New Features
 - Yaroslav Halchenko
     * [9ba27353] Add support for `jail.d/{confilefile}` and `fail2ban.d/{configfile}`
-      to provide additional flexibility to system adminstrators. Thanks to
+      to provide additional flexibility to system administrators. Thanks to
       beilber for the idea. Closes gh-114.
     * [3ce53e87] Add exim filter.
 - Erwan Ben Souiden
@@ -2091,7 +2091,7 @@ ver. 0.8.7 (2012/07/31) - stable
     * [47c03a2] files/nagios - spelling/grammar fixes
     * [b083038] updated Free Software Foundation's address
     * [9092a63] changed TLDs to invalid domains, in accordance with RFC 2606
-    * [642d9af,3282f86] reformated printing of jail's name to be consistent
+    * [642d9af,3282f86] reformatted printing of jail's name to be consistent
       with init's info messages
     * [3282f86] uniform use of capitalized Jail in the messages
 - Leonardo Chiquitto
@@ -2436,7 +2436,7 @@ ver. 0.6.1 (2006/03/16) - stable
 - Fixed crash when time format does not match data
 - Propagated patch from Debian to fix fail2ban search path addition to the path
   search list: now it is added first. Thanks to Nick Craig-Wood
-- Added SMTP authentification for mail notification. Thanks to Markus Hoffmann
+- Added SMTP authentication for mail notification. Thanks to Markus Hoffmann
 - Removed debug mode as it is confusing for people
 - Added parsing of timestamp in TAI64N format (#1275325). Thanks to Mark
   Edgington
@@ -2469,7 +2469,7 @@ ver. 0.5.5 (2005/10/26) - beta
     further adjusted by upstream author).
   * Added -f command line parameter for [findtime].
   * Added a cleanup of firewall rules on emergency shutdown when unknown
-    exception is catched.
+    exception is caught.
   * Fail2ban should not crash now if a wrong file name is specified in config.
   * reordered code a bit so that log targets are setup right after background
     and then only loglevel (verbose, debug) is processed, so the warning could
