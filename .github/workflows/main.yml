@@ -22,15 +22,15 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9, '3.10', '3.11', pypy3]
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.10']
       fail-fast: false
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -75,7 +75,7 @@ jobs:
       - name: Test suite
         run: |
           #python setup.py test
-          if dpkg --compare-versions "$F2B_PYV" lt 3.10; then 
+          if dpkg --compare-versions "$F2B_PYV" lt 3.10; then
             python bin/fail2ban-testcases --verbosity=2
           else
             echo "Skip systemd backend since systemd-python module must be fixed for python >= v.3.10 in GHA ..."
