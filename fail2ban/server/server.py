@@ -370,6 +370,15 @@ class Server:
 	
 	def getIgnoreIP(self, name):
 		return self.__jails[name].filter.getIgnoreIP()
+
+	def addIgnoreGEO(self, name, geo):
+		self.__jails[name].filter.addIgnoreGEO(geo)
+
+	def delIgnoreGEO(self, name, geo):
+		self.__jails[name].filter.delIgnoreGEO(geo)
+
+	def getIgnoreGEO(self, name):
+		return self.__jails[name].filter.getIgnoreGEO()
 	
 	def addLogPath(self, name, fileName, tail=False):
 		filter_ = self.__jails[name].filter

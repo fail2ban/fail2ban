@@ -246,6 +246,9 @@ boolean value (default true) indicates the banning of own IP addresses should be
 .B ignoreip
 list of IPs not to ban. They can include a DNS resp. CIDR mask too. The option affects additionally to \fBignoreself\fR (if true) and don't need to contain own DNS resp. IPs of the running host.
 .TP
+.B ignoregeo
+list of GEO location codes of IPs not to ban. For this to work, you should have a `geoiplookup` or `mmdblookup` or other program with the same name installed. This feature was only tested with Maxmind's `geoiplookup` or `mmdblookup`.
+.TP
 .B ignorecommand
 command that is executed to determine if the current candidate IP for banning (or failure-ID for raw IDs) should not be banned. This option operates alongside the \fBignoreself\fR and \fBignoreip\fR options. It is executed first, only if neither \fBignoreself\fR nor \fBignoreip\fR match the criteria.
 .br

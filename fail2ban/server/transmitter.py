@@ -235,6 +235,16 @@ class Transmitter:
 			self.__server.delIgnoreIP(name, value)
 			if self.__quiet: return
 			return self.__server.getIgnoreIP(name)
+		elif command[1] == "addignoregeo":
+			for value in command[2:]:
+				self.__server.addIgnoreGEO(name, value)
+			if self.__quiet: return
+			return self.__server.getIgnoreGEO(name)
+		elif command[1] == "delignoregeo":
+			value = command[2]
+			self.__server.delIgnoreGEO(name, value)
+			if self.__quiet: return
+			return self.__server.getIgnoreGEO(name)
 		elif command[1] == "ignorecommand":
 			value = command[2]
 			self.__server.setIgnoreCommand(name, value)
@@ -453,6 +463,8 @@ class Transmitter:
 			return self.__server.getIgnoreSelf(name)
 		elif command[1] == "ignoreip":
 			return self.__server.getIgnoreIP(name)
+		elif command[1] == "ignoregeo":
+			return self.__server.getIgnoreGEO(name)
 		elif command[1] == "ignorecommand":
 			return self.__server.getIgnoreCommand(name)
 		elif command[1] == "ignorecache":

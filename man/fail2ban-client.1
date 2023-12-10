@@ -229,6 +229,14 @@ adds <IP> to the ignore list of
 removes <IP> from the ignore list
 of <JAIL>
 .TP
+\fBset <JAIL> addignoregeo <GEO>\fR
+adds <GEO> to the ignore list of
+<JAIL>
+.TP
+\fBset <JAIL> delignoreigeo <GEO>\fR
+removes <GEO> from the ignore list
+of <JAIL>
+.TP
 \fBset <JAIL> ignorecommand <VALUE>\fR
 sets ignorecommand of <JAIL>
 .TP
@@ -390,6 +398,10 @@ ignoring the own IP addresses
 .TP
 \fBget <JAIL> ignoreip\fR
 gets the list of ignored IP
+addresses for <JAIL>
+.TP
+\fBget <JAIL> ignoregeo\fR
+gets the list of ignored GEO
 addresses for <JAIL>
 .TP
 \fBget <JAIL> ignorecommand\fR

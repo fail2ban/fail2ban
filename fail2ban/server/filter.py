@@ -29,6 +29,9 @@ import os
 import re
 import sys
 import time
+import subprocess
+import shutil
+
 
 from .actions import Actions
 from .failmanager import FailManagerEmpty, FailManager
@@ -83,6 +86,8 @@ class Filter(JailThread):
 		## The ignore IP list.
 		self.__ignoreIpSet = set()
 		self.__ignoreIpList = []
+		## The ignore GEO ip list.
+		self.__ignoreGeoSet = set()
 		## External command
 		self.__ignoreCommand = False
 		## Cache for ignoreip:
@@ -541,6 +546,33 @@ class Filter(JailThread):
 	def getIgnoreIP(self):
 		return self.__ignoreIpList + list(self.__ignoreIpSet)
 
+	def addIgnoreGEO(self, geo):
+		# An empty string is always false
+		if geo == "":
+			return
+		
+		# Avoid exact duplicates
+		if geo in self.__ignoreGeoSet:
+			logSys.log(logging.MSG, "  Ignore duplicate %r, already in geo ignore list", geo)
+			return
+
+		# log and append to ignore list
+		logSys.debug("  Add %r to geo ignore list", geo)
+		self.__ignoreGeoSet.add(geo)
+
+	def delIgnoreGEO(self, geo=None):
+		# clear all:
+		if geo is None:
+			self.__ignoreGeoSet.clear()
+			return
+		# delete by ip:
+		logSys.debug("  Remove %r from geo ignore list", geo)
+		if geo in self.__ignoreGeoSet:
+			self.__ignoreGeoSet.remove(geo)
+
+	def getIgnoreGEO(self):
+		return list(self.__ignoreGeoSet)
+
 	##
 	# Check if IP address/DNS is in the ignore list.
 	#
@@ -578,6 +610,25 @@ class Filter(JailThread):
 			self.logIgnoreIp(ip, log_ignore, ignore_source="ignoreself rule")
 			if self.__ignoreCache: c.set(key, True)
 			return True
+
+		# check if the IP's geolocation is not on geo ignore list
+		
+		if self.__ignoreGeoSet:
+			geoipcc = None
+			geoip2cf = "/usr/share/GeoIP/GeoIP2-Country.mmdb"
+			
+			if shutil.which("mmdblookup") and os.path.isfile(geoip2cf):
+				geoipcc = str(subprocess.check_output(["mmdblookup","--file","/usr/share/GeoIP/GeoIP2-Country.mmdb","--ip",str(ip),"country","iso_code"])).split(" ")[2].replace("\"", "")
+			elif shutil.which("geoiplookup"):
+				if shutil.which("mmdblookup") and not os.path.isfile(geoip2cf):
+					logSys.warning("Found mmdblookup but cannot find mmdb country file at /usr/share/GeoIP/GeoIP2-Country.mmdb, using geoiplookup instead.")
+				geoipcc = str(subprocess.check_output(["geoiplookup",str(ip)])).split(" ")[3].replace(",","")
+			else:
+				logSys.warning("Cannot find geoiplookup or correctly set mmdblookup. Geolocation is unavailable. If you have mmdblookup installed, please check if /usr/share/GeoIP/GeoIP2-Country.mmdb file is available.")
+
+			if geoipcc in self.__ignoreGeoSet:
+				self.logIgnoreIp(ip, log_ignore, ignore_source="geo-" + geoipcc)
+				return True
 
 		# check if the IP is covered by ignore IP (in set or in subnet/dns):
 		if ip in self.__ignoreIpSet:
