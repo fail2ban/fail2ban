@@ -60,8 +60,10 @@ jobs:
           #readline if available as module:
           python -c 'import readline' 2> /dev/null || python -m pip install readline || echo 'readline not available'
           # asyncore/asynchat:
-          if [[ "$F2B_PYV" = 3.12 ]]; then python -m pip install pyasynchat || echo "can't install pyasynchat"; fi
-          if [[ "$F2B_PYV" = 3.12 ]]; then python -m pip install pyasyncore || echo "can't install pyasyncore"; fi
+          if dpkg --compare-versions "$F2B_PYV" ge 3.12; then
+            python -m pip install pyasynchat || echo "can't install pyasynchat";
+            python -m pip install pyasyncore || echo "can't install pyasyncore";
+          fi
 
       - name: Before scripts
         run: |
@@ -82,7 +84,12 @@ jobs:
             python bin/fail2ban-testcases --verbosity=2
           else
             echo "Skip systemd backend since systemd-python module must be fixed for python >= v.3.10 in GHA ..."
+            if dpkg --compare-versions "$F2B_PYV" lt 3.12; then
             python bin/fail2ban-testcases --verbosity=2 -i "[sS]ystemd|[jJ]ournal"
+            else
+            # need heavydebug for 3.12 to find error in testSetupInstallRoot:
+            python bin/fail2ban-testcases -l 5 --verbosity=2 -i "[sS]ystemd|[jJ]ournal"
+            fi
           fi
 
       #- name: Test suite (debug some systemd tests only)
