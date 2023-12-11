@@ -221,7 +221,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.pruneLog()
 		self.assertTrue(_test_exec(
 			"-d", "^Epoch",
-			"1490349000 test failed.dns.ch", "^\s*test <F-ID>\S+</F-ID>"
+			"1490349000 test failed.dns.ch", r"^\s*test <F-ID>\S+</F-ID>"
 		))
 		self.assertLogged('Lines: 1 lines, 0 ignored, 1 matched, 0 missed', all=True)
 		self.assertNotLogged('Unable to find a corresponding IP address')
@@ -229,7 +229,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.pruneLog()
 		self.assertTrue(_test_exec(
 			"-d", "^Epoch", "-o", "id",
-			"1490349000 test this/is/some/path/32", "^\s*test <F-ID>\S+</F-ID>"
+			"1490349000 test this/is/some/path/32", r"^\s*test <F-ID>\S+</F-ID>"
 		))
 		self.assertLogged('this/is/some/path/32', all=True)
 
@@ -439,23 +439,23 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			# with different ID/IP from failregex (ID/User from first, IP from second message):
 			self.assertTrue(_test('-o', 'ID:"<fid>" | IP:<ip> | U:<F-USER>', log, 
 				flt+'[failregex="'
-				  '^'+prefix+'<F-ID>User <F-USER>\S+</F-USER></F-ID> not allowed\n'
-				  '^'+prefix+'Received disconnect from <ADDR>'
+				  '^'+prefix+r'<F-ID>User <F-USER>\S+</F-USER></F-ID> not allowed'+'\n'
+				  '^'+prefix+r'Received disconnect from <ADDR>'
 				'"]'))
 			self.assertLogged('ID:"User root" | IP:192.0.2.76 | U:root')
 			self.pruneLog()
 			# with different ID/IP from failregex (User from first, ID and IP from second message):
 			self.assertTrue(_test('-o', 'ID:"<fid>" | IP:<ip> | U:<F-USER>', log, 
 				flt+'[failregex="'
-				  '^'+prefix+'User <F-USER>\S+</F-USER> not allowed\n'
-				  '^'+prefix+'Received disconnect from <F-ID><ADDR> port \d+</F-ID>'
+				  '^'+prefix+r'User <F-USER>\S+</F-USER> not allowed'+'\n'
+				  '^'+prefix+r'Received disconnect from <F-ID><ADDR> port \d+</F-ID>'
 				'"]'))
 			self.assertLogged('ID:"192.0.2.76 port 58846" | IP:192.0.2.76 | U:root')
 			self.pruneLog()
 		# first with sshd and prefregex:
 		_test_variants()
 		# the same without prefregex and MLFID directly in failregex (no merge with prefregex groups):
-		_test_variants('common', prefix="\s*\S+ sshd\[<F-MLFID>\d+</F-MLFID>\]:\s+")
+		_test_variants('common', prefix=r"\s*\S+ sshd\[<F-MLFID>\d+</F-MLFID>\]:\s+")
 
 	def testNoDateTime(self):
 		# datepattern doesn't match:
@@ -541,7 +541,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			'svc[2] connect started 192.0.2.4\n'
 			'svc[2] connect authorized 192.0.2.4\n'
 			'svc[2] connect finished 192.0.2.4\n',
-			'common[prefregex="^svc\[<F-MLFID>\d+</F-MLFID>\] connect <F-CONTENT>.+</F-CONTENT>$"'
+			r'common[prefregex="^svc\[<F-MLFID>\d+</F-MLFID>\] connect <F-CONTENT>.+</F-CONTENT>$"'
 			', failregex="'
 			'^started\n'
 			'^<F-NOFAIL><F-MLFFORGET>finished</F-MLFFORGET></F-NOFAIL> <ADDR>\n'
