@@ -397,75 +397,77 @@ def gatherTests(regexps=None, opts=None):
 
 		tests = FilteredTestSuite()
 
+	loadTests = unittest.defaultTestLoader.loadTestsFromTestCase;
+
 	# Server
-	tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
-	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
-	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
-	tests.addTest(unittest.makeSuite(servertestcase.LoggingTests))
-	tests.addTest(unittest.makeSuite(servertestcase.ServerConfigReaderTests))
-	tests.addTest(unittest.makeSuite(actiontestcase.CommandActionTest))
-	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
+	tests.addTest(loadTests(servertestcase.Transmitter))
+	tests.addTest(loadTests(servertestcase.JailTests))
+	tests.addTest(loadTests(servertestcase.RegexTests))
+	tests.addTest(loadTests(servertestcase.LoggingTests))
+	tests.addTest(loadTests(servertestcase.ServerConfigReaderTests))
+	tests.addTest(loadTests(actiontestcase.CommandActionTest))
+	tests.addTest(loadTests(actionstestcase.ExecuteActions))
 	# Ticket, BanTicket, FailTicket
-	tests.addTest(unittest.makeSuite(tickettestcase.TicketTests))
+	tests.addTest(loadTests(tickettestcase.TicketTests))
 	# FailManager
-	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
-	tests.addTest(unittest.makeSuite(failmanagertestcase.FailmanagerComplex))
+	tests.addTest(loadTests(failmanagertestcase.AddFailure))
+	tests.addTest(loadTests(failmanagertestcase.FailmanagerComplex))
 	# BanManager
-	tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
+	tests.addTest(loadTests(banmanagertestcase.AddFailure))
 	try:
 		import dns
-		tests.addTest(unittest.makeSuite(banmanagertestcase.StatusExtendedCymruInfo))
+		tests.addTest(loadTests(banmanagertestcase.StatusExtendedCymruInfo))
 	except ImportError: # pragma: no cover
 		pass
 	
 	# ClientBeautifier
-	tests.addTest(unittest.makeSuite(clientbeautifiertestcase.BeautifierTest))
+	tests.addTest(loadTests(clientbeautifiertestcase.BeautifierTest))
 
 	# ClientReaders
-	tests.addTest(unittest.makeSuite(clientreadertestcase.ConfigReaderTest))
-	tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
-	tests.addTest(unittest.makeSuite(clientreadertestcase.FilterReaderTest))
-	tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTest))
-	tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTestCache))
+	tests.addTest(loadTests(clientreadertestcase.ConfigReaderTest))
+	tests.addTest(loadTests(clientreadertestcase.JailReaderTest))
+	tests.addTest(loadTests(clientreadertestcase.FilterReaderTest))
+	tests.addTest(loadTests(clientreadertestcase.JailsReaderTest))
+	tests.addTest(loadTests(clientreadertestcase.JailsReaderTestCache))
 	# CSocket and AsyncServer
-	tests.addTest(unittest.makeSuite(sockettestcase.Socket))
-	tests.addTest(unittest.makeSuite(sockettestcase.ClientMisc))
+	tests.addTest(loadTests(sockettestcase.Socket))
+	tests.addTest(loadTests(sockettestcase.ClientMisc))
 	# Misc helpers
-	tests.addTest(unittest.makeSuite(misctestcase.HelpersTest))
-	tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
-	tests.addTest(unittest.makeSuite(misctestcase.TestsUtilsTest))
-	tests.addTest(unittest.makeSuite(misctestcase.MyTimeTest))
+	tests.addTest(loadTests(misctestcase.HelpersTest))
+	tests.addTest(loadTests(misctestcase.SetupTest))
+	tests.addTest(loadTests(misctestcase.TestsUtilsTest))
+	tests.addTest(loadTests(misctestcase.MyTimeTest))
 	# Database
-	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
+	tests.addTest(loadTests(databasetestcase.DatabaseTest))
 	# Observer
-	tests.addTest(unittest.makeSuite(observertestcase.ObserverTest))
-	tests.addTest(unittest.makeSuite(observertestcase.BanTimeIncr))
-	tests.addTest(unittest.makeSuite(observertestcase.BanTimeIncrDB))
+	tests.addTest(loadTests(observertestcase.ObserverTest))
+	tests.addTest(loadTests(observertestcase.BanTimeIncr))
+	tests.addTest(loadTests(observertestcase.BanTimeIncrDB))
 
 	# Filter
-	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
-	tests.addTest(unittest.makeSuite(filtertestcase.BasicFilter))
-	tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
-	tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
-	tests.addTest(unittest.makeSuite(filtertestcase.LogFileFilterPoll))
+	tests.addTest(loadTests(filtertestcase.IgnoreIP))
+	tests.addTest(loadTests(filtertestcase.BasicFilter))
+	tests.addTest(loadTests(filtertestcase.LogFile))
+	tests.addTest(loadTests(filtertestcase.LogFileMonitor))
+	tests.addTest(loadTests(filtertestcase.LogFileFilterPoll))
 	# each test case class self will check no network, and skip it (we see it in log)
-	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIPDNS))
-	tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
-	tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
-	tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsNetworkTests))
-	tests.addTest(unittest.makeSuite(filtertestcase.JailTests))
+	tests.addTest(loadTests(filtertestcase.IgnoreIPDNS))
+	tests.addTest(loadTests(filtertestcase.GetFailures))
+	tests.addTest(loadTests(filtertestcase.DNSUtilsTests))
+	tests.addTest(loadTests(filtertestcase.DNSUtilsNetworkTests))
+	tests.addTest(loadTests(filtertestcase.JailTests))
 
 	# DateDetector
-	tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
-	tests.addTest(unittest.makeSuite(datedetectortestcase.CustomDateFormatsTest))
+	tests.addTest(loadTests(datedetectortestcase.DateDetectorTest))
+	tests.addTest(loadTests(datedetectortestcase.CustomDateFormatsTest))
 	# Filter Regex tests with sample logs
-	tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
+	tests.addTest(loadTests(samplestestcase.FilterSamplesRegex))
 
 	# bin/fail2ban-client, bin/fail2ban-server
-	tests.addTest(unittest.makeSuite(fail2banclienttestcase.Fail2banClientTest))
-	tests.addTest(unittest.makeSuite(fail2banclienttestcase.Fail2banServerTest))
+	tests.addTest(loadTests(fail2banclienttestcase.Fail2banClientTest))
+	tests.addTest(loadTests(fail2banclienttestcase.Fail2banServerTest))
 	# bin/fail2ban-regex
-	tests.addTest(unittest.makeSuite(fail2banregextestcase.Fail2banRegexTest))
+	tests.addTest(loadTests(fail2banregextestcase.Fail2banRegexTest))
 
 	#
 	# Python action testcases
@@ -495,17 +497,17 @@ def gatherTests(regexps=None, opts=None):
 		logSys.warning("I: Skipping pyinotify backend testing. Got exception '%s'" % e)
 
 	for Filter_ in filters:
-		tests.addTest(unittest.makeSuite(
+		tests.addTest(loadTests(
 			filtertestcase.get_monitor_failures_testcase(Filter_)))
 	try: # pragma: systemd no cover
 		from ..server.filtersystemd import FilterSystemd
-		tests.addTest(unittest.makeSuite(filtertestcase.get_monitor_failures_journal_testcase(FilterSystemd)))
+		tests.addTest(loadTests(filtertestcase.get_monitor_failures_journal_testcase(FilterSystemd)))
 	except ImportError as e: # pragma: no cover
 		logSys.warning("I: Skipping systemd backend testing. Got exception '%s'" % e)
 
 	# Server test for logging elements which break logging used to support
 	# testcases analysis
-	tests.addTest(unittest.makeSuite(servertestcase.TransmitterLogging))
+	tests.addTest(loadTests(servertestcase.TransmitterLogging))
 
 	return tests
 
