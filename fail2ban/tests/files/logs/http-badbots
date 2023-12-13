@@ -6,3 +6,8 @@
 
 # failJSON: { "time": "2007-03-05T14:41:21", "match": true , "host": "1.2.3.4" }
 1.2.3.4 - - [05/Mar/2007:14:41:21 +0100] "HEAD /123.html/trackback/ HTTP/1.0" 301 459 "http://www.mydomain.tld/123.html/trackback" "TrackBack/1.02"
+
+# failJSON: { "match": false }
+127.0.0.1 - user [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326 "http://www.example.com/start.html" "Mozilla/4.08 [en] (Win98; I ;Nav)"
+# failJSON: { "time": "2000-10-10T22:55:36", "match": true , "host": "127.0.0.1" }
+127.0.0.1 - user [10/Oct/2000:13:55:36 -0700] "OPTIONS /apache_pb.gif HTTP/1.0" 200 2326 "http://www.example.com/start.html" "EmailCollector"
