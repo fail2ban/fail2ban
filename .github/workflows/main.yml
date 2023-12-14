@@ -54,6 +54,7 @@ jobs:
           #if [[ "$F2B_PY" = 3 ]]; then python -m pip install --upgrade pip || echo "can't upgrade pip"; fi
           #sudo apt-get -y install python${F2B_PY/2/}-pyinotify || echo 'inotify not available'
           python -m pip install pyinotify || echo 'inotify not available'
+          sudo apt-get -y install sqlite3 || echo 'sqlite3 not available'
           #sudo apt-get -y install python${F2B_PY/2/}-systemd || echo 'systemd not available'
           sudo apt-get -y install libsystemd-dev || echo 'systemd dependencies seems to be unavailable'
           python -m pip install systemd-python || echo 'systemd not available'
