@@ -159,10 +159,11 @@ Feb 10 13:26:34 srv postfix/smtpd[123]: disconnect from unknown[192.0.2.2] ehlo=
 Feb 18 09:45:10 xxx postfix/smtpd[42]: lost connection after CONNECT from spammer.example.com[192.0.2.10]
 # failJSON: { "time": "2005-02-18T09:45:12", "match": true , "host": "192.0.2.42" }
 Feb 18 09:45:12 xxx postfix/smtpd[42]: lost connection after STARTTLS from spammer.example.com[192.0.2.42]
+
+# failJSON: { "match": false, "desc": "avoid double counting (with next failure message 'disconnect ...'), gh-3505" }
+Feb 18 09:48:04 xxx postfix/smtpd[50903]: lost connection after AUTH from unknown[192.0.2.23]
 # failJSON: { "time": "2005-02-18T09:48:04", "match": true , "host": "192.0.2.23" }
-Feb 18 09:48:04 xxx postfix/smtpd[23]: lost connection after AUTH from unknown[192.0.2.23]
-# failJSON: { "time": "2005-02-18T09:48:04", "match": true , "host": "192.0.2.23" }
-Feb 18 09:48:04 xxx postfix/smtpd[23]: lost connection after AUTH from unknown[192.0.2.23]
+Feb 18 09:48:04 xxx postfix/smtpd[50903]: disconnect from unknown[192.0.2.23] ehlo=1 auth=0/1 rset=1 commands=2/3
 
 # failJSON: { "time": "2004-12-23T19:39:13", "match": true , "host": "192.0.2.2" }
 Dec 23 19:39:13 xxx postfix/postscreen[21057]: PREGREET 14 after 0.08 from [192.0.2.2]:59415: EHLO ylmf-pc\r\n
