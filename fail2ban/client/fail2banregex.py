@@ -789,7 +789,15 @@ class Fail2banRegex(object):
 		return True
 
 
+def _loc_except_hook(exctype, value, traceback):
+	if (exctype != BrokenPipeError and exctype != IOError or value.errno != 32):
+		return sys.__excepthook__(exctype, value, traceback)
+	# pipe seems to be closed (head / tail / etc), thus simply exit:
+	sys.exit(0)
+
 def exec_command_line(*args):
+	sys.excepthook = _loc_except_hook; # stop on closed/broken pipe
+
 	logging.exitOnIOError = True
 	parser = get_opt_parser()
 	(opts, args) = parser.parse_args(*args)
