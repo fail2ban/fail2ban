@@ -157,9 +157,10 @@ class SMTPAction(ActionBase):
 		msg['To'] = self.toaddr
 		msg['Date'] = formatdate()
 
-		smtp = smtplib.SMTP()
+		smtp_host, smtp_port = self.host.split(':')
+		smtp = smtplib.SMTP(host=smtp_host, port=smtp_port)
 		try:
-			r = smtp.connect(self.host)
+			r = smtp.connect(host=smtp_host, port=smtp_port)
 			self._logSys.debug("Connected to SMTP '%s', response: %i: %s",
 				self.host, *r)
 
