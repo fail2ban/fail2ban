@@ -123,6 +123,7 @@ config/filter.d/nagios.conf
 config/filter.d/named-refused.conf
 config/filter.d/nginx-bad-request.conf
 config/filter.d/nginx-botsearch.conf
+config/filter.d/nginx-error-common.conf
 config/filter.d/nginx-forbidden.conf
 config/filter.d/nginx-http-auth.conf
 config/filter.d/nginx-limit-req.conf
@@ -141,6 +142,7 @@ config/filter.d/pure-ftpd.conf
 config/filter.d/qmail.conf
 config/filter.d/recidive.conf
 config/filter.d/roundcube-auth.conf
+config/filter.d/routeros-auth.conf
 config/filter.d/scanlogd.conf
 config/filter.d/screensharingd.conf
 config/filter.d/selinux-common.conf
@@ -193,6 +195,8 @@ fail2ban/client/filterreader.py
 fail2ban/client/__init__.py
 fail2ban/client/jailreader.py
 fail2ban/client/jailsreader.py
+fail2ban/compat/asynchat.py
+fail2ban/compat/asyncore.py
 fail2ban/exceptions.py
 fail2ban/helpers.py
 fail2ban/__init__.py
@@ -349,6 +353,7 @@ fail2ban/tests/files/logs/pure-ftpd
 fail2ban/tests/files/logs/qmail
 fail2ban/tests/files/logs/recidive
 fail2ban/tests/files/logs/roundcube-auth
+fail2ban/tests/files/logs/routeros-auth
 fail2ban/tests/files/logs/scanlogd
 fail2ban/tests/files/logs/screensharingd
 fail2ban/tests/files/logs/selinux-ssh

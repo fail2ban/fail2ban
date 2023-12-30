@@ -7,15 +7,38 @@
 Fail2Ban: Changelog
 ===================
 
-ver. 1.0.3-dev-1 (20??/??/??) - development nightly edition
+ver. 1.1.0 (20??/??/??) - development nightly edition
 -----------
+
+### Compatibility
+* the minimum supported python version is now 3.5, if you have previous python version
+  you can use the 0.11 or 1.0 version of fail2ban or upgrade python (or even build it from source).
 
 ### Fixes
 * circumvent SEGFAULT in a python's socket module by getaddrinfo with disabled IPv6 (gh-3438)
+* avoid sporadic error in pyinotify backend if pending file deleted in other thread, e. g. by flushing logs (gh-3635)
 * `action.d/cloudflare-token.conf` - fixes gh-3479, url-encode args by unban
 * `action.d/*ipset*`: make `maxelem` ipset option configurable through banaction arguments (gh-3564)
+* `filter.d/apache-common.conf` - accepts remote besides client (gh-3622)
+* `filter.d/mysqld-auth.conf` - matches also if no suffix in message (mariadb 10.3 log format, gh-3603)
+* `filter.d/nginx-*.conf` - nginx error-log filters extended with support of journal format (gh-3646)
+* `filter.d/postfix.conf`:
+  - "rejected" rule extended to match "Access denied" too (gh-3474)
+  - avoid double counting ('lost connection after AUTH' together with message 'disconnect ...', gh-3505)
+  - add Sender address rejected: Malformed DNS server reply (gh-3590)
+  - add to postfix syslog daemon format (gh-3690)
+  - change journalmatch postfix, allow sub-units with postfix@-.service (gh-3692)
+* `filter.d/recidive.conf`: support for systemd-journal, conditional RE depending on logtype (for file or journal, gh-3693)
+* `filter.d/slapd.conf` - filter rewritten for single-line processing, matches errored result without `text=...` (gh-3604)
 
 ### New Features and Enhancements
+* supports python 3.12 and 3.13 (gh-3487)
+* bundling async modules removed in python 3.12+ (fallback to local libraries pyasyncore/pyasynchat if import would miss them, gh-3487)
+* `fail2ban-client` extended (gh-2975):
+  - `fail2ban-client status --all [flavor]` - returns status of fail2ban and all jails in usual form
+  - `fail2ban-client stats` - returns statistic in form of table (jail, backend, found and banned counts)
+  - `fail2ban-client statistic` or `fail2ban-client statistics` - same as `fail2ban-client stats` (aliases for stats)
+  - `fail2ban-client status --all stats` - (undocumented, flavor "stats") returns statistic of all jails in form of python dict
 * `fail2ban-regex` extended to load settings from jail (by simple name it'd prefer jail to the filter now, gh-2655);
   to load the settings from filter one could use:
 ```diff
@@ -29,14 +52,17 @@ ver. 1.0.3-dev-1 (20??/??/??) - development nightly edition
   if available for platform and uses DNS to find local IPv6 as a fallback only
 * improve `ignoreself` by considering all local addresses from network interfaces additionally to IPs from hostnames (gh-3132)
 * `action.d/mikrotik.conf` - new action for mikrotik routerOS, adds and removes entries from address lists on the router (gh-2860)
+* `action.d/pf.conf` - pf action extended with support of `protocol=all` (gh-3503)
 * `action.d/smtp.py` - added optional support for TLS connections via the `ssl` arg.
+* `filter.d/dante.conf` - new filter for Dante SOCKS server (gh-2112)
 * `filter.d/exim.conf`, `filter.d/exim-spam.conf`:
   - messages are prefiltered by `prefregex` now
   - filter can bypass additional timestamp or pid that may be logged via systemd-journal or syslog-ng (gh-3060)
-  - rewrite host line regex for all varied exim's log_selector states (gh-3263)
+  - rewrite host line regex for all varied exim's log_selector states (gh-3263, gh-3701, gh-3702)
   - fixed "dropped: too many ..." regex, also matching unrecognized commands now (gh-3502)
 * `filter.d/named-refused.conf` - denied allows any reason in parenthesis as suffix (gh-3697)
 * `filter.d/nginx-forbidden.conf` - new filter to ban forbidden locations, e. g. using `deny` directive (gh-2226)
+* `filter.d/routeros-auth.conf` - new filter detecting failed login attempts in the log produced by MikroTik RouterOS
 * `filter.d/sshd.conf`:
   - avoid double counting for "maximum authentication attempts exceeded" (gh-3502)
   - message "Disconnecting ... Too many authentication failures" is not a failure anymore
