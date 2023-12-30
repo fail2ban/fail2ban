@@ -311,7 +311,8 @@ def initTests(opts):
 		# precache all ip to dns used in test cases:
 		c.set('192.0.2.888', None)
 		c.set('8.8.4.4', 'dns.google')
-		c.set('8.8.4.4', 'dns.google')
+		c.set('8.8.8.8', 'dns.google')
+		c.set('199.9.14.201', 'b-2017.b.root-servers.org')
 		# precache all dns to ip's used in test cases:
 		c = DNSUtils.CACHE_nameToIp
 		c.clear = lambda: logSys.warning('clear CACHE_nameToIp is disabled in test suite')
