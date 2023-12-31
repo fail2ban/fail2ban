@@ -720,14 +720,8 @@ class Server:
 				# Remove the handler.
 				logger.removeHandler(handler)
 				# And try to close -- it might be closed already
-				try:
-					handler.flush()
-					handler.close()
-				except (ValueError, KeyError): # pragma: no cover
-					# Is known to be thrown after logging was shutdown once
-					# with older Pythons -- seems to be safe to ignore there
-					if sys.version_info < (3,) or sys.version_info >= (3, 2):
-						raise
+				handler.flush()
+				handler.close()
 			# detailed format by deep log levels (as DEBUG=10):
 			if logger.getEffectiveLevel() <= logging.DEBUG: # pragma: no cover
 				if self.__verbose is None:
@@ -931,32 +925,16 @@ class Server:
 		# the default value (configurable).
 		try:
 			fdlist = self.__get_fdlist()
-			maxfd = -1
-		except:
-			try:
-				maxfd = os.sysconf("SC_OPEN_MAX")
-			except (AttributeError, ValueError):
-				maxfd = 256	   # default maximum
-			fdlist = range(maxfd+1)
-	
-		# urandom should not be closed in Python 3.4.0. Fixed in 3.4.1
-		# http://bugs.python.org/issue21207
-		if sys.version_info[0:3] == (3, 4, 0): # pragma: no cover
-			urandom_fd = os.open("/dev/urandom", os.O_RDONLY)
-			for fd in fdlist:
-				try:
-					if not os.path.sameopenfile(urandom_fd, fd):
-						os.close(fd)
-				except OSError:   # ERROR (ignore)
-					pass
-			os.close(urandom_fd)
-		elif maxfd == -1:
 			for fd in fdlist:
 				try:
 					os.close(fd)
 				except OSError:   # ERROR (ignore)
 					pass
-		else:
+		except:
+			try:
+				maxfd = os.sysconf("SC_OPEN_MAX")
+			except (AttributeError, ValueError):
+				maxfd = 256	   # default maximum
 			os.closerange(0, maxfd)
 	
 		# Redirect the standard file descriptors to /dev/null.

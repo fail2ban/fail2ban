@@ -22,10 +22,7 @@ import threading
 import unittest
 import re
 import sys
-if sys.version_info >= (3, 3):
-	import importlib
-else:
-	import imp
+import importlib
 
 from ..dummyjail import DummyJail
 from ..utils import CONFIG_DIR, asyncserver, Utils, uni_decode

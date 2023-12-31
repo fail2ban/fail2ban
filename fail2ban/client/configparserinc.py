@@ -116,20 +116,14 @@ after = 1.conf
 
 	CONDITIONAL_RE = re.compile(r"^(\w+)(\?.+)$")
 
-	if sys.version_info >= (3,2):
-		# overload constructor only for fancy new Python3's
-		def __init__(self, share_config=None, *args, **kwargs):
-			kwargs = kwargs.copy()
-			kwargs['interpolation'] = BasicInterpolationWithName()
-			kwargs['inline_comment_prefixes'] = ";"
-			super(SafeConfigParserWithIncludes, self).__init__(
-				*args, **kwargs)
-			self._cfg_share = share_config
-
-	else:
-		def __init__(self, share_config=None, *args, **kwargs):
-			SafeConfigParser.__init__(self, *args, **kwargs)
-			self._cfg_share = share_config
+	# overload constructor only for fancy new Python3's
+	def __init__(self, share_config=None, *args, **kwargs):
+		kwargs = kwargs.copy()
+		kwargs['interpolation'] = BasicInterpolationWithName()
+		kwargs['inline_comment_prefixes'] = ";"
+		super(SafeConfigParserWithIncludes, self).__init__(
+			*args, **kwargs)
+		self._cfg_share = share_config
 
 	def get_ex(self, section, option, raw=False, vars={}):
 		"""Get an option value for a given section.
@@ -372,10 +366,7 @@ after = 1.conf
 		if logSys.getEffectiveLevel() <= logLevel:
 			logSys.log(logLevel, "    Reading file: %s", fileNamesFull[0])
 		# read file(s) :
-		if sys.version_info >= (3,2): # pragma: no cover
-			return SafeConfigParser.read(self, fileNamesFull, encoding='utf-8')
-		else:
-			return SafeConfigParser.read(self, fileNamesFull)
+		return SafeConfigParser.read(self, fileNamesFull, encoding='utf-8')
 
 	def merge_section(self, section, options, pref=None):
 		alls = self.get_sections()
