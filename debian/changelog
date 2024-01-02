@@ -3,6 +3,7 @@ fail2ban (1.0.2-3) unstable; urgency=medium
   * Add banaction = nftables in the defaults-debian.conf default
     see https://github.com/fail2ban/fail2ban/discussions/3575#discussioncomment-7045315
   * Move python3-systemd as depend (Closes: #770171)
+  * Add backend = systemd to jail.d/defaults-debian.conf
 
  -- Sylvestre Ledru <sylvestre@debian.org>  Tue, 19 Sep 2023 13:55:20 +0200
 
