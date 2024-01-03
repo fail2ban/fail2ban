@@ -51,6 +51,7 @@ config/action.d/npf.conf
 config/action.d/nsupdate.conf
 config/action.d/osx-afctl.conf
 config/action.d/osx-ipfw.conf
+config/action.d/pbr.conf
 config/action.d/pf.conf
 config/action.d/route.conf
 config/action.d/sendmail-buffered.conf
