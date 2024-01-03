@@ -344,7 +344,7 @@ class Fail2banRegex(object):
 					if re.search(r'(?ms)^[\w/_\-]+$', fltName): # name of jail?
 						try:
 							jail = JailReader(fltName, force_enable=True, 
-								share_config=self.share_config)
+								share_config=self.share_config, basedir=basedir)
 							jail.read()
 						except NoJailError:
 							jail = None
@@ -406,7 +406,8 @@ class Fail2banRegex(object):
 					fltName = os.path.abspath(fltName)
 			if fltOpt:
 				self.output( "Use   filter options : %r" % fltOpt )
-			reader = FilterReader(fltName, 'fail2ban-regex-jail', fltOpt, share_config=self.share_config, basedir=basedir)
+			reader = FilterReader(fltName, 'fail2ban-regex-jail', fltOpt,
+				share_config=self.share_config, basedir=basedir)
 			ret = None
 			try:
 				if basedir is not None:
