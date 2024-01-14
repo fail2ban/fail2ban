@@ -2200,11 +2200,13 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 
 	def testIpToName(self):
 		#unittest.F2B.SkipIfNoNetwork()
-		res = DNSUtils.ipToName('8.8.4.4')
-		self.assertTrue(res.endswith(('.google', '.google.com')))
+		self.assertEqual(DNSUtils.ipToName('87.142.124.10'), 'test-host')
+		self.assertEqual(DNSUtils.ipToName('2001:db8::ffff'), 'test-other')
+		res = DNSUtils.ipToName('199.9.14.201')
+		self.assertTrue(res.endswith(('.isi.edu', '.b.root-servers.org')))
 		# same as above, but with IPAddr:
-		res = DNSUtils.ipToName(IPAddr('8.8.4.4'))
-		self.assertTrue(res.endswith(('.google', '.google.com')))
+		res = DNSUtils.ipToName(IPAddr('199.9.14.201'))
+		self.assertTrue(res.endswith(('.isi.edu', '.b.root-servers.org')))
 		# invalid ip (TEST-NET-1 according to RFC 5737)
 		res = DNSUtils.ipToName('192.0.2.0')
 		self.assertEqual(res, None)

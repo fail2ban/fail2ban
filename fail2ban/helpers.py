@@ -183,8 +183,6 @@ def __stopOnIOError(logSys=None, logHndlr=None): # pragma: no cover
 			pass
 		sys.exit(0)
 
-BrokenPipeError = BrokenPipeError
-
 __origLog = logging.Logger._log
 def __safeLog(self, level, msg, args, **kwargs):
 	"""Safe log inject to avoid possible errors by unsafe log-handlers, 
@@ -284,7 +282,7 @@ def splitwords(s):
 	"""
 	if not s:
 		return []
-	return list(filter(bool, [v.strip() for v in re.split('[\s,]+', s)]))
+	return list(filter(bool, [v.strip() for v in re.split(r'[\s,]+', s)]))
 
 def _merge_dicts(x, y):
 	"""Helper to merge dicts.

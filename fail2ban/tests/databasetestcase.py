@@ -39,7 +39,7 @@ try:
 	Fail2BanDb = database.Fail2BanDb
 except ImportError: # pragma: no cover
 	Fail2BanDb = None
-from .utils import LogCaptureTestCase, logSys as DefLogSys
+from .utils import LogCaptureTestCase, logSys as DefLogSys, uni_decode
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
@@ -114,9 +114,32 @@ class DatabaseTest(LogCaptureTestCase):
 			self.jail.name in self.db.getJailNames(),
 			"Jail not retained in Db after disconnect reconnect.")
 
+	@staticmethod
+	def _mockupFailedDB(): # pragma: no cover -- only sqlite >= 3.42
+		"""[Mock-Up] broken connect to cover reparable restore."""
+		_org_connect = sqlite3.connect;
+		class _mckp_Cursor(sqlite3.Cursor):
+			def execute(*args, **kwargs):
+				# intended BOOM (simulate broken database):
+				raise sqlite3.Error("[mock-up] broken database");
+		class _mckp_Connection(sqlite3.Connection):
+			def cursor(*args, **kwargs):
+				return _mckp_Cursor(*args, **kwargs)
+		def _mckp_connect(*args, **kwargs):
+			DefLogSys.debug("[mock-up] broken connect to cover reparable restore")
+			# restore original connect immediately:
+			sqlite3.connect = _org_connect
+			# return mockup connect (caused BOOM during first cursor execute):
+			return _mckp_Connection(*args, **kwargs);
+		sqlite3.connect = _mckp_connect;
+
 	def testRepairDb(self):
-		if not Utils.executeCmd("sqlite3 --version"): # pragma: no cover
+		ret = Utils.executeCmd("sqlite3 --version", output=True)
+		if not ret or not ret[0]: # pragma: no cover
 			raise unittest.SkipTest("no sqlite3 command")
+		# version:
+		ret = uni_decode(ret[1]).split(' ')
+		ret = tuple(map(int, (str(ret[0]).split('.'))))if ret else (3,0,0);
 		self.db = None
 		if self.dbFilename is None: # pragma: no cover
 			_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
@@ -124,6 +147,9 @@ class DatabaseTest(LogCaptureTestCase):
 		#   - 14000 bytes - seems to be reparable,
 		#   - 4000  bytes - is totally broken.
 		for truncSize in (14000, 4000):
+			if truncSize >= 14000 and ret > (3,42): # pragma: no cover -- only sqlite >= 3.42
+				truncSize = 14400
+				self._mockupFailedDB(); # mock-up it to ensure it fails by open
 			self.pruneLog("[test-repair], next phase - file-size: %d" % truncSize)
 			shutil.copyfile(
 				os.path.join(TEST_FILES_DIR, 'database_v1.db'), self.dbFilename)
@@ -134,7 +160,7 @@ class DatabaseTest(LogCaptureTestCase):
 			# test repair:
 			try:
 				self.db = Fail2BanDb(self.dbFilename)
-				if truncSize == 14000: # restored:
+				if truncSize >= 14000: # restored:
 					self.assertLogged("Repair seems to be successful",
 						"Check integrity", "Database updated", all=True)
 					self.assertEqual(self.db.getLogPaths(), set(['/tmp/Fail2BanDb_pUlZJh.log']))

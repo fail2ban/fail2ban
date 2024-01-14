@@ -16,11 +16,20 @@ ver. 1.0.3-dev-1 (20??/??/??) - development nightly edition
 * `action.d/*ipset*`: make `maxelem` ipset option configurable through banaction arguments (gh-3564)
 
 ### New Features and Enhancements
+* `fail2ban-regex` extended to load settings from jail (by simple name it'd prefer jail to the filter now, gh-2655);
+  to load the settings from filter one could use:
+```diff
+- fail2ban-regex ... sshd           ; # jail
++ fail2ban-regex ... sshd.conf      ; # filter
+# or:
++ fail2ban-regex ... filter.d/sshd  ; # filter
+```
 * better auto-detection for IPv6 support (`allowipv6 = auto` by default), trying to check sysctl net.ipv6.conf.all.disable_ipv6
   (value read from `/proc/sys/net/ipv6/conf/all/disable_ipv6`) if available, otherwise seeks over local IPv6 from network interfaces
   if available for platform and uses DNS to find local IPv6 as a fallback only
 * improve `ignoreself` by considering all local addresses from network interfaces additionally to IPs from hostnames (gh-3132)
 * `action.d/mikrotik.conf` - new action for mikrotik routerOS, adds and removes entries from address lists on the router (gh-2860)
+* `action.d/smtp.py` - added optional support for TLS connections via the `ssl` arg.
 * `filter.d/exim.conf` - fixed "dropped: too many ..." regex, also matching unrecognized commands now (gh-3502)
 * `filter.d/nginx-forbidden.conf` - new filter to ban forbidden locations, e. g. using `deny` directive (gh-2226)
 * `filter.d/sshd.conf`:

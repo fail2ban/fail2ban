@@ -190,12 +190,10 @@ class TestsUtilsTest(LogCaptureTestCase):
 
 	def testUniConverters(self):
 		self.assertRaises(Exception, uni_decode, 
-			(b'test' if sys.version_info >= (3,) else 'test'), 'f2b-test::non-existing-encoding')
-		uni_decode((b'test\xcf' if sys.version_info >= (3,) else 'test\xcf'))
+			b'test', 'f2b-test::non-existing-encoding')
+		uni_decode(b'test\xcf')
 		uni_string(b'test\xcf')
 		uni_string('test\xcf')
-		if sys.version_info < (3,) and 'PyPy' not in sys.version:
-			uni_string('test\xcf')
 
 	def testSafeLogging(self):
 		# logging should be exception-safe, to avoid possible errors (concat, str. conversion, representation failures, etc)
