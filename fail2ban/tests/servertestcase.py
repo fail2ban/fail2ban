@@ -1301,7 +1301,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 		# for j in jails:
 		# 	print(j, jails[j])
 
-		# test default stock actions sepecified in all stock jails:
+		# test default stock actions specified in all stock jails:
 		if not unittest.F2B.fast:
 			self._testExecActions(server)
 
@@ -1330,7 +1330,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 
 		for actCfg in glob.glob(os.path.join(CONFIG_DIR, 'action.d', '*.conf')):
 			act = os.path.basename(actCfg).replace('.conf', '')
-			# transmit artifical jail with each action to the server:
+			# transmit artificial jail with each action to the server:
 			stream = self.getDefaultJailStream('j-'+act, act)
 			for cmd in stream:
 				# command to server:
@@ -1372,12 +1372,12 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`{ nft flush set inet f2b-table addr6-set-j-w-nft-mp 2> /dev/null; } || ",
 				),
 				'stop': (
-					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-mp\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
-					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
-					"`nft delete set inet f2b-table addr-set-j-w-nft-mp`",
-					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-mp\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
-					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
-					"`nft delete set inet f2b-table addr6-set-j-w-nft-mp`",
+					r"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-mp\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
+					r"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
+					r"`nft delete set inet f2b-table addr-set-j-w-nft-mp`",
+					r"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-mp\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
+					r"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
+					r"`nft delete set inet f2b-table addr6-set-j-w-nft-mp`",
 				),
 				'ip4-check': (
 					r"`nft list chain inet f2b-table f2b-chain | grep -q '@addr-set-j-w-nft-mp[ \t]'`",
@@ -1418,12 +1418,12 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`{ nft flush set inet f2b-table addr6-set-j-w-nft-ap 2> /dev/null; } || ",
 				),
 				'stop': (
-					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-ap\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
-					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
-					"`nft delete set inet f2b-table addr-set-j-w-nft-ap`",
-					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-ap\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
-					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
-					"`nft delete set inet f2b-table addr6-set-j-w-nft-ap`",
+					r"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-ap\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
+					r"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
+					r"`nft delete set inet f2b-table addr-set-j-w-nft-ap`",
+					r"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-ap\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
+					r"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
+					r"`nft delete set inet f2b-table addr6-set-j-w-nft-ap`",
 				),
 				'ip4-check': (
 					r"""`nft list chain inet f2b-table f2b-chain | grep -q '@addr-set-j-w-nft-ap[ \t]'`""",
@@ -1832,7 +1832,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'start': (
 					'`echo "table <f2b-j-w-pf> persist counters" | pfctl -a f2b/j-w-pf -f-`',
 					'port="<port>"',
-					'`echo "block quick proto tcp from <f2b-j-w-pf> to any port $port" | pfctl -a f2b/j-w-pf -f-`',
+					'`echo "block quick $protocol from <f2b-j-w-pf> to any port $port" | pfctl -a f2b/j-w-pf -f-`',
 				),
 				'flush': (
 					'`pfctl -a f2b/j-w-pf -t f2b-j-w-pf -T flush`',
@@ -1855,7 +1855,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'start': (
 					'`echo "table <f2b-j-w-pf-mp> persist counters" | pfctl -a f2b/j-w-pf-mp -f-`',
 					'port="http,https"',
-					'`echo "block quick proto tcp from <f2b-j-w-pf-mp> to any port $port" | pfctl -a f2b/j-w-pf-mp -f-`',
+					'`echo "block quick $protocol from <f2b-j-w-pf-mp> to any port $port" | pfctl -a f2b/j-w-pf-mp -f-`',
 				),
 				'flush': (
 					'`pfctl -a f2b/j-w-pf-mp -t f2b-j-w-pf-mp -T flush`',
@@ -1877,7 +1877,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'ip4': (), 'ip6': (),
 				'ip4-start': (
 					'`echo "table <f2b-j-w-pf-ap> persist counters" | pfctl -a f2b/j-w-pf-ap -f-`',
-					'`echo "block quick proto tcp from <f2b-j-w-pf-ap> to any" | pfctl -a f2b/j-w-pf-ap -f-`',
+					'`echo "block quick $protocol from <f2b-j-w-pf-ap> to any" | pfctl -a f2b/j-w-pf-ap -f-`',
 				),
 				'ip6-start': (), # the same as ipv4
 				'flush': (

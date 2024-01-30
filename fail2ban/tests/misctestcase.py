@@ -190,12 +190,10 @@ class TestsUtilsTest(LogCaptureTestCase):
 
 	def testUniConverters(self):
 		self.assertRaises(Exception, uni_decode, 
-			(b'test' if sys.version_info >= (3,) else 'test'), 'f2b-test::non-existing-encoding')
-		uni_decode((b'test\xcf' if sys.version_info >= (3,) else 'test\xcf'))
+			b'test', 'f2b-test::non-existing-encoding')
+		uni_decode(b'test\xcf')
 		uni_string(b'test\xcf')
 		uni_string('test\xcf')
-		if sys.version_info < (3,) and 'PyPy' not in sys.version:
-			uni_string('test\xcf')
 
 	def testSafeLogging(self):
 		# logging should be exception-safe, to avoid possible errors (concat, str. conversion, representation failures, etc)
@@ -205,19 +203,19 @@ class TestsUtilsTest(LogCaptureTestCase):
 				self.err = err
 			def __repr__(self):
 				if self.err:
-					raise Exception('no represenation for test!')
+					raise Exception('no representation for test!')
 				else:
 					return 'conv-error (\xf2\xf0\xe5\xf2\xe8\xe9), unterminated utf \xcf'
 		test = Test()
 		logSys.log(logging.NOTICE, "test 1a: %r", test)
-		self.assertLogged("Traceback", "no represenation for test!")
+		self.assertLogged("Traceback", "no representation for test!")
 		self.pruneLog()
 		logSys.notice("test 1b: %r", test)
-		self.assertLogged("Traceback", "no represenation for test!")
+		self.assertLogged("Traceback", "no representation for test!")
 
 		self.pruneLog('[phase 2] test error conversion by encoding %s' % sys.getdefaultencoding())
 		test = Test(0)
-		# this may produce coversion error on ascii default encoding:
+		# this may produce conversion error on ascii default encoding:
 		#str(test)
 		logSys.log(logging.NOTICE, "test 2a: %r, %s", test, test)
 		self.assertLogged("test 2a", "Error by logging handler", all=False)

@@ -51,7 +51,7 @@ except ImportError:
 	FilterSystemd = None
 
 from ..version import version, normVersion
-from .filterreader import FilterReader
+from .jailreader import FilterReader, JailReader, NoJailError
 from ..server.filter import Filter, FileContainer, MyTime
 from ..server.failregex import Regex, RegexException
 
@@ -69,7 +69,7 @@ def debuggexURL(sample, regex, multiline=False, useDns="yes"):
 	if multiline: args['flags'] = 'm'
 	return 'https://www.debuggex.com/?' + urllib.parse.urlencode(args)
 
-def output(args): # pragma: no cover (overriden in test-cases)
+def output(args): # pragma: no cover (overridden in test-cases)
 	print(args)
 
 def shortstr(s, l=53):
@@ -280,7 +280,7 @@ class Fail2banRegex(object):
 			self._filter.setUseDns(opts.usedns)
 		self._filter.returnRawHost = opts.raw
 		self._filter.checkAllRegex = opts.checkAllRegex and not opts.out
-		# ignore pending (without ID/IP), added to matches if it hits later (if ID/IP can be retreved)
+		# ignore pending (without ID/IP), added to matches if it hits later (if ID/IP can be retrieved)
 		self._filter.ignorePending = bool(opts.out)
 		# callback to increment ignored RE's by index (during process):
 		self._filter.onIgnoreRegex = self._onIgnoreRegex
@@ -312,12 +312,18 @@ class Fail2banRegex(object):
 	def _dumpRealOptions(self, reader, fltOpt):
 		realopts = {}
 		combopts = reader.getCombined()
+		if isinstance(reader, FilterReader):
+			_get_opt = lambda k: reader.get('Definition', k)
+		elif reader.filter: # JailReader for jail with filter:
+			_get_opt = lambda k: reader.filter.get('Definition', k)
+		else: # JailReader for jail without filter:
+			_get_opt = lambda k: None
 		# output all options that are specified in filter-argument as well as some special (mostly interested):
 		for k in ['logtype', 'datepattern'] + list(fltOpt.keys()):
 			# combined options win, but they contain only a sub-set in filter expected keys,
 			# so get the rest from definition section:
 			try:
-				realopts[k] = combopts[k] if k in combopts else reader.get('Definition', k)
+				realopts[k] = combopts[k] if k in combopts else _get_opt(k)
 			except NoOptionError: # pragma: no cover
 				pass
 		self.output("Real  filter options : %r" % realopts)
@@ -330,16 +336,26 @@ class Fail2banRegex(object):
 		fltName = value
 		fltFile = None
 		fltOpt = {}
+		jail = None
 		if regextype == 'fail':
 			if re.search(r'(?ms)^/{0,3}[\w/_\-.]+(?:\[.*\])?$', value):
 				try:
 					fltName, fltOpt = extractOptions(value)
+					if re.search(r'(?ms)^[\w/_\-]+$', fltName): # name of jail?
+						try:
+							jail = JailReader(fltName, force_enable=True, 
+								share_config=self.share_config, basedir=basedir)
+							jail.read()
+						except NoJailError:
+							jail = None
 					if "." in fltName[~5:]:
 						tryNames = (fltName,)
 					else:
 						tryNames = (fltName, fltName + '.conf', fltName + '.local')
 					for fltFile in tryNames:
-						if not "/" in fltFile:
+						if os.path.dirname(fltFile) == 'filter.d':
+							fltFile = os.path.join(basedir, fltFile)
+						elif not "/" in fltFile:
 							if os.path.basename(basedir) == 'filter.d':
 								fltFile = os.path.join(basedir, fltFile)
 							else:
@@ -354,8 +370,25 @@ class Fail2banRegex(object):
 					output("       while parsing: %s" % (value,))
 					if self._verbose: raise(e)
 					return False
+		
+		readercommands = None
+		# if it is jail:
+		if jail:
+			self.output( "Use %11s jail : %s" % ('', fltName) )
+			if fltOpt:
+				self.output( "Use jail/flt options : %r" % fltOpt )
+			if not fltOpt: fltOpt = {}
+			fltOpt['backend'] = self._backend
+			ret = jail.getOptions(addOpts=fltOpt)
+			if not ret:
+				output('ERROR: Failed to get jail for %r' % (value,))
+				return False
+			# show real options if expected:
+			if self._verbose > 1 or logSys.getEffectiveLevel()<=logging.DEBUG:
+				self._dumpRealOptions(jail, fltOpt)
+			readercommands = jail.convert(allow_no_files=True)
 		# if it is filter file:
-		if fltFile is not None:
+		elif fltFile is not None:
 			if (basedir == self._opts.config
 				or os.path.basename(basedir) == 'filter.d'
 				or ("." not in fltName[~5:] and "/" not in fltName)
@@ -364,16 +397,17 @@ class Fail2banRegex(object):
 				if os.path.basename(basedir) == 'filter.d':
 					basedir = os.path.dirname(basedir)
 				fltName = os.path.splitext(os.path.basename(fltName))[0]
-				self.output( "Use %11s filter file : %s, basedir: %s" % (regex, fltName, basedir) )
+				self.output( "Use %11s file : %s, basedir: %s" % ('filter', fltName, basedir) )
 			else:
 				## foreign file - readexplicit this file and includes if possible:
-				self.output( "Use %11s file : %s" % (regex, fltName) )
+				self.output( "Use %11s file : %s" % ('filter', fltName) )
 				basedir = None
 				if not os.path.isabs(fltName): # avoid join with "filter.d" inside FilterReader
 					fltName = os.path.abspath(fltName)
 			if fltOpt:
 				self.output( "Use   filter options : %r" % fltOpt )
-			reader = FilterReader(fltName, 'fail2ban-regex-jail', fltOpt, share_config=self.share_config, basedir=basedir)
+			reader = FilterReader(fltName, 'fail2ban-regex-jail', fltOpt,
+				share_config=self.share_config, basedir=basedir)
 			ret = None
 			try:
 				if basedir is not None:
@@ -398,6 +432,7 @@ class Fail2banRegex(object):
 			# to stream:
 			readercommands = reader.convert()
 
+		if readercommands:
 			regex_values = {}
 			for opt in readercommands:
 				if opt[0] == 'multi-set':
@@ -476,7 +511,7 @@ class Fail2banRegex(object):
 					ret.append(match)
 				else:
 					is_ignored = True
-			if self._opts.out: # (formated) output - don't need stats:
+			if self._opts.out: # (formatted) output - don't need stats:
 				return None, ret, None
 			# prefregex stats:
 			if self._filter.prefRegex:
@@ -595,7 +630,7 @@ class Fail2banRegex(object):
 					continue
 				line_datetimestripped, ret, is_ignored = self.testRegex(line)
 
-			if self._opts.out: # (formated) output:
+			if self._opts.out: # (formatted) output:
 				if len(ret) > 0 and not is_ignored: out(ret)
 				continue
 
@@ -789,7 +824,15 @@ class Fail2banRegex(object):
 		return True
 
 
+def _loc_except_hook(exctype, value, traceback):
+	if (exctype != BrokenPipeError and exctype != IOError or value.errno != 32):
+		return sys.__excepthook__(exctype, value, traceback)
+	# pipe seems to be closed (head / tail / etc), thus simply exit:
+	sys.exit(0)
+
 def exec_command_line(*args):
+	sys.excepthook = _loc_except_hook; # stop on closed/broken pipe
+
 	logging.exitOnIOError = True
 	parser = get_opt_parser()
 	(opts, args) = parser.parse_args(*args)

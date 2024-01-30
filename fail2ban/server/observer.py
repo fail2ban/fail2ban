@@ -161,7 +161,7 @@ class ObserverThread(JailThread):
 		self.pulse_notify()
 
 	def add_wn(self, *event):
-		"""Add a event to queue withouth notifying thread to wake up.
+		"""Add a event to queue without notifying thread to wake up.
 		"""
 		## lock and add new event to queue:
 		with self._queue_lock:
@@ -465,7 +465,7 @@ class ObserverThread(JailThread):
 		return banTime
 
 	def banFound(self, ticket, jail, btime):
-		""" Notify observer a ban occured for ip
+		""" Notify observer a ban occurred for ip
 
 		Observer will check ip was known (bad) and possibly increase/prolong a ban time
 		Secondary we will actualize the bans and bips (bad ip) in database
@@ -507,7 +507,7 @@ class ObserverThread(JailThread):
 			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
 	def prolongBan(self, ticket, jail):
-		""" Notify observer a ban occured for ip
+		""" Notify observer a ban occurred for ip
 
 		Observer will check ip was known (bad) and possibly increase/prolong a ban time
 		Secondary we will actualize the bans and bips (bad ip) in database
@@ -521,7 +521,7 @@ class ObserverThread(JailThread):
 		except Exception as e:
 			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
-# Global observer initial created in server (could be later rewriten via singleton)
+# Global observer initial created in server (could be later rewritten via singleton)
 class _Observers:
 	def __init__(self):
 		self.Main = None

@@ -8,7 +8,7 @@
 # DESCRIPTION (NOTES):
 #
 # Script to fetch list of agent strings from http://www.user-agents.org
-# which are known to be from mailicious bots, and create apache-badbots.conf
+# which are known to be from malicious bots, and create apache-badbots.conf
 # filter for fail2ban
 #
 # COPYRIGHT: Yaroslav Halchenko 2007-2013

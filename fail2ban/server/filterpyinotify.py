@@ -173,7 +173,9 @@ class FilterPyinotify(FileFilter):
 			if not chkpath(path): # not found - prolong for next time
 				if retardTM < 60: retardTM *= 2
 				if minTime > retardTM: minTime = retardTM
-				self.__pending[path][0] = retardTM
+				try:
+					self.__pending[path][0] = retardTM
+				except KeyError: pass
 				continue
 			logSys.log(logging.MSG, "Log presence detected for %s %s", 
 				"directory" if isDir else "file", path)

@@ -768,7 +768,7 @@ class LogFileFilterPoll(unittest.TestCase):
 			fc.setPos(0); self.filter.seekToTime(fc, time)
 			self.assertEqual(fc.getPos(), 157)
 
-			# stil one exact line:
+			# still one exact line:
 			f.write(b"%s [sshd] error: PAM: Authentication failure\n" % _tmb(time))
 			f.write(b"%s [sshd] error: PAM: failure len 1\n" % _tmb(time))
 			f.flush()
@@ -1056,7 +1056,7 @@ class CommonMonitorTestCase(unittest.TestCase):
 		return Utils.wait_for(lambda: self.filter.ticks >= last_ticks + ticks, _maxWaitTime(delay))
 
 	def commonFltError(self, reason="common", exc=None):
-		""" Mock-up for default common error handler to find catched unhandled exceptions
+		""" Mock-up for default common error handler to find caught unhandled exceptions
 		could occur in filters
 		"""
 		self._commonFltError(reason, exc)
@@ -1087,7 +1087,7 @@ def get_monitor_failures_testcase(Filter_):
 			self.file = open(self.name, 'ab')
 			self.jail = DummyJail()
 			self.filter = Filter_(self.jail)
-			# mock-up common error to find catched unhandled exceptions:
+			# mock-up common error to find caught unhandled exceptions:
 			self._commonFltError, self.filter.commonError = self.filter.commonError, self.commonFltError
 			self.filter.addLogPath(self.name, autoSeek=False)
 			# speedup search using exact date pattern:
@@ -1388,7 +1388,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def _initFilter(self, **kwargs):
 			self._getRuntimeJournal() # check journal available
 			self.filter = Filter_(self.jail, **kwargs)
-			# mock-up common error to find catched unhandled exceptions:
+			# mock-up common error to find caught unhandled exceptions:
 			self._commonFltError, self.filter.commonError = self.filter.commonError, self.commonFltError
 			self.filter.addJournalMatch([
 				"SYSLOG_IDENTIFIER=fail2ban-testcases",
@@ -1704,7 +1704,7 @@ class GetFailures(LogCaptureTestCase):
 		self.assertSortedEqual(self.filter.getLogPaths(), [GetFailures.FILENAME_01, GetFailures.FILENAME_02])
 
 	def testTail(self):
-		# There must be no containters registered, otherwise [-1] indexing would be wrong
+		# There must be no containers registered, otherwise [-1] indexing would be wrong
 		self.assertEqual(self.filter.getLogs(), [])
 		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
 		self.assertEqual(self.filter.getLogs()[-1].getPos(), 1653)
@@ -2043,7 +2043,7 @@ class DNSUtilsTests(unittest.TestCase):
 			c.set(i, 1)
 		st = time.time()
 		self.assertTrue(Utils.wait_for(lambda: time.time() >= st + 0.0005, 1))
-		# we have still 5 elements (or fewer if too slow test mashine):
+		# we have still 5 elements (or fewer if too slow test machine):
 		self.assertTrue(len(c) <= 5)
 		# but all that are expiered also:
 		for i in range(10):
@@ -2200,11 +2200,13 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 
 	def testIpToName(self):
 		#unittest.F2B.SkipIfNoNetwork()
-		res = DNSUtils.ipToName('8.8.4.4')
-		self.assertTrue(res.endswith(('.google', '.google.com')))
+		self.assertEqual(DNSUtils.ipToName('87.142.124.10'), 'test-host')
+		self.assertEqual(DNSUtils.ipToName('2001:db8::ffff'), 'test-other')
+		res = DNSUtils.ipToName('199.9.14.201')
+		self.assertTrue(res.endswith(('.isi.edu', '.b.root-servers.org')))
 		# same as above, but with IPAddr:
-		res = DNSUtils.ipToName(IPAddr('8.8.4.4'))
-		self.assertTrue(res.endswith(('.google', '.google.com')))
+		res = DNSUtils.ipToName(IPAddr('199.9.14.201'))
+		self.assertTrue(res.endswith(('.isi.edu', '.b.root-servers.org')))
 		# invalid ip (TEST-NET-1 according to RFC 5737)
 		res = DNSUtils.ipToName('192.0.2.0')
 		self.assertEqual(res, None)

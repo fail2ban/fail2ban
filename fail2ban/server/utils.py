@@ -32,10 +32,7 @@ import time
 from ..helpers import getLogger, _merge_dicts, uni_decode
 from collections import OrderedDict
 
-if sys.version_info >= (3, 3):
-	import importlib.machinery
-else:
-	import imp
+import importlib.machinery
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -355,10 +352,6 @@ class Utils():
 	def load_python_module(pythonModule):
 		pythonModuleName = os.path.splitext(
 			os.path.basename(pythonModule))[0]
-		if sys.version_info >= (3, 3):
-			mod = importlib.machinery.SourceFileLoader(
-				pythonModuleName, pythonModule).load_module()
-		else:
-			mod = imp.load_source(
-				pythonModuleName, pythonModule)
+		mod = importlib.machinery.SourceFileLoader(
+			pythonModuleName, pythonModule).load_module()
 		return mod

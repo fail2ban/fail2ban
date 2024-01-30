@@ -25,8 +25,14 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from pickle import dumps, loads, HIGHEST_PROTOCOL
-import asynchat
-import asyncore
+try:
+	import asynchat
+except ImportError:
+	from ..compat import asynchat
+try:
+	import asyncore
+except ImportError:
+	from ..compat import asyncore
 import errno
 import fcntl
 import os

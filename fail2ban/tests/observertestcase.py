@@ -104,7 +104,7 @@ class BanTimeIncr(LogCaptureTestCase):
 			[1200, 2400, 4800, 9600, 19200, 38400, 43200, 43200, 43200, 43200]
 		)
 		a.setBanTimeExtra('maxtime', '24h')
-		## test randomization - not possibe all 10 times we have random = 0:
+		## test randomization - not possible all 10 times we have random = 0:
 		a.setBanTimeExtra('rndtime', '5m')
 		self.assertTrue(
 			False in [1200 in [a.calcBanTime(600, 1) for i in range(10)] for c in range(10)]
@@ -159,7 +159,7 @@ class BanTimeIncr(LogCaptureTestCase):
 			[1200, 2400, 4800, 9600, 19200, 38400, 43200, 43200, 43200, 43200]
 		)
 		a.setBanTimeExtra('maxtime', '24h')
-		## test randomization - not possibe all 10 times we have random = 0:
+		## test randomization - not possible all 10 times we have random = 0:
 		a.setBanTimeExtra('rndtime', '5m')
 		self.assertTrue(
 			False in [1200 in [int(a.calcBanTime(600, 1)) for i in range(10)] for c in range(10)]
@@ -474,7 +474,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		obs.wait_empty(5)
 
 		stime = int(MyTime.time())
-		# completelly empty ?
+		# completely empty ?
 		tickets = self.db.getBans()
 		self.assertEqual(tickets, [])
 
@@ -503,7 +503,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		failManager.addFailure(ticket)
 		obs.add('failureFound', jail, ticket)
 		obs.wait_empty(5)
-		# wait until ticket transfered from failmanager into jail:
+		# wait until ticket transferred from failmanager into jail:
 		ticket2 = Utils.wait_for(jail.getFailTicket, 10)
 		# check ticket and failure count:
 		self.assertTrue(ticket2)

@@ -257,7 +257,7 @@ class FailTicket(Ticket):
 		as estimation from rate by previous known interval (if it exceeds the findTime)
 		"""
 		if time > self._time:
-			# expand current interval and attemps count (considering maxTime):
+			# expand current interval and attempts count (considering maxTime):
 			if self._firstTime < time - maxTime:
 				# adjust retry calculated as estimation from rate by previous known interval:
 				self._retry = int(round(self._retry / float(time - self._firstTime) * maxTime))

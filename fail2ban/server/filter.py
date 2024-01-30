@@ -635,7 +635,7 @@ class Filter(JailThread):
 				e = m.end(1)
 				m = line[s:e]
 				tupleLine = (line[:s], m, line[e:])
-				if m: # found and not empty - retrive date:
+				if m: # found and not empty - retrieve date:
 					date = self.dateDetector.getTime(m, timeMatch)
 					if date is not None:
 						# Lets get the time part
@@ -666,7 +666,7 @@ class Filter(JailThread):
 		if self.checkFindTime and date is not None:
 			# if in operation (modifications have been really found):
 			if self.inOperation:
-				# if weird date - we'd simulate now for timeing issue (too large deviation from now):
+				# if weird date - we'd simulate now for timing issue (too large deviation from now):
 				delta = int(date - MyTime.time())
 				if abs(delta) > 60:
 					# log timing issue as warning once per day:
