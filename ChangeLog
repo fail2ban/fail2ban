@@ -35,6 +35,10 @@ ver. 1.0.3-dev-1 (20??/??/??) - development nightly edition
 * `filter.d/sshd.conf`:
   - avoid double counting for "maximum authentication attempts exceeded" (gh-3502)
   - message "Disconnecting ... Too many authentication failures" is not a failure anymore
+  - mode `ddos`/`aggressive` extended to match new messages caused by port scanner, wrong payload on ssh port (gh-3486):
+    * message authentication code incorrect [preauth]
+    * connection corrupted [preauth]
+    * timeout before authentication
 
 
 ver. 1.0.2 (2022/11/09) - finally-war-game-test-tape-not-a-nuclear-alarm
