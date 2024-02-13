@@ -325,6 +325,13 @@ Mar  1 18:59:33 hostname sshd[1189575]: error: kex_exchange_identification: bann
 # failJSON: { "time": "2005-03-01T18:59:33", "match": true , "host": "192.0.2.12", "desc": "ddos: port scanner, https payload on ssh port (banner exchange: invalid format, gh-3169)" }
 Mar  1 18:59:33 hostname sshd[1189575]: banner exchange: Connection from 192.0.2.12 port 44105: invalid format
 
+# failJSON: { "time": "2005-03-01T18:59:50", "match": true , "host": "192.0.2.13", "desc": "ddos: port scanner, wrong payload on ssh port (message authentication code incorrect [preauth], gh-3486)" }
+Mar  1 18:59:50 hostname sshd[71905]: ssh_dispatch_run_fatal: Connection from 192.0.2.13 port 33738: message authentication code incorrect [preauth]
+# failJSON: { "time": "2005-03-01T18:59:50", "match": true , "host": "192.0.2.13", "desc": "ddos: port scanner, wrong payload on ssh port (connection corrupted [preauth], gh-3486)" }
+Mar  1 18:59:50 hostname sshd[80348]: ssh_dispatch_run_fatal: Connection from 192.0.2.13 port 52452: Connection corrupted [preauth]
+# failJSON: { "time": "2005-03-01T18:59:52", "match": true , "host": "192.0.2.14", "desc": "ddos: port scanner (timeout before authentication, gh-3486)" }
+Mar  1 18:59:52 srv sshd[12345]: fatal: Timeout before authentication for 192.0.2.14 port 55555
+
 # failJSON: { "time": "2005-03-15T09:21:01", "match": true , "host": "192.0.2.212", "desc": "DDOS mode causes failure on close within preauth stage" }
 Mar 15 09:21:01 host sshd[2717]: Connection closed by 192.0.2.212 [preauth]
 # failJSON: { "time": "2005-03-15T09:21:02", "match": true , "host": "192.0.2.212", "desc": "DDOS mode causes failure on close within preauth stage" }
