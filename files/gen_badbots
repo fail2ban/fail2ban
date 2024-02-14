@@ -60,12 +60,15 @@ cat >| config/filter.d/apache-badbots.conf <<EOF
 
 [Definition]
 
-badbotscustom = EmailCollector|WebEMailExtrac|TrackBack/1\.02|sogou music spider
+badbotscustom = EmailCollector|WebEMailExtrac|TrackBack/1\.02|sogou music spider|(?:Mozilla/\d+\.\d+ )?Jorgee
 badbots = $badbots
 
-failregex = ^<HOST> -.*"(GET|POST).*HTTP.*"(?:%(badbots)s|%(badbotscustom)s)"$
+failregex = ^<HOST> -.*"(GET|POST|HEAD).*HTTP.*"(?:%(badbots)s|%(badbotscustom)s)"$
 
 ignoreregex =
+
+datepattern = ^[^\[]*\[({DATE})
+              {^LN-BEG}
 
 # DEV Notes:
 # List of bad bots fetched from http://www.user-agents.org
