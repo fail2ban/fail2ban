@@ -59,7 +59,9 @@ cat >| config/filter.d/apache-badbots.conf <<EOF
 badbotscustom = EmailCollector|WebEMailExtrac|TrackBack/1\.02|sogou music spider|(?:Mozilla/\d+\.\d+ )?Jorgee
 badbots = $badbots
 
-failregex = ^<HOST> -.*"(GET|POST|HEAD).*HTTP.*"(?:%(badbots)s|%(badbotscustom)s)"$
+requri = /\S*
+rescode = \d+
+failregex = ^<ADDR> [^"]*"[A-Z]+\s+%(requri)s\s+[^"]*" %(rescode)s \d+ "[^"]*" "(?:%(badbots)s|%(badbotscustom)s)"$
 
 ignoreregex =
 
