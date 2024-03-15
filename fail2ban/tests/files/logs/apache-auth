@@ -137,6 +137,9 @@
 # failJSON: { "match": false, "desc": "ignore mod_evasive errors in normal mode (gh-2548)" }
 [Thu Oct 17 18:43:40.160521 2019] [evasive20:error] [pid 22589] [client 192.0.2.1:56175] client denied by server configuration: /path/index.php, referer: https://hostname/path/
 
+# failJSON: { "time": "2023-11-06T13:39:56", "match": true , "host": "192.0.2.111", "desc": "remote instead of client, gh-3622" }
+[Mon Nov 06 13:39:56.637868 2023] [auth_basic:error] [pid 3175001:tid 140494544914112] [remote 192.0.2.111:35924] AH01618: user whatever not found: /admin
+
 # filterOptions: {"mode": "aggressive"}
 
 # failJSON: { "time": "2019-10-17T18:43:40", "match": true, "host": "192.0.2.1", "desc": "accept mod_evasive errors in aggressive mode (gh-2548)" }
