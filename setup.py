@@ -221,6 +221,7 @@ setup(
 	packages = [
 		'fail2ban',
 		'fail2ban.client',
+		'fail2ban.compat',
 		'fail2ban.server',
 	] + [
 		'fail2ban.tests',
