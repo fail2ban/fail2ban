@@ -288,10 +288,10 @@ class Jail(object):
 					correctBanTime=correctBanTime, maxmatches=self.filter.failManager.maxMatches
 				):
 					try:
-						#logSys.debug('restored ticket: %s', ticket)
-						if self.filter._inIgnoreIPList(ticket.getID(), ticket): continue
 						# mark ticked was restored from database - does not put it again into db:
 						ticket.restored = True
+						#logSys.debug('restored ticket: %s', ticket)
+						if self.filter._inIgnoreIPList(ticket.getID(), ticket): continue
 						# correct start time / ban time (by the same end of ban):
 						btm = ticket.getBanTime(forbantime)
 						diftm = MyTime.time() - ticket.getTime()
