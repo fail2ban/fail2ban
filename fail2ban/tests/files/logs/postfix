@@ -12,6 +12,8 @@ Jul 18 23:12:56 xxx postfix/smtpd[8738]: NOQUEUE: reject: RCPT from foo[192.51.1
 Jul 18 23:12:56 xxx postfix/smtpd[1938]: NOQUEUE: reject: RCPT from unknown[192.0.2.236]: 554 5.7.1 <dom.tld>: Helo command rejected: Access denied; from=<ADMINISTRATOR@dom.tld> to=<lp@dom.tld> proto=ESMTP helo=<dom.tld>
 # failJSON: { "time": "2005-07-18T23:12:56", "match": true , "host": "192.51.100.43" }
 Jul 18 23:12:56 xxx postfix/smtpd[8738]: NOQUEUE: reject: RCPT from foo[192.51.100.43]: 554 5.7.1 <foo@bad.domain>: Sender address rejected: match bad.domain; from=<foo@bad.domain> to=<foo@porcupine.org> proto=SMTP helo=<192.51.100.43>
+# failJSON: { "time": "2005-07-18T23:12:57", "match": true , "host": "192.51.100.143", "desc": "gh-3590" }
+Jul 18 23:12:57 xxx postfix/smtpd[8722]: NOQUEUE: reject: RCPT from foo[192.51.100.143]: 450 4.1.8 <foo@bad.domain>: Sender address rejected: Malformed DNS server reply; from=<foo@bad.domain> to=<foo@porcupine.org> proto=SMTP helo=<192.51.100.143>
 # failJSON: { "time": "2005-08-10T10:55:38", "match": true , "host": "72.53.132.234" }
 Aug 10 10:55:38 f-vanier-bourgeois postfix/smtpd[2162]: NOQUEUE: reject: VRFY from 72-53-132-234.cpe.distributel.net[72.53.132.234]: 550 5.1.1 : Recipient address rejected: User unknown in local recipient tab
 # failJSON: { "time": "2005-08-13T15:45:46", "match": true , "host": "192.0.2.1" }
