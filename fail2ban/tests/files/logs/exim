@@ -93,12 +93,19 @@
 # failJSON: { "time": "2017-11-28T14:14:32", "match": true , "host": "192.0.2.6", "desc": "quoted injecting on AUTH command" }
 2017-11-28 14:14:32 SMTP protocol error in "aUtH lOgIn" H=(test) [8.8.8.8]" H=(roxzgj) [192.0.2.6] AUTH command used when not advertised
 
+# failJSON: { "time": "2024-03-21T19:26:06", "match": true , "host": "194.169.175.1" }
+2024-03-21 19:26:06 dovecot_login authenticator failed for (User) [194.169.175.1]:21298 I=[22.33.44.55]:465 Ci=30416: 535 Incorrect authentication data (set_id=uaf589@example.com)
+# failJSON: { "time": "2024-03-21T09:18:51", "match": true , "host": "9.12.1.21" }
+2024-03-21 09:18:51 H=m05.horp.tld [9.12.1.21]:43030 I=[194.169.175.2]:25 Ci=7326 CV=no SNI=mail.leone.tld F=<user@example.tld> rejected RCPT <locus@leone.tld>: relay not permitted
+
 ## no matches with `mode = normal`:
 
 # failJSON: { "match": false , "desc": "aggressive mode only" }
 2017-12-03 08:32:00 no host name found for IP address 192.0.2.8
 # failJSON: { "match": false , "desc": "aggressive mode only" }
 2017-12-03 08:51:35 no IP address found for host test.example.com (during SMTP connection from [192.0.2.9])
+# failJSON: { "match": false , "desc": "aggressive mode only" }
+2022-04-03 21:53:53 no IP address found for host hos-t.example.tld (during SMTP connection from [63.85.123.6]:49390 I=[31.130.202.17]:25)
 
 # filterOptions: [{"mode": "aggressive"}]
 
@@ -106,8 +113,5 @@
 2017-12-03 08:32:00 no host name found for IP address 192.0.2.8
 # failJSON: { "time": "2017-12-03T08:51:35", "match": true , "host": "192.0.2.9", "desc": "no IP found for host" }
 2017-12-03 08:51:35 no IP address found for host test.example.com (during SMTP connection from [192.0.2.9])
-
-# failJSON: { "time": "2024-03-21T19:26:06", "match": true , "host": "194.169.175.1" }
-2024-03-21 19:26:06 dovecot_login authenticator failed for (User) [194.169.175.1]:21298 I=[22.33.44.55]:465 Ci=30416: 535 Incorrect authentication data (set_id=uaf589@example.com)
-# failJSON: { "time": "2024-03-21T09:18:51", "match": true , "host": "9.12.1.21" }
-2024-03-21 09:18:51 H=m05.horp.tld [9.12.1.21]:43030 I=[194.169.175.2]:25 Ci=7326 CV=no SNI=mail.leone.tld F=<user@example.tld> rejected RCPT <locus@leone.tld>: relay not permitted
+# failJSON: { "time": "2022-04-03T21:53:53", "match": true , "host": "63.85.123.6", "desc": "no IP found for host long" }
+2022-04-03 21:53:53 no IP address found for host hos-t.example.tld (during SMTP connection from [63.85.123.6]:49390 I=[31.130.202.17]:25)
