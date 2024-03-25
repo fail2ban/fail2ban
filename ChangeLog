@@ -30,7 +30,7 @@ ver. 1.0.3-dev-1 (20??/??/??) - development nightly edition
 * improve `ignoreself` by considering all local addresses from network interfaces additionally to IPs from hostnames (gh-3132)
 * `filter.d/exim.conf`:
   - messages are prefiltered by `prefregex` now
-  - filter can bypass additional timestamp that may be logged via systemd-journal (gh-3060)
+  - filter can bypass additional timestamp or pid that may be logged via systemd-journal or syslog-ng (gh-3060)
   - rewrite host line regex for all varied exim's log_selector states (gh-3263)
   - fixed "dropped: too many ..." regex, also matching unrecognized commands now (gh-3502)
 * `action.d/mikrotik.conf` - new action for mikrotik routerOS, adds and removes entries from address lists on the router (gh-2860)
