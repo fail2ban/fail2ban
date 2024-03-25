@@ -18,6 +18,8 @@ Aug 17 08:20:22 catinthehat named[2954]: client 223.252.23.219#56275: zone trans
 # BIND9 ver: BIND 9.9.3-rpz2+rl.13208.13-P2-RedHat-9.9.3-4.P2.el6 (Extended Support Version)
 # failJSON: { "time": "2013-08-23T10:32:56", "match": true , "host": "82.207.95.42" }
 23-Aug-2013 10:32:56.621 client 82.207.95.42#40278 (redginseng.com.ua): query (cache) 'redginseng.com.ua/A/IN' denied
+# failJSON: { "time": "2013-08-23T18:41:28", "match": true , "host": "192.0.2.3", "desc": "denied with allow-query-cache did not match, gh-2697" }
+23-Aug-2013 18:41:28.090 client @0x7f7c95c76968 192.0.2.3#60683 (example.com): query (cache) 'example.com/A/IN' denied (allow-query-cache did not match)
 
 # failJSON: { "time": "2013-08-27T17:49:45", "match": true , "host": "59.167.242.100" }
 27-Aug-2013 17:49:45.330 client 59.167.242.100#44281 (watt.kiev.ua): zone transfer 'watt.kiev.ua/AXFR/IN' denied
