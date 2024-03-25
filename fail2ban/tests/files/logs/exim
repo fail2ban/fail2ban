@@ -72,6 +72,11 @@
 # failJSON: { "time": "2016-03-21T04:33:14", "match": true , "host": "192.0.2.33", "desc": "short form without optional session-id" }
 2016-03-21 04:33:14 SMTP connection from (some.domain) [192.0.2.33] closed by DROP in ACL
 
+# failJSON: { "time": "2016-04-01T11:08:00", "match": true , "host": "192.0.2.29", "desc": "authentication mechanism not supported, gh-3060" }
+2016-04-01 11:08:00 info exim[8003]: [8003] SMTP protocol error in "AUTH LOGIN" H=(User) [192.0.2.29]:4816 I=[192.0.2.1]:25 Ci=8003 LOGIN authentication mechanism not supported
+# failJSON: { "time": "2016-04-01T11:08:00", "match": true , "host": "192.0.2.29", "desc": "additional pid logged with syslog-ng, gh-3060" }
+2016-04-01 11:08:00 info exim[8001]: [8001] no MAIL in SMTP connection from (User) [192.0.2.29]:20042 I=[192.0.2.1]:25 Ci=8001 D=0.349s C=EHLO,AUTH,QUIT
+
 # failJSON: { "time": "2016-04-01T11:08:39", "match": true , "host": "192.0.2.1" }
 2016-04-01 11:08:39 [18643] no MAIL in SMTP connection from host.example.com (SERVER) [192.0.2.1]:1418 I=[172.89.0.6]:25 D=34s C=EHLO,AUTH
 # failJSON: { "time": "2016-04-01T11:08:40", "match": true , "host": "192.0.2.2" }
@@ -115,3 +120,8 @@
 2017-12-03 08:51:35 no IP address found for host test.example.com (during SMTP connection from [192.0.2.9])
 # failJSON: { "time": "2022-04-03T21:53:53", "match": true , "host": "63.85.123.6", "desc": "no IP found for host long" }
 2022-04-03 21:53:53 no IP address found for host hos-t.example.tld (during SMTP connection from [63.85.123.6]:49390 I=[31.130.202.17]:25)
+
+# filterOptions: {"logtype": "journal"}
+
+# failJSON: { "match": true , "host": "192.0.2.27", "desc": "systemd-journal entry with additional timestamp, gh-3060" }
+mail.example.com exim[3751842]: 2021-07-17 23:20:49 plain_server authenticator failed for ([192.0.2.17]) [192.0.2.27]: 535 Incorrect authentication data
