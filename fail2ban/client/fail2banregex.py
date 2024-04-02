@@ -341,7 +341,7 @@ class Fail2banRegex(object):
 			if re.search(r'(?ms)^/{0,3}[\w/_\-.]+(?:\[.*\])?$', value):
 				try:
 					fltName, fltOpt = extractOptions(value)
-					if re.search(r'(?ms)^[\w/_\-]+$', fltName): # name of jail?
+					if not re.search(r'(?ms)(?:/|\.(?:conf|local)$)', fltName): # name of jail?
 						try:
 							jail = JailReader(fltName, force_enable=True, 
 								share_config=self.share_config, basedir=basedir)
