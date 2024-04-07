@@ -270,7 +270,7 @@ Take note of  -l heavydebug  / -l debug  and -v as they might be very useful.
      call graphs and can browse different versions.
 
 .. TIP::
-     Some applications log spaces at the end. If you are not sure add \s*$ as
+     Some applications log spaces at the end. If you are not sure add \\s*$ as
      the end part of the regex.
 
 If your regex is not matching, http://www.debuggex.com/?flavor=python can help
