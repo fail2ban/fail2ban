@@ -81,8 +81,9 @@ class Jail(object):
 		# Extra parameters for increase ban time
 		self._banExtra = {};
 		logSys.info("Creating new jail '%s'" % self.name)
+		self._realBackend = None
 		if backend is not None:
-			self._setBackend(backend)
+			self._realBackend = self._setBackend(backend)
 		self.backend = backend
 
 	def __repr__(self):
@@ -113,7 +114,7 @@ class Jail(object):
 				else:
 					logSys.info("Initiated %r backend" % b)
 				self.__actions = Actions(self)
-				return					# we are done
+				return b				# we are done
 			except ImportError as e: # pragma: no cover
 				# Log debug if auto, but error if specific
 				logSys.log(
@@ -185,10 +186,15 @@ class Jail(object):
 	def status(self, flavor="basic"):
 		"""The status of the jail.
 		"""
+		fstat = self.filter.status(flavor=flavor)
+		astat = self.actions.status(flavor=flavor)
+		if flavor == "stats":
+			backend = type(self.filter).__name__.replace('Filter', '').lower()
+			return [self._realBackend or self.backend, fstat, astat]
 		return [
-			("Filter", self.filter.status(flavor=flavor)),
-			("Actions", self.actions.status(flavor=flavor)),
-			]
+			("Filter", fstat),
+			("Actions", astat),
+		]
 
 	@property
 	def hasFailTickets(self):

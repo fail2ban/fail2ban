@@ -978,6 +978,8 @@ class Filter(JailThread):
 	def status(self, flavor="basic"):
 		"""Status of failures detected by filter.
 		"""
+		if flavor == "stats":
+			return (self.failManager.size(), self.failManager.getFailTotal())
 		ret = [("Currently failed", self.failManager.size()),
 		       ("Total failed", self.failManager.getFailTotal())]
 		return ret
@@ -1255,6 +1257,8 @@ class FileFilter(Filter):
 		"""Status of Filter plus files being monitored.
 		"""
 		ret = super(FileFilter, self).status(flavor=flavor)
+		if flavor == "stats":
+			return ret
 		path = list(self.__logs.keys())
 		ret.append(("File list", path))
 		return ret

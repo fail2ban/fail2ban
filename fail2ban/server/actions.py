@@ -721,9 +721,11 @@ class Actions(JailThread, Mapping):
 		"""Status of current and total ban counts and current banned IP list.
 		"""
 		# TODO: Allow this list to be printed as 'status' output
-		supported_flavors = ["short", "basic", "cymru"]
+		supported_flavors = ["short", "basic", "stats", "cymru"]
 		if flavor is None or flavor not in supported_flavors:
 			logSys.warning("Unsupported extended jail status flavor %r. Supported: %s" % (flavor, supported_flavors))
+		if flavor == "stats":
+			return (self.banManager.size(), self.banManager.getBanTotal())
 		# Always print this information (basic)
 		if flavor != "short":
 			banned = self.banManager.getBanList()

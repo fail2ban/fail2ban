@@ -645,6 +645,11 @@ class Transmitter(TransmitterBase):
 			(0, [('Number of jail', len(jails)), ('Jail list', ", ".join(jails)),
 				{"TestJail1": self._JAIL_STATUS, "TestJail2": self._JAIL_STATUS}
 			]))
+		self.assertEqual(self.transm.proceed(["stats"]),
+			(0, {
+				"TestJail1": [FAST_BACKEND, (0, 0), (0, 0)],
+				"TestJail2": [FAST_BACKEND, (0, 0), (0, 0)]
+			}))
 
 	def testJailStatus(self):
 		self.assertEqual(self.transm.proceed(["status", self.jailName]),

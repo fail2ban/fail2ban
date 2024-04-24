@@ -144,6 +144,8 @@ class Transmitter:
 			return self.__commandGet(command[1:])
 		elif name == "status":
 			return self.status(command[1:])
+		elif name in ("stats", "statistic", "statistics"):
+			return self.__server.status("--all", "stats")
 		elif name == "version":
 			return version.version
 		elif name == "config-error":

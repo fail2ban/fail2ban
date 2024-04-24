@@ -429,6 +429,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 	def status(self, flavor="basic"):
 		ret = super(FilterSystemd, self).status(flavor=flavor)
+		if flavor == "stats":
+			return ret
 		ret.append(("Journal matches",
 			[" + ".join(" ".join(match) for match in self.__matches)]))
 		return ret

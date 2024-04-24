@@ -608,13 +608,18 @@ class Server:
 		try:
 			self.__lock.acquire()
 			jails = sorted(self.__jails.items())
-			jailList = [n for n, j in jails]
-			ret = [("Number of jail", len(jailList)),
-				   ("Jail list", ", ".join(jailList))]
+			if flavor != "stats":
+				jailList = [n for n, j in jails]
+				ret = [
+					("Number of jail", len(jailList)),
+					("Jail list", ", ".join(jailList))
+				]
 			if name == '--all':
 				jstat = dict(jails)
 				for n, j in jails:
 					jstat[n] = j.status(flavor=flavor)
+				if flavor == "stats":
+					return jstat
 				ret.append(jstat)
 			return ret
 		finally:
