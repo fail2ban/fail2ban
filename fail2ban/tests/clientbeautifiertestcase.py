@@ -70,8 +70,8 @@ class BeautifierTest(unittest.TestCase):
 
 	def testStatus(self):
 		self.b.setInputCmd(["status"])
-		response = (("Number of jails", 0), ("Jail list", ["ssh", "exim4"]))
-		output = "Status\n|- Number of jails:\t0\n`- Jail list:\tssh exim4"
+		response = (("Number of jails", 2), ("Jail list", ", ".join(["ssh", "exim4"])))
+		output = "Status\n|- Number of jails:\t2\n`- Jail list:\tssh, exim4"
 		self.assertEqual(self.b.beautify(response), output)
 
 		self.b.setInputCmd(["status", "ssh"])
@@ -103,6 +103,69 @@ class BeautifierTest(unittest.TestCase):
 		output += "   |- Currently banned:	3\n"
 		output += "   |- Total banned:	3\n"
 		output += "   `- Banned IP list:	192.168.0.1 10.2.2.1 2001:db8::1"
+		self.assertEqual(self.b.beautify(response), output)
+
+		self.b.setInputCmd(["status", "--all"])
+		response = (("Number of jails", 2), ("Jail list", ", ".join(["ssh", "exim4"])), {
+			"ssh": (
+				("Filter", [
+						("Currently failed", 0),
+						("Total failed", 0),
+						("File list", "/var/log/auth.log")
+					]
+				),
+				("Actions", [
+						("Currently banned", 3),
+						("Total banned", 3),
+						("Banned IP list", [
+								IPAddr("192.168.0.1"),
+								IPAddr("::ffff:10.2.2.1"),
+								IPAddr("2001:db8::1")
+							]
+						)
+					]
+				)
+			),
+			"exim4": (
+				("Filter", [
+						("Currently failed", 3),
+						("Total failed", 6),
+						("File list", "/var/log/exim4/mainlog")
+					]
+				),
+				("Actions", [
+						("Currently banned", 0),
+						("Total banned", 0),
+						("Banned IP list", []
+						)
+					]
+				)
+			)
+		})
+		output = (
+		         "Status\n"
+		       + "|- Number of jails:\t2\n"
+		       + "|- Jail list:\tssh, exim4\n"
+		       + "`- Status for the jails:\n"
+		       + "   |- Jail: ssh\n"
+		       + "   |  |- Filter\n"
+		       + "   |  |  |- Currently failed:	0\n"
+		       + "   |  |  |- Total failed:	0\n"
+		       + "   |  |  `- File list:	/var/log/auth.log\n"
+		       + "   |  `- Actions\n"
+		       + "   |     |- Currently banned:	3\n"
+		       + "   |     |- Total banned:	3\n"
+		       + "   |     `- Banned IP list:	192.168.0.1 10.2.2.1 2001:db8::1\n"
+		       + "   `- Jail: exim4\n"
+		       + "      |- Filter\n"
+		       + "      |  |- Currently failed:	3\n"
+		       + "      |  |- Total failed:	6\n"
+		       + "      |  `- File list:	/var/log/exim4/mainlog\n"
+		       + "      `- Actions\n"
+		       + "         |- Currently banned:	0\n"
+		       + "         |- Total banned:	0\n"
+		       + "         `- Banned IP list:	"
+		)
 		self.assertEqual(self.b.beautify(response), output)
 
 	def testFlushLogs(self):

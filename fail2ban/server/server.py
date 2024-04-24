@@ -604,14 +604,18 @@ class Server:
 		return 1
 
 	# Status
-	def status(self):
+	def status(self, name="", flavor="basic"):
 		try:
 			self.__lock.acquire()
-			jails = list(self.__jails)
-			jails.sort()
-			jailList = ", ".join(jails)
-			ret = [("Number of jail", len(self.__jails)),
-				   ("Jail list", jailList)]
+			jails = sorted(self.__jails.items())
+			jailList = [n for n, j in jails]
+			ret = [("Number of jail", len(jailList)),
+				   ("Jail list", ", ".join(jailList))]
+			if name == '--all':
+				jstat = dict(jails)
+				for n, j in jails:
+					jstat[n] = j.status(flavor=flavor)
+				ret.append(jstat)
 			return ret
 		finally:
 			self.__lock.release()

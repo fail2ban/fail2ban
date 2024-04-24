@@ -620,6 +620,19 @@ class Transmitter(TransmitterBase):
 				["set", self.jailName, "addignoreregex", 50])[0],
 			1)
 
+	_JAIL_STATUS = [
+		('Filter', [
+			('Currently failed', 0),
+			('Total failed', 0),
+			('File list', [])]
+		),
+		('Actions', [
+			('Currently banned', 0),
+			('Total banned', 0),
+			('Banned IP list', [])]
+		)
+	]
+
 	def testStatus(self):
 		jails = [self.jailName]
 		self.assertEqual(self.transm.proceed(["status"]),
@@ -628,59 +641,24 @@ class Transmitter(TransmitterBase):
 		jails.append("TestJail2")
 		self.assertEqual(self.transm.proceed(["status"]),
 			(0, [('Number of jail', len(jails)), ('Jail list', ", ".join(jails))]))
+		self.assertEqual(self.transm.proceed(["status", "--all"]),
+			(0, [('Number of jail', len(jails)), ('Jail list', ", ".join(jails)),
+				{"TestJail1": self._JAIL_STATUS, "TestJail2": self._JAIL_STATUS}
+			]))
 
 	def testJailStatus(self):
 		self.assertEqual(self.transm.proceed(["status", self.jailName]),
-			(0,
-				[
-					('Filter', [
-						('Currently failed', 0),
-						('Total failed', 0),
-						('File list', [])]
-					),
-					('Actions', [
-						('Currently banned', 0),
-						('Total banned', 0),
-						('Banned IP list', [])]
-					)
-				]
-			)
+			(0, self._JAIL_STATUS)
 		)
 
 	def testJailStatusBasic(self):
 		self.assertEqual(self.transm.proceed(["status", self.jailName, "basic"]),
-			(0,
-				[
-					('Filter', [
-						('Currently failed', 0),
-						('Total failed', 0),
-						('File list', [])]
-					),
-					('Actions', [
-						('Currently banned', 0),
-						('Total banned', 0),
-						('Banned IP list', [])]
-					)
-				]
-			)
+			(0, self._JAIL_STATUS)
 		)
 
 	def testJailStatusBasicKwarg(self):
 		self.assertEqual(self.transm.proceed(["status", self.jailName, "INVALID"]),
-			(0,
-				[
-					('Filter', [
-						('Currently failed', 0),
-						('Total failed', 0),
-						('File list', [])]
-					),
-					('Actions', [
-						('Currently banned', 0),
-						('Total banned', 0),
-						('Banned IP list', [])]
-					)
-				]
-			)
+			(0, self._JAIL_STATUS)
 		)
 
 	def testJailStatusCymru(self):

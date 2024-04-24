@@ -71,23 +71,37 @@ class Beautifier:
 			elif inC[0] == "echo":
 				msg = ' '.join(msg)
 			elif inC[0:1] == ['status']:
-				if len(inC) > 1:
-					# Display information
-					msg = ["Status for the jail: %s" % inC[1]]
+				def jail_stat(response, pref=""):
+					# Display jail information
 					for n, res1 in enumerate(response):
-						prefix1 = "`-" if n == len(response) - 1 else "|-"
+						prefix1 = pref + ("`-" if n == len(response) - 1 else "|-")
 						msg.append("%s %s" % (prefix1, res1[0]))
-						prefix1 = "   " if n == len(response) - 1 else "|  "
+						prefix1 = pref + ("   " if n == len(response) - 1 else "|  ")
 						for m, res2 in enumerate(res1[1]):
 							prefix2 = prefix1 + ("`-" if m == len(res1[1]) - 1 else "|-")
 							val = " ".join(map(str, res2[1])) if isinstance(res2[1], list) else res2[1]
 							msg.append("%s %s:\t%s" % (prefix2, res2[0], val))
+				if len(inC) > 1 and inC[1] != "--all":
+					msg = ["Status for the jail: %s" % inC[1]]
+					jail_stat(response)
 				else:
+					jstat = None
+					if len(inC) > 1: # --all
+						jstat = response[-1]
+						response = response[:-1]
 					msg = ["Status"]
 					for n, res1 in enumerate(response):
-						prefix1 = "`-" if n == len(response) - 1 else "|-"
+						prefix1 = "`-" if not jstat and n == len(response) - 1 else "|-"
 						val = " ".join(map(str, res1[1])) if isinstance(res1[1], list) else res1[1]
 						msg.append("%s %s:\t%s" % (prefix1, res1[0], val))
+					if jstat:
+						msg.append("`- Status for the jails:")
+						i = 0
+						for n, j in jstat.items():
+							i += 1
+							prefix1 = "`-" if i == len(jstat) else "|-"
+							msg.append("   %s Jail: %s" % (prefix1, n))
+							jail_stat(j, "      " if i == len(jstat) else "   |  ")
 				msg = "\n".join(msg)
 			elif len(inC) < 2:
 				pass # to few cmd args for below
