@@ -587,7 +587,7 @@ class IgnoreIP(LogCaptureTestCase):
 				self.assertNotLogged("returned successfully")
 
 	def testIgnoreCauseOK(self):
-		ip = "93.184.216.34"
+		ip = "93.184.215.14"
 		for ignore_source in ["dns", "ip", "command"]:
 			self.filter.logIgnoreIp(ip, True, ignore_source=ignore_source)
 			self.assertLogged("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source))
@@ -1892,13 +1892,13 @@ class GetFailures(LogCaptureTestCase):
 		#unittest.F2B.SkipIfNoNetwork() ## without network it is simulated via cache in utils.
 		# We should still catch failures with usedns = no ;-)
 		output_yes = (
-			('93.184.216.34', 1, 1124013299.0,
+			('93.184.215.14', 1, 1124013299.0,
 			  ['Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2']
 			),
-			('93.184.216.34', 1, 1124013539.0,
-			  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.34 port 51332 ssh2']
+			('93.184.215.14', 1, 1124013539.0,
+			  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.215.14 port 51332 ssh2']
 			),
-			('2606:2800:220:1:248:1893:25c8:1946', 1, 1124013299.0,
+			('2606:2800:21f:cb07:6820:80da:af6b:8b2c', 1, 1124013299.0,
 			  ['Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2']
 			),
 		)
@@ -1906,8 +1906,8 @@ class GetFailures(LogCaptureTestCase):
 			output_yes = output_yes[0:2]
 
 		output_no = (
-			('93.184.216.34', 1, 1124013539.0,
-			  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.34 port 51332 ssh2']
+			('93.184.215.14', 1, 1124013539.0,
+			  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.215.14 port 51332 ssh2']
 			)
 		)
 
@@ -2100,8 +2100,8 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 
 	## example.com IPs considering IPv6 support (without network it is simulated via cache in utils).
 	EXAMPLE_ADDRS = (
-		['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'] if unittest.F2B.no_network or DNSUtils.IPv6IsAllowed() else \
-		['93.184.216.34']
+		['93.184.215.14', '2606:2800:21f:cb07:6820:80da:af6b:8b2c'] if unittest.F2B.no_network or DNSUtils.IPv6IsAllowed() else \
+		['93.184.215.14']
 	)
 
 	def test_IPAddr(self):
@@ -2234,8 +2234,8 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 
 		self.assertEqual(IPAddr('192.0.2.0').getPTR(), '0.2.0.192.in-addr.arpa.')
 		self.assertEqual(IPAddr('192.0.2.1').getPTR(), '1.2.0.192.in-addr.arpa.')
-		self.assertEqual(IPAddr('2606:2800:220:1:248:1893:25c8:1946').getPTR(), 
-			'6.4.9.1.8.c.5.2.3.9.8.1.8.4.2.0.1.0.0.0.0.2.2.0.0.0.8.2.6.0.6.2.ip6.arpa.')
+		self.assertEqual(IPAddr('2606:2800:21f:cb07:6820:80da:af6b:8b2c').getPTR(), 
+			'c.2.b.8.b.6.f.a.a.d.0.8.0.2.8.6.7.0.b.c.f.1.2.0.0.0.8.2.6.0.6.2.ip6.arpa.')
 
 	def testIPAddr_Equal6(self):
 		self.assertEqual(
@@ -2283,14 +2283,14 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 
 	def testIPAddr_Compare(self):
 		ip4 = [
-			IPAddr('93.184.0.1'),
-			IPAddr('93.184.216.1'),
-			IPAddr('93.184.216.34')
+			IPAddr('192.0.0.1'),
+			IPAddr('192.0.2.1'),
+			IPAddr('192.0.2.14')
 		]
 		ip6 = [
-			IPAddr('2606:2800:220:1:248:1893::'),
-			IPAddr('2606:2800:220:1:248:1893:25c8:0'),
-			IPAddr('2606:2800:220:1:248:1893:25c8:1946')
+			IPAddr('2001:db8::'),
+			IPAddr('2001:db8::80da:af6b:0'),
+			IPAddr('2001:db8::80da:af6b:8b2c')
 		]
 		# ip4
 		self.assertNotEqual(ip4[0], None)
@@ -2313,8 +2313,8 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertEqual(sorted(reversed(ip4+ip6)), ip4+ip6)
 		# hashing (with string as key):
 		d={
-			'93.184.216.34': 'ip4-test', 
-			'2606:2800:220:1:248:1893:25c8:1946': 'ip6-test'
+			'192.0.2.14': 'ip4-test', 
+			'2001:db8::80da:af6b:8b2c': 'ip6-test'
 		}
 		d2 = dict([(IPAddr(k), v) for k, v in d.items()])
 		self.assertTrue(isinstance(list(d.keys())[0], str))
@@ -2366,9 +2366,9 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 	def testIPAddr_CompareDNS(self):
 		#unittest.F2B.SkipIfNoNetwork() ## without network it is simulated via cache in utils.
 		ips = IPAddr('example.com')
-		self.assertTrue(IPAddr("93.184.216.34").isInNet(ips))
-		self.assertEqual(IPAddr("2606:2800:220:1:248:1893:25c8:1946").isInNet(ips),
-		                        "2606:2800:220:1:248:1893:25c8:1946" in self.EXAMPLE_ADDRS)
+		self.assertTrue(IPAddr("93.184.215.14").isInNet(ips))
+		self.assertEqual(IPAddr("2606:2800:21f:cb07:6820:80da:af6b:8b2c").isInNet(ips),
+		                        "2606:2800:21f:cb07:6820:80da:af6b:8b2c" in self.EXAMPLE_ADDRS)
 
 	def testIPAddr_wrongDNS_IP(self):
 		unittest.F2B.SkipIfNoNetwork()
@@ -2379,8 +2379,8 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		ips = [DNSUtils.dnsToIp('example.com'), DNSUtils.dnsToIp('example.com')]
 		for ip1, ip2 in zip(ips, ips):
 			self.assertEqual(id(ip1), id(ip2))
-		ip1 = IPAddr('93.184.216.34'); ip2 = IPAddr('93.184.216.34'); self.assertEqual(id(ip1), id(ip2))
-		ip1 = IPAddr('2606:2800:220:1:248:1893:25c8:1946'); ip2 = IPAddr('2606:2800:220:1:248:1893:25c8:1946'); self.assertEqual(id(ip1), id(ip2))
+		ip1 = IPAddr('93.184.215.14'); ip2 = IPAddr('93.184.215.14'); self.assertEqual(id(ip1), id(ip2))
+		ip1 = IPAddr('2606:2800:21f:cb07:6820:80da:af6b:8b2c'); ip2 = IPAddr('2606:2800:21f:cb07:6820:80da:af6b:8b2c'); self.assertEqual(id(ip1), id(ip2))
 
 	def test_NetworkInterfacesAddrs(self):
 		for withMask in (False, True):
