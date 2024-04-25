@@ -1,6 +1,3 @@
-# watch control file for uscan
-# Run the "uscan" command to check for upstream updates and more.
-# Site		Directory		Pattern			Version	Script
-version=3
-opts="filenamemangle=s/.*\/(.*)/fail2ban-$1\.tar\.gz/" \
- https://github.com/fail2ban/fail2ban/tags .*archive/(\d[\d\.]+).tar.gz
+version=4
+opts=filenamemangle=s/.+\/v?(\d\S+)\.tar\.gz/fail2ban-$1\.tar\.gz/ \
+  https://github.com/fail2ban/fail2ban/tags .*/v?(\d\S+)\.tar\.gz

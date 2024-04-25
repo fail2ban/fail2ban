@@ -1,9 +1,37 @@
+fail2ban (1.0.2-3) unstable; urgency=medium
+
+  * Add banaction = nftables in the defaults-debian.conf default
+    see https://github.com/fail2ban/fail2ban/discussions/3575#discussioncomment-7045315
+  * Move python3-systemd as depend (Closes: #770171, #1037437)
+  * Add backend = systemd to jail.d/defaults-debian.conf
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Tue, 19 Sep 2023 13:55:20 +0200
+
+fail2ban (1.0.2-2) unstable; urgency=medium
+
+  * Team upload.
+
+  [ Pirate Praveen ]
+  * Use systemd for correct /lib/systemd/system path (Closes: #1034230)
+
+  [ Jochen Sprickerhof ]
+  * Drop dependency on lsb-base. It is a transitional package to
+    sysvinit-utils which is essential.
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Fri, 21 Apr 2023 21:54:48 +0200
+
 fail2ban (1.0.2-1~upstream1) unstable; urgency=medium
 
   [ Sergey Brester ]
   * upstream package for debian, https://github.com/fail2ban/fail2ban/releases/tag/1.0.2
 
  -- Sergey G. Brester <serg.brester@sebres.de>  Thu, 09 Nov 2022 17:23:50 +0200
+
+fail2ban (1.0.2-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Wed, 09 Nov 2022 17:42:47 +0100
 
 fail2ban (1.0.1-1~upstream1) unstable; urgency=medium
 
@@ -12,6 +40,82 @@ fail2ban (1.0.1-1~upstream1) unstable; urgency=medium
 
  -- Sergey G. Brester <serg.brester@sebres.de>  Thu, 27 Sep 2022 19:07:41 +0200
 
+fail2ban (1.0.1-1~exp1) experimental; urgency=medium
+
+  [ Bastian Germann ]
+  [ Gioele Barabucci ]
+  * d/post{inst,rm},preinst: Remove code for ancient versions
+
+  [ Debian Janitor ]
+  * debian/watch: Use GitHub /tags rather than /releases page.
+  * Update standards version to 4.6.1, no changes needed.
+
+  [ Sylvestre Ledru ]
+  * New upstream release
+  * Fix debian/watch
+  * Remove a bunch of patches (merged upstream)
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Wed, 28 Sep 2022 07:16:20 -1000
+
+fail2ban (0.11.2-6) unstable; urgency=medium
+
+  * Cherry-pick upstream fix to fix a startup issue with Python 3.10
+    (LP: #1958505)
+  * Cherry-pick upstream fix for courier-auth (Closes: #1004466)
+  * ignore false positive
+    fail2ban: read-in-maintainer-script [postinst:41
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 10 Mar 2022 22:52:59 +0100
+
+fail2ban (0.11.2-5) unstable; urgency=medium
+
+  * Revert the CVE-2021-32749 fix (Closes: #991449)
+    Debian bookworm has the mailutils version with the proper fix
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 20 Jan 2022 23:21:44 +0100
+
+fail2ban (0.11.2-4) unstable; urgency=medium
+
+  * Cherry pick 5ac303df8a171f748330d4c645ccbf1c2c7f3497
+    to address the 2to3 issue.
+    Thanks to Paul Wise for digging
+    (Closes: #997601)
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Tue, 11 Jan 2022 09:12:57 +0100
+
+fail2ban (0.11.2-3) unstable; urgency=medium
+
+  [ Debian Janitor ]
+  * Remove constraints unnecessary since stretch:
+    + Build-Depends: Drop versioned constraint on debhelper.
+  * Bump debhelper from old 12 to 13.
+  * Update standards version to 4.5.1, no changes needed.
+  * Remove constraints unnecessary since buster:
+    + fail2ban: Drop versioned constraint on lsb-base in Depends.
+
+  [ Sylvestre Ledru ]
+  * Fix the watch file
+  * Fix systemd-service-in-odd-location
+    lib/systemd/system/fail2ban.service => /usr/lib/systemd/system/fail2ban.service
+  * Fix the roundcube debian custom path (Closes: #988323)
+    Thanks to Kurt Fitzner for the patch
+  * Do not fail the postinst if chown/chmod are failing (Closes: #926237)
+    Thanks to Kim-Alexander Brodowski for the patch
+  * Adjust the systemd path from /var/run => /run
+    (Closes: #902413)
+    Thanks to Gabriel Filion for the patch
+  * Add support for scanlogd (taken from upstream)
+    (Closes: #983399)
+  * Standards-Version => 4.6.0
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Sat, 23 Oct 2021 16:09:47 +0200
+
+fail2ban (0.11.2-2) unstable; urgency=high
+
+  * Fix a problem with mail
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Mon, 12 Jul 2021 06:52:40 +0200
+
 fail2ban (0.11.2-1~upstream1) unstable; urgency=medium
 
   [ Sergey Brester ]
@@ -19,12 +123,40 @@ fail2ban (0.11.2-1~upstream1) unstable; urgency=medium
 
  -- Sergey G. Brester <serg.brester@sebres.de>  Mon, 23 Nov 2020 21:54:36 +0100
 
+fail2ban (0.11.2-1) unstable; urgency=medium
+
+  * New upstream release
+    Remove python-3.9.patch (merged upstream)
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 26 Nov 2020 13:47:53 +0100
+
+fail2ban (0.11.1-4) unstable; urgency=medium
+
+  * Fix the copyright file (Closes: #975644)
+  * https for the Website field in Debian control
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Tue, 24 Nov 2020 17:13:04 +0100
+
 fail2ban (0.11.1-3) unstable; urgency=medium
 
+  [ Ondřej Nový ]
+  * Use debhelper-compat instead of debian/compat.
+  * d/control: Update Maintainer field with new Debian Python Team
+    contact address.
+  * d/control: Update Vcs-* fields with new Debian Python Team Salsa
+    layout.
+  * d/watch: Use https protocol.
+
+  [ Sylvestre Ledru ]
+  * Fix the python 3.9 support (Closes: #975565)
   * remove deprecated package dh-systemd from the build deps
     (Closes: #958625)
+  * Fix day-of-week for changelog entry 0.5.4-2.
+  * Update watch file format version to 4.
+  * Bump debhelper from deprecated 9 to 12.
+  * Update standards version to 4.5.0, no changes needed.
 
- --
+ -- Sylvestre Ledru <sylvestre@debian.org>  Mon, 23 Nov 2020 21:45:34 +0100
 
 fail2ban (0.11.1-2) unstable; urgency=medium
 
@@ -1111,7 +1243,7 @@ fail2ban (0.6.1-3) unstable; urgency=low
 fail2ban (0.6.1-2) unstable; urgency=low
 
   * Assigned maxreinits to 1000 to be reasonable since otherwise logfile grows
-    indefinetly if there is a real problem on the system (closes: #359218)
+    indefinitely if there is a real problem on the system (closes: #359218)
   * Adjusted debian/{copyright,watch}
   * New version of init.d script (Thanks to Aaron Isotton) (closes: #364278)
 
@@ -1165,7 +1297,7 @@ fail2ban (0.6.0-4) unstable; urgency=low
     of "ChallengeResponseAuthentication no" and "PasswordAuthentication
     yes"
   * Fixed Apache timeregex and timepattern to confirm
-    the fomat of time stamp used in Debian's access.log (error.log uses
+    the format of time stamp used in Debian's access.log (error.log uses
     RFC 2822 format)
   * Added section ApacheAttacks to specify some common patterns of attacks on
     a webserver (awstats.pl as a try). This section stays split from Apache
@@ -1317,7 +1449,7 @@ fail2ban (0.5.4-2) unstable; urgency=low
   * Added a keyword <section> in parsing of the subject and the body of an
     email sent out by fail2ban (closes: #330311)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 27 Sep 2005 08:09:06 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 27 Sep 2005 08:09:06 -0400
 
 fail2ban (0.5.4-1) unstable; urgency=low
 

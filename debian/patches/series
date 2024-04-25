@@ -3,5 +3,6 @@ deb_init_paths
 deb_manpages_reportbug
 0002-ENH-verify-that-use_stock_cfg-was-not-provided-while.patch
 deb_no_iptables_service
-python3-test-suite.diff
 no-python-user.diff
+roundcude-update.diff
+systemd-run.diff

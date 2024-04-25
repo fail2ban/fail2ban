@@ -11,16 +11,17 @@ Build-Depends:
  , python3-pyinotify
  , sqlite3
  , 2to3
-Homepage: http://www.fail2ban.org
+ , pkg-config
+ , systemd
+Homepage: https://www.fail2ban.org
 Vcs-Git: https://github.com/fail2ban/fail2ban.git
 Vcs-Browser: https://github.com/fail2ban/fail2ban
-Standards-Version: 4.4.1
-
+Standards-Version: 4.6.1
 
 Package: fail2ban
 Architecture: all
-Depends: ${python3:Depends}, ${misc:Depends}, lsb-base (>=2.0-7)
-Recommends: nftables | iptables, whois, python3-pyinotify, python3-systemd
+Depends: ${python3:Depends}, ${misc:Depends}, python3-systemd
+Recommends: nftables | iptables, whois, python3-pyinotify
 Suggests: mailx, system-log-daemon, monit, sqlite3
 Description: ban hosts that cause multiple authentication errors
  Fail2ban monitors log files (e.g. /var/log/auth.log,
@@ -31,7 +32,7 @@ Description: ban hosts that cause multiple authentication errors
  email.
  .
  By default, it comes with filter expressions for various services
- (sshd, apache, proftpd, sasl, etc.) but configuration can be
+ (sshd, Apache, proftpd, sasl, etc.) but configuration can be
  easily extended for monitoring any other text file.  All filters and
  actions are given in the config files, thus fail2ban can be adopted
  to be used with a variety of files and firewalls.  Following recommends
