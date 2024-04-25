@@ -25,8 +25,14 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from pickle import dumps, loads, HIGHEST_PROTOCOL
-import asynchat
-import asyncore
+try:
+	import asynchat
+except ImportError:
+	from ..compat import asynchat
+try:
+	import asyncore
+except ImportError:
+	from ..compat import asyncore
 import errno
 import fcntl
 import os
@@ -178,7 +184,7 @@ def loop(active, timeout=None, use_poll=False, err_count=None):
 			elif err_count['listen'] > 100: # pragma: no cover - normally unreachable
 				if (
 					   e.args[0] == errno.EMFILE # [Errno 24] Too many open files
-					or sum(err_count.itervalues()) > 1000
+					or sum(err_count.values()) > 1000
 				):
 					logSys.critical("Too many errors - critical count reached %r", err_count)
 					break
@@ -220,7 +226,7 @@ class AsyncServer(asyncore.dispatcher):
 			elif self.__errCount['accept'] > 100:
 				if (
 					  (isinstance(e, socket.error) and e.args[0] == errno.EMFILE) # [Errno 24] Too many open files
-					or sum(self.__errCount.itervalues()) > 1000
+					or sum(self.__errCount.values()) > 1000
 				):
 					logSys.critical("Too many errors - critical count reached %r", self.__errCount)
 					self.stop()

@@ -119,6 +119,15 @@ class DateDetectorTest(LogCaptureTestCase):
 			log = log % dateLong
 			datelog = self.datedetector.getTime(log)
 			self.assertFalse(datelog)
+
+	def testGetEpochPatternCut(self):
+		self.__datedetector = DateDetector()
+		self.__datedetector.appendTemplate(r'^type=\S+ msg=audit\(({EPOCH})')
+		# correct epoch time and cut out epoch string only (captured group only, not the whole match):
+		line = "type=USER_AUTH msg=audit(1106513999.000:987)"
+		datelog = self.datedetector.getTime(line)
+		timeMatch = datelog[1]
+		self.assertEqual([int(datelog[0]), line[timeMatch.start(1):timeMatch.end(1)]], [1106513999, '1106513999.000'])
 	
 	def testGetTime(self):
 		log = "Jan 23 21:59:59 [sshd] error: PAM: Authentication failure"
@@ -279,7 +288,7 @@ class DateDetectorTest(LogCaptureTestCase):
 		self.assertEqual(logTime, mu)
 		self.assertEqual(logMatch.group(1), '2012/10/11 02:37:17')
 		# confuse it with year being at the end
-		for i in xrange(10):
+		for i in range(10):
 			( logTime, logMatch ) =	self.datedetector.getTime('11/10/2012 02:37:17 [error] 18434#0')
 			self.assertEqual(logTime, mu)
 			self.assertEqual(logMatch.group(1), '11/10/2012 02:37:17')
@@ -529,7 +538,7 @@ class CustomDateFormatsTest(unittest.TestCase):
 			date = dd.getTime(line)
 			if matched:
 				self.assertTrue(date)
-				if isinstance(matched, basestring):
+				if isinstance(matched, str):
 					self.assertEqual(matched, date[1].group(1))
 				else:
 					self.assertEqual(matched, date[0])
@@ -564,7 +573,7 @@ class CustomDateFormatsTest(unittest.TestCase):
 			date = dd.getTime(line)
 			if matched:
 				self.assertTrue(date)
-				if isinstance(matched, basestring): # pragma: no cover
+				if isinstance(matched, str): # pragma: no cover
 					self.assertEqual(matched, date[1].group(1))
 				else:
 					self.assertEqual(matched, date[0])

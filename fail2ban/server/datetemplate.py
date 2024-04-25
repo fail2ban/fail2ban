@@ -227,8 +227,10 @@ class DateEpoch(DateTemplate):
 			self.name = "LongEpoch" if not pattern else pattern
 			epochRE = r"\d{10,11}(?:\d{3}(?:\.\d{1,6}|\d{3})?)?"
 		if pattern:
-			# pattern should capture/cut out the whole match:
-			regex = "(" + RE_EPOCH_PATTERN.sub(lambda v: "(%s)" % epochRE, pattern) + ")"
+			# pattern should find the whole pattern, but cut out grouped match (or whole match if no groups specified):
+			regex = RE_EPOCH_PATTERN.sub(lambda v: "(%s)" % epochRE, pattern)
+			if not RE_GROUPED.search(pattern):
+				regex = "(" + regex + ")"
 			self._grpIdx = 2
 			self.setRegex(regex)
 		elif not lineBeginOnly:
@@ -355,7 +357,7 @@ class DatePatternRegex(DateTemplate):
 
 
 class DateTai64n(DateTemplate):
-	"""A date template which matches TAI64N formate timestamps.
+	"""A date template which matches TAI64N format timestamps.
 
 	Attributes
 	----------

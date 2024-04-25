@@ -22,15 +22,15 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9, '3.10', '3.11.0-beta.3', pypy2, pypy3]
+        python-version: [3.7, 3.8, 3.9, '3.10', '3.11', '3.12', '3.13.0-alpha.2', pypy3.10]
       fail-fast: false
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -51,24 +51,32 @@ jobs:
 
       - name: Install dependencies
         run: |
-          if [[ "$F2B_PY" = 3 ]]; then python -m pip install --upgrade pip || echo "can't upgrade pip"; fi
-          if [[ "$F2B_PY" = 3 ]] && ! command -v 2to3x -v 2to3 > /dev/null; then
-            #pip install 2to3
-            sudo apt-get -y install 2to3
-          fi
+          #if [[ "$F2B_PY" = 3 ]]; then python -m pip install --upgrade pip || echo "can't upgrade pip"; fi
           #sudo apt-get -y install python${F2B_PY/2/}-pyinotify || echo 'inotify not available'
           python -m pip install pyinotify || echo 'inotify not available'
+          sudo apt-get -y install sqlite3 || echo 'sqlite3 not available'
           #sudo apt-get -y install python${F2B_PY/2/}-systemd || echo 'systemd not available'
           sudo apt-get -y install libsystemd-dev || echo 'systemd dependencies seems to be unavailable'
           python -m pip install systemd-python || echo 'systemd not available'
-          #readline if available as module:
+          # readline if available as module:
           python -c 'import readline' 2> /dev/null || python -m pip install readline || echo 'readline not available'
+          # asyncore/asynchat:
+          if dpkg --compare-versions "$F2B_PYV" ge 3.12; then
+            #sudo apt-get -y install python${F2B_PY/2/}-setuptools || echo 'setuptools not unavailable'
+            python -m pip install setuptools || echo "can't install setuptools"
+            # don't install async* modules, we need to cover bundled-in libraries:
+            #python -m pip install pyasynchat || echo "can't install pyasynchat";
+            #python -m pip install pyasyncore || echo "can't install pyasyncore";
+          fi
+          # aiosmtpd in test_smtp (for 3.10+, no need to test it everywhere):
+          if dpkg --compare-versions "$F2B_PYV" ge 3.10; then
+            #sudo apt-get -y install python${F2B_PY/2/}-aiosmtpd || echo 'aiosmtpd not available'
+            python -m pip install aiosmtpd || echo 'aiosmtpd not available'
+          fi
 
       - name: Before scripts
         run: |
           cd "$GITHUB_WORKSPACE"
-          # Manually execute 2to3 for now
-          if [[ "$F2B_PY" = 3 ]]; then echo "2to3 ..." && ./fail2ban-2to3; fi
           _debug() { echo -n "$1 "; err=$("${@:2}" 2>&1) && echo 'OK' || echo -e "FAIL\n$err"; }
           # (debug) output current preferred encoding:
           _debug 'Encodings:' python -c 'import locale, sys; from fail2ban.helpers import PREFER_ENC; print(PREFER_ENC, locale.getpreferredencoding(), (sys.stdout and sys.stdout.encoding))'
@@ -80,14 +88,8 @@ jobs:
 
       - name: Test suite
         run: |
-          if [[ "$F2B_PY" = 2 ]]; then
-            python setup.py test
-          elif dpkg --compare-versions "$F2B_PYV" lt 3.10; then 
-            python bin/fail2ban-testcases --verbosity=2
-          else
-            echo "Skip systemd backend since systemd-python module must be fixed for python >= v.3.10 in GHA ..."
-            python bin/fail2ban-testcases --verbosity=2 -i "[sS]ystemd|[jJ]ournal"
-          fi
+          #python setup.py test
+          python bin/fail2ban-testcases --verbosity=2
 
       #- name: Test suite (debug some systemd tests only)
          #run: python bin/fail2ban-testcases --verbosity=2 "[sS]ystemd|[jJ]ournal"

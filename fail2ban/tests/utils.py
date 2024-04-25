@@ -35,7 +35,7 @@ import time
 import threading
 import unittest
 
-from cStringIO import StringIO
+from io import StringIO
 from functools import wraps
 
 from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, uni_decode
@@ -73,7 +73,7 @@ class DefaultTestOptions(optparse.Values):
 		self.__dict__ = {
 			'log_level': None, 'verbosity': None, 'log_lazy': True, 
 			'log_traceback': None, 'full_traceback': None,
-			'fast': False, 'memory_db': False, 'no_gamin': False,
+			'fast': False, 'memory_db': False,
 			'no_network': False, 'negate_re': False
 		}
 
@@ -105,9 +105,6 @@ def getOptParser(doc=""):
 		Option('-n', "--no-network", action="store_true",
 			   dest="no_network",
 			   help="Do not run tests that require the network"),
-		Option('-g', "--no-gamin", action="store_true",
-			   dest="no_gamin",
-			   help="Do not run tests that require the gamin"),
 		Option('-m', "--memory-db", action="store_true",
 			   dest="memory_db",
 			   help="Run database tests using memory instead of file"),
@@ -171,8 +168,8 @@ def initProcess(opts):
 
 	# Let know the version
 	if opts.verbosity != 0:
-		print("Fail2ban %s test suite. Python %s. Please wait..." \
-				% (version, str(sys.version).replace('\n', '')))
+		print(("Fail2ban %s test suite. Python %s. Please wait..." \
+				% (version, str(sys.version).replace('\n', ''))))
 
 	return opts;
 
@@ -186,7 +183,6 @@ class F2B(DefaultTestOptions):
 		self.__dict__ = opts.__dict__
 		if self.fast: # pragma: no cover - normal mode in travis
 			self.memory_db = True
-			self.no_gamin = True
 		self.__dict__['share_config'] = {}
 	def SkipIfFast(self):
 		pass
@@ -271,7 +267,7 @@ def initTests(opts):
 			raise unittest.SkipTest('Skip test because of "--fast"')
 		unittest.F2B.SkipIfFast = F2B_SkipIfFast
 	else:
-		# smaller inertance inside test-cases (litle speedup):
+		# smaller inertance inside test-cases (little speedup):
 		Utils.DEFAULT_SLEEP_TIME = 0.025
 		Utils.DEFAULT_SLEEP_INTERVAL = 0.005
 		Utils.DEFAULT_SHORT_INTERVAL = 0.0005
@@ -300,10 +296,10 @@ def initTests(opts):
 
 	# precache all invalid ip's (TEST-NET-1, ..., TEST-NET-3 according to RFC 5737):
 	c = DNSUtils.CACHE_ipToName
-	c.clear = lambda: logSys.warn('clear CACHE_ipToName is disabled in test suite')
+	c.clear = lambda: logSys.warning('clear CACHE_ipToName is disabled in test suite')
 	# increase max count and max time (too many entries, long time testing):
 	c.setOptions(maxCount=10000, maxTime=5*60)
-	for i in xrange(256):
+	for i in range(256):
 		c.set('192.0.2.%s' % i, None)
 		c.set('198.51.100.%s' % i, None)
 		c.set('203.0.113.%s' % i, None)
@@ -312,13 +308,17 @@ def initTests(opts):
 	c.set('2001:db8::ffff', 'test-other')
 	c.set('87.142.124.10', 'test-host')
 	if unittest.F2B.no_network: # pragma: no cover
+		if unittest.F2B.fast: # pragma: no cover
+			for i in ('127.0.0.1', '::1'): # DNSUtils.dnsToIp('localhost')
+				c.set(i, 'localhost')
 		# precache all ip to dns used in test cases:
 		c.set('192.0.2.888', None)
 		c.set('8.8.4.4', 'dns.google')
-		c.set('8.8.4.4', 'dns.google')
+		c.set('8.8.8.8', 'dns.google')
+		c.set('199.9.14.201', 'b-2017.b.root-servers.org')
 		# precache all dns to ip's used in test cases:
 		c = DNSUtils.CACHE_nameToIp
-		c.clear = lambda: logSys.warn('clear CACHE_nameToIp is disabled in test suite')
+		c.clear = lambda: logSys.warning('clear CACHE_nameToIp is disabled in test suite')
 		for i in (
 			('999.999.999.999', set()),
 			('abcdef.abcdef', set()),
@@ -326,14 +326,15 @@ def initTests(opts):
 			('failed.dns.ch', set()),
 			('doh1.2.3.4.buga.xxxxx.yyy.invalid', set()),
 			('1.2.3.4.buga.xxxxx.yyy.invalid', set()),
-			('example.com', set([IPAddr('2606:2800:220:1:248:1893:25c8:1946'), IPAddr('93.184.216.34')])),
-			('www.example.com', set([IPAddr('2606:2800:220:1:248:1893:25c8:1946'), IPAddr('93.184.216.34')])),
+			('example.com', set([IPAddr('2606:2800:21f:cb07:6820:80da:af6b:8b2c'), IPAddr('93.184.215.14')])),
+			('www.example.com', set([IPAddr('2606:2800:21f:cb07:6820:80da:af6b:8b2c'), IPAddr('93.184.215.14')])),
 		):
 			c.set(*i)
 		# if fast - precache all host names as localhost addresses (speed-up getSelfIPs/ignoreself):
 		if unittest.F2B.fast: # pragma: no cover
+			ips = set([IPAddr('127.0.0.1'), IPAddr('::1')]); # DNSUtils.dnsToIp('localhost')
 			for i in DNSUtils.getSelfNames():
-				c.set(i, DNSUtils.dnsToIp('localhost'))
+				c.set(i, ips)
 
 
 def mtimesleep():
@@ -401,75 +402,77 @@ def gatherTests(regexps=None, opts=None):
 
 		tests = FilteredTestSuite()
 
+	loadTests = unittest.defaultTestLoader.loadTestsFromTestCase;
+
 	# Server
-	tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
-	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
-	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
-	tests.addTest(unittest.makeSuite(servertestcase.LoggingTests))
-	tests.addTest(unittest.makeSuite(servertestcase.ServerConfigReaderTests))
-	tests.addTest(unittest.makeSuite(actiontestcase.CommandActionTest))
-	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
+	tests.addTest(loadTests(servertestcase.Transmitter))
+	tests.addTest(loadTests(servertestcase.JailTests))
+	tests.addTest(loadTests(servertestcase.RegexTests))
+	tests.addTest(loadTests(servertestcase.LoggingTests))
+	tests.addTest(loadTests(servertestcase.ServerConfigReaderTests))
+	tests.addTest(loadTests(actiontestcase.CommandActionTest))
+	tests.addTest(loadTests(actionstestcase.ExecuteActions))
 	# Ticket, BanTicket, FailTicket
-	tests.addTest(unittest.makeSuite(tickettestcase.TicketTests))
+	tests.addTest(loadTests(tickettestcase.TicketTests))
 	# FailManager
-	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
-	tests.addTest(unittest.makeSuite(failmanagertestcase.FailmanagerComplex))
+	tests.addTest(loadTests(failmanagertestcase.AddFailure))
+	tests.addTest(loadTests(failmanagertestcase.FailmanagerComplex))
 	# BanManager
-	tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
+	tests.addTest(loadTests(banmanagertestcase.AddFailure))
 	try:
 		import dns
-		tests.addTest(unittest.makeSuite(banmanagertestcase.StatusExtendedCymruInfo))
+		tests.addTest(loadTests(banmanagertestcase.StatusExtendedCymruInfo))
 	except ImportError: # pragma: no cover
 		pass
 	
 	# ClientBeautifier
-	tests.addTest(unittest.makeSuite(clientbeautifiertestcase.BeautifierTest))
+	tests.addTest(loadTests(clientbeautifiertestcase.BeautifierTest))
 
 	# ClientReaders
-	tests.addTest(unittest.makeSuite(clientreadertestcase.ConfigReaderTest))
-	tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
-	tests.addTest(unittest.makeSuite(clientreadertestcase.FilterReaderTest))
-	tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTest))
-	tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTestCache))
+	tests.addTest(loadTests(clientreadertestcase.ConfigReaderTest))
+	tests.addTest(loadTests(clientreadertestcase.JailReaderTest))
+	tests.addTest(loadTests(clientreadertestcase.FilterReaderTest))
+	tests.addTest(loadTests(clientreadertestcase.JailsReaderTest))
+	tests.addTest(loadTests(clientreadertestcase.JailsReaderTestCache))
 	# CSocket and AsyncServer
-	tests.addTest(unittest.makeSuite(sockettestcase.Socket))
-	tests.addTest(unittest.makeSuite(sockettestcase.ClientMisc))
+	tests.addTest(loadTests(sockettestcase.Socket))
+	tests.addTest(loadTests(sockettestcase.ClientMisc))
 	# Misc helpers
-	tests.addTest(unittest.makeSuite(misctestcase.HelpersTest))
-	tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
-	tests.addTest(unittest.makeSuite(misctestcase.TestsUtilsTest))
-	tests.addTest(unittest.makeSuite(misctestcase.MyTimeTest))
+	tests.addTest(loadTests(misctestcase.HelpersTest))
+	tests.addTest(loadTests(misctestcase.SetupTest))
+	tests.addTest(loadTests(misctestcase.TestsUtilsTest))
+	tests.addTest(loadTests(misctestcase.MyTimeTest))
 	# Database
-	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
+	tests.addTest(loadTests(databasetestcase.DatabaseTest))
 	# Observer
-	tests.addTest(unittest.makeSuite(observertestcase.ObserverTest))
-	tests.addTest(unittest.makeSuite(observertestcase.BanTimeIncr))
-	tests.addTest(unittest.makeSuite(observertestcase.BanTimeIncrDB))
+	tests.addTest(loadTests(observertestcase.ObserverTest))
+	tests.addTest(loadTests(observertestcase.BanTimeIncr))
+	tests.addTest(loadTests(observertestcase.BanTimeIncrDB))
 
 	# Filter
-	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
-	tests.addTest(unittest.makeSuite(filtertestcase.BasicFilter))
-	tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
-	tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
-	tests.addTest(unittest.makeSuite(filtertestcase.LogFileFilterPoll))
+	tests.addTest(loadTests(filtertestcase.IgnoreIP))
+	tests.addTest(loadTests(filtertestcase.BasicFilter))
+	tests.addTest(loadTests(filtertestcase.LogFile))
+	tests.addTest(loadTests(filtertestcase.LogFileMonitor))
+	tests.addTest(loadTests(filtertestcase.LogFileFilterPoll))
 	# each test case class self will check no network, and skip it (we see it in log)
-	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIPDNS))
-	tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
-	tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
-	tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsNetworkTests))
-	tests.addTest(unittest.makeSuite(filtertestcase.JailTests))
+	tests.addTest(loadTests(filtertestcase.IgnoreIPDNS))
+	tests.addTest(loadTests(filtertestcase.GetFailures))
+	tests.addTest(loadTests(filtertestcase.DNSUtilsTests))
+	tests.addTest(loadTests(filtertestcase.DNSUtilsNetworkTests))
+	tests.addTest(loadTests(filtertestcase.JailTests))
 
 	# DateDetector
-	tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
-	tests.addTest(unittest.makeSuite(datedetectortestcase.CustomDateFormatsTest))
+	tests.addTest(loadTests(datedetectortestcase.DateDetectorTest))
+	tests.addTest(loadTests(datedetectortestcase.CustomDateFormatsTest))
 	# Filter Regex tests with sample logs
-	tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
+	tests.addTest(loadTests(samplestestcase.FilterSamplesRegex))
 
 	# bin/fail2ban-client, bin/fail2ban-server
-	tests.addTest(unittest.makeSuite(fail2banclienttestcase.Fail2banClientTest))
-	tests.addTest(unittest.makeSuite(fail2banclienttestcase.Fail2banServerTest))
+	tests.addTest(loadTests(fail2banclienttestcase.Fail2banClientTest))
+	tests.addTest(loadTests(fail2banclienttestcase.Fail2banServerTest))
 	# bin/fail2ban-regex
-	tests.addTest(unittest.makeSuite(fail2banregextestcase.Fail2banRegexTest))
+	tests.addTest(loadTests(fail2banregextestcase.Fail2banRegexTest))
 
 	#
 	# Python action testcases
@@ -493,33 +496,23 @@ def gatherTests(regexps=None, opts=None):
 	# yoh: Since I do not know better way for parametric tests
 	#      with good old unittest
 	try:
-		# because gamin can be very slow on some platforms (and can produce many failures 
-		# with fast sleep interval) - skip it by fast run:
-		if unittest.F2B.fast or unittest.F2B.no_gamin: # pragma: no cover
-			raise ImportError('Skip, fast: %s, no_gamin: %s' % (unittest.F2B.fast, unittest.F2B.no_gamin))
-		from ..server.filtergamin import FilterGamin
-		filters.append(FilterGamin)
-	except ImportError as e: # pragma: no cover
-		logSys.warning("Skipping gamin backend testing. Got exception '%s'" % e)
-
-	try:
 		from ..server.filterpyinotify import FilterPyinotify
 		filters.append(FilterPyinotify)
 	except ImportError as e: # pragma: no cover
 		logSys.warning("I: Skipping pyinotify backend testing. Got exception '%s'" % e)
 
 	for Filter_ in filters:
-		tests.addTest(unittest.makeSuite(
+		tests.addTest(loadTests(
 			filtertestcase.get_monitor_failures_testcase(Filter_)))
 	try: # pragma: systemd no cover
 		from ..server.filtersystemd import FilterSystemd
-		tests.addTest(unittest.makeSuite(filtertestcase.get_monitor_failures_journal_testcase(FilterSystemd)))
+		tests.addTest(loadTests(filtertestcase.get_monitor_failures_journal_testcase(FilterSystemd)))
 	except ImportError as e: # pragma: no cover
 		logSys.warning("I: Skipping systemd backend testing. Got exception '%s'" % e)
 
 	# Server test for logging elements which break logging used to support
 	# testcases analysis
-	tests.addTest(unittest.makeSuite(servertestcase.TransmitterLogging))
+	tests.addTest(loadTests(servertestcase.TransmitterLogging))
 
 	return tests
 
@@ -531,8 +524,8 @@ def gatherTests(regexps=None, opts=None):
 import difflib, pprint
 if not hasattr(unittest.TestCase, 'assertDictEqual'):
 	def assertDictEqual(self, d1, d2, msg=None):
-		self.assert_(isinstance(d1, dict), 'First argument is not a dictionary')
-		self.assert_(isinstance(d2, dict), 'Second argument is not a dictionary')
+		self.assertTrue(isinstance(d1, dict), 'First argument is not a dictionary')
+		self.assertTrue(isinstance(d2, dict), 'Second argument is not a dictionary')
 		if d1 != d2:
 			standardMsg = '%r != %r' % (d1, d2)
 			diff = ('\n' + '\n'.join(difflib.ndiff(
@@ -550,7 +543,7 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=False, key=repr, msg=None)
 	# used to recognize having element as nested dict, list or tuple:
 	def _is_nested(v):
 		if isinstance(v, dict):
-			return any(isinstance(v, (dict, list, tuple)) for v in v.itervalues())
+			return any(isinstance(v, (dict, list, tuple)) for v in v.values())
 		return any(isinstance(v, (dict, list, tuple)) for v in v)
 	if nestedOnly:
 		_nest_sorted = sorted
@@ -570,7 +563,7 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=False, key=repr, msg=None)
 				return
 			raise ValueError('%r != %r' % (a, b))
 		if isinstance(a, dict) and isinstance(b, dict): # compare dict's:
-			for k, v1 in a.iteritems():
+			for k, v1 in a.items():
 				v2 = b[k]
 				if isinstance(v1, (dict, list, tuple)) and isinstance(v2, (dict, list, tuple)):
 					_assertSortedEqual(v1, v2, level-1 if level != 0 else 0, nestedOnly, key)
@@ -596,23 +589,12 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=False, key=repr, msg=None)
 		self.fail(msg)
 unittest.TestCase.assertSortedEqual = assertSortedEqual
 
-if not hasattr(unittest.TestCase, 'assertRaisesRegexp'):
-	def assertRaisesRegexp(self, exccls, regexp, fun, *args, **kwargs):
-		try:
-			fun(*args, **kwargs)
-		except exccls as e:
-			if re.search(regexp, str(e)) is None:
-				self.fail('\"%s\" does not match \"%s\"' % (regexp, e))
-		else:
-			self.fail('%s not raised' % getattr(exccls, '__name__'))
-	unittest.TestCase.assertRaisesRegexp = assertRaisesRegexp
-
 # always custom following methods, because we use atm better version of both (support generators)
 if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
 	def assertIn(self, a, b, msg=None):
 		bb = b
 		wrap = False
-		if msg is None and hasattr(b, '__iter__') and not isinstance(b, basestring):
+		if msg is None and hasattr(b, '__iter__') and not isinstance(b, str):
 			b, bb = itertools.tee(b)
 			wrap = True
 		if a not in b:
@@ -623,7 +605,7 @@ if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
 	def assertNotIn(self, a, b, msg=None):
 		bb = b
 		wrap = False
-		if msg is None and hasattr(b, '__iter__') and not isinstance(b, basestring):
+		if msg is None and hasattr(b, '__iter__') and not isinstance(b, str):
 			b, bb = itertools.tee(b)
 			wrap = True
 		if a in b:

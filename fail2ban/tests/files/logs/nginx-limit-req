@@ -8,5 +8,10 @@
 # failJSON: { "time": "2016-09-30T08:36:06", "match": true, "host": "13.123.1.123" }
 2016/09/30 08:36:06 [error] 22923#0: *4758725916 limiting requests, excess: 15.243 by zone "one", client: 13.123.1.123, server: example.com, request: "GET / HTTP/1.1", host: "example.com"
 
-# failJSON: { "time": "2016-09-30T08:36:06", "match": true, "host": "2606:2800:220:1:248:1893:25c8:1946" }
-2016/09/30 08:36:06 [error] 22923#0: *4758725916 limiting requests, excess: 15.243 by zone "one", client: 2606:2800:220:1:248:1893:25c8:1946, server: example.com, request: "GET / HTTP/1.1", host: "example.com"
+# failJSON: { "time": "2016-09-30T08:36:06", "match": true, "host": "2001:db8::80da:af6b:8b2c" }
+2016/09/30 08:36:06 [error] 22923#0: *4758725916 limiting requests, excess: 15.243 by zone "one", client: 2001:db8::80da:af6b:8b2c, server: example.com, request: "GET / HTTP/1.1", host: "example.com"
+
+# filterOptions: [{"logtype": "journal"}]
+
+# failJSON: { "match": true , "host": "192.0.2.2" }
+host nginx[983479]: 2023/12/09 21:35:20 [notice] 983479#983479: *22174 limiting requests, excess: 1.495 by zone "one", client: 192.0.2.2, server: example.com, request: "GET /index.htm HTTP/1.1", host: "example.com", referrer: "https://example.com"
