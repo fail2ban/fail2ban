@@ -11,6 +11,13 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Fixes
+* `jail.conf`:
+  - default banactions need to be specified in `paths-*.conf` (maintainer level) now
+  - since stock fail2ban includes `paths-debian.conf` by default, banactions are `nftables`
+    (can be overwritten in `jail.local` by user)
+* `paths-debian.conf`:
+  - default banactions are `nftables`
+  - sshd backend switched to `systemd` (gh-3292)
 
 ### New Features and Enhancements
 
