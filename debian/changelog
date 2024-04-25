@@ -1,3 +1,10 @@
+fail2ban (1.1.0-1~upstream1) unstable; urgency=medium
+
+  [ Sergey Brester ]
+  * upstream package for debian, https://github.com/fail2ban/fail2ban/releases/tag/1.1.0
+
+ -- Sergey G. Brester <serg.brester@sebres.de>  Thu, 25 Apr 2024 23:58:50 +0200
+
 fail2ban (1.0.2-3) unstable; urgency=medium
 
   * Add banaction = nftables in the defaults-debian.conf default
