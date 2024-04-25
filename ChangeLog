@@ -15,6 +15,13 @@ ver. 1.1.0 (2024/04/25) - object-found--norad-59479-cospar-2024-069a--altitude-3
   you can use the 0.11 or 1.0 version of fail2ban or upgrade python (or even build it from source).
 
 ### Fixes
+* `jail.conf`:
+  - default banactions need to be specified in `paths-*.conf` (maintainer level) now
+  - since stock fail2ban includes `paths-debian.conf` by default, banactions are `nftables`
+    (can be overwritten in `jail.local` by user)
+* `paths-debian.conf`:
+  - default banactions are `nftables`
+  - sshd backend switched to `systemd` (gh-3292)
 * circumvent SEGFAULT in a python's socket module by getaddrinfo with disabled IPv6 (gh-3438)
 * avoid sporadic error in pyinotify backend if pending file deleted in other thread, e. g. by flushing logs (gh-3635)
 * `action.d/cloudflare-token.conf` - fixes gh-3479, url-encode args by unban
