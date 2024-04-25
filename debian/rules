@@ -35,7 +35,6 @@ ifneq (,$(filter notest,$(DEB_BUILD_OPTIONS)))
 endif
 
 override_dh_auto_configure:
-	LANG=C ./fail2ban-2to3
 	dh_auto_configure
 
 override_dh_auto_test:
@@ -63,8 +62,6 @@ override_dh_install:
 	install -m 644 build/fail2ban.service $(DESTDIR)$(SYSTEMD_SYSTEM_UNIT_DIR)
 	install -m 644 files/fail2ban-tmpfiles.conf $(DESTDIR)/usr/lib/tmpfiles.d
 	install -d $(DESTDIR)$(SYSTEMD_SYSTEM_UNIT_DIR)
-	: # Install default jail enabler
-	install -m 644 debian/debian-files/jail.d_defaults-debian.conf $(DESTDIR)/etc/fail2ban/jail.d/defaults-debian.conf
 	dh_install
 
 override_dh_installexamples:
