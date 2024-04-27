@@ -24,10 +24,9 @@ __license__ = "GPL"
 
 import os
 import time
-from distutils.version import LooseVersion
 
 from systemd import journal
-if LooseVersion(getattr(journal, '__version__', "0")) < '204':
+if getattr(journal, "__version__", "0").split(".") < "204".split("."):
 	raise ImportError("Fail2Ban requires systemd >= 204")
 
 from .failmanager import FailManagerEmpty
