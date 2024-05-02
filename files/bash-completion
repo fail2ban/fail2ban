@@ -80,7 +80,7 @@ _fail2ban () {
                 ;;
             *)
                 if [[ "${words[$cword-2]}" == "add" ]];then
-                    COMPREPLY=( $( compgen -W "auto polling gamin pyinotify systemd" -- "$cur" ) )
+                    COMPREPLY=( $( compgen -W "auto polling pyinotify systemd" -- "$cur" ) )
                     return 0
                 elif [[ "${words[$cword-2]}" == "set" ||  "${words[$cword-2]}" == "get" ]];then
                     cmd="${words[cword-2]}"

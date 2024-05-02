@@ -37,3 +37,6 @@ Sep 16 21:30:32 catinthehat mysqld: 130916 21:30:32 [Warning] Access denied for 
 # filterOptions: [{"logtype": "file"}, {"logtype": "short"}, {"logtype": "journal"}]
 # failJSON: { "match": true , "host": "192.0.2.1", "user":"root", "desc": "mariadb 10.4 log format, gh-2611" }
 2020-01-16 21:34:14 4644 [Warning] Access denied for user 'root'@'192.0.2.1' (using password: YES)
+
+# failJSON: { "match": true , "host": "192.0.2.1", "user":"root", "desc": "mariadb 10.3 log format" }
+2020-01-16 21:34:14 4644 [Warning] Access denied for user 'root'@'192.0.2.1'

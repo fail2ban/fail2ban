@@ -58,11 +58,6 @@ except ImportError: # pragma: no cover
 def _thread_name():
 	return threading.current_thread().__class__.__name__
 
-try:
-	FileExistsError
-except NameError: # pragma: 3.x no cover
-	FileExistsError = OSError
-
 def _make_file_path(name):
 	"""Creates path of file (last level only) on demand"""
 	name = os.path.dirname(name)
@@ -209,7 +204,7 @@ class Server:
 
 		# Restore default signal handlers:
 		if _thread_name() == '_MainThread':
-			for s, sh in self.__prev_signals.iteritems():
+			for s, sh in self.__prev_signals.items():
 				signal.signal(s, sh)
 
 		# Give observer a small chance to complete its work before exit
@@ -227,7 +222,7 @@ class Server:
 			obsMain.stop()
 
 		# Explicit close database (server can leave in a thread, 
-		# so delayed GC can prevent commiting changes)
+		# so delayed GC can prevent committing changes)
 		if self.__db:
 			self.__db.close()
 			self.__db = None
@@ -287,10 +282,10 @@ class Server:
 		logSys.info("Stopping all jails")
 		with self.__lock:
 			# 1st stop all jails (signal and stop actions/filter thread):
-			for name in self.__jails.keys():
+			for name in list(self.__jails.keys()):
 				self.delJail(name, stop=True, join=False)
 			# 2nd wait for end and delete jails:
-			for name in self.__jails.keys():
+			for name in list(self.__jails.keys()):
 				self.delJail(name, stop=False, join=True)
 
 	def clearCaches(self):
@@ -328,7 +323,7 @@ class Server:
 					if "--restart" in opts:
 						self.stopAllJail()
 				# first set all affected jail(s) to idle and reset filter regex and other lists/dicts:
-				for jn, jail in self.__jails.iteritems():
+				for jn, jail in self.__jails.items():
 					if name == '--all' or jn == name:
 						jail.idle = True
 						self.__reload_state[jn] = jail
@@ -339,7 +334,7 @@ class Server:
 			# end reload, all affected (or new) jails have already all new parameters (via stream) and (re)started:
 			with self.__lock:
 				deljails = []
-				for jn, jail in self.__jails.iteritems():
+				for jn, jail in self.__jails.items():
 					# still in reload state:
 					if jn in self.__reload_state:
 						# remove jails that are not reloaded (untouched, so not in new configuration)
@@ -539,7 +534,7 @@ class Server:
 			jails = [self.__jails[name]]
 		else:
 			# in all jails:
-			jails = self.__jails.values()
+			jails = list(self.__jails.values())
 		# unban given or all (if value is None):
 		cnt = 0
 		ifexists |= (name is None)
@@ -553,7 +548,7 @@ class Server:
 			jails = [self.__jails[name]]
 		else:
 			# in all jails:
-			jails = self.__jails.values()
+			jails = list(self.__jails.values())
 		# check banned ids:
 		res = []
 		if name is None and ids:
@@ -603,20 +598,29 @@ class Server:
 	def isAlive(self, jailnum=None):
 		if jailnum is not None and len(self.__jails) != jailnum:
 			return 0
-		for jail in self.__jails.values():
+		for jail in list(self.__jails.values()):
 			if not jail.isAlive():
 				return 0
 		return 1
 
 	# Status
-	def status(self):
+	def status(self, name="", flavor="basic"):
 		try:
 			self.__lock.acquire()
-			jails = list(self.__jails)
-			jails.sort()
-			jailList = ", ".join(jails)
-			ret = [("Number of jail", len(self.__jails)),
-				   ("Jail list", jailList)]
+			jails = sorted(self.__jails.items())
+			if flavor != "stats":
+				jailList = [n for n, j in jails]
+				ret = [
+					("Number of jail", len(jailList)),
+					("Jail list", ", ".join(jailList))
+				]
+			if name == '--all':
+				jstat = dict(jails)
+				for n, j in jails:
+					jstat[n] = j.status(flavor=flavor)
+				if flavor == "stats":
+					return jstat
+				ret.append(jstat)
 			return ret
 		finally:
 			self.__lock.release()
@@ -725,14 +729,8 @@ class Server:
 				# Remove the handler.
 				logger.removeHandler(handler)
 				# And try to close -- it might be closed already
-				try:
-					handler.flush()
-					handler.close()
-				except (ValueError, KeyError): # pragma: no cover
-					# Is known to be thrown after logging was shutdown once
-					# with older Pythons -- seems to be safe to ignore there
-					if sys.version_info < (3,) or sys.version_info >= (3, 2):
-						raise
+				handler.flush()
+				handler.close()
 			# detailed format by deep log levels (as DEBUG=10):
 			if logger.getEffectiveLevel() <= logging.DEBUG: # pragma: no cover
 				if self.__verbose is None:
@@ -818,7 +816,7 @@ class Server:
 		return DNSUtils.setIPv6IsAllowed(value)
 
 	def setThreadOptions(self, value):
-		for o, v in value.iteritems():
+		for o, v in value.items():
 			if o == 'stacksize':
 				threading.stack_size(int(v)*1024)
 			else: # pragma: no cover
@@ -936,32 +934,16 @@ class Server:
 		# the default value (configurable).
 		try:
 			fdlist = self.__get_fdlist()
-			maxfd = -1
-		except:
-			try:
-				maxfd = os.sysconf("SC_OPEN_MAX")
-			except (AttributeError, ValueError):
-				maxfd = 256	   # default maximum
-			fdlist = xrange(maxfd+1)
-	
-		# urandom should not be closed in Python 3.4.0. Fixed in 3.4.1
-		# http://bugs.python.org/issue21207
-		if sys.version_info[0:3] == (3, 4, 0): # pragma: no cover
-			urandom_fd = os.open("/dev/urandom", os.O_RDONLY)
-			for fd in fdlist:
-				try:
-					if not os.path.sameopenfile(urandom_fd, fd):
-						os.close(fd)
-				except OSError:   # ERROR (ignore)
-					pass
-			os.close(urandom_fd)
-		elif maxfd == -1:
 			for fd in fdlist:
 				try:
 					os.close(fd)
 				except OSError:   # ERROR (ignore)
 					pass
-		else:
+		except:
+			try:
+				maxfd = os.sysconf("SC_OPEN_MAX")
+			except (AttributeError, ValueError):
+				maxfd = 256	   # default maximum
 			os.closerange(0, maxfd)
 	
 		# Redirect the standard file descriptors to /dev/null.

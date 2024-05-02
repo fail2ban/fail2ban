@@ -71,24 +71,78 @@ class Beautifier:
 			elif inC[0] == "echo":
 				msg = ' '.join(msg)
 			elif inC[0:1] == ['status']:
-				if len(inC) > 1:
-					# Display information
-					msg = ["Status for the jail: %s" % inC[1]]
+				def jail_stat(response, pref=""):
+					# Display jail information
 					for n, res1 in enumerate(response):
-						prefix1 = "`-" if n == len(response) - 1 else "|-"
+						prefix1 = pref + ("`-" if n == len(response) - 1 else "|-")
 						msg.append("%s %s" % (prefix1, res1[0]))
-						prefix1 = "   " if n == len(response) - 1 else "|  "
+						prefix1 = pref + ("   " if n == len(response) - 1 else "|  ")
 						for m, res2 in enumerate(res1[1]):
 							prefix2 = prefix1 + ("`-" if m == len(res1[1]) - 1 else "|-")
 							val = " ".join(map(str, res2[1])) if isinstance(res2[1], list) else res2[1]
 							msg.append("%s %s:\t%s" % (prefix2, res2[0], val))
+				if len(inC) > 1 and inC[1] != "--all":
+					msg = ["Status for the jail: %s" % inC[1]]
+					jail_stat(response)
 				else:
+					jstat = None
+					if len(inC) > 1: # --all
+						jstat = response[-1]
+						response = response[:-1]
 					msg = ["Status"]
 					for n, res1 in enumerate(response):
-						prefix1 = "`-" if n == len(response) - 1 else "|-"
+						prefix1 = "`-" if not jstat and n == len(response) - 1 else "|-"
 						val = " ".join(map(str, res1[1])) if isinstance(res1[1], list) else res1[1]
 						msg.append("%s %s:\t%s" % (prefix1, res1[0], val))
+					if jstat:
+						msg.append("`- Status for the jails:")
+						i = 0
+						for n, j in jstat.items():
+							i += 1
+							prefix1 = "`-" if i == len(jstat) else "|-"
+							msg.append("   %s Jail: %s" % (prefix1, n))
+							jail_stat(j, "      " if i == len(jstat) else "   |  ")
 				msg = "\n".join(msg)
+			elif inC[0:1] == ['stats'] or inC[0:1] == ['statistics']:
+				def _statstable(response):
+					tophead = ["Jail", "Backend", "Filter", "Actions"]
+					headers = ["", "", "cur", "tot", "cur", "tot"]
+					minlens = [8, 8, 3, 3, 3, 3]
+					ralign = [0, 0, 1, 1, 1, 1]
+					rows = [[n, r[0], *r[1], *r[2]] for n, r in response.items()]
+					lens = []
+					for i in range(len(rows[0])):
+						col = (len(str(s[i])) for s in rows)
+						lens.append(max(minlens[i], max(col)))
+					rfmt = []
+					hfmt = []
+					for i in range(len(rows[0])):
+						f = "%%%ds" if ralign[i] else "%%-%ds"
+						rfmt.append(f % lens[i])
+						hfmt.append(f % lens[i])
+					rfmt = [rfmt[0], rfmt[1], "%s \u2502 %s" % (rfmt[2], rfmt[3]), "%s \u2502 %s" % (rfmt[4], rfmt[5])]
+					hfmt = [hfmt[0], hfmt[1], "%s \u2502 %s" % (hfmt[2], hfmt[3]), "%s \u2502 %s" % (hfmt[4], hfmt[5])]
+					tlens = [lens[0], lens[1], 3 + lens[2] + lens[3], 3 + lens[4] + lens[5]]
+					tfmt = [hfmt[0], hfmt[1], "%%-%ds" % (tlens[2],), "%%-%ds" % (tlens[3],)]
+					tsep = tfmt[0:2]
+					rfmt = " \u2551 ".join(rfmt)
+					hfmt = " \u2551 ".join(hfmt)
+					tfmt = " \u2551 ".join(tfmt)
+					tsep = " \u2551 ".join(tsep)
+					separator = ((tsep % tuple(tophead[0:2])) + " \u255F\u2500" + 
+						("\u2500\u256B\u2500".join(['\u2500' * n for n in tlens[2:]])) + '\u2500')
+					ret = []
+					ret.append(tfmt % tuple(["", ""]+tophead[2:]))
+					ret.append(separator)
+					ret.append(hfmt % tuple(headers))
+					separator = "\u2550\u256C\u2550".join(['\u2550' * n for n in tlens]) + '\u2550'
+					ret.append(separator)
+					for row in rows:
+						ret.append(rfmt % tuple(row))
+					separator = "\u2550\u2569\u2550".join(['\u2550' * n for n in tlens]) + '\u2550'
+					ret.append(separator)
+					return ret
+				msg = "\n".join(_statstable(response))
 			elif len(inC) < 2:
 				pass # to few cmd args for below
 			elif inC[1] == "syslogsocket":

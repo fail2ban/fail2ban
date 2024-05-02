@@ -26,7 +26,7 @@ __license__ = "GPL"
 import logging
 import math
 import random
-import Queue
+import queue
 
 from .actions import Actions
 from ..helpers import getLogger, _as_bool, extractOptions, MyTime
@@ -66,7 +66,7 @@ class Jail(object):
 	#Known backends. Each backend should have corresponding __initBackend method
 	# yoh: stored in a list instead of a tuple since only
 	#      list had .index until 2.6
-	_BACKENDS = ['pyinotify', 'gamin', 'polling', 'systemd']
+	_BACKENDS = ['pyinotify', 'polling', 'systemd']
 
 	def __init__(self, name, backend = "auto", db=None):
 		self.__db = db
@@ -76,13 +76,14 @@ class Jail(object):
 							"might not function correctly. Please shorten"
 							% name)
 		self.__name = name
-		self.__queue = Queue.Queue()
+		self.__queue = queue.Queue()
 		self.__filter = None
 		# Extra parameters for increase ban time
 		self._banExtra = {};
 		logSys.info("Creating new jail '%s'" % self.name)
+		self._realBackend = None
 		if backend is not None:
-			self._setBackend(backend)
+			self._realBackend = self._setBackend(backend)
 		self.backend = backend
 
 	def __repr__(self):
@@ -113,7 +114,7 @@ class Jail(object):
 				else:
 					logSys.info("Initiated %r backend" % b)
 				self.__actions = Actions(self)
-				return					# we are done
+				return b				# we are done
 			except ImportError as e: # pragma: no cover
 				# Log debug if auto, but error if specific
 				logSys.log(
@@ -127,25 +128,19 @@ class Jail(object):
 			"Failed to initialize any backend for Jail %r" % self.name)
 
 	def _initPolling(self, **kwargs):
-		from filterpoll import FilterPoll
+		from .filterpoll import FilterPoll
 		logSys.info("Jail '%s' uses poller %r" % (self.name, kwargs))
 		self.__filter = FilterPoll(self, **kwargs)
 
-	def _initGamin(self, **kwargs):
-		# Try to import gamin
-		from filtergamin import FilterGamin
-		logSys.info("Jail '%s' uses Gamin %r" % (self.name, kwargs))
-		self.__filter = FilterGamin(self, **kwargs)
-
 	def _initPyinotify(self, **kwargs):
 		# Try to import pyinotify
-		from filterpyinotify import FilterPyinotify
+		from .filterpyinotify import FilterPyinotify
 		logSys.info("Jail '%s' uses pyinotify %r" % (self.name, kwargs))
 		self.__filter = FilterPyinotify(self, **kwargs)
 
 	def _initSystemd(self, **kwargs): # pragma: systemd no cover
 		# Try to import systemd
-		from filtersystemd import FilterSystemd
+		from .filtersystemd import FilterSystemd
 		logSys.info("Jail '%s' uses systemd %r" % (self.name, kwargs))
 		self.__filter = FilterSystemd(self, **kwargs)
 
@@ -191,10 +186,15 @@ class Jail(object):
 	def status(self, flavor="basic"):
 		"""The status of the jail.
 		"""
+		fstat = self.filter.status(flavor=flavor)
+		astat = self.actions.status(flavor=flavor)
+		if flavor == "stats":
+			backend = type(self.filter).__name__.replace('Filter', '').lower()
+			return [self._realBackend or self.backend, fstat, astat]
 		return [
-			("Filter", self.filter.status(flavor=flavor)),
-			("Actions", self.actions.status(flavor=flavor)),
-			]
+			("Filter", fstat),
+			("Actions", astat),
+		]
 
 	@property
 	def hasFailTickets(self):
@@ -219,7 +219,7 @@ class Jail(object):
 		try:
 			ticket = self.__queue.get(False)
 			return ticket
-		except Queue.Empty:
+		except queue.Empty:
 			return False
 
 	def setBanTimeExtra(self, opt, value):
@@ -294,10 +294,10 @@ class Jail(object):
 					correctBanTime=correctBanTime, maxmatches=self.filter.failManager.maxMatches
 				):
 					try:
-						#logSys.debug('restored ticket: %s', ticket)
-						if self.filter.inIgnoreIPList(ticket.getID(), log_ignore=True): continue
 						# mark ticked was restored from database - does not put it again into db:
 						ticket.restored = True
+						#logSys.debug('restored ticket: %s', ticket)
+						if self.filter._inIgnoreIPList(ticket.getID(), ticket): continue
 						# correct start time / ban time (by the same end of ban):
 						btm = ticket.getBanTime(forbantime)
 						diftm = MyTime.time() - ticket.getTime()
