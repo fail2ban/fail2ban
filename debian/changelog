@@ -1,3 +1,9 @@
+fail2ban (1.1.0-2) UNRELEASED; urgency=medium
+
+  * Fix Build-Depends: pkg-config => pkgconf
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 02 May 2024 22:04:26 +0200
+
 fail2ban (1.1.0-1) unstable; urgency=medium
 
   * New upstream release

@@ -12,7 +12,7 @@ Build-Depends:
  , python3-setuptools
  , python3-pyinotify
  , sqlite3
- , pkg-config
+ , pkgconfig
  , systemd
 Homepage: https://www.fail2ban.org
 Vcs-Git: https://salsa.debian.org/python-team/packages/fail2ban.git
