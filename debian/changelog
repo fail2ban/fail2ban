@@ -1,7 +1,11 @@
 fail2ban (1.1.0-1) unstable; urgency=medium
 
   * New upstream release
+    (LP: #2055114)
   * Block ssh invalid keys too (Closes: #1038779)
+  * Follow upstream advice
+    https://github.com/fail2ban/fail2ban/issues/3292#issuecomment-2078361360
+    to only have sshd as enabled = true in jail.d_defaults-debian.conf
 
  -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 02 May 2024 13:57:06 +0200
 
