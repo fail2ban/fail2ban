@@ -45,55 +45,24 @@ def _json_default(x):
 		x = list(x)
 	return uni_string(x)
 
-if sys.version_info >= (3,): # pragma: 2.x no cover
-	def _json_dumps_safe(x):
-		try:
-			x = json.dumps(x, ensure_ascii=False, default=_json_default).encode(
-				PREFER_ENC, 'replace')
-		except Exception as e:
-			# adapter handler should be exception-safe
-			logSys.error('json dumps failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
-			x = '{}'
-		return x
+def _json_dumps_safe(x):
+	try:
+		x = json.dumps(x, ensure_ascii=False, default=_json_default).encode(
+			PREFER_ENC, 'replace')
+	except Exception as e:
+		# adapter handler should be exception-safe
+		logSys.error('json dumps failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
+		x = '{}'
+	return x
 
-	def _json_loads_safe(x):
-		try:
-			x = json.loads(x.decode(PREFER_ENC, 'replace'))
-		except Exception as e:
-			# converter handler should be exception-safe
-			logSys.error('json loads failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
-			x = {}
-		return x
-else: # pragma: 3.x no cover
-	def _normalize(x):
-		if isinstance(x, dict):
-			return dict((_normalize(k), _normalize(v)) for k, v in x.iteritems())
-		elif isinstance(x, (list, set)):
-			return [_normalize(element) for element in x]
-		elif isinstance(x, unicode):
-			# in 2.x default text_factory is unicode - so return proper unicode here:
-			return x.encode(PREFER_ENC, 'replace').decode(PREFER_ENC)
-		elif isinstance(x, basestring):
-			return x.decode(PREFER_ENC, 'replace')
-		return x
-
-	def _json_dumps_safe(x):
-		try:
-			x = json.dumps(_normalize(x), ensure_ascii=False, default=_json_default)
-		except Exception as e:
-			# adapter handler should be exception-safe
-			logSys.error('json dumps failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
-			x = '{}'
-		return x
-
-	def _json_loads_safe(x):
-		try:
-			x = json.loads(x.decode(PREFER_ENC, 'replace'))
-		except Exception as e:
-			# converter handler should be exception-safe
-			logSys.error('json loads failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
-			x = {}
-		return x
+def _json_loads_safe(x):
+	try:
+		x = json.loads(x.decode(PREFER_ENC, 'replace'))
+	except Exception as e:
+		# converter handler should be exception-safe
+		logSys.error('json loads failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
+		x = {}
+	return x
 
 sqlite3.register_adapter(dict, _json_dumps_safe)
 sqlite3.register_converter("JSON", _json_loads_safe)
@@ -135,7 +104,7 @@ class Fail2BanDb(object):
 	sqlite3.OperationalError
 		Error connecting/creating a SQLite3 database.
 	RuntimeError
-		If exisiting database fails to update to new schema.
+		If existing database fails to update to new schema.
 
 	Attributes
 	----------
@@ -525,7 +494,7 @@ class Fail2BanDb(object):
 		Parameters
 		----------
 		jail : Jail
-			If specified, will only reutrn logs belonging to the jail.
+			If specified, will only return logs belonging to the jail.
 
 		Returns
 		-------

@@ -103,7 +103,7 @@ class BanManager:
 			return list(self.__banList.keys())
 		with self.__lock:
 			lst = []
-			for ticket in self.__banList.itervalues():
+			for ticket in self.__banList.values():
 				eob = ticket.getEndOfBanTime(self.__banTime)
 				lst.append((ticket,eob))
 		lst.sort(key=lambda t: t[1])
@@ -161,7 +161,7 @@ class BanManager:
 				return return_dict
 		# get ips in lock:
 		with self.__lock:
-			banIPs = [banData.getIP() for banData in self.__banList.values()]
+			banIPs = [banData.getIP() for banData in list(self.__banList.values())]
 		# get cymru info:
 		try:
 			for ip in banIPs:
@@ -333,7 +333,7 @@ class BanManager:
 			# Gets the list of ticket to remove (thereby correct next unban time).
 			unBanList = {}
 			nextUnbanTime = BanTicket.MAX_TIME
-			for fid,ticket in self.__banList.iteritems():
+			for fid,ticket in self.__banList.items():
 				# current time greater as end of ban - timed out:
 				eob = ticket.getEndOfBanTime(self.__banTime)
 				if time > eob:
@@ -349,15 +349,15 @@ class BanManager:
 			if len(unBanList):
 				if len(unBanList) / 2.0 <= len(self.__banList) / 3.0:
 					# few as 2/3 should be removed - remove particular items:
-					for fid in unBanList.iterkeys():
+					for fid in unBanList.keys():
 						del self.__banList[fid]
 				else:
 					# create new dictionary without items to be deleted:
-					self.__banList = dict((fid,ticket) for fid,ticket in self.__banList.iteritems() \
+					self.__banList = dict((fid,ticket) for fid,ticket in self.__banList.items() \
 						if fid not in unBanList)
 						
 			# return list of tickets:
-			return unBanList.values()
+			return list(unBanList.values())
 
 	##
 	# Flush the ban list.
@@ -367,7 +367,7 @@ class BanManager:
 	
 	def flushBanList(self):
 		with self.__lock:
-			uBList = self.__banList.values()
+			uBList = list(self.__banList.values())
 			self.__banList = dict()
 			return uBList
 

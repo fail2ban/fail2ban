@@ -1,0 +1,5 @@
+# failJSON: { "time": "2018-09-14T19:03:05", "match": true , "host": "12.34.56.78" }
+2018/09/14 19:03:05 [error] 2035#2035: *9134 access forbidden by rule, client: 12.34.56.78, server: www.example.net, request: "GET /wp-content/themes/evolve/js/back-end/libraries/fileuploader/upload_handler.php HTTP/1.1", host: "www.example.net", referrer: "http://example.net/foo.php"
+
+# failJSON: { "time": "2018-09-13T15:42:05", "match": true , "host": "12.34.56.78" }
+2018/09/13 15:42:05 [error] 2035#2035: *287 access forbidden by rule, client: 12.34.56.78, server: www.example.com, request: "GET /wp-config.php~ HTTP/1.1", host: "www.example.com"

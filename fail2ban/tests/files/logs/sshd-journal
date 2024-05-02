@@ -9,8 +9,8 @@
 srv sshd[13709]: error: PAM: Authentication failure for myhlj1374 from 192.030.0.6
 # failJSON: { "match": true , "host": "example.com" }
 srv sshd[28732]: error: PAM: Authentication failure for stefanor from example.com
-# failJSON: { "match": true , "host": "2606:2800:220:1:248:1893:25c8:1946" }
-srv sshd[28732]: error: PAM: Authentication failure for test-ipv6 from 2606:2800:220:1:248:1893:25c8:1946
+# failJSON: { "match": true , "host": "2001:db8::80da:af6b:8b2c" }
+srv sshd[28732]: error: PAM: Authentication failure for test-ipv6 from 2001:db8::80da:af6b:8b2c
 
 #2
 # failJSON: { "match": true , "host": "194.117.26.69" }

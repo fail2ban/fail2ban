@@ -32,10 +32,7 @@ import time
 from ..helpers import getLogger, _merge_dicts, uni_decode
 from collections import OrderedDict
 
-if sys.version_info >= (3, 3):
-	import importlib.machinery
-else:
-	import imp
+import importlib.machinery
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -53,7 +50,7 @@ _RETCODE_HINTS = {
 
 # Dictionary to lookup signal name from number
 signame = dict((num, name)
-	for name, num in signal.__dict__.iteritems() if name.startswith("SIG"))
+	for name, num in signal.__dict__.items() if name.startswith("SIG"))
 
 class Utils():
 	"""Utilities provide diverse static methods like executes OS shell commands, etc.
@@ -140,7 +137,7 @@ class Utils():
 		if not isinstance(realCmd, list):
 			realCmd = [realCmd]
 		i = len(realCmd)-1
-		for k, v in varsDict.iteritems():
+		for k, v in varsDict.items():
 			varsStat += "%s=$%s " % (k, i)
 			realCmd.append(v)
 			i += 1
@@ -355,10 +352,6 @@ class Utils():
 	def load_python_module(pythonModule):
 		pythonModuleName = os.path.splitext(
 			os.path.basename(pythonModule))[0]
-		if sys.version_info >= (3, 3):
-			mod = importlib.machinery.SourceFileLoader(
-				pythonModuleName, pythonModule).load_module()
-		else:
-			mod = imp.load_source(
-				pythonModuleName, pythonModule)
+		mod = importlib.machinery.SourceFileLoader(
+			pythonModuleName, pythonModule).load_module()
 		return mod

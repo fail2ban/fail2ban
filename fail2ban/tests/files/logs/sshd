@@ -223,6 +223,11 @@ Apr 27 13:02:04 host sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal S
 # disable this test-cases block for obsolete multi-line filter (zzz-sshd-obsolete...):
 # filterOptions: [{"test.condition":"name=='sshd'"}]
 
+# failJSON: { "time": "2004-11-23T21:50:38", "match": true , "host": "192.0.2.7", "user": "xxx", "desc": "maximum authentication attempts exceeded for invalid user" }
+Nov 23 21:50:38 myhost sshd[109798]: error: maximum authentication attempts exceeded for invalid user xxx from 192.0.2.7 port 49941 ssh2 [preauth]
+# failJSON: { "time": "2004-11-23T21:50:38", "match": false, "desc": "No failure, helper only (already counted above)" }
+Nov 23 21:50:38 myhost sshd[109798]: Disconnecting invalid user xxx 192.0.2.7 port 49941: Too many authentication failures [preauth]
+
 # 2 methods auth: pam_unix and pam_ldap are used in combination (gh-2070), succeeded after "failure" in first method:
 # failJSON: { "match": false , "desc": "No failure" }
 Mar  7 18:53:20 bar sshd[1556]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.0.2.113  user=rda
@@ -319,6 +324,13 @@ Feb 17 17:40:18 sshd[19725]: error: kex_exchange_identification: Connection clos
 Mar  1 18:59:33 hostname sshd[1189575]: error: kex_exchange_identification: banner line too long
 # failJSON: { "time": "2005-03-01T18:59:33", "match": true , "host": "192.0.2.12", "desc": "ddos: port scanner, https payload on ssh port (banner exchange: invalid format, gh-3169)" }
 Mar  1 18:59:33 hostname sshd[1189575]: banner exchange: Connection from 192.0.2.12 port 44105: invalid format
+
+# failJSON: { "time": "2005-03-01T18:59:50", "match": true , "host": "192.0.2.13", "desc": "ddos: port scanner, wrong payload on ssh port (message authentication code incorrect [preauth], gh-3486)" }
+Mar  1 18:59:50 hostname sshd[71905]: ssh_dispatch_run_fatal: Connection from 192.0.2.13 port 33738: message authentication code incorrect [preauth]
+# failJSON: { "time": "2005-03-01T18:59:50", "match": true , "host": "192.0.2.13", "desc": "ddos: port scanner, wrong payload on ssh port (connection corrupted [preauth], gh-3486)" }
+Mar  1 18:59:50 hostname sshd[80348]: ssh_dispatch_run_fatal: Connection from 192.0.2.13 port 52452: Connection corrupted [preauth]
+# failJSON: { "time": "2005-03-01T18:59:52", "match": true , "host": "192.0.2.14", "desc": "ddos: port scanner (timeout before authentication, gh-3486)" }
+Mar  1 18:59:52 srv sshd[12345]: fatal: Timeout before authentication for 192.0.2.14 port 55555
 
 # failJSON: { "time": "2005-03-15T09:21:01", "match": true , "host": "192.0.2.212", "desc": "DDOS mode causes failure on close within preauth stage" }
 Mar 15 09:21:01 host sshd[2717]: Connection closed by 192.0.2.212 [preauth]

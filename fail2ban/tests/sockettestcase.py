@@ -54,7 +54,6 @@ class Socket(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		LogCaptureTestCase.setUp(self)
 		super(Socket, self).setUp()
 		self.server = AsyncServer(self)
 		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'f2b-socket')
@@ -68,7 +67,7 @@ class Socket(LogCaptureTestCase):
 		if self.serverThread:
 			self.server.stop(); # stop if not already stopped
 			self._stopServerThread()
-		LogCaptureTestCase.tearDown(self)
+		super(Socket, self).tearDown()
 
 	@staticmethod
 	def proceed(message):
@@ -153,7 +152,7 @@ class Socket(LogCaptureTestCase):
 		org_handler = RequestHandler.found_terminator
 		try:
 			RequestHandler.found_terminator = lambda self: self.close()
-			self.assertRaisesRegexp(Exception, r"reset by peer|Broken pipe",
+			self.assertRaisesRegex(Exception, r"reset by peer|Broken pipe",
 				lambda: client.send(testMessage, timeout=unittest.F2B.maxWaitTime(10)))
 		finally:
 			RequestHandler.found_terminator = org_handler
@@ -230,7 +229,7 @@ class ClientMisc(LogCaptureTestCase):
 		def _poll(*args):
 			phase['cntr'] += 1
 			raise Exception('test *%d*' % phase['cntr'])
-		# test errors "catched" and logged:
+		# test errors "caught" and logged:
 		loop(_active, use_poll=_poll)
 		self.assertLogged("test *1*", "test *10*", "test *20*", all=True)
 		self.assertLogged("Too many errors - stop logging connection errors")

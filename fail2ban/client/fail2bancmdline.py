@@ -27,7 +27,7 @@ import sys
 
 from ..version import version, normVersion
 from ..protocol import printFormatted
-from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, BrokenPipeError
+from ..helpers import getLogger, str2LogLevel, getVerbosityFormat
 
 # Gets the instance of the logger.
 logSys = getLogger("fail2ban")
