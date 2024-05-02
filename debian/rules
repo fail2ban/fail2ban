@@ -9,8 +9,6 @@
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
 
-export PYBUILD_DISABLE_python2=1
-
 %:
 	dh $@ --with python3 --buildsystem pybuild
 
@@ -25,7 +23,6 @@ override_dh_clean:
 	-rm bin/fail2ban-python
 
 override_dh_auto_configure:
-	LANG=C ./fail2ban-2to3
 	dh_auto_configure
 
 override_dh_install:

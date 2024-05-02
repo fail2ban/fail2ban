@@ -12,7 +12,6 @@ Build-Depends:
  , python3-setuptools
  , python3-pyinotify
  , sqlite3
- , 2to3
  , pkg-config
  , systemd
 Homepage: https://www.fail2ban.org
