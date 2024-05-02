@@ -1,3 +1,9 @@
+fail2ban (1.1.0-2) UNRELEASED; urgency=low
+
+  Update lintian override info format in d/source/lintian-overrides on line 1-2.
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 02 May 2024 19:26:16 +0000
+
 fail2ban (1.1.0-1) unstable; urgency=medium
 
   * New upstream release
