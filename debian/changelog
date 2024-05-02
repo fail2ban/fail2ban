@@ -1,10 +1,3 @@
-fail2ban (1.1.0-2) UNRELEASED; urgency=low
-
-  Update lintian override info format in d/source/lintian-overrides on line 1-2.
-  Update standards version to 4.6.2, no changes needed.
-
- -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 02 May 2024 19:26:16 +0000
-
 fail2ban (1.1.0-1) unstable; urgency=medium
 
   * New upstream release
@@ -13,6 +6,8 @@ fail2ban (1.1.0-1) unstable; urgency=medium
   * Follow upstream advice
     https://github.com/fail2ban/fail2ban/issues/3292#issuecomment-2078361360
     to only have sshd as enabled = true in jail.d_defaults-debian.conf
+  * Update lintian override info format in d/source/lintian-overrides on line 1-2.
+  * Update standards version to 4.6.2, no changes needed.
 
  -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 02 May 2024 13:57:06 +0200
 
