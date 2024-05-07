@@ -35,7 +35,7 @@ If your distribution is not listed, you can install from GitHub:
 
 Required:
 - [Python >= 3.5](https://www.python.org) or [PyPy3](https://pypy.org)
-- python-setuptools, python-distutils (or python3-setuptools) for installation from source
+- python-setuptools (or python3-setuptools) for installation from source
 
 Optional:
 - [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify), may require:
