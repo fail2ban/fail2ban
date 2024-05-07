@@ -26,8 +26,6 @@ import os
 import time
 
 from systemd import journal
-if getattr(journal, "__version__", "0").split(".") < "204".split("."):
-	raise ImportError("Fail2Ban requires systemd >= 204")
 
 from .failmanager import FailManagerEmpty
 from .filter import JournalFilter, Filter

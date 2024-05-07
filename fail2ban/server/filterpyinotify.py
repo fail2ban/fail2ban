@@ -36,10 +36,6 @@ from .utils import Utils
 from ..helpers import getLogger
 
 
-if not hasattr(pyinotify, '__version__') \
-  or pyinotify.__version__.split(".") < '0.8.3'.split("."): # pragma: no cover
-  raise ImportError("Fail2Ban requires pyinotify >= 0.8.3")
-
 # Verify that pyinotify is functional on this system
 # Even though imports -- might be dysfunctional, e.g. as on kfreebsd
 try:
