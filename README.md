@@ -29,7 +29,7 @@ and the website: https://www.fail2ban.org
 Installation:
 -------------
 
-Fail2Ban is likely already packaged for your Linux distribution and [can installed with a simple command](https://github.com/fail2ban/fail2ban/wiki/How-to-install-fail2ban-packages).
+Fail2Ban is likely already packaged for your Linux distribution and [can be installed with a simple command](https://github.com/fail2ban/fail2ban/wiki/How-to-install-fail2ban-packages).
 
 If your distribution is not listed, you can install from GitHub:
 
@@ -52,7 +52,7 @@ To install:
     cd fail2ban-master
     sudo python setup.py install
    
-Alternatively, you can clone the source from GitHub to a directory of Your choice, and do the install from there. Pick the correct branch, for example, master or 0.11
+Alternatively, you can clone the source from GitHub to a directory of your choice, and do the install from there. Pick the correct branch, for example, master or 0.11
 
     git clone https://github.com/fail2ban/fail2ban.git
     cd fail2ban
