@@ -1,8 +1,9 @@
-fail2ban (1.1.0-2) UNRELEASED; urgency=medium
+fail2ban (1.1.0-2) unstable; urgency=medium
 
   * Fix Build-Depends: pkg-config => pkgconf
+  * Switch Build-Depends to systemd-dev
 
- -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 02 May 2024 22:04:26 +0200
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 16 May 2024 09:56:41 +0200
 
 fail2ban (1.1.0-1) unstable; urgency=medium
 
