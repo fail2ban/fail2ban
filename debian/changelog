@@ -1,3 +1,12 @@
+fail2ban (1.1.0-3) unstable; urgency=medium
+
+  * Restore the use of nftables and, for some jails,
+    the systemd backend.
+    Many thanks to Vincent Lefevre
+    (Closes: #1070677)
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Sat, 25 May 2024 08:34:39 +0200
+
 fail2ban (1.1.0-2) unstable; urgency=medium
 
   * Fix Build-Depends: pkg-config => pkgconf
