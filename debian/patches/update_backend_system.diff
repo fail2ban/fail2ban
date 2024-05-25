@@ -1,0 +1,25 @@
+Index: fail2ban/config/paths-debian.conf
+===================================================================
+--- fail2ban.orig/config/paths-debian.conf
++++ fail2ban/config/paths-debian.conf
+@@ -1,4 +1,4 @@
+-# Debian
++># Debian
+ 
+ [INCLUDES]
+ 
+@@ -28,3 +28,14 @@ exim_main_log = /var/log/exim4/mainlog
+ proftpd_log = /var/log/proftpd/proftpd.log
+ 
+ roundcube_errors_log = /var/log/roundcube/errors.log
++
++# In Debian, these services will log to the journal via syslog, so use the
++# journal by default.
++syslog_backend = systemd
++sshd_backend = systemd
++dropbear_backend = systemd
++proftpd_backend = systemd
++pureftpd_backend = systemd
++wuftpd_backend = systemd
++postfix_backend = systemd
++dovecot_backend = systemd
