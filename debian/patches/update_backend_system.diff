@@ -2,12 +2,6 @@ Index: fail2ban/config/paths-debian.conf
 ===================================================================
 --- fail2ban.orig/config/paths-debian.conf
 +++ fail2ban/config/paths-debian.conf
-@@ -1,4 +1,4 @@
--# Debian
-+># Debian
- 
- [INCLUDES]
- 
 @@ -28,3 +28,14 @@ exim_main_log = /var/log/exim4/mainlog
  proftpd_log = /var/log/proftpd/proftpd.log
  

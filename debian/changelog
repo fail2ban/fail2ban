@@ -1,3 +1,10 @@
+fail2ban (1.1.0-4) unstable; urgency=medium
+
+  * Fix spurious ">" character in paths-debian.conf
+    (Fixes: #1071829)
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Sat, 25 May 2024 12:06:07 +0200
+
 fail2ban (1.1.0-3) unstable; urgency=medium
 
   * Restore the use of nftables and, for some jails,
