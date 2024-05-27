@@ -9,4 +9,4 @@ check-hidden = true
 ignore-regex = (\b([A-Z][A-Z][A-Z]+|gir\.st)\b)|\[[a-zA-Z]+\][a-z]+\b|[a-z]+://\S+|.*codespell-ignore.*
 # some oddly named variables, some names, etc
 # wee -- comes in regex etc for weeks
-ignore-words-list = theis,timere,alls,wee,wight,ans,re-use
+ignore-words-list = assertIn,theis,timere,alls,wee,wight,ans,re-use
