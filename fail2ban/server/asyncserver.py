@@ -25,14 +25,6 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from pickle import dumps, loads, HIGHEST_PROTOCOL
-try:
-	import asynchat
-except ImportError:
-	from ..compat import asynchat
-try:
-	import asyncore
-except ImportError:
-	from ..compat import asyncore
 import errno
 import fcntl
 import os
@@ -44,6 +36,13 @@ import traceback
 from .utils import Utils
 from ..protocol import CSPROTO
 from ..helpers import logging, getLogger, formatExceptionInfo
+
+# load asyncore and asynchat after helper to ensure we've a path to compat folder:
+import asynchat
+if asynchat.asyncore:
+	asyncore = asynchat.asyncore
+else: # pragma: no cover - normally unreachable
+	import asyncore
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)

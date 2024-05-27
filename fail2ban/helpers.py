@@ -40,6 +40,14 @@ except:
 	_libcap = None
 
 
+# some modules (like pyinotify, see #3487) may have dependency to asyncore, so ensure we've a path
+# to compat folder, otherwise python 3.12+ could miss them:
+def __extend_compat_path():
+	cp = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'compat')
+	if cp not in sys.path:
+		sys.path.append(cp)
+__extend_compat_path()
+
 PREFER_ENC = locale.getpreferredencoding()
 # correct preferred encoding if lang not set in environment:
 if PREFER_ENC.startswith('ANSI_'): # pragma: no cover

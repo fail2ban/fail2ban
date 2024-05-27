@@ -27,14 +27,15 @@ import logging
 import os
 from os.path import dirname, sep as pathsep
 
-import pyinotify
-
 from .failmanager import FailManagerEmpty
 from .filter import FileFilter
 from .mytime import MyTime, time
 from .utils import Utils
 from ..helpers import getLogger
 
+# pyinotify may have dependency to asyncore, so import it after helper to ensure 
+# we've a path to compat folder:
+import pyinotify
 
 # Verify that pyinotify is functional on this system
 # Even though imports -- might be dysfunctional, e.g. as on kfreebsd
