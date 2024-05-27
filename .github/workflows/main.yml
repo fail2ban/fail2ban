@@ -79,7 +79,7 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           _debug() { echo -n "$1 "; err=$("${@:2}" 2>&1) && echo 'OK' || echo -e "FAIL\n$err"; }
           # (debug) output current preferred encoding:
-          _debug 'Encodings:' python -c 'import locale, sys; from fail2ban.helpers import PREFER_ENC; print(PREFER_ENC, locale.getpreferredencoding(), (sys.stdout and sys.stdout.encoding))'
+          echo 'Encodings:' $(python -c 'import locale, sys; from fail2ban.helpers import PREFER_ENC; print(PREFER_ENC, locale.getpreferredencoding(), (sys.stdout and sys.stdout.encoding))')
           # (debug) backend availabilities:
           echo 'Backends:'
           _debug '- systemd:' python -c 'from fail2ban.server.filtersystemd import FilterSystemd'
