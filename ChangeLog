@@ -120,6 +120,8 @@ ver. 0.11.1 (2020/01/11) - this-is-the-way
 * Introduced new action command `actionprolong` to prolong ban-time (e. g. set new timeout if expected);
   Several actions (like ipset, etc.) rewritten using net logic with `actionprolong`.
   Note: because ban-time is dynamic, it was removed from jail.conf as timeout argument (check jail.local).
+* `filter.d/nginx-noscript.conf`: used to ban script sniffing, which is not captured by nginx-botsearch.
+
 
 ### Enhancements
 * algorithm of restore current bans after restart changed: update the restored ban-time (and therefore 
