@@ -13,6 +13,11 @@
 # failJSON: { "time": "2014-04-03T22:20:40", "match": true, "host": "192.0.2.2", "desc": "trying injection on user name"}
 2014/04/03 22:20:40 [error] 30708#0: *3 user "test": password mismatch, client: 127.0.0.1, server: test, request: "GET / HTTP/1.1", host: "localhost:8443"": was not found in "/etc/nginx/.htpasswd", client: 192.0.2.2, server: , request: "GET / HTTP/1.1", host: "localhost:8443"
 
+# filterOptions: [{"logtype": "journal"}]
+
+# failJSON: { "match": true, "host": "192.0.2.3", "desc": "systemd journal message, with optional extra timestamp, gh-3646"}
+host nginx[983478]: 2023/12/09 21:35:20 [error] 983478#983478: *3 user "fakeusername" was not found in "/var/lib/nginx/htpasswd-for-host.example.com", client: 192.0.2.3, server: host.example.com, request: "GET / HTTP/2.0", host: "host.example.com"
+
 # filterOptions: [{"mode": "fallback"}]
 
 # failJSON: { "time": "2020-11-25T14:42:16", "match": true , "host": "142.93.180.14" }

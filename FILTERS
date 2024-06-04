@@ -129,7 +129,7 @@ Date/Time
 ---------
 
 At the moment, Fail2Ban depends on log lines to have time stamps.  That is why
-before starting to develop failregex, check if your log line format known to
+before starting to develop failregex, check if your log line format is known to
 Fail2Ban.  Copy the time component from the log line and append an IP address to
 test with following command::
 

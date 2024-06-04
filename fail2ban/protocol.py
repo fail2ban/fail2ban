@@ -58,6 +58,8 @@ protocol = [
 ["banned", "return jails with banned IPs as dictionary"],
 ["banned <IP> ... <IP>]", "return list(s) of jails where given IP(s) are banned"],
 ["status", "gets the current status of the server"], 
+["status --all [FLAVOR]", "gets the current status of all jails, with optional flavor or extended info"],
+["stat[istic]s", "gets the current statistics of all jails as table"],
 ["ping", "tests if the server is alive"],
 ["echo", "for internal usage, returns back and outputs a given string"],
 ["help", "return this output"], 

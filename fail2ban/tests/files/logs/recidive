@@ -17,3 +17,8 @@ Sep 16 00:44:55 spaceman fail2ban.actions: NOTICE [jail] Ban 10.0.0.7
 Jan 16 17:11:25 testorg fail2ban.actions[6605]: NOTICE [postfix-auth] Ban 192.0.2.1
 # failJSON: { "time": "2005-03-05T08:41:28", "match": true , "host": "192.0.2.2", "desc": "SYSLOG / systemd-journal with daemon-name" }
 Mar 05 08:41:28 test.org fail2ban-server[11524]: fail2ban.actions        [11524]: NOTICE  [postfix-auth] Ban 192.0.2.2
+
+# filterOptions: {"logtype": "journal"}
+
+# failJSON: { "match": true , "host": "192.0.2.3", "desc": "systemd-journal short variant, gh-3693" }
+host fail2ban[15699]: [postfix-sasl] Ban 192.0.2.3

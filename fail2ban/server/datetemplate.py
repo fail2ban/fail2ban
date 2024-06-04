@@ -357,7 +357,7 @@ class DatePatternRegex(DateTemplate):
 
 
 class DateTai64n(DateTemplate):
-	"""A date template which matches TAI64N formate timestamps.
+	"""A date template which matches TAI64N format timestamps.
 
 	Attributes
 	----------

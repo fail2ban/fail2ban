@@ -22,7 +22,6 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import re
-import sre_constants
 import sys
 
 from .ipdns import IPAddr
@@ -143,9 +142,7 @@ class Regex:
 			self._regex = regex
 			self._altValues = []
 			self._tupleValues = []
-			for k in filter(
-				lambda k: len(k) > len(COMPLNAME_PRE[0]), self._regexObj.groupindex
-			):
+			for k in [k for k in self._regexObj.groupindex if len(k) > len(COMPLNAME_PRE[0])]:
 				n = COMPLNAME_CRE.match(k)
 				if n:
 					g, n = n.group(1), mapTag2Opt(n.group(2))
@@ -157,7 +154,7 @@ class Regex:
 			self._tupleValues.sort()
 			self._altValues = self._altValues if len(self._altValues) else None
 			self._tupleValues = self._tupleValues if len(self._tupleValues) else None
-		except sre_constants.error as e:
+		except re.error as e:
 			raise RegexException("Unable to compile regular expression '%s':\n%s" %
 								 (regex, e))
 		# set fetch handler depending on presence of alternate (or tuple) tags:
@@ -235,7 +232,7 @@ class Regex:
 	#
 	@staticmethod
 	def _tupleLinesBuf(tupleLines):
-		return "\n".join(map(lambda v: "".join(v[::2]), tupleLines)) + "\n"
+		return "\n".join(["".join(v[::2]) for v in tupleLines]) + "\n"
 
 	##
 	# Searches the regular expression.
@@ -243,11 +240,11 @@ class Regex:
 	# Sets an internal cache (match object) in order to avoid searching for
 	# the pattern again. This method must be called before calling any other
 	# method of this object.
-	# @param a list of tupples. The tupples are ( prematch, datematch, postdatematch )
+	# @param a list of tuples. The tuples are ( prematch, datematch, postdatematch )
 	
 	def search(self, tupleLines, orgLines=None):
 		buf = tupleLines
-		if not isinstance(tupleLines, basestring):
+		if not isinstance(tupleLines, str):
 			buf = Regex._tupleLinesBuf(tupleLines)
 		self._matchCache = self._regexObj.search(buf)
 		if self._matchCache:

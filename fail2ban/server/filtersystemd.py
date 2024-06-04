@@ -24,11 +24,8 @@ __license__ = "GPL"
 
 import os
 import time
-from distutils.version import LooseVersion
 
 from systemd import journal
-if LooseVersion(getattr(journal, '__version__', "0")) < '204':
-	raise ImportError("Fail2Ban requires systemd >= 204")
 
 from .failmanager import FailManagerEmpty
 from .filter import JournalFilter, Filter
@@ -253,7 +250,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		return ((logline[:0], date[0] + ' ', logline.replace('\n', '\\n')), date[1])
 
 	def seekToTime(self, date):
-		if isinstance(date, (int, long)):
+		if isinstance(date, int):
 			date = float(date)
 		self.__journal.seek_realtime(date)
 
@@ -344,7 +341,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 							except OSError:
 								pass
 				if self.idle:
-					# because journal.wait will returns immediatelly if we have records in journal,
+					# because journal.wait will returns immediately if we have records in journal,
 					# just wait a little bit here for not idle, to prevent hi-load:
 					if not Utils.wait_for(lambda: not self.active or not self.idle, 
 						self.sleeptime * 10, self.sleeptime
@@ -429,12 +426,14 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 	def status(self, flavor="basic"):
 		ret = super(FilterSystemd, self).status(flavor=flavor)
+		if flavor == "stats":
+			return ret
 		ret.append(("Journal matches",
 			[" + ".join(" ".join(match) for match in self.__matches)]))
 		return ret
 
 	def _updateDBPending(self):
-		"""Apply pending updates (jornal position) to database.
+		"""Apply pending updates (journal position) to database.
 		"""
 		db = self.jail.database
 		while True:

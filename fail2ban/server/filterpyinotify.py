@@ -24,11 +24,8 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Y
 __license__ = "GPL"
 
 import logging
-from distutils.version import LooseVersion
 import os
 from os.path import dirname, sep as pathsep
-
-import pyinotify
 
 from .failmanager import FailManagerEmpty
 from .filter import FileFilter
@@ -36,10 +33,9 @@ from .mytime import MyTime, time
 from .utils import Utils
 from ..helpers import getLogger
 
-
-if not hasattr(pyinotify, '__version__') \
-  or LooseVersion(pyinotify.__version__) < '0.8.3': # pragma: no cover
-  raise ImportError("Fail2Ban requires pyinotify >= 0.8.3")
+# pyinotify may have dependency to asyncore, so import it after helper to ensure 
+# we've a path to compat folder:
+import pyinotify
 
 # Verify that pyinotify is functional on this system
 # Even though imports -- might be dysfunctional, e.g. as on kfreebsd
@@ -155,7 +151,7 @@ class FilterPyinotify(FileFilter):
 		except KeyError: pass
 
 	def getPendingPaths(self):
-		return self.__pending.keys()
+		return list(self.__pending.keys())
 
 	def _checkPending(self):
 		if not self.__pending:
@@ -173,7 +169,9 @@ class FilterPyinotify(FileFilter):
 			if not chkpath(path): # not found - prolong for next time
 				if retardTM < 60: retardTM *= 2
 				if minTime > retardTM: minTime = retardTM
-				self.__pending[path][0] = retardTM
+				try:
+					self.__pending[path][0] = retardTM
+				except KeyError: pass
 				continue
 			logSys.log(logging.MSG, "Log presence detected for %s %s", 
 				"directory" if isDir else "file", path)
@@ -181,7 +179,7 @@ class FilterPyinotify(FileFilter):
 		self.__pendingChkTime = time.time()
 		self.__pendingMinTime = minTime
 		# process now because we've missed it in monitoring:
-		for path, isDir in found.iteritems():
+		for path, isDir in found.items():
 			self._delPending(path)
 			# refresh monitoring of this:
 			if isDir is not None:

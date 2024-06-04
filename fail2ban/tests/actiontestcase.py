@@ -70,7 +70,7 @@ class CommandActionTest(LogCaptureTestCase):
 			lambda: substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
 		self.assertRaises(ValueError,
 			lambda: substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
-		# Unresolveable substition
+		# Unresolveable substitution
 		self.assertRaises(ValueError,
 			lambda: substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
 		self.assertRaises(ValueError,
@@ -242,14 +242,14 @@ class CommandActionTest(LogCaptureTestCase):
 		setattr(self.__action, 'ab', "<ac>")
 		setattr(self.__action, 'x?family=inet6', "")
 		# produce self-referencing properties except:
-		self.assertRaisesRegexp(ValueError, r"properties contain self referencing definitions",
+		self.assertRaisesRegex(ValueError, r"properties contain self referencing definitions",
 			lambda: self.__action.replaceTag("<a><b>", 
 				self.__action._properties, conditional="family=inet4")
 		)
-		# remore self-referencing in props:
+		# remote self-referencing in props:
 		delattr(self.__action, 'ac')
 		# produce self-referencing query except:
-		self.assertRaisesRegexp(ValueError, r"possible self referencing definitions in query",
+		self.assertRaisesRegex(ValueError, r"possible self referencing definitions in query",
 			lambda: self.__action.replaceTag("<x"*30+">"*30,
 				self.__action._properties, conditional="family=inet6")
 		)
@@ -276,7 +276,7 @@ class CommandActionTest(LogCaptureTestCase):
 					conditional="family=inet6", cache=cache),
 				"Text 890-567 text 567 '567'")
 		self.assertTrue(len(cache) >= 3)
-		# set one parameter - internal properties and cache should be reseted:
+		# set one parameter - internal properties and cache should be reset:
 		setattr(self.__action, 'xyz', "000-<abc>")
 		self.assertEqual(len(cache), 0)
 		# test againg, should have 000 instead of 890:

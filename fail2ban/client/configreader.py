@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 import glob
 import os
-from ConfigParser import NoOptionError, NoSectionError
+from configparser import NoOptionError, NoSectionError
 
 from .configparserinc import sys, SafeConfigParserWithIncludes, logLevel
 from ..helpers import getLogger, _as_bool, _merge_dicts, substituteRecursiveTags
@@ -98,7 +98,7 @@ class ConfigReader():
 	def read(self, name, once=True):
 		""" Overloads a default (not shared) read of config reader.
 
-	  To prevent mutiple reads of config files with it includes, reads into 
+	  To prevent multiple reads of config files with it includes, reads into 
 	  the config reader, if it was not yet cached/shared by 'name'.
 	  """
 		# already shared ?
@@ -183,7 +183,7 @@ class ConfigReader():
 class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	"""Unshared config reader (previously ConfigReader).
 
-	Do not use this class (internal not shared/cached represenation).
+	Do not use this class (internal not shared/cached representation).
 	Use ConfigReader instead.
 	"""
 
@@ -221,7 +221,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 		config_files += sorted(glob.glob('%s/*.local' % config_dir))
 
 		# choose only existing ones
-		config_files = filter(os.path.exists, config_files)
+		config_files = list(filter(os.path.exists, config_files))
 
 		if len(config_files):
 			# at least one config exists and accessible

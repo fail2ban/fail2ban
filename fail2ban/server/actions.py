@@ -156,11 +156,11 @@ class Actions(JailThread, Mapping):
 		else:
 			if hasattr(self, '_reload_actions'):
 				# reload actions after all parameters set via stream:
-				for name, initOpts in self._reload_actions.iteritems():
+				for name, initOpts in self._reload_actions.items():
 					if name in self._actions:
 						self._actions[name].reload(**(initOpts if initOpts else {}))
 				# remove obsolete actions (untouched by reload process):
-				delacts = OrderedDict((name, action) for name, action in self._actions.iteritems()
+				delacts = OrderedDict((name, action) for name, action in self._actions.items()
 					if name not in self._reload_actions)
 				if len(delacts):
 					# unban all tickets using removed actions only:
@@ -217,7 +217,7 @@ class Actions(JailThread, Mapping):
 			return lst
 		if len(ids) == 1:
 			return 1 if ids[0] in lst else 0
-		return map(lambda ip: 1 if ip in lst else 0, ids)
+		return [1 if ip in lst else 0 for ip in ids]
 
 	def getBanList(self, withTime=False):
 		"""Returns the list of banned IP addresses.
@@ -288,7 +288,7 @@ class Actions(JailThread, Mapping):
 			if not isinstance(ip, IPAddr):
 				ipa = IPAddr(ip)
 				if not ipa.isSingle: # subnet (mask/cidr) or raw (may be dns/hostname):
-					ips = filter(ipa.contains, self.banManager.getBanList())
+					ips = list(filter(ipa.contains, self.banManager.getBanList()))
 					if ips:
 						return self.removeBannedIP(ips, db, ifexists)
 			# not found:
@@ -305,7 +305,7 @@ class Actions(JailThread, Mapping):
 		"""
 		if actions is None:
 			actions = self._actions
-		for name, action in reversed(actions.items()):
+		for name, action in reversed(list(actions.items())):
 			try:
 				action.stop()
 			except Exception as e:
@@ -328,7 +328,7 @@ class Actions(JailThread, Mapping):
 			True when the thread exits nicely.
 		"""
 		cnt = 0
-		for name, action in self._actions.iteritems():
+		for name, action in self._actions.items():
 			try:
 				action.start()
 			except Exception as e:
@@ -505,7 +505,7 @@ class Actions(JailThread, Mapping):
 					Observers.Main.add('banFound', bTicket, self._jail, btime)
 				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.restored else 'Restore '), ip)
 				# do actions :
-				for name, action in self._actions.iteritems():
+				for name, action in self._actions.items():
 					try:
 						if bTicket.restored and getattr(action, 'norestored', False):
 							continue
@@ -543,13 +543,13 @@ class Actions(JailThread, Mapping):
 						# avoid too often checks:
 						if not rebanacts and MyTime.time() > self.__lastConsistencyCheckTM + 3:
 							self.__lastConsistencyCheckTM = MyTime.time()
-							for action in self._actions.itervalues():
+							for action in self._actions.values():
 								if hasattr(action, 'consistencyCheck'):
 									action.consistencyCheck()
 					# check epoch in order to reban it:
 					if bTicket.banEpoch < self.banEpoch:
 						if not rebanacts: rebanacts = dict(
-							(name, action) for name, action in self._actions.iteritems()
+							(name, action) for name, action in self._actions.items()
 								if action.banEpoch > bTicket.banEpoch)
 						cnt += self.__reBan(bTicket, actions=rebanacts)
 				else: # pragma: no cover - unexpected: ticket is not banned for some reasons - reban using all actions:
@@ -576,8 +576,8 @@ class Actions(JailThread, Mapping):
 		ip = ticket.getID()
 		aInfo = self._getActionInfo(ticket)
 		if log:
-			logSys.notice("[%s] Reban %s%s", self._jail.name, ip, (', action %r' % actions.keys()[0] if len(actions) == 1 else ''))
-		for name, action in actions.iteritems():
+			logSys.notice("[%s] Reban %s%s", self._jail.name, ip, (', action %r' % list(actions.keys())[0] if len(actions) == 1 else ''))
+		for name, action in actions.items():
 			try:
 				logSys.debug("[%s] action %r: reban %s", self._jail.name, name, ip)
 				if not aInfo.immutable: aInfo.reset()
@@ -601,7 +601,7 @@ class Actions(JailThread, Mapping):
 		if not self.banManager._inBanList(ticket): return
 		# do actions :
 		aInfo = None
-		for name, action in self._actions.iteritems():
+		for name, action in self._actions.items():
 			try:
 				if ticket.restored and getattr(action, 'norestored', False):
 					continue
@@ -650,7 +650,7 @@ class Actions(JailThread, Mapping):
 		cnt = 0
 		# first we'll execute flush for actions supporting this operation:
 		unbactions = {}
-		for name, action in (actions if actions is not None else self._actions).iteritems():
+		for name, action in (actions if actions is not None else self._actions).items():
 			try:
 				if hasattr(action, 'flush') and (not isinstance(action, CommandAction) or action.actionflush):
 					logSys.notice("[%s] Flush ticket(s) with %s", self._jail.name, name)
@@ -670,7 +670,7 @@ class Actions(JailThread, Mapping):
 					action.consistencyCheck(_beforeRepair)
 					continue
 			# fallback to single unbans:
-			logSys.debug("  Unban tickets each individualy")
+			logSys.debug("  Unban tickets each individually")
 			unbactions[name] = action
 		actions = unbactions
 		# flush the database also:
@@ -705,7 +705,7 @@ class Actions(JailThread, Mapping):
 		aInfo = self._getActionInfo(ticket)
 		if log:
 			logSys.notice("[%s] Unban %s", self._jail.name, ip)
-		for name, action in unbactions.iteritems():
+		for name, action in unbactions.items():
 			try:
 				logSys.debug("[%s] action %r: unban %s", self._jail.name, name, ip)
 				if not aInfo.immutable: aInfo.reset()
@@ -721,9 +721,11 @@ class Actions(JailThread, Mapping):
 		"""Status of current and total ban counts and current banned IP list.
 		"""
 		# TODO: Allow this list to be printed as 'status' output
-		supported_flavors = ["short", "basic", "cymru"]
+		supported_flavors = ["short", "basic", "stats", "cymru"]
 		if flavor is None or flavor not in supported_flavors:
 			logSys.warning("Unsupported extended jail status flavor %r. Supported: %s" % (flavor, supported_flavors))
+		if flavor == "stats":
+			return (self.banManager.size(), self.banManager.getBanTotal())
 		# Always print this information (basic)
 		if flavor != "short":
 			banned = self.banManager.getBanList()

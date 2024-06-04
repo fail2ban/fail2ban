@@ -40,6 +40,7 @@ config/action.d/mail.conf
 config/action.d/mail-whois-common.conf
 config/action.d/mail-whois.conf
 config/action.d/mail-whois-lines.conf
+config/action.d/mikrotik.conf
 config/action.d/mynetwatchman.conf
 config/action.d/netscaler.conf
 config/action.d/nftables-allports.conf
@@ -90,6 +91,7 @@ config/filter.d/counter-strike.conf
 config/filter.d/courier-auth.conf
 config/filter.d/courier-smtp.conf
 config/filter.d/cyrus-imap.conf
+config/filter.d/dante.conf
 config/filter.d/directadmin.conf
 config/filter.d/domino-smtp.conf
 config/filter.d/dovecot.conf
@@ -121,6 +123,8 @@ config/filter.d/nagios.conf
 config/filter.d/named-refused.conf
 config/filter.d/nginx-bad-request.conf
 config/filter.d/nginx-botsearch.conf
+config/filter.d/nginx-error-common.conf
+config/filter.d/nginx-forbidden.conf
 config/filter.d/nginx-http-auth.conf
 config/filter.d/nginx-limit-req.conf
 config/filter.d/nsd.conf
@@ -138,6 +142,7 @@ config/filter.d/pure-ftpd.conf
 config/filter.d/qmail.conf
 config/filter.d/recidive.conf
 config/filter.d/roundcube-auth.conf
+config/filter.d/routeros-auth.conf
 config/filter.d/scanlogd.conf
 config/filter.d/screensharingd.conf
 config/filter.d/selinux-common.conf
@@ -175,7 +180,6 @@ CONTRIBUTING.md
 COPYING
 .coveragerc
 DEVELOP
-fail2ban-2to3
 fail2ban/client/actionreader.py
 fail2ban/client/beautifier.py
 fail2ban/client/configparserinc.py
@@ -191,6 +195,8 @@ fail2ban/client/filterreader.py
 fail2ban/client/__init__.py
 fail2ban/client/jailreader.py
 fail2ban/client/jailsreader.py
+fail2ban/compat/asynchat.py
+fail2ban/compat/asyncore.py
 fail2ban/exceptions.py
 fail2ban/helpers.py
 fail2ban/__init__.py
@@ -204,7 +210,6 @@ fail2ban/server/datedetector.py
 fail2ban/server/datetemplate.py
 fail2ban/server/failmanager.py
 fail2ban/server/failregex.py
-fail2ban/server/filtergamin.py
 fail2ban/server/filterpoll.py
 fail2ban/server/filter.py
 fail2ban/server/filterpyinotify.py
@@ -272,7 +277,7 @@ fail2ban/tests/files/config/apache-auth/noentry/.htaccess
 fail2ban/tests/files/config/apache-auth/README
 fail2ban/tests/files/database_v1.db
 fail2ban/tests/files/database_v2.db
-fail2ban/tests/files/filter.d/substition.conf
+fail2ban/tests/files/filter.d/substitution.conf
 fail2ban/tests/files/filter.d/testcase01.conf
 fail2ban/tests/files/filter.d/testcase02.conf
 fail2ban/tests/files/filter.d/testcase02.local
@@ -300,6 +305,7 @@ fail2ban/tests/files/logs/counter-strike
 fail2ban/tests/files/logs/courier-auth
 fail2ban/tests/files/logs/courier-smtp
 fail2ban/tests/files/logs/cyrus-imap
+fail2ban/tests/files/logs/dante
 fail2ban/tests/files/logs/directadmin
 fail2ban/tests/files/logs/domino-smtp
 fail2ban/tests/files/logs/dovecot
@@ -329,6 +335,7 @@ fail2ban/tests/files/logs/nagios
 fail2ban/tests/files/logs/named-refused
 fail2ban/tests/files/logs/nginx-bad-request
 fail2ban/tests/files/logs/nginx-botsearch
+fail2ban/tests/files/logs/nginx-forbidden
 fail2ban/tests/files/logs/nginx-http-auth
 fail2ban/tests/files/logs/nginx-limit-req
 fail2ban/tests/files/logs/nsd
@@ -346,6 +353,7 @@ fail2ban/tests/files/logs/pure-ftpd
 fail2ban/tests/files/logs/qmail
 fail2ban/tests/files/logs/recidive
 fail2ban/tests/files/logs/roundcube-auth
+fail2ban/tests/files/logs/routeros-auth
 fail2ban/tests/files/logs/scanlogd
 fail2ban/tests/files/logs/screensharingd
 fail2ban/tests/files/logs/selinux-ssh

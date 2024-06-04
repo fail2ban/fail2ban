@@ -1,0 +1,15 @@
+# RouterOS v7.5
+# failJSON: { "time": "2005-02-15T11:25:46", "match": true , "host": "192.168.88.6", "user": "admin" }
+Feb 15 11:25:46 gw.local system,error,critical login failure for user admin from 192.168.88.6 via web
+
+# RouterOS v7.5
+# failJSON: { "match": false }
+Feb 15 11:26:15 gw.local system,info log rule changed by admin
+
+# RouterOS v7.5
+# failJSON: { "time": "2005-02-15T11:57:42", "match": true , "host": "2001:470:1:c84::24", "user": "" }
+Feb 15 11:57:42 1234.hostname.cz system,error,critical login failure for user  from 2001:470:1:c84::24 via ssh
+
+# RouterOS v7.5
+# failJSON: { "time": "2005-03-02T09:09:46", "match": true , "host": "1.2.3.4", "user": "user with space" }
+Mar  2 09:09:46 gw.local system,error,critical login failure for user user with space from 1.2.3.4 via ssh

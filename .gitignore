@@ -10,3 +10,4 @@ htmlcov
 __pycache__
 .vagrant/
 .idea/
+.venv/
