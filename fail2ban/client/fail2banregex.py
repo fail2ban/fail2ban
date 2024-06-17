@@ -106,7 +106,7 @@ usage = lambda: "%s [OPTIONS] <LOG> <REGEX> [IGNOREREGEX]" % sys.argv[0]
 
 class _f2bOptParser(OptionParser):
 	def format_help(self, *args, **kwargs):
-		""" Overwritten format helper with full ussage."""
+		""" Overwritten format helper with full usage."""
 		self.usage = ''
 		return "Usage: " + usage() + "\n" + __doc__ + """
 LOG:
