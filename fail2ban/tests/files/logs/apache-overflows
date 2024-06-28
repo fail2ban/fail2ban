@@ -25,3 +25,6 @@
 # https://issues.apache.org/bugzilla/show_bug.cgi?id=46123
 # failJSON: { "time": "2008-10-29T11:55:14", "match": true , "host": "127.0.0.1" }
 [Wed Oct 29 11:55:14 2008] [error] [client 127.0.0.1] Invalid method in request \x16\x03\x01 - possible attempt to establish SSL connection when the server isn't expecting it
+
+# failJSON: { "time": "2024-06-26T05:20:26", "match": true , "host": "192.0.2.39", "desc": "AH10244: invalid URI path, gh-3778" }
+[Wed Jun 26 05:20:26.182799 2024] [core:error] [pid 2928] [client 192.0.2.39:37924] AH10244: invalid URI path (/cgi-bin/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/bin/sh)
