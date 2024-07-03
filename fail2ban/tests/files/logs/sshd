@@ -20,6 +20,9 @@ Feb 25 14:34:10 belka sshd[31603]: Failed password for invalid user ROOT from aa
 # failJSON: { "time": "2005-02-25T14:34:11", "match": true , "host": "aaaa:bbbb:cccc:1234::1:1" }
 Feb 25 14:34:11 belka sshd[31603]: Failed password for invalid user ROOT from aaaa:bbbb:cccc:1234::1:1
 
+# failJSON: { "time": "2005-07-03T14:59:17", "match": true , "host": "192.0.2.1", "desc": "new log with session in daemon prefix, gh-3782" }
+Jul  3 14:59:17 host sshd-session[1571]: Failed password for root from 192.0.2.1 port 56502 ssh2
+
 #3
 # failJSON: { "time": "2005-01-05T01:31:41", "match": true , "host": "1.2.3.4" }
 Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM 1.2.3.4
