@@ -120,7 +120,7 @@ class SetupTest(unittest.TestCase):
 		# suppress stdout (and stderr) if not heavydebug
 		supdbgout = ' >/dev/null' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
 		try:
-			self.assertEqual(os.system("%s %s install --root=%s%s"
+			self.assertEqual(os.system("%s -W 'ignore:setup.py install is deprecated' %s install --root=%s%s"
 					  % (sys.executable, self.setup, tmp, supdbgout)), 0)
 
 			def strippath(l):
