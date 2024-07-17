@@ -1,0 +1,35 @@
+[files]
+extend-exclude = [
+    ".git/",
+    ".codespellrc",
+    "fail2ban/tests/files/logs/",
+]
+ignore-hidden = false
+
+[default]
+extend-ignore-re = [
+    "Christoph Theis",
+    "\\[[0-9a-f]{7,8}\\]",
+    "hash_[0-9a-f]{38}",
+    "\t[0-9.-]+[ A-Z]+",
+    "Erreur d'authentification",
+    "WebEMailExtrac",
+    "ssh2: RSA 14:ba:xx",
+    "\\[Cc\\]lient",
+    "\\[Gg\\]ot",
+    "\\[nN\\]ot",
+    "\\[Uu\\]nknown",
+    "\\[uU\\]ser",
+    "\\[Uu\\]\\(\\?:ser",
+]
+
+[default.extend-words]
+"alls" = "alls"
+"helo" = "helo"
+
+[default.extend-identifiers]
+"failManager2nd" = "failManager2nd"
+"log2nd" = "log2nd"
+"routeros" = "routeros"
+"REFERERS" = "REFERERS"
+"tre_search" = "tre_search"
