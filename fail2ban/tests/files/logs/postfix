@@ -148,6 +148,9 @@ Jan 14 16:18:16 xxx postfix/smtpd[14933]: warning: host[192.0.2.5]: SASL CRAM-MD
 # failJSON: { "time": "2005-01-14T16:18:16", "match": true , "host": "192.0.2.5", "desc": "aggressive only" }
 Jan 14 16:18:16 xxx postfix/smtpd[14933]: warning: host[192.0.2.5]: SASL CRAM-MD5 authentication failed: Invalid authentication mechanism
 
+# failJSON: { "time": "2004-11-04T09:11:01", "match": true , "host": "192.0.2.152", "desc": "reason unavailable" }
+Nov  4 09:11:01 mail postfix/smtpd[1234]: warning: unknown[192.0.2.152]: SASL LOGIN authentication failed: (reason unavailable), sasl_username=admin
+
 # ---------------------------------------
 # Test-cases of postfix DDOS mode:
 # ---------------------------------------
