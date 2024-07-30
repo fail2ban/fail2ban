@@ -1,0 +1,5 @@
+# failJSON: { "time": "2005-03-08T09:37:44", "match": true , "host": "192.0.2.123" }
+Mar  8 09:37:44 HOSTNAME pvedaemon[12021]: authentication failure; rhost=192.0.2.123 user=root@pam msg=Authentication failure
+
+# failJSON: { "time": "2005-03-09T03:32:27", "match": true , "host": "192.0.2.124" }
+Mar  9 03:32:27 HOSTNAME pvedaemon[8961]: authentication failure; rhost=192.0.2.124 user=jose@pve msg=invalid credentials
