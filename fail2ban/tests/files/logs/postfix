@@ -70,6 +70,9 @@ Jun 12 08:58:35 xxx postfix/smtpd[13533]: improper command pipelining after AUTH
 # failJSON: { "time": "2005-05-05T15:51:11", "match": true , "host": "216.245.194.173", "desc": "postfix postscreen / gh-1764" }
 May  5 15:51:11 xxx postfix/postscreen[1148]: NOQUEUE: reject: RCPT from [216.245.194.173]:60591: 550 5.7.1 Service unavailable; client [216.245.194.173] blocked using rbl.example.com; from=<spammer@example.com>, to=<goodguy@example.com>, proto=ESMTP, helo=<badguy.example.com>
 
+# failJSON: { "time": "2005-06-01T19:00:55", "match": true , "host": "192.0.2.114", "desc": "postfix client restriction / gh-3800" }
+Jun  1 19:00:55 mail postfix/smtpd[7749]: NOQUEUE: reject: CONNECT from unknown[192.0.2.114]: 450 4.7.25 Client host rejected: cannot find your hostname, [178.215.236.114]; proto=SMTP
+
 # failJSON: { "time": "2005-06-03T06:25:43", "match": true , "host": "192.0.2.11", "desc": "too many errors / gh-2439" }
 Jun  3 06:25:43 srv postfix/smtpd[29306]: too many errors after RCPT from example.com[192.0.2.11]
 
@@ -147,6 +150,9 @@ Jan 14 16:18:16 xxx postfix/smtpd[14933]: warning: host[192.0.2.5]: SASL CRAM-MD
 
 # failJSON: { "time": "2005-01-14T16:18:16", "match": true , "host": "192.0.2.5", "desc": "aggressive only" }
 Jan 14 16:18:16 xxx postfix/smtpd[14933]: warning: host[192.0.2.5]: SASL CRAM-MD5 authentication failed: Invalid authentication mechanism
+
+# failJSON: { "time": "2004-11-04T09:11:01", "match": true , "host": "192.0.2.152", "desc": "reason unavailable" }
+Nov  4 09:11:01 mail postfix/smtpd[1234]: warning: unknown[192.0.2.152]: SASL LOGIN authentication failed: (reason unavailable), sasl_username=admin
 
 # ---------------------------------------
 # Test-cases of postfix DDOS mode:

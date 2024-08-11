@@ -34,6 +34,7 @@ class BeautifierTest(unittest.TestCase):
 		""" Call before every test case """
 		super(BeautifierTest, self).setUp()
 		self.b = Beautifier()
+		self.b.encUtf = 0; ## we prefer ascii in test suite (see #3750)
 
 	def tearDown(self):
 		""" Call after every test case """
@@ -170,22 +171,25 @@ class BeautifierTest(unittest.TestCase):
 
 	def testStatusStats(self):
 		self.b.setInputCmd(["stats"])
+		## no jails:
+		self.assertEqual(self.b.beautify({}), "No jails found.")
+		## 3 jails:
 		response = {
 			"ssh": ["systemd", (3, 6), (12, 24)],
 			"exim4": ["pyinotify", (6, 12), (20, 20)],
 			"jail-with-long-name": ["polling", (0, 0), (0, 0)]
 		}
 		output = (""
-			+ "                    ?           ? Filter    ? Actions  \n"
-			+ "Jail                ? Backend   ????????????????????????\n"
-			+ "                    ?           ? cur ? tot ? cur ? tot\n"
-			+ "????????????????????????????????????????????????????????\n"
-			+ "ssh                 ? systemd   ?   3 ?   6 ?  12 ?  24\n"
-			+ "exim4               ? pyinotify ?   6 ?  12 ?  20 ?  20\n"
-			+ "jail-with-long-name ? polling   ?   0 ?   0 ?   0 ?   0\n"
-			+ "????????????????????????????????????????????????????????"
+			+ "                     |           | Filter    | Actions  \n"
+			+ " Jail                | Backend   |-----------x-----------\n"
+			+ "                     |           | cur | tot | cur | tot\n"
+			+ "---------------------x-----------x-----------x-----------\n"
+			+ " ssh                 | systemd   |   3 |   6 |  12 |  24\n"
+			+ " exim4               | pyinotify |   6 |  12 |  20 |  20\n"
+			+ " jail-with-long-name | polling   |   0 |   0 |   0 |   0\n"
+			+ "---------------------------------------------------------"
 		)
-		response = self.b.beautify(response).encode('ascii', 'replace').decode('ascii')
+		response = self.b.beautify(response)
 		self.assertEqual(response, output)
 			
 

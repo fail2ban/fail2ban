@@ -2034,32 +2034,32 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			('j-fwcmd-rr', 'firewallcmd-rich-rules[port="22:24", protocol="tcp"]', {
 				'ip4': ("family='ipv4'", "icmp-port-unreachable",), 'ip6': ("family='ipv6'", 'icmp6-port-unreachable',),
 				'ip4-ban': (
-					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' reject type='icmp-port-unreachable'"; done`""",
+					r"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family=\"ipv4\" source address=\"192.0.2.1\" port port=\"$p\" protocol=\"tcp\" reject type='icmp-port-unreachable'"; done`""",
 				),
 				'ip4-unban': (
-					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' reject type='icmp-port-unreachable'"; done`""",
+					r"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family=\"ipv4\" source address=\"192.0.2.1\" port port=\"$p\" protocol=\"tcp\" reject type='icmp-port-unreachable'"; done`""",
 				),
 				'ip6-ban': (
-					""" `ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' reject type='icmp6-port-unreachable'"; done`""",
+					r""" `ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family=\"ipv6\" source address=\"2001:db8::\" port port=\"$p\" protocol=\"tcp\" reject type='icmp6-port-unreachable'"; done`""",
 				),
 				'ip6-unban': (
-					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' reject type='icmp6-port-unreachable'"; done`""",
+					r"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family=\"ipv6\" source address=\"2001:db8::\" port port=\"$p\" protocol=\"tcp\" reject type='icmp6-port-unreachable'"; done`""",
 				),					
 			}),
 			# firewallcmd-rich-logging --
 			('j-fwcmd-rl', 'firewallcmd-rich-logging[port="22:24", protocol="tcp"]', {
 				'ip4': ("family='ipv4'", "icmp-port-unreachable",), 'ip6': ("family='ipv6'", 'icmp6-port-unreachable',),
 				'ip4-ban': (
-					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp-port-unreachable'"; done`""",
+					r"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family=\"ipv4\" source address=\"192.0.2.1\" port port=\"$p\" protocol=\"tcp\" log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp-port-unreachable'"; done`""",
 				),
 				'ip4-unban': (
-					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp-port-unreachable'"; done`""",
+					r"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family=\"ipv4\" source address=\"192.0.2.1\" port port=\"$p\" protocol=\"tcp\" log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp-port-unreachable'"; done`""",
 				),
 				'ip6-ban': (
-					""" `ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp6-port-unreachable'"; done`""",
+					r""" `ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family=\"ipv6\" source address=\"2001:db8::\" port port=\"$p\" protocol=\"tcp\" log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp6-port-unreachable'"; done`""",
 				),
 				'ip6-unban': (
-					"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp6-port-unreachable'"; done`""",
+					r"""`ports="22:24"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family=\"ipv6\" source address=\"2001:db8::\" port port=\"$p\" protocol=\"tcp\" log prefix='f2b-j-fwcmd-rl' level='info' limit value='1/m' reject type='icmp6-port-unreachable'"; done`""",
 				),					
 			}),
 		)

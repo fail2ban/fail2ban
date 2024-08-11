@@ -7,6 +7,33 @@
 Fail2Ban: Changelog
 ===================
 
+ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
+-----------
+
+### Fixes
+* `jail.conf`:
+  - default banactions need to be specified in `paths-*.conf` (maintainer level) now
+  - since stock fail2ban includes `paths-debian.conf` by default, banactions are `nftables`
+    (can be overwritten in `jail.local` by user)
+* `paths-debian.conf`:
+  - default banactions are `nftables`
+  - sshd backend switched to `systemd` (gh-3292)
+* `action.d/firewallcmd-ipset.conf`:
+  - rename `ipsettype` to `ipsetbackend` (gh-2620), parameter `ipsettype` will be used now to the real set type (gh-3760)
+* `filter.d/apache-overflows.conf` - consider AH10244: invalid URI path (gh-3778)
+* `filter.d/postfix.conf` - consider CONNECT and other rejected commands as a valid `_pref` (gh-3800)
+* `filter.d/recidive.conf` - restore possibility to set jail name in the filter, _jailname is positive now (gh-3769)
+* `filter.d/roundcube-auth.conf` - improved RE better matching log format of roundcube version 1.4+ (gh-3816)
+* `filter.d/sshd.conf` - adapted to conform possible new daemon name sshd-session, since OpenSSH 9.8 
+  several log messages will be tagged with as originating from a process named "sshd-session" rather than "sshd" (gh-3782)
+
+### New Features and Enhancements
+* `action.d/*-ipset.conf`:
+  - parameter `ipsettype` to set type of ipset, e. g. hash:ip, hash:net, etc (gh-3760)
+* `action.d/firewallcmd-rich-*.conf` - fixed incorrect quoting, disabling port variable expansion
+  by substitution of rich rule (gh-3815)
+* `filter.d/proxmox.conf` - add support to Proxmox Web GUI (gh-2966)
+
 ver. 1.1.0 (2024/04/25) - object-found--norad-59479-cospar-2024-069a--altitude-36267km
 -----------
 

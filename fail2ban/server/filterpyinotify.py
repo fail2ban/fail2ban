@@ -24,11 +24,8 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Y
 __license__ = "GPL"
 
 import logging
-from distutils.version import LooseVersion
 import os
 from os.path import dirname, sep as pathsep
-
-import pyinotify
 
 from .failmanager import FailManagerEmpty
 from .filter import FileFilter
@@ -36,10 +33,9 @@ from .mytime import MyTime, time
 from .utils import Utils
 from ..helpers import getLogger
 
-
-if not hasattr(pyinotify, '__version__') \
-  or LooseVersion(pyinotify.__version__) < '0.8.3': # pragma: no cover
-  raise ImportError("Fail2Ban requires pyinotify >= 0.8.3")
+# pyinotify may have dependency to asyncore, so import it after helper to ensure 
+# we've a path to compat folder:
+import pyinotify
 
 # Verify that pyinotify is functional on this system
 # Even though imports -- might be dysfunctional, e.g. as on kfreebsd
