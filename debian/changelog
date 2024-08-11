@@ -1,3 +1,12 @@
+fail2ban (1.1.0-5) unstable; urgency=medium
+
+  * Follow upstream recommendation for ssh
+    See
+    https://github.com/fail2ban/fail2ban/issues/3747#issuecomment-2122420989
+    https://github.com/fail2ban/fail2ban/issues/3812
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Sun, 11 Aug 2024 11:59:06 +0200
+
 fail2ban (1.1.0-4) unstable; urgency=medium
 
   * Fix spurious ">" character in paths-debian.conf
