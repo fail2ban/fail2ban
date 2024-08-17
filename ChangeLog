@@ -28,6 +28,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   several log messages will be tagged with as originating from a process named "sshd-session" rather than "sshd" (gh-3782)
 
 ### New Features and Enhancements
+* added Policy Based Routing (pbr) action: more granular blocking compared with 'route' action (gh-3466)
 * `action.d/*-ipset.conf`:
   - parameter `ipsettype` to set type of ipset, e. g. hash:ip, hash:net, etc (gh-3760)
 * `action.d/firewallcmd-rich-*.conf` - fixed incorrect quoting, disabling port variable expansion
