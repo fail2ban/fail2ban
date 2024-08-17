@@ -11,11 +11,20 @@ Index: fail2ban/config/filter.d/sshd.conf
  
  # optional prefix (logged from several ssh versions) like "error: ", "error: PAM: " or "fatal: "
  __pref = (?:(?:error|fatal): (?:PAM: )?)?
+@@ -126,7 +126,7 @@ ignoreregex =
+ 
+ maxlines = 1
+ 
+-journalmatch = _SYSTEMD_UNIT=sshd.service + _COMM=sshd
++journalmatch = _SYSTEMD_UNIT=ssh.service + _COMM=sshd
+ 
+ # DEV Notes:
+ #
 Index: fail2ban/fail2ban/tests/config/filter.d/zzz-sshd-obsolete-multiline.conf
 ===================================================================
 --- fail2ban.orig/fail2ban/tests/config/filter.d/zzz-sshd-obsolete-multiline.conf
 +++ fail2ban/fail2ban/tests/config/filter.d/zzz-sshd-obsolete-multiline.conf
-@@ -9,7 +9,7 @@ before = ../../../../config/filter.d/com
+@@ -9,7 +9,7 @@ before = ../../../../../../../config/fil
  
  [DEFAULT]
  
