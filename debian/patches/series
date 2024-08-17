@@ -8,3 +8,4 @@ roundcube.diff
 systemd-run.diff
 sshd-filter.diff
 update_backend_system.diff
+update-ssh-9.8.diff

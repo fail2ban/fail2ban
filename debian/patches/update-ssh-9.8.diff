@@ -1,0 +1,26 @@
+Index: fail2ban/config/filter.d/sshd.conf
+===================================================================
+--- fail2ban.orig/config/filter.d/sshd.conf
++++ fail2ban/config/filter.d/sshd.conf
+@@ -16,7 +16,7 @@ before = common.conf
+ 
+ [DEFAULT]
+ 
+-_daemon = sshd
++_daemon = sshd(?:-session)?
+ 
+ # optional prefix (logged from several ssh versions) like "error: ", "error: PAM: " or "fatal: "
+ __pref = (?:(?:error|fatal): (?:PAM: )?)?
+Index: fail2ban/fail2ban/tests/config/filter.d/zzz-sshd-obsolete-multiline.conf
+===================================================================
+--- fail2ban.orig/fail2ban/tests/config/filter.d/zzz-sshd-obsolete-multiline.conf
++++ fail2ban/fail2ban/tests/config/filter.d/zzz-sshd-obsolete-multiline.conf
+@@ -9,7 +9,7 @@ before = ../../../../config/filter.d/com
+ 
+ [DEFAULT]
+ 
+-_daemon = sshd
++_daemon = sshd(?:-session)?
+ 
+ # optional prefix (logged from several ssh versions) like "error: ", "error: PAM: " or "fatal: "
+ __pref = (?:(?:error|fatal): (?:PAM: )?)?
