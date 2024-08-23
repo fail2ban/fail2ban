@@ -116,11 +116,15 @@ class JailReader(ConfigReader):
 		"logtimezone": ["string", None],
 		"logencoding": ["string", None],
 		"logpath": ["string", None],
+		"skip_if_nologs": ["bool", False],
 		"action": ["string", ""]
 	}
 	_configOpts.update(FilterReader._configOpts)
 
-	_ignoreOpts = set(['action', 'filter', 'enabled', 'backend'] + list(FilterReader._configOpts.keys()))
+	_ignoreOpts = set(
+		['action', 'filter', 'enabled', 'backend', 'skip_if_nologs'] +
+		list(FilterReader._configOpts.keys())
+	)
 
 	def getOptions(self, addOpts=None):
 
@@ -274,9 +278,14 @@ class JailReader(ConfigReader):
 							["set", self.__name, "addlogpath", p, tail])
 				if not found_files:
 					msg = "Have not found any log file for %s jail" % self.__name
-					if not allow_no_files:
+					skip_if_nologs = self.__opts.get('skip_if_nologs', False)
+					if not allow_no_files and not skip_if_nologs:
 						raise ValueError(msg)
 					logSys.warning(msg)
+					if skip_if_nologs:
+						self.__opts['config-error'] = msg
+						stream = [['config-error', "Jail '%s' skipped, because of missing log files." % (self.__name,)]]
+						return stream
 			elif opt == "ignoreip":
 				stream.append(["set", self.__name, "addignoreip"] + splitwords(value))
 			elif opt not in JailReader._ignoreOpts:
