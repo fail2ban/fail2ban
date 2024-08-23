@@ -733,6 +733,7 @@ class JailsReaderTest(LogCaptureTestCase):
 			 ['start', 'test-known-interp'],
 			 ['add', 'missinglogfiles', 'auto'],
 			 ['set', 'missinglogfiles', 'addfailregex', '<IP>'],
+			 ['config-error', "Jail 'missinglogfiles_skip' skipped, because of missing log files."],
 			 ['add', 'brokenaction', 'auto'],
 			 ['set', 'brokenaction', 'addfailregex', '<IP>'],
 			 ['set', 'brokenaction', 'addaction', 'brokenaction'],
@@ -1022,6 +1023,11 @@ filter = testfilter1
 		self.assertRaisesRegex(ValueError, r"Have not found any log file for .* jail", 
 			self._testLogPath, backend='polling')
 
+	def testLogPathSkipJailIfNoLogs(self):
+		s = self._testLogPath(backend='polling', skip_if_nologs=True)
+		self.assertLogged('Have not found any log file for')
+		self.assertEqual(s, [['config-error', "Jail 'testjail1' skipped, because of missing log files."]])
+
 	def testLogPathSystemdBackend(self):
 		try: # pragma: systemd no cover
 			from ..server.filtersystemd import FilterSystemd
@@ -1031,7 +1037,7 @@ filter = testfilter1
 		self._testLogPath(backend='systemd[journalflags=2]')
 	
 	@with_tmpdir
-	def _testLogPath(self, basedir, backend):
+	def _testLogPath(self, basedir, backend, skip_if_nologs=False):
 		jailfd = open(os.path.join(basedir, "jail.conf"), 'w')
 		jailfd.write("""
 [testjail1]
@@ -1043,8 +1049,10 @@ action =
 filter = 
 failregex = test <HOST>
 """ % (backend, basedir))
+		if skip_if_nologs:
+			jailfd.write("skip_if_nologs = true\n")
 		jailfd.close()
 		jails = JailsReader(basedir=basedir)
 		self.assertTrue(jails.read())
 		self.assertTrue(jails.getOptions())
-		jails.convert()
+		return jails.convert()

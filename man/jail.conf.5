@@ -197,6 +197,9 @@ Optional space separated option 'tail' can be added to the end of the path to ca
 
 Ensure syslog or the program that generates the log file isn't configured to compress repeated log messages to "\fI*last message repeated 5 time*s\fR" otherwise it will fail to detect. This is called \fIRepeatedMsgReduction\fR in rsyslog and should be \fIOff\fR.
 .TP
+.B skip_if_nologs
+if no logpath matches found, skip the jail by start of fail2ban if \fIskip_if_nologs\fR set to true, otherwise (default: false) start of fail2ban will fail with an error "Have not found any log file".
+.TP
 .B logencoding
 encoding of log files used for decoding. Default value of "auto" uses current system locale.
 .TP

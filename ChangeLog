@@ -28,6 +28,8 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   several log messages will be tagged with as originating from a process named "sshd-session" rather than "sshd" (gh-3782)
 
 ### New Features and Enhancements
+* new jail option `skip_if_nologs` to ignore jail if no `logpath` matches found, fail2ban continue to start with warnings/errors,
+  thus other jails become running (gh-2756)
 * `action.d/*-ipset.conf`:
   - parameter `ipsettype` to set type of ipset, e. g. hash:ip, hash:net, etc (gh-3760)
 * `action.d/firewallcmd-rich-*.conf` - fixed incorrect quoting, disabling port variable expansion
