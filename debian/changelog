@@ -1,3 +1,11 @@
+fail2ban (1.1.0-7) unstable; urgency=medium
+
+  * Add python3-setuptools to the run time build deps
+    (Closes: #1076494)
+    Should be removed at some point when upstream removes the need
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Sun, 01 Sep 2024 08:40:14 +0200
+
 fail2ban (1.1.0-6) unstable; urgency=medium
 
   * Adjust the ssh configuration to work with openssh 9.8
