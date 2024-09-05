@@ -37,8 +37,9 @@ class Ticket(object):
 
 	MAX_TIME = 0X7FFFFFFFFFFF ;# 4461763-th year
 	
-	RESTORED = 0x01
-	BANNED   = 0x08
+	RESTORED  = 0x01
+	PROLONGED = 0x04
+	BANNED    = 0x08
 
 	def __init__(self, ip=None, time=None, matches=None, data={}, ticket=None):
 		"""Ticket constructor
@@ -108,7 +109,7 @@ class Ticket(object):
 		self._banTime = value
 
 	def getBanTime(self, defaultBT=None):
-		return (self._banTime if self._banTime is not None else defaultBT)
+		return (self._banTime if self._banTime is not None else (defaultBT() if callable(defaultBT) else defaultBT))
 
 	def setBanCount(self, value, always=False):
 		if always or value > self._banCount:
@@ -121,7 +122,7 @@ class Ticket(object):
 		return self._banCount;
 
 	def getEndOfBanTime(self, defaultBT=None):
-		bantime = (self._banTime if self._banTime is not None else defaultBT)
+		bantime = self.getBanTime(defaultBT)
 		# permanent
 		if bantime == -1:
 			return Ticket.MAX_TIME
@@ -129,7 +130,7 @@ class Ticket(object):
 		return self._time + bantime
 
 	def isTimedOut(self, time, defaultBT=None):
-		bantime = (self._banTime if self._banTime is not None else defaultBT)
+		bantime = self.getBanTime(defaultBT)
 		# permanent
 		if bantime == -1:
 			return False
@@ -174,6 +175,16 @@ class Ticket(object):
 			self._flags |= Ticket.BANNED
 		else:
 			self._flags &= ~(Ticket.BANNED)
+
+	@property
+	def prolonged(self):
+		return self._flags & Ticket.PROLONGED
+	@prolonged.setter
+	def prolonged(self, value):
+		if value:
+			self._flags |= Ticket.PROLONGED
+		else:
+			self._flags &= ~(Ticket.PROLONGED)
 
 	def setData(self, *args, **argv):
 		# if overwrite - set data and filter None values:

@@ -104,14 +104,15 @@ class BanTimeIncr(LogCaptureTestCase):
 			[1200, 2400, 4800, 9600, 19200, 38400, 43200, 43200, 43200, 43200]
 		)
 		a.setBanTimeExtra('maxtime', '24h')
-		## test randomization - not possible all 10 times we have random = 0:
+		## test randomization - impossible accurately - all 10 times we may get random 0:
+		bm = a.actions.banManager
 		a.setBanTimeExtra('rndtime', '5m')
 		self.assertTrue(
-			False in [1200 in [a.calcBanTime(600, 1) for i in range(10)] for c in range(10)]
+			True in [bm.calcBanTime() > bm.getBanTime() for i in range(10)]
 		)
 		a.setBanTimeExtra('rndtime', None)
-		self.assertFalse(
-			False in [1200 in [a.calcBanTime(600, 1) for i in range(10)] for c in range(10)]
+		self.assertTrue(
+			True in [bm.calcBanTime() == bm.getBanTime() for i in range(10)]
 		)
 		# restore default:
 		a.setBanTimeExtra('multipliers', None)
@@ -159,14 +160,15 @@ class BanTimeIncr(LogCaptureTestCase):
 			[1200, 2400, 4800, 9600, 19200, 38400, 43200, 43200, 43200, 43200]
 		)
 		a.setBanTimeExtra('maxtime', '24h')
-		## test randomization - not possible all 10 times we have random = 0:
+		## test randomization - impossible accurately - all 10 times we may get random 0:
+		bm = a.actions.banManager
 		a.setBanTimeExtra('rndtime', '5m')
 		self.assertTrue(
-			False in [1200 in [int(a.calcBanTime(600, 1)) for i in range(10)] for c in range(10)]
+			True in [bm.calcBanTime() > bm.getBanTime() for i in range(10)]
 		)
 		a.setBanTimeExtra('rndtime', None)
-		self.assertFalse(
-			False in [1200 in [int(a.calcBanTime(600, 1)) for i in range(10)] for c in range(10)]
+		self.assertTrue(
+			True in [bm.calcBanTime() == bm.getBanTime() for i in range(10)]
 		)
 		# restore default:
 		a.setBanTimeExtra('factor', None);

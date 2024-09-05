@@ -25,7 +25,6 @@ __license__ = "GPL"
 
 import logging
 import math
-import random
 import queue
 
 from .actions import Actions
@@ -238,9 +237,11 @@ class Jail(object):
 				logSys.warning("ban time increment is not available as long jail database is not set")
 		if opt in ['maxtime', 'rndtime']:
 			if not value is None:
-				be[opt] = MyTime.str2seconds(value)
+				be[opt] = value = MyTime.str2seconds(value)
+			if opt == 'rndtime':
+				self.actions.banManager.setRndTime(value)
 		# prepare formula lambda:
-		if opt in ['formula', 'factor', 'maxtime', 'rndtime', 'multipliers'] or be.get('evformula', None) is None:
+		if opt in ['formula', 'factor', 'maxtime', 'multipliers'] or be.get('evformula', None) is None:
 			# split multifiers to an array begins with 0 (or empty if not set):
 			if opt == 'multipliers':
 				be['evmultipliers'] = [int(i) for i in (value.split(' ') if value is not None and value != '' else [])]
@@ -259,10 +260,6 @@ class Jail(object):
 			if not be.get('maxtime', None) is None:
 				maxtime = be['maxtime']
 				evformula = lambda ban, evformula=evformula: min(evformula(ban), maxtime)
-			# mix lambda with random time (to prevent bot-nets to calculate exact time IP can be unbanned):
-			if not be.get('rndtime', None) is None:
-				rndtime = be['rndtime']
-				evformula = lambda ban, evformula=evformula: (evformula(ban) + random.random() * rndtime)
 			# set to extra dict:
 			be['evformula'] = evformula
 		#logSys.info('banTimeExtra : %s' % json.dumps(be))

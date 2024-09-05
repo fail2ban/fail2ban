@@ -476,11 +476,12 @@ class ObserverThread(JailThread):
 			oldbtime = btime
 			ip = ticket.getID()
 			logSys.debug("[%s] Observer: ban found %s, %s", jail.name, ip, btime)
-			# if not permanent and ban time was not set - check time should be increased:
-			if btime != -1 and ticket.getBanTime() is None:
-				btime = self.incrBanTime(jail, btime, ticket)
+			# if not permanent and ban time was not yet prolonged - check time should be increased:
+			if btime != -1 and not ticket.prolonged:
+				btime = self.incrBanTime(jail, ticket.getBanTime(btime), ticket)
 				# if we should prolong ban time:
 				if btime == -1 or btime > oldbtime:
+					ticket.prolonged = True
 					ticket.setBanTime(btime)
 			# if not permanent
 			if btime != -1:

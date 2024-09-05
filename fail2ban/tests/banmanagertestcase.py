@@ -99,6 +99,28 @@ class AddFailure(unittest.TestCase):
 		ticket = BanTicket('111.111.1.111', 1167605999.0)
 		self.assertFalse(self.__banManager._inBanList(ticket))
 		
+	def testRndBanTime(self):
+		bm = self.__banManager
+		bm.setBanTime(600)
+		bm.setRndTime(300)
+		for i in range(20): # try multiple times (almost impossible to get random 0 always)
+			t = BanTicket(self.__ticket.getID(), self.__ticket.getTime())
+			bm.addBanTicket(t);
+			bm.flushBanList()
+			if t.getBanTime(bm.getBanTime) > bm.getBanTime():
+				break
+		self.assertTrue(isinstance(t.getBanTime(bm.getBanTime), float))
+		self.assertTrue(t.getBanTime(bm.getBanTime) > bm.getBanTime())
+		bm.setRndTime(None)
+		for i in range(20):
+			t = BanTicket(self.__ticket.getID(), self.__ticket.getTime())
+			bm.addBanTicket(t);
+			bm.flushBanList()
+			if t.getBanTime(bm.getBanTime) > bm.getBanTime():
+				break
+		self.assertTrue(isinstance(t.getBanTime(bm.getBanTime), int))
+		self.assertTrue(t.getBanTime(bm.getBanTime) == bm.getBanTime())
+
 	def testBanTimeIncr(self):
 		ticket = BanTicket(self.__ticket.getID(), self.__ticket.getTime())
 		## increase twice and at end permanent, check time/count increase:

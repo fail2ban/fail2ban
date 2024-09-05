@@ -494,17 +494,24 @@ class Actions(JailThread, Mapping):
 		for ticket in tickets:
 
 			bTicket = BanTicket.wrap(ticket)
-			btime = ticket.getBanTime(self.banManager.getBanTime())
 			ip = bTicket.getID()
-			aInfo = self._getActionInfo(bTicket)
 			reason = {}
 			if self.banManager.addBanTicket(bTicket, reason=reason):
 				cnt += 1
+				btime = bTicket.getBanTime(self.banManager.calcBanTime)
 				# report ticket to observer, to check time should be increased and hereafter observer writes ban to database (asynchronous)
 				if Observers.Main is not None and not bTicket.restored:
 					Observers.Main.add('banFound', bTicket, self._jail, btime)
-				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.restored else 'Restore '), ip)
+				# because of rndtime the initial bantime may be variable so now we'll add it to ban message too:
+				if btime != -1:
+					bendtime = bTicket.getTime() + btime
+					logtime = (MyTime.seconds2str(btime), MyTime.time2str(bendtime))
+				else:
+					logtime = ('permanent', 'infinite')
+				logtime = " (%s -> %s)" % logtime
+				logSys.notice("[%s] %sBan %s%s", self._jail.name, ('' if not bTicket.restored else 'Restore '), ip, logtime)
 				# do actions :
+				aInfo = self._getActionInfo(bTicket)
 				for name, action in self._actions.items():
 					try:
 						if bTicket.restored and getattr(action, 'norestored', False):

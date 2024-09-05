@@ -24,6 +24,8 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import random
+
 from threading import Lock
 
 from .ticket import BanTicket
@@ -54,6 +56,8 @@ class BanManager:
 		self.__banList = dict()
 		## The amount of time an IP address gets banned.
 		self.__banTime = 600
+		## Additional random part of bantime.
+		self.__rndTime = 0
 		## Total number of banned IP address
 		self.__banTotal = 0
 		## The time for next unban process (for performance and load reasons):
@@ -66,7 +70,7 @@ class BanManager:
 	# @param value the time
 	
 	def setBanTime(self, value):
-			self.__banTime = int(value)
+		self.__banTime = int(value)
 	
 	##
 	# Get the ban time.
@@ -75,15 +79,22 @@ class BanManager:
 	# @return the time
 	
 	def getBanTime(self):
-			return self.__banTime
-	
+		return self.__banTime
+
+
+	def setRndTime(self, value):
+		self.__rndTime = int(value) if value else 0
+
+	def calcBanTime(self):
+		return self.__banTime + (random.random() * self.__rndTime if self.__rndTime and self.__banTime != -1 else 0)
+
 	##
 	# Set the total number of banned address.
 	#
 	# @param value total number
 	
 	def setBanTotal(self, value):
-			self.__banTotal = value
+		self.__banTotal = value
 	
 	##
 	# Get the total number of banned address.
@@ -91,7 +102,7 @@ class BanManager:
 	# @return the total number
 	
 	def getBanTotal(self):
-			return self.__banTotal
+		return self.__banTotal
 
 	##
 	# Returns a copy of the IP list.
@@ -266,7 +277,7 @@ class BanManager:
 	# @return True if the IP address is not in the ban list
 	
 	def addBanTicket(self, ticket, reason={}):
-		eob = ticket.getEndOfBanTime(self.__banTime)
+		eob = ticket.getEndOfBanTime(self.calcBanTime)
 		if eob < MyTime.time():
 			reason['expired'] = 1
 			return False
@@ -280,7 +291,7 @@ class BanManager:
 				if eob > oldticket.getEndOfBanTime(self.__banTime):
 					# we have longest ban - set new (increment) ban time
 					reason['prolong'] = 1
-					btm = ticket.getBanTime(self.__banTime)
+					btm = ticket.getBanTime(self.calcBanTime)
 					# if not permanent:
 					if btm != -1:
 						diftm = ticket.getTime() - oldticket.getTime()
@@ -292,6 +303,9 @@ class BanManager:
 			self.__banList[fid] = ticket
 			self.__banTotal += 1
 			ticket.incrBanCount()
+			# if bantime not yet set and random part exists - set fixed bantime here:
+			if ticket._banTime is None and self.__rndTime and eob != BanTicket.MAX_TIME:
+				ticket.setBanTime(eob - ticket.getTime())
 			# correct next unban time:
 			if self._nextUnbanTime > eob:
 				self._nextUnbanTime = eob

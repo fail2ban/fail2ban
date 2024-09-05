@@ -227,6 +227,7 @@ class MyTime:
 			if s >= 60: # a minute
 				r += str(s//60) + 'm '; s %= 60
 			if s: # remaining seconds
+				if isinstance(s, float): s = round(s, 3) if not r else int(round(s))
 				r += str(s) + 's '
 			elif not self.sec: # 0s
 				r = '0 '

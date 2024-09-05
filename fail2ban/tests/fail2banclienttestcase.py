@@ -1663,6 +1663,39 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"192.0.2.11", "+ 600 =", all=True, wait=MID_WAITTIME)
 
+		self.pruneLog("[test-phase 3) time+31m]")
+		# jump to the future (+20 minutes):
+		_time_shift(20)
+		_observer_wait_idle()
+		self.assertLogged(
+			"stdout: '[test-jail1] test-action1: -- unban 192.0.2.11",
+			"stdout: '[test-jail1] test-action2: -- unban 192.0.2.11",
+			"0 ticket(s) in 'test-jail1'",
+			all=True, wait=MID_WAITTIME)
+		_observer_wait_idle()
+
+		self.execCmd(SUCCESS, startparams, "set", "test-jail1", "bantime.rndtime", "300s")
+
+		# generate bad ip:
+		_write_file(test1log, "w+", *(
+		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.11: I'm \"evildoer\"",) * 1
+		))
+		# wait for ban:
+		self.assertLogged(
+			"stdout: '[test-jail1] test-action1: ++ ban 192.0.2.11 ",
+			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.11 ",
+			all=True, wait=MID_WAITTIME)
+
+		self.pruneLog("[test-phase 4) time+32m]")
+		# jump to the future (+1 minute):
+		_time_shift(1)
+		# wait for observer idle (write all tickets to db):
+		_observer_wait_idle()
+		# wait for prolong:
+		self.assertLogged(
+			"stdout: '[test-jail1] test-action2: ++ prolong 192.0.2.11 ",
+			all=True, wait=MID_WAITTIME)
+
 		# test stop with busy observer:
 		self.pruneLog("[test-phase end) stop on busy observer]")
 		tearDownMyTime()

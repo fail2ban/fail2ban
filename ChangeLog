@@ -28,6 +28,9 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   several log messages will be tagged with as originating from a process named "sshd-session" rather than "sshd" (gh-3782)
 
 ### New Features and Enhancements
+* `bantime.rndtime` also affects the initial `bantime` (still unknown tickets without prolongation),
+  this caused that rndtime will be prolonged too and therefore multiplied by the exponent and factor 
+  during the bantime.increment process (see gh-2834);
 * new jail option `skip_if_nologs` to ignore jail if no `logpath` matches found, fail2ban continue to start with warnings/errors,
   thus other jails become running (gh-2756)
 * `action.d/*-ipset.conf`:
