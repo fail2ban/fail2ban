@@ -1,3 +1,3 @@
 Tests: unit
-Depends: gamin, python3, python3-dnspython, python3-systemd, python3-pyinotify, python3-setuptools, sqlite3, libsystemd-dev, @,
+Depends: python3, python3-dnspython, python3-systemd, python3-pyinotify, python3-setuptools, sqlite3, libsystemd-dev, @,
 Restrictions: allow-stderr, needs-root, build-needed
