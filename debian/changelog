@@ -1,3 +1,9 @@
+fail2ban (1.1.0-8) unstable; urgency=medium
+
+  * Add autopkgtest testing.  Thanks to Zaiba Sanglikar for the patch
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Mon, 23 Sep 2024 16:10:15 +0200
+
 fail2ban (1.1.0-7) unstable; urgency=medium
 
   * Add python3-setuptools to the run time build deps
