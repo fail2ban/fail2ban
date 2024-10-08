@@ -559,6 +559,12 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		self.assertEqual(restored_tickets[1].getBanTime(), -1)
 		self.assertEqual(restored_tickets[1].getBanCount(), 1)
 
+		self.pruneLog('[test-phase 2] manually attempt must inform observer')
+		jail.filter.addAttempt(ip)
+		obs.wait_empty(5)
+		self.assertLogged("Observer: failure found %s" % ip, 
+			"Found %s, bad" % ip, wait=True)
+
 		# stop observer
 		obs.stop()
 

@@ -482,6 +482,9 @@ class Filter(JailThread):
 		# Perform the ban if this attempt is resulted to:
 		if attempts >= self.failManager.getMaxRetry():
 			self.performBan(ip)
+		# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
+		if Observers.Main is not None:
+			Observers.Main.add('failureFound', self.jail, ticket)
 
 		return 1
 
