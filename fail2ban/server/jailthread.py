@@ -114,7 +114,7 @@ class JailThread(Thread):
 	def join(self):
 		""" Safer join, that could be called also for not started (or ended) threads (used for cleanup).
 		"""
-		## if cleanup needed - create derivate and call it before join...
+		## if cleanup needed - create derivative and call it before join...
 
 		## if was really started - should call join:
 		if self.active is not None:
