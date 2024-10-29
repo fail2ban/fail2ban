@@ -85,6 +85,8 @@ class Jail(object):
 		if backend is not None:
 			self._realBackend = self._setBackend(backend)
 		self.backend = backend
+		self.__ignoregeo = set()
+		self.__geoipdb = None
 
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__.__name__, self.name)
@@ -207,6 +209,16 @@ class Jail(object):
 
 		Used by filter to add a failure for banning.
 		"""
+		# Perform geolocation lookup
+		ip = ticket.getID()
+		country_code = self.actions.perform_geolocation_lookup(ip)
+		ticket.setData("country_code", country_code)
+
+		# Check if the IP should be ignored based on geolocation
+		if country_code in self.__ignoregeo:
+			logSys.info("Ignoring IP %s from country %s based on geolocation", ip, country_code)
+			return
+
 		self.__queue.put(ticket)
 		# add ban to database moved to observer (should previously check not already banned 
 		# and increase ticket time if "bantime.increment" set)
@@ -324,6 +336,8 @@ class Jail(object):
 		self.filter.start()
 		self.actions.start()
 		self.restoreCurrentBans()
+		self.__ignoregeo = set(self.filter.getOptions().get("ignoregeo", "").split())
+		self.__geoipdb = self.filter.getOptions().get("geoipdb", None)
 		logSys.info("Jail %r started", self.name)
 
 	def stop(self, stop=True, join=True):

@@ -743,3 +743,56 @@ class Actions(JailThread, Mapping):
 				 ("Banned Country list", self.banManager.geBanListExtendedCountry(cymru_info)),
 				 ("Banned RIR list", self.banManager.geBanListExtendedRIR(cymru_info))]
 		return ret
+
+	def perform_geolocation_lookup(self, ip):
+		"""Perform geolocation lookup for the given IP address.
+
+		Parameters
+		----------
+		ip : str
+			The IP address to perform geolocation lookup for.
+
+		Returns
+		-------
+		str
+			The country code of the IP address.
+		"""
+		# Implement the geolocation lookup logic here
+		# For example, you can use an external service like ip-api.com
+		import requests
+		response = requests.get(f"http://ip-api.com/json/{ip}")
+		data = response.json()
+		return data.get("countryCode")
+
+	def ban(self, aInfo):
+		"""Executes the given command ("actionban" or "actionreban").
+
+		Replaces the tags in the action command with actions properties
+		and ban information, and executes the resulting command.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
+		"""
+		# Perform geolocation lookup
+		ip = aInfo["ip"]
+		country_code = self.perform_geolocation_lookup(ip)
+		aInfo["country_code"] = country_code
+
+		# Check if the IP should be ignored based on geolocation
+		ignoregeo = self._jail.filter.getOptions().get("ignoregeo", "").split()
+		if country_code in ignoregeo:
+			logSys.info("Ignoring IP %s from country %s based on geolocation", ip, country_code)
+			return
+
+		# if we should start the action on demand (conditional by family):
+		family = aInfo.get('family', '')
+		if self._startOnDemand:
+			if not self.__started.get(family):
+				self._start(family, forceStart=True)
+		# ban:
+		if not self._processCmd('<actionban>', aInfo):
+			raise RuntimeError("Error banning %(ip)s" % aInfo)
+		self.__started[family] = self.__started.get(family, 0) | 3; # started and contains items

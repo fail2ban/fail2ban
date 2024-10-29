@@ -384,3 +384,23 @@ class BanManager:
 			except KeyError:
 				pass
 		return None						  # if none found
+
+	##
+	# Handle geolocation data for banned IPs.
+	#
+	# @param ticket the ticket
+	# @return True if the IP address is not in the ban list
+
+	def handleGeolocationData(self, ticket):
+		# Perform geolocation lookup
+		ip = ticket.getID()
+		country_code = self.perform_geolocation_lookup(ip)
+		ticket.setData("country_code", country_code)
+
+		# Check if the IP should be ignored based on geolocation
+		ignoregeo = self._jail.filter.getOptions().get("ignoregeo", "").split()
+		if country_code in ignoregeo:
+			logSys.info("Ignoring IP %s from country %s based on geolocation", ip, country_code)
+			return False
+
+		return True
