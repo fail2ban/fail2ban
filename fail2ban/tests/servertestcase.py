@@ -1596,10 +1596,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'stop': (
 					"`iptables -w -D INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset`",
-					"`ipset destroy f2b-j-w-iptables-ipset`",
+					"`ipset destroy f2b-j-w-iptables-ipset 2>/dev/null || { sleep 1; ipset destroy f2b-j-w-iptables-ipset; }`",
 					"`ip6tables -w -D INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset6`",
-					"`ipset destroy f2b-j-w-iptables-ipset6`",
+					"`ipset destroy f2b-j-w-iptables-ipset6 2>/dev/null || { sleep 1; ipset destroy f2b-j-w-iptables-ipset6; }`",
 				),
 				'ip4-check': (
 					r"""`iptables -w -C INPUT -p $proto -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`""",
@@ -1645,10 +1645,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'stop': (
 					"`iptables -w -D INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset-ap`",
-					"`ipset destroy f2b-j-w-iptables-ipset-ap`",
+					"`ipset destroy f2b-j-w-iptables-ipset-ap 2>/dev/null || { sleep 1; ipset destroy f2b-j-w-iptables-ipset-ap; }`",
 					"`ip6tables -w -D INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset-ap6`",
-					"`ipset destroy f2b-j-w-iptables-ipset-ap6`",
+					"`ipset destroy f2b-j-w-iptables-ipset-ap6 2>/dev/null || { sleep 1; ipset destroy f2b-j-w-iptables-ipset-ap6; }`",
 				),
 				'ip4-check': (
 					r"""`iptables -w -C INPUT -p $proto -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`""",
@@ -1976,10 +1976,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'stop': (
 					"`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 					"`ipset flush f2b-j-w-fwcmd-ipset`",
-					"`ipset destroy f2b-j-w-fwcmd-ipset`",
+					"`ipset destroy f2b-j-w-fwcmd-ipset 2>/dev/null || { sleep 1; ipset destroy f2b-j-w-fwcmd-ipset; }`",
 					"`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					"`ipset flush f2b-j-w-fwcmd-ipset6`",
-					"`ipset destroy f2b-j-w-fwcmd-ipset6`",
+					"`ipset destroy f2b-j-w-fwcmd-ipset6 2>/dev/null || { sleep 1; ipset destroy f2b-j-w-fwcmd-ipset6; }`",
 				),
 				'ip4-ban': (
 					r"`ipset -exist add f2b-j-w-fwcmd-ipset 192.0.2.1 timeout 0`",
@@ -2012,10 +2012,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'stop': (
 					"`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -p tcp -m set --match-set f2b-j-w-fwcmd-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
 					"`ipset flush f2b-j-w-fwcmd-ipset-ap`",
-					"`ipset destroy f2b-j-w-fwcmd-ipset-ap`",
+					"`ipset destroy f2b-j-w-fwcmd-ipset-ap 2>/dev/null || { sleep 1; ipset destroy f2b-j-w-fwcmd-ipset-ap; }`",
 					"`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -p tcp -m set --match-set f2b-j-w-fwcmd-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					"`ipset flush f2b-j-w-fwcmd-ipset-ap6`",
-					"`ipset destroy f2b-j-w-fwcmd-ipset-ap6`",
+					"`ipset destroy f2b-j-w-fwcmd-ipset-ap6 2>/dev/null || { sleep 1; ipset destroy f2b-j-w-fwcmd-ipset-ap6; }`",
 				),
 				'ip4-ban': (
 					r"`ipset -exist add f2b-j-w-fwcmd-ipset-ap 192.0.2.1 timeout 0`",
