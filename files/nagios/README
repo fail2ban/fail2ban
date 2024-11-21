@@ -25,6 +25,19 @@ following steps:
 ------------------------------------------------------------------------------
 
 
+SELinux Notes:
+If you're using SELinux in Enforcing mode, you will need to create a SELinux module - otherwise the check will abort with the typical "NRPE: Unable to read output" error.
+An SELinux module draft is part of this folder, you only need to compile and install it:
+# checkmodule -M -m -o nrpe_fail2ban.mod nrpe_fail2ban.te
+# semodule_package -o nrpe_fail2ban.pp -m nrpe_fail2ban.mod
+# semodule -i nrpe_fail2ban.pp
+
+After installation, ensure that the module is loaded:
+# semodule -l | grep nrpe
+nrpe_fail2ban   1.0
+
+
+
 Notes (from f2ban.txt)
 -----
 It seems that Fail2ban is currently not working, please login and check
