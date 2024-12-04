@@ -21,6 +21,8 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 * `action.d/firewallcmd-ipset.conf`:
   - rename `ipsettype` to `ipsetbackend` (gh-2620), parameter `ipsettype` will be used now to the real set type (gh-3760)
 * `filter.d/apache-overflows.conf` - consider AH10244: invalid URI path (gh-3778)
+* `filter.d/freeswitch.conf` - bypass some new info in prefix before [WARNING] (changed default `_pref_line`),
+  FreeSWITCH log line prefix has changed in newer versions (gh-3143)
 * `filter.d/postfix.conf` - consider CONNECT and other rejected commands as a valid `_pref` (gh-3800)
 * `filter.d/recidive.conf` - restore possibility to set jail name in the filter, _jailname is positive now (gh-3769)
 * `filter.d/roundcube-auth.conf` - improved RE better matching log format of roundcube version 1.4+ (gh-3816)
