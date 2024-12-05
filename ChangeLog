@@ -2633,7 +2633,7 @@ ver. 0.3.1 (2005/03/31) - beta
 
 ver. 0.3.0 (2005/02/24) - beta
 ----------
-- Re-writting of parts of the code in order to handle several log files with
+- Re-writing of parts of the code in order to handle several log files with
   different rules
 - Removed `sshd.py` because it is no more needed
 - Fixed a bug when exiting with IP in the ban list
