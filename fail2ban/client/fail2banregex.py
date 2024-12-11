@@ -118,12 +118,11 @@ LOG:
 
 REGEX:
   string                a string representing a 'failregex'
-  filter                name of filter, optionally with options (sshd[mode=aggressive])
+  filter                name of jail or filter, optionally with options (sshd[mode=aggressive])
   filename              path to a filter file (filter.d/sshd.conf)
 
 IGNOREREGEX:
   string                a string representing an 'ignoreregex'
-  filename              path to a filter file (filter.d/sshd.conf)
 \n""" + OptionParser.format_help(self, *args, **kwargs) + """\n
 Report bugs to https://github.com/fail2ban/fail2ban/issues\n
 """ + __copyright__ + "\n"
@@ -370,6 +369,9 @@ class Fail2banRegex(object):
 					output("       while parsing: %s" % (value,))
 					if self._verbose: raise(e)
 					return False
+		elif self._ignoreregex:
+			# clear ignoreregex that could be previously loaded from filter:
+			self._filter.delIgnoreRegex()
 		
 		readercommands = None
 		# if it is jail:
@@ -432,8 +434,8 @@ class Fail2banRegex(object):
 			# to stream:
 			readercommands = reader.convert()
 
+		regex_values = {}
 		if readercommands:
-			regex_values = {}
 			for opt in readercommands:
 				if opt[0] == 'multi-set':
 					optval = opt[3]
@@ -473,7 +475,7 @@ class Fail2banRegex(object):
 
 		else:
 			self.output( "Use %11s line : %s" % (regex, shortstr(value)) )
-			regex_values = {regextype: [RegexStat(value)]}
+			regex_values[regextype] = [RegexStat(value)]
 
 		for regextype, regex_values in regex_values.items():
 			regex = regextype + 'regex'
