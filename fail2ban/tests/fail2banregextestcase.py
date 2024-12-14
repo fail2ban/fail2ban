@@ -148,7 +148,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged("Unable to compile regular expression")
 		self.assertLogged("unknown group name", "at position 23", all=False); # details of failed compilation
 
-	def testWrongIngnoreRE(self):
+	def testWrongIgnoreRE(self):
 		self.assertFalse(_test_exec(
 			"--datepattern", "{^LN-BEG}EPOCH",
 			"test", r".*? from <HOST>$", r".**"
@@ -581,7 +581,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			FILENAME_ZZZ_GEN, FILENAME_ZZZ_GEN
 		))
 
-	def testWronChar(self):
+	def testWrongChar(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
 		self.assertTrue(_test_exec(
 		"-l", "notice", # put down log-level, because of too many debug-messages
@@ -596,7 +596,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('Nov  8 00:16:12 main sshd[32548]: input_userauth_request: invalid user llinco')
 		self.assertLogged('Nov  8 00:16:12 main sshd[32547]: pam_succeed_if(sshd:auth): error retrieving information about user llinco')
 
-	def testWronCharDebuggex(self):
+	def testWrongCharDebuggex(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
 		self.assertTrue(_test_exec(
 		"-l", "notice", # put down log-level, because of too many debug-messages

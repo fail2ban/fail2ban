@@ -4,7 +4,7 @@ Apache Auth.
 This directory contains the configuration file of Apache's Web Server to
 simulate authentication files.
 
-These assumed that /var/www/html is the web root and AllowOverides is "All".
+These assumed that /var/www/html is the web root and AllowOverrides is "All".
 
 The subdirectories here are copied to the /var/www/html directory.
 
