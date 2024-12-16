@@ -266,10 +266,6 @@ Take note of  -l heavydebug  / -l debug  and -v as they might be very useful.
      less common usages.
 
 .. TIP::
-     For looking through source code - http://sourcecodebrowser.com/ . It has
-     call graphs and can browse different versions.
-
-.. TIP::
      Some applications log spaces at the end. If you are not sure add \s*$ as
      the end part of the regex.
 
