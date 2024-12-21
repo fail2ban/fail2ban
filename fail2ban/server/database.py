@@ -725,7 +725,7 @@ class Fail2BanDb(object):
 						failures = 0
 						tickdata = {}
 					m = data.get('matches', [])
-					# pre-insert "maxadd" enries (because tickets are ordered desc by time)
+					# pre-insert "maxadd" entries (because tickets are ordered desc by time)
 					maxadd = self.maxMatches - len(matches)
 					if maxadd > 0:
 						if len(m) <= maxadd:

@@ -1521,7 +1521,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		@with_alt_time
 		def test_grow_file_with_db(self):
 
-			def _gen_falure(ip):
+			def _gen_failure(ip):
 				# insert new failures ans check it is monitored:
 				fields = self.journal_fields
 				fields.update(TEST_JOURNAL_FIELDS)
@@ -1547,7 +1547,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.filter.start()
 			self.waitForTicks(2)
 			# check new IP but no old IPs found:
-			_gen_falure("192.0.2.5")
+			_gen_failure("192.0.2.5")
 			self.assertFalse(self.jail.getFailTicket())
 
 			# now the same with increased time (check now - findtime case):
@@ -1561,7 +1561,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.waitForTicks(2)
 			MyTime.setTime(time.time() + 20)
 			# check new IP but no old IPs found:
-			_gen_falure("192.0.2.6")
+			_gen_failure("192.0.2.6")
 			self.assertFalse(self.jail.getFailTicket())
 
 			# now reset DB, so we'd find all messages before filter entering in operation mode:

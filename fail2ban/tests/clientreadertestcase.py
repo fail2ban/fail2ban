@@ -564,7 +564,7 @@ class FilterReaderTest(LogCaptureTestCase):
 		self.assertNotEqual(opts['maxlines'], 'X'); # wrong int value 'X' for 'maxlines'
 		self.assertLogged("Wrong int value 'X' for 'maxlines'. Using default one:")
 
-	def testFilterReaderSubstitionDefault(self):
+	def testFilterReaderSubstitutionDefault(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sweet@example.com fromip=<IP>']]
 		filterReader = FilterReader('substitution', "jailname", {},
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
@@ -584,7 +584,7 @@ class FilterReaderTest(LogCaptureTestCase):
 		opts = filterReader.getCombined()
 		self.assertTrue('sshd' in opts['failregex'])
 		
-	def testFilterReaderSubstitionSet(self):
+	def testFilterReaderSubstitutionSet(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sour@example.com fromip=<IP>']]
 		filterReader = FilterReader('substitution', "jailname", {'honeypot': 'sour@example.com'},
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
@@ -593,7 +593,7 @@ class FilterReaderTest(LogCaptureTestCase):
 		c = filterReader.convert()
 		self.assertSortedEqual(c, output)
 
-	def testFilterReaderSubstitionKnown(self):
+	def testFilterReaderSubstitutionKnown(self):
 		output = [['set', 'jailname', 'addfailregex', '^to=test,sweet@example.com,test2,sweet@example.com fromip=<IP>$']]
 		filterName, filterOpt = extractOptions(
 			'substitution[failregex="^<known/failregex>$", honeypot="<sweet>,<known/honeypot>", sweet="test,<known/honeypot>,test2"]')
@@ -604,7 +604,7 @@ class FilterReaderTest(LogCaptureTestCase):
 		c = filterReader.convert()
 		self.assertSortedEqual(c, output)
 
-	def testFilterReaderSubstitionSection(self):
+	def testFilterReaderSubstitutionSection(self):
 		output = [['set', 'jailname', 'addfailregex', '^\\s*to=fail2ban@localhost fromip=<IP>\\s*$']]
 		filterName, filterOpt = extractOptions(
 			'substitution[failregex="^\\s*<Definition/failregex>\\s*$", honeypot="<default/honeypot>"]')
@@ -615,7 +615,7 @@ class FilterReaderTest(LogCaptureTestCase):
 		c = filterReader.convert()
 		self.assertSortedEqual(c, output)
 
-	def testFilterReaderSubstitionFail(self):
+	def testFilterReaderSubstitutionFail(self):
 		# directly subst the same var :
 		filterReader = FilterReader('substitution', "jailname", {'honeypot': '<honeypot>'},
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
