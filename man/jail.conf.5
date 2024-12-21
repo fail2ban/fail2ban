@@ -547,7 +547,7 @@ There are several prefixes and words with special meaning that could be specifie
 specifies the systemd journal match used to filter the journal entries. See \fBjournalctl(1)\fR and \fBsystemd.journal-fields(7)\fR for matches syntax and more details on special journal fields. This option is only valid for the \fIsystemd\fR backend.
 .PP
 Similar to actions, filters may have an [Init] section also (optional since v.0.10). All parameters of both sections [Definition] and [Init] can be overridden (redefined or extended) in \fIjail.conf\fR or \fIjail.local\fR (or in related \fIfilter.d/filter-name.local\fR).
-Every option supplied in the jail to the filter overwrites the value specified in [Init] section, which in turm would overwrite the value in [Definition] section.
+Every option supplied in the jail to the filter overwrites the value specified in [Init] section, which in turn would overwrite the value in [Definition] section.
 Besides the standard settings of filter both sections can be used to initialize filter-specific options.
 
 Filters can also have a section called [INCLUDES]. This is used to read other configuration files.
