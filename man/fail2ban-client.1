@@ -125,8 +125,8 @@ server
 .TP
 \fBstatus \fB\-\-all\fR [FLAVOR]\fR
 gets the current status of all
-jails, with optional flavor or
-extended info
+jails, with optional output style [FLAVOR].
+Flavors: 'basic' (default), 'cymru', 'short', 'stats'.
 .TP
 \fBstat[istic]s\fR
 gets the current statistics of all
@@ -217,9 +217,9 @@ stops the jail <JAIL>. The jail is
 removed
 .TP
 \fBstatus <JAIL> [FLAVOR]\fR
-gets the current status of <JAIL>,
-with optional flavor or extended
-info
+gets the current status of all
+jails, with optional output style [FLAVOR].
+Flavors: 'basic' (default), 'cymru', 'short', 'stats'.
 .IP
 JAIL CONFIGURATION
 .TP
