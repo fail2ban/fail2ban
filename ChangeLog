@@ -26,8 +26,10 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 * `filter.d/postfix.conf` - consider CONNECT and other rejected commands as a valid `_pref` (gh-3800)
 * `filter.d/recidive.conf` - restore possibility to set jail name in the filter, _jailname is positive now (gh-3769)
 * `filter.d/roundcube-auth.conf` - improved RE better matching log format of roundcube version 1.4+ (gh-3816)
-* `filter.d/sshd.conf` - adapted to conform possible new daemon name sshd-session, since OpenSSH 9.8 
-  several log messages will be tagged with as originating from a process named "sshd-session" rather than "sshd" (gh-3782)
+* `filter.d/sshd.conf`:
+  - adapted to conform possible new daemon name sshd-session, since OpenSSH 9.8 
+    several log messages will be tagged with as originating from a process named "sshd-session" rather than "sshd" (gh-3782)
+  - `ddos` and `aggressive` modes: regex extended for timeout before authentication (optional connection from part, gh-3907)
 
 ### New Features and Enhancements
 * new jail option `skip_if_nologs` to ignore jail if no `logpath` matches found, fail2ban continue to start with warnings/errors,
