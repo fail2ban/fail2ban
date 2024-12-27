@@ -26,6 +26,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 * `filter.d/postfix.conf` - consider CONNECT and other rejected commands as a valid `_pref` (gh-3800)
 * `filter.d/dropbear.conf`:
   - recognizes extra pid/timestamp if logged into stdout/journal, added `journalmatch` (gh-3597)
+  - failregex extended to match different format of "Exit before auth" message (gh-3791)
 * `filter.d/recidive.conf` - restore possibility to set jail name in the filter, _jailname is positive now (gh-3769)
 * `filter.d/roundcube-auth.conf` - improved RE better matching log format of roundcube version 1.4+ (gh-3816)
 * `filter.d/sshd.conf`:
