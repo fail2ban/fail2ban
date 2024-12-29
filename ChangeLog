@@ -33,6 +33,8 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   - adapted to conform possible new daemon name sshd-session, since OpenSSH 9.8 
     several log messages will be tagged with as originating from a process named "sshd-session" rather than "sshd" (gh-3782)
   - `ddos` and `aggressive` modes: regex extended for timeout before authentication (optional connection from part, gh-3907)
+  - `extra` and `aggressive` modes: consider `Received disconnect ... 11: Bye Bye` with `[preauth]` as a failure 
+    and without `[preauth]` it'd be still used as nofail-helper e. g. to obtain IP by multi-line processing (amend to gh-2115)
 
 ### New Features and Enhancements
 * new jail option `skip_if_nologs` to ignore jail if no `logpath` matches found, fail2ban continue to start with warnings/errors,

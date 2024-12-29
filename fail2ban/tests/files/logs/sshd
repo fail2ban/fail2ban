@@ -375,6 +375,13 @@ Nov 25 01:35:14 srv sshd[3625]: error: Received disconnect from 192.168.2.92 por
 # failJSON: { "time": "2004-11-25T01:35:15", "match": true , "host": "192.168.2.93", "desc": "No authentication methods available (supported is optional, gh-2682)" }
 Nov 25 01:35:15 srv sshd[3626]: error: Received disconnect from 192.168.2.93 port 1883:14: No authentication methods available [preauth]
 
+# failJSON: { "constraint": "name == 'sshd'", "time": "2004-11-25T01:35:20", "match": true , "host": "192.0.2.182", "desc": "Received disconnect ... Bye Bye [preauth] in extra/aggressive mode, gh-2115" }
+Nov 25 01:35:20 srv sshd[3627]: error: Received disconnect from 192.0.2.182 port 19709:11: Bye Bye [preauth]
+# failJSON: { "constraint": "name == 'sshd'", "match": false, "desc": "failure but no IP, matched in next line on no-fail helper" }
+Nov 25 01:35:25 srv sshd[3628]: fatal: Unable to negotiate a key exchange method [preauth]
+# failJSON: { "constraint": "name == 'sshd'", "time": "2004-11-25T01:35:25", "match": true , "host": "192.0.2.183", "desc": "Received disconnect ... Bye Bye without [preauth] in extra/aggressive mode, gh-2115" }
+Nov 25 01:35:25 srv sshd[3628]: error: Received disconnect from 192.0.2.183 port 19709:11: Bye Bye
+
 # gh-1545:
 # failJSON: { "time": "2004-11-26T13:03:29", "match": true , "host": "192.0.2.1", "desc": "No matching cipher" }
 Nov 26 13:03:29 srv sshd[45]: Unable to negotiate with 192.0.2.1 port 55419: no matching cipher found. Their offer: aes256-cbc,rijndael-cbc@lysator.liu.se,aes192-cbc,aes128-cbc,arcfour128,arcfour,3des-cbc,none [preauth]
