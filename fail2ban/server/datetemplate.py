@@ -35,7 +35,7 @@ logSys = getLogger(__name__)
 # check already grouped contains "(", but ignores char "\(" and conditional "(?(id)...)":
 RE_GROUPED = re.compile(r'(?<!(?:\(\?))(?<!\\)\((?!\?)')
 RE_GROUP = ( re.compile(r'^((?:\(\?\w+\))?\^?(?:\(\?\w+\))?)(.*?)(\$?)$'), r"\1(\2)\3" )
-RE_GLOBALFLAGS = re.compile(r'((?:^|(?!<\\))\(\?[a-z]+\))')
+RE_GLOBALFLAGS = re.compile(r'((?:^|(?<!\\))\(\?[a-z]+\))')
 
 RE_EXLINE_NO_BOUNDS = re.compile(r'^\{UNB\}')
 RE_EXLINE_BOUND_BEG = re.compile(r'^\{\^LN-BEG\}')
