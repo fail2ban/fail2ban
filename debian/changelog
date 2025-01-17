@@ -1,6 +1,8 @@
 fail2ban (1.1.0-8) unstable; urgency=medium
 
   * Add autopkgtest testing.  Thanks to Zaiba Sanglikar for the patch
+  * Remove patch deb_path_to_common. Thanks to Zaiba Sanglikar
+    for the patch
 
  -- Sylvestre Ledru <sylvestre@debian.org>  Mon, 23 Sep 2024 16:10:15 +0200
 
