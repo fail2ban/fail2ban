@@ -21,6 +21,8 @@
 [2013-02-05 23:44:42] NOTICE[436][C-00000fa9] chan_sip.c: Call from '' (1.2.3.4:10836) to extension '0972598285108' rejected because extension not found in context 'default'.
 # failJSON: { "time": "2005-01-18T17:39:50", "match": true , "host": "1.2.3.4" }
 [Jan 18 17:39:50] NOTICE[12049]: res_pjsip_session.c:2337 new_invite: Call from 'anonymous' (TCP:[1.2.3.4]:61470) to extension '9011+442037690237' rejected because extension not found in context 'default'.
+# failJSON: { "time": "2005-06-12T15:13:54", "match": true , "host": "1.2.3.4" }
+[Jun 12 15:13:54] NOTICE[3980] res_pjsip_session.c:  anonymous: Call (UDP:1.2.3.4:65049) to extension '001447441452805' rejected because extension not found in context 'inbound-foo-bar'.
 # failJSON: { "time": "2013-03-26T15:47:54", "match": true , "host": "1.2.3.4" }
 [2013-03-26 15:47:54] NOTICE[1237] chan_sip.c: Registration from '"100"sip:100@1.2.3.4' failed for '1.2.3.4:23930' - No matching peer found
 # failJSON: { "time": "2013-05-13T07:10:53", "match": true , "host": "1.2.3.4" }
