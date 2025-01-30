@@ -15,6 +15,8 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   - default banactions need to be specified in `paths-*.conf` (maintainer level) now
   - since stock fail2ban includes `paths-debian.conf` by default, banactions are `nftables`
     (can be overwritten in `jail.local` by user)
+* `paths-common.conf`:
+  - changed default `mysql_log` path (default `logpath` of `mysqld-auth` jail without maintainer overrides, gh-3932)
 * `paths-debian.conf`:
   - default banactions are `nftables`
   - sshd backend switched to `systemd` (gh-3292)
@@ -33,8 +35,6 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   - adapted to conform possible new daemon name sshd-session, since OpenSSH 9.8 
     several log messages will be tagged with as originating from a process named "sshd-session" rather than "sshd" (gh-3782)
   - `ddos` and `aggressive` modes: regex extended for timeout before authentication (optional connection from part, gh-3907)
-* `paths-common.conf`:
-  - changed default `mysql_log` path (default `logpath` of `mysqld-auth` jail without maintainer overrides, gh-3932)
 
 ### New Features and Enhancements
 * new jail option `skip_if_nologs` to ignore jail if no `logpath` matches found, fail2ban continue to start with warnings/errors,
