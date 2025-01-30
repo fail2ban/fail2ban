@@ -1,0 +1,28 @@
+Apr 25 10:57:30 hostname ovpn-server[901]: TCP connection established with [AF_INET]83.97.20.30:10107
+Apr 25 10:57:36 hostname ovpn-server[901]: 83.97.20.30:10107 WARNING: Bad encapsulated packet length from peer (5635), which must be > 0 and <= 1626 -- please ensure that --tun-mtu or --link-mtu is equal on both peers -- this condition could also indicate a possible active attack on the TCP link -- [Attempting restart...]
+Apr 25 10:57:36 hostname ovpn-server[901]: 83.97.20.30:10107 Connection reset, restarting [0]
+# failJSON: { "time": "2005-04-25T10:57:36", "match": true , "host": "83.97.20.30" }
+Apr 25 10:57:36 hostname ovpn-server[901]: 83.97.20.30:10107 SIGUSR1[soft,connection-reset] received, client-instance restarting
+Apr 25 10:57:43 hostname ovpn-server[901]: TCP connection established with [AF_INET]83.97.20.30:29148
+Apr 25 10:57:49 hostname ovpn-server[901]: 83.97.20.30:29148 WARNING: Bad encapsulated packet length from peer (5635), which must be > 0 and <= 1626 -- please ensure that --tun-mtu or --link-mtu is equal on both peers -- this condition could also indicate a possible active attack on the TCP link -- [Attempting restart...]
+Apr 25 10:57:49 hostname ovpn-server[901]: 83.97.20.30:29148 Connection reset, restarting [0]
+# failJSON: { "time": "2005-04-25T10:57:49", "match": true , "host": "83.97.20.30" }
+Apr 25 10:57:49 hostname ovpn-server[901]: 83.97.20.30:29148 SIGUSR1[soft,connection-reset] received, client-instance restarting
+Apr 25 10:57:56 hostname ovpn-server[901]: TCP connection established with [AF_INET]83.97.20.30:2495
+Apr 25 10:58:03 hostname ovpn-server[901]: 83.97.20.30:2495 WARNING: Bad encapsulated packet length from peer (5635), which must be > 0 and <= 1626 -- please ensure that --tun-mtu or --link-mtu is equal on both peers -- this condition could also indicate a possible active attack on the TCP link -- [Attempting restart...]
+Apr 25 10:58:03 hostname ovpn-server[901]: 83.97.20.30:2495 Connection reset, restarting [0]
+# failJSON: { "time": "2005-04-25T10:58:03", "match": true , "host": "83.97.20.30" }
+Apr 25 10:58:03 hostname ovpn-server[901]: 83.97.20.30:2495 SIGUSR1[soft,connection-reset] received, client-instance restarting
+Apr 25 10:58:09 hostname ovpn-server[901]: TCP connection established with [AF_INET]83.97.20.30:30968
+Apr 25 10:58:15 hostname ovpn-server[901]: 83.97.20.30:30968 WARNING: Bad encapsulated packet length from peer (5635), which must be > 0 and <= 1626 -- please ensure that --tun-mtu or --link-mtu is equal on both peers -- this condition could also indicate a possible active attack on the TCP link -- [Attempting restart...]
+Apr 25 10:58:15 hostname ovpn-server[901]: 83.97.20.30:30968 Connection reset, restarting [0]
+# failJSON: { "time": "2005-04-25T10:58:15", "match": true , "host": "83.97.20.30" }
+Apr 25 10:58:15 hostname ovpn-server[901]: 83.97.20.30:30968 SIGUSR1[soft,connection-reset] received, client-instance restarting
+# failJSON: { "time": "2005-04-25T11:19:00", "match": true , "host": "192.0.2.251" }
+Apr 25 11:19:00 ovpn-server[13818]: 192.0.2.251:55329 VERIFY ERROR: depth=2, error=unable to get issuer certificate: <ROOT CA>
+# failJSON: { "time": "2005-04-25T11:19:00", "match": true , "host": "192.0.2.252" }
+Apr 25 11:19:00 ovpn-server[13819]: 192.0.2.252:55330 TLS Error: TLS handshake failed
+# failJSON: { "time": "2005-04-25T11:19:00", "match": true , "host": "192.0.2.253" }
+Apr 25 11:19:00 ovpn-server[13820]: TLS Error: cannot locate HMAC in incoming packet from [AF_INET]192.0.2.253:55340
+# failJSON: { "time": "2005-04-25T11:19:22", "match": true , "host": "192.0.2.254" }
+Apr 25 11:19:22 ovpn-server[13821]: 192.0.2.254:64480 TLS Auth Error: Auth Username/Password verification failed for peer

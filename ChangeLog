@@ -42,6 +42,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 * `action.d/firewallcmd-rich-*.conf` - fixed incorrect quoting, disabling port variable expansion
   by substitution of rich rule (gh-3815)
 * `filter.d/proxmox.conf` - add support to Proxmox Web GUI (gh-2966)
+* `filter.d/openvpn.conf` - new filter and jail for openvpn recognizing failed TLS handshakes (gh-2702)
 
 ver. 1.1.0 (2024/04/25) - object-found--norad-59479-cospar-2024-069a--altitude-36267km
 -----------
