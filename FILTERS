@@ -246,7 +246,7 @@ The following general rules apply to regular expressions:
 * make regular expressions readable (as much as possible), but only if it is
   justified. E.g. (?:...) represents a non-capturing regex and (...) is more
   readable, but capturing groups make the RE a bit slower, thus (?:...) may be
-  more preferrable.
+  more preferable.
 
 If you have only a basic knowledge of regular repressions we advise to read
 https://docs.python.org/library/re.html first.  It doesn't take long and would
