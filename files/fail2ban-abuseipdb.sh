@@ -8,13 +8,13 @@
 #   been reported previously, thereby avoiding redundant entries and potential API rate limiting.
 #
 # Integration with Fail2Ban:
-#   - Place this script in the Fail2Ban `action.d` directory named 'abuseipdb_fail2ban_actionban.sh'
-#   - Configure Fail2Ban to use this script as the `actionban` for relevant jails.
+#   - Place this script in the 'action.d' directory of Fail2Ban.
+#   - Configure Fail2Ban to use this script as the `actionban`.
 #   - First edit 'abuseipdb.conf' in '/etc/fail2ban/action.d/abuseipdb.conf' and add following rule,
-#   - actionban = /etc/fail2ban/action.d/abuseipdb_fail2ban_actionban.sh \
+#   - actionban = /etc/fail2ban/action.d/fail2ban-abuseipdb.sh \
 #         "<abuseipdb_apikey>" "<matches>" "<ip>" "<abuseipdb_category>" "<bantime>"
 #   - Also make sure you set your 'abuseipdb_apikey' in the configuration file.
-#   - Final step, adjust your jails accordingly. Check the below jail example to also reporting with custom comment via  'tp_comment'
+#   - Adjust your jails accordingly. Check the below jail example to also reporting with custom comment via  'tp_comment'
 #
 #   Example jail in 'jail.local':
 #     [nginx-botsearch]
