@@ -1,0 +1,63 @@
+# Fail2Ban AbuseIPDB Integration (Enhanced)
+#
+# Author: Hasan CALISIR
+# GitHub: https://github.com/hsntgm
+#
+# Description:
+#   This configuration enhances Fail2Ban's integration with AbuseIPDB,
+#   providing users with improved control, flexibility, and security when reporting abusive IPs.
+#
+# Key Enhancements:
+#   - Implements a **local banned IP list** to ensure **complete isolation** from Fail2Ban, 
+#     enabling the script to manage and track IP bans without relying solely on Fail2Ban's internal ban management.
+#   - Performs **two API calls**: 
+#     1. `/v2/check`: Verifies if the IP is already reported to AbuseIPDB.
+#     2. `/v2/report`: Reports the IP to AbuseIPDB if necessary, ensuring efficient use of API calls.
+#   - Supports **Fail2Ban's `norestored=1` feature** to prevent redundant reports on Fail2Ban restart. 
+#     This feature ensures that once an IP is reported, it is not reported again upon Fail2Ban restart.
+#   - **Prevents redundant reporting** by checking the local list before making a report to AbuseIPDB.
+#   - Provides **custom comments** for IP reports, helping to avoid the leakage of sensitive information.
+#
+
+[Definition]
+# Option:  norestored
+######################
+# Notes.:  Ensure norestored is set to 0
+#          We control this at the script level to provide users with more control over how restored tickets are handled.
+#          We will also be able to log all triggered events by norestored
+#          Do not modify this value directly. Instead, adjust 'BYPASS_FAIL2BAN' below as needed.
+# norestored = 0
+
+
+# Option:  User defined settings
+######################
+# Notes.:  * Path to the main local banned IP list used by the action script. Not logrotate your main IP list log.
+#          * Path to the log file where actions and events are recorded by the action script
+#          * Rely on Fail2Ban for restarts (0) or completely isolate it by bypassing Fail2Ban (1)
+#          ! Bypassing Fail2Ban on restarts (BYPASS_FAIL2BAN = 1) can overhelm your server and AbuseIPDB API on restarts
+#          ! Use this option if you want to completely isolate from Fail2Ban and rely solely on the local banned IP list for reporting.
+
+# BANNED_IP_LIST = "/var/log/abuseipdb/abuseipdb-banned.log"
+# LOG_FILE = "/var/log/abuseipdb/abuseipdb.log"
+# BYPASS_FAIL2BAN = 0
+
+
+# Option:  actionstart
+######################
+# Notes.:  DO NOT MODIFY, JUST UNCOMMENT
+# actionstart = nohup /etc/fail2ban/action.d/fail2ban_abuseipdb.sh \
+#     "--actionstart" "<BANNED_IP_LIST>" "<LOG_FILE>" &
+
+
+# Option:  actionban
+######################
+# Notes.:  DO NOT MODIFY, JUST UNCOMMENT
+# actionban = /etc/fail2ban/action.d/fail2ban_abuseipdb.sh \
+#     "<abuseipdb_apikey>" "<matches>" "<ip>" "<abuseipdb_category>" "<bantime>" "<restored>" "<BYPASS_FAIL2BAN>" "<BANNED_IP_LIST>" "<LOG_FILE>"
+
+
+[Init]
+# Option:  abuseipdb_apikey
+######################
+# Notes    Set your API key and COMMENT OUT
+# abuseipdb_apikey =
