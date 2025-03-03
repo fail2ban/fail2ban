@@ -793,6 +793,7 @@ class FileIPAddrSet(IPAddrSet):
 				ips = splitwords(ips, ignoreComments=True)
 				self.set(ips)
 		except Exception as e: # pragma: no cover
+			self._nextCheck += 60; # increase interval to check (to 1 minute, to avoid log flood on errors)
 			if not noError: raise e
 			logSys.warning("Retrieving IPs set from %r failed: %s", self.fileName, e)
 
