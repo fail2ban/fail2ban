@@ -247,7 +247,8 @@ Values can also be quoted (required when value includes a ","). More that one ac
 boolean value (default true) indicates the banning of own IP addresses should be prevented
 .TP
 .B ignoreip
-list of IPs not to ban. They can include a DNS resp. CIDR mask too. The option affects additionally to \fBignoreself\fR (if true) and don't need to contain own DNS resp. IPs of the running host.
+list of IPs not to ban. They can also include CIDR mask or can be DNS (FQDN), or even raw string (if jail banning IDs instead of IPs). The option affects additionally to \fBignoreself\fR (if true) and don't need to contain own DNS resp. IPs of the running host.
+This can also contain a filename (prefixed with "file:") with entries to ignore, which will be lazy loaded to the runtime on demand by first ban and automatically reloaded by update after small latency.
 .TP
 .B ignorecommand
 command that is executed to determine if the current candidate IP for banning (or failure-ID for raw IDs) should not be banned. This option operates alongside the \fBignoreself\fR and \fBignoreip\fR options. It is executed first, only if neither \fBignoreself\fR nor \fBignoreip\fR match the criteria.
