@@ -32,7 +32,7 @@ import time
 
 from .actions import Actions
 from .failmanager import FailManagerEmpty, FailManager
-from .ipdns import DNSUtils, IPAddr
+from .ipdns import DNSUtils, IPAddr, FileIPAddrSet
 from .observer import Observers
 from .ticket import FailTicket
 from .jailthread import JailThread
@@ -510,6 +510,12 @@ class Filter(JailThread):
 		# An empty string is always false
 		if ipstr == "":
 			return
+		# File?
+		ip = FileIPAddrSet.RE_FILE_IGN_IP.match(ipstr)
+		if ip:
+			ip = DNSUtils.getIPsFromFile(ip.group(1)) # FileIPAddrSet
+			self.__ignoreIpList.append(ip)
+			return
 		# Create IP address object
 		ip = IPAddr(ipstr)
 		# Avoid exact duplicates
@@ -532,6 +538,11 @@ class Filter(JailThread):
 			return
 		# delete by ip:
 		logSys.debug("  Remove %r from ignore list", ip)
+		# File?
+		if FileIPAddrSet.RE_FILE_IGN_IP.match(ip):
+			self.__ignoreIpList.remove(ip)
+			return
+		# IP / DNS
 		if ip in self.__ignoreIpSet:
 			self.__ignoreIpSet.remove(ip)
 		else:
@@ -588,7 +599,7 @@ class Filter(JailThread):
 			return True
 		for net in self.__ignoreIpList:
 			if ip.isInNet(net):
-				self.logIgnoreIp(ip, log_ignore, ignore_source=("ip" if net.isValid else "dns"))
+				self.logIgnoreIp(ip, log_ignore, ignore_source=(net.instanceType))
 				if self.__ignoreCache: c.set(key, True)
 				return True
 
