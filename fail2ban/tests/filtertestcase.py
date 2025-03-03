@@ -2546,6 +2546,16 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 			self.assertTrue(IPAddr('192.0.2.202') in ips)
 			self.assertTrue(IPAddr('2001:db8::ca') in ips)
 			self.assertTrue(IPAddr('2001:db8::cb') in ips)
+			# +1m, jump to next minute to force next check for update:
+			MyTime.setTime(MyTime.time() + 60)
+			self.assertFalse(ips._isModified()); # must be unchanged
+			self.assertEqual(ips._isModified(), None); # not checked by latency (same time)
+			f.write(b"""#END of file\n""")
+			f.flush()
+			# +1m, jump to next minute to force next check for update:
+			MyTime.setTime(MyTime.time() + 60)
+			self.assertTrue(ips._isModified()); # must be modified
+			self.assertEqual(ips._isModified(), None); # not checked by latency (same time)
 		finally:
 			tearDownMyTime()
 			_killfile(f, fname)

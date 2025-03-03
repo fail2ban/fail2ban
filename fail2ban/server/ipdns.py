@@ -765,21 +765,33 @@ class FileIPAddrSet(IPAddrSet):
 		if m:
 			return self.fileName == m.group(1)
 
-	def load(self, ifNeeded=True, noError=True):
+	def _isModified(self):
+		"""Check whether the file is modified (file stats changed)
+
+		Side effect: if modified, _fileStats will be updated to last known stats of file
+		"""
+		tm = MyTime.time()
+		# avoid to check it always (not often than maxUpdateLatency):
+		if tm <= self._nextCheck:
+			return None; # no check needed
+		self._nextCheck = tm + self.maxUpdateLatency
+		stats = os.stat(self.fileName)
+		stats = stats.st_mtime, stats.st_ino, stats.st_size
+		if self._fileStats != stats:
+			self._fileStats = stats
+			return True; # modified, needs to be reloaded
+		return False; # unmodified
+
+	def load(self, forceReload=False, noError=True):
+		"""Load set from file (on demand if needed or by forceReload)
+		"""
 		try:
-			if ifNeeded:
-				tm = MyTime.time()
-				if tm > self._nextCheck:
-					self._nextCheck = tm + self.maxUpdateLatency
-					stats = os.stat(self.fileName)
-					stats = stats.st_mtime, stats.st_ino, stats.st_size
-					if self._fileStats == stats:
-						return
-					self._fileStats = stats
-			with open(self.fileName, 'r') as f:
-				ips = f.read()
-			ips = splitwords(ips, ignoreComments=True)
-			self.set(ips)
+			# load only if needed and modified (or first time load on demand)
+			if self._isModified() or forceReload:
+				with open(self.fileName, 'r') as f:
+					ips = f.read()
+				ips = splitwords(ips, ignoreComments=True)
+				self.set(ips)
 		except Exception as e: # pragma: no cover
 			if not noError: raise e
 			logSys.warning("Retrieving IPs set from %r failed: %s", self.fileName, e)
@@ -793,9 +805,9 @@ class FileIPAddrSet(IPAddrSet):
 		return self._shortRepr
 
 	def __contains__(self, ip):
-		# check it is up-to-date (not often than maxUpdateLatency):
+		# load if needed:
 		if self.fileName:
-			self.load(ifNeeded=True)
+			self.load()
 		# inherited contains:
 		return IPAddrSet.__contains__(self, ip)
 
