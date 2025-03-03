@@ -399,6 +399,82 @@ class IgnoreIP(LogCaptureTestCase):
 		self.filter.addIgnoreIP('192.168.1.0/255.255.0.0')
 		self.assertRaises(ValueError, self.filter.addIgnoreIP, '192.168.1.0/255.255.0.128')
 
+	def testIgnoreIPDNS(self):
+		# test subnets are pre-cached (as IPAddrSet), so it shall work even without network:
+		for dns in ("test-subnet-a", "test-subnet-b"):
+			self.filter.addIgnoreIP(dns)
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.0.2.1')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.0.2.7')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.0.2.16')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.0.2.23')))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.0.2.8')))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.0.2.15')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('2001:db8::00')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('2001:db8::07')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('2001:0db8:0000:0000:0000:0000:0000:0000')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('2001:0db8:0000:0000:0000:0000:0000:0007')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('2001:db8::10')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('2001:db8::17')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('2001:0db8:0000:0000:0000:0000:0000:0010')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('2001:0db8:0000:0000:0000:0000:0000:0017')))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('2001:db8::08')))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('2001:db8::0f')))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('2001:0db8:0000:0000:0000:0000:0000:0008')))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('2001:0db8:0000:0000:0000:0000:0000:000f')))
+
+	# to test several IPs in ip-set from file "files/test-ign-ips-file":
+	TEST_IPS_IGN_FILE = {
+		'127.0.0.1': True,
+		'127.255.255.255': True,
+		'127.0.0.1/8': True,
+		'192.0.2.1': True,
+		'192.0.2.7': True,
+		'192.0.2.0/29': True,
+		'192.0.2.16': True,
+		'192.0.2.23': True,
+		'192.0.2.200': True,
+		'192.0.2.216': True,
+		'192.0.2.223': True,
+		'192.0.2.216/29': True,
+		'192.0.2.8': False,
+		'192.0.2.15': False,
+		'192.0.2.100': False,
+		'192.0.2.224': False,
+		'::1': True,
+		'2001:db8::00': True,
+		'2001:db8::07': True,
+		'2001:db8::0/125': True,
+		'2001:0db8:0000:0000:0000:0000:0000:0000': True,
+		'2001:0db8:0000:0000:0000:0000:0000:0007': True,
+		'2001:db8::10': True,
+		'2001:db8::17': True,
+		'2001:0db8:0000:0000:0000:0000:0000:0010': True,
+		'2001:0db8:0000:0000:0000:0000:0000:0017': True,
+		'2001:db8::c8': True,
+		'2001:db8::d8': True,
+		'2001:db8::df': True,
+		'2001:db8::d8/125': True,
+		'2001:0db8:0000:0000:0000:0000:0000:00d8': True,
+		'2001:0db8:0000:0000:0000:0000:0000:00df': True,
+		'2001:db8::08': False,
+		'2001:db8::0f': False,
+		'2001:0db8:0000:0000:0000:0000:0000:0008': False,
+		'2001:0db8:0000:0000:0000:0000:0000:000f': False,
+		'2001:db8::e0': False,
+		'2001:0db8:0000:0000:0000:0000:0000:00e0': False,
+	}
+
+	def testIgnoreIPFileIPAddr(self):
+		fname = 'file://' + os.path.join(TEST_FILES_DIR, "test-ign-ips-file")
+		self.filter.ignoreSelf = False
+		self.filter.addIgnoreIP(fname)
+		for ip, v in IgnoreIP.TEST_IPS_IGN_FILE.items():
+			self.assertEqual(self.filter.inIgnoreIPList(IPAddr(ip)), v, ("for %r in ignoreip, file://test-ign-ips-file)" % (ip,)))
+		# now remove it:
+		self.filter.delIgnoreIP(fname)
+		for ip in IgnoreIP.TEST_IPS_IGN_FILE.keys():
+			self.assertEqual(self.filter.inIgnoreIPList(IPAddr(ip)), False, ("for %r ignoreip, without file://test-ign-ips-file)" % (ip,)))
+
 	def testIgnoreInProcessLine(self):
 		setUpMyTime()
 		try:
@@ -2426,6 +2502,53 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 				if cov != 'last':
 					DNSUtils.CACHE_nameToIp.unset(DNSUtils._getSelfIPs_key)
 					DNSUtils.CACHE_nameToIp.unset(DNSUtils._getNetIntrfIPs_key)
+
+	def test_FileIPAddrSet(self):
+		fname = os.path.join(TEST_FILES_DIR, "test-ign-ips-file")
+		ips = DNSUtils.getIPsFromFile(fname)
+		for ip, v in IgnoreIP.TEST_IPS_IGN_FILE.items():
+			self.assertEqual(IPAddr(ip) in ips, v, ("for %r in test-ign-ips-file\n containing %s)" % (ip, set(ips))))
+
+	def test_FileIPAddrSet_Update(self):
+		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='.ips')
+		f = open(fname, 'wb')
+		try:
+			f.write(b"192.0.2.200, 192.0.2.201\n")
+			f.flush()
+			ips = DNSUtils.getIPsFromFile(fname)
+			self.assertTrue(IPAddr('192.0.2.200') in ips)
+			self.assertTrue(IPAddr('192.0.2.201') in ips)
+			self.assertFalse(IPAddr('192.0.2.202') in ips)
+			# +1m, jump to next minute to force next check for update:
+			MyTime.setTime(MyTime.time() + 60)
+			# add .202, some comment and check all 3 IPs are there:
+			f.write(b"""192.0.2.202\n
+			  # 2001:db8::ca/127         ; IPv6 commented yet
+			""")
+			f.flush()
+			self.assertTrue(IPAddr('192.0.2.200') in ips)
+			self.assertTrue(IPAddr('192.0.2.201') in ips)
+			self.assertTrue(IPAddr('192.0.2.202') in ips)
+			self.assertFalse(IPAddr('2001:db8::ca') in ips)
+			self.assertFalse(IPAddr('2001:db8::cb') in ips)
+			# +1m, jump to next minute to force next check for update:
+			MyTime.setTime(MyTime.time() + 60)
+			# remove .200, add IPv6-subnet and check all new IPs are there:
+			f.seek(0); f.truncate()
+			f.write(b"""
+				# 192.0.2.200              ; commented
+				192.0.2.201, 192.0.2.202   # no .200 anymore
+				2001:db8::ca/127           ; but 2 new IPv6
+			""")
+			f.flush()
+			self.assertFalse(IPAddr('192.0.2.200') in ips)
+			self.assertTrue(IPAddr('192.0.2.201') in ips)
+			self.assertTrue(IPAddr('192.0.2.202') in ips)
+			self.assertTrue(IPAddr('2001:db8::ca') in ips)
+			self.assertTrue(IPAddr('2001:db8::cb') in ips)
+		finally:
+			tearDownMyTime()
+			_killfile(f, fname)
 
 	def testFQDN(self):
 		unittest.F2B.SkipIfNoNetwork()

@@ -39,7 +39,7 @@ from io import StringIO
 from functools import wraps
 
 from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, uni_decode
-from ..server.ipdns import IPAddr, DNSUtils
+from ..server.ipdns import IPAddr, IPAddrSet, DNSUtils
 from ..server.mytime import MyTime
 from ..server.utils import Utils
 # for action_d.test_smtp :
@@ -335,6 +335,12 @@ def initTests(opts):
 			ips = set([IPAddr('127.0.0.1'), IPAddr('::1')]); # DNSUtils.dnsToIp('localhost')
 			for i in DNSUtils.getSelfNames():
 				c.set(i, ips)
+	# some test subnets (although normally they are not resolved to addr/cidr,
+	# we'll use IPAddrSet here to seek through the resolved subnet in tests):
+	c = DNSUtils.CACHE_nameToIp
+	c.set('test-local-net', IPAddrSet([IPAddr('127.0.0.1/8'), IPAddr('::1')]))
+	c.set('test-subnet-a', IPAddrSet([IPAddr('192.0.2.0/29'), IPAddr('2001:db8::0/125')]));   # 192.0.2.0  .. 192.0.2.7,  2001:db8::00 .. 2001:db8::07
+	c.set('test-subnet-b', IPAddrSet([IPAddr('192.0.2.16/29'), IPAddr('2001:db8::10/125')])); # 192.0.2.16 .. 192.0.2.23, 2001:db8::10 .. 2001:db8::17
 
 
 def mtimesleep():
