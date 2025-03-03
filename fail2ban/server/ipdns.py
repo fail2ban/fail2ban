@@ -778,7 +778,7 @@ class FileIPAddrSet(IPAddrSet):
 					self._fileStats = stats
 			with open(self.fileName, 'r') as f:
 				ips = f.read()
-			ips = splitwords(ips)
+			ips = splitwords(ips, ignoreComments=True)
 			self.set(ips)
 		except Exception as e: # pragma: no cover
 			if not noError: raise e

@@ -34,7 +34,7 @@ from io import StringIO
 from .utils import LogCaptureTestCase, logSys as DefLogSys
 
 from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger, \
-	getVerbosityFormat, splitwords, uni_decode, uni_string
+	getVerbosityFormat, removeComments, splitwords, uni_decode, uni_string
 from ..server.mytime import MyTime
 
 
@@ -67,6 +67,16 @@ class HelpersTest(unittest.TestCase):
 		self.assertEqual(splitwords(' 1\n  2'), ['1', '2'])
 		self.assertEqual(splitwords(' 1\n  2, 3'), ['1', '2', '3'])
 		self.assertEqual(splitwords('\t1\t  2,\r\n 3\n'), ['1', '2', '3']); # other spaces
+
+	def testSplitNoComments(self):
+		s = '''
+			# comment ...
+			; comment ...
+			line1 A # comment ...
+			line2 B ; comment ...
+		'''
+		self.assertEqual(splitwords(s, ignoreComments=True), ['line1', 'A', 'line2', 'B'])
+		self.assertEqual(splitwords(removeComments(s)), ['line1', 'A', 'line2', 'B'])
 
 
 def _sh_call(cmd):
