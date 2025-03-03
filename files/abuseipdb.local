@@ -8,8 +8,8 @@
 #   providing users with improved control, flexibility, and security when reporting abusive IPs.
 #
 # Key Enhancements:
-#   - Implements a **local banned IP list** to ensure **complete isolation** from Fail2Ban, 
-#     enabling the script to manage and track IP bans without relying solely on Fail2Ban's internal ban management.
+#   - Implements a **AbuseIPDB SQLite DB** to ensure **complete isolation** from Fail2Ban, 
+#     enabling the script to manage and track IP bans without relying solely on Fail2Ban's internal DB and ban management.
 #   - Performs **two API calls**: 
 #     1. `/v2/check`: Verifies if the IP is already reported to AbuseIPDB.
 #     2. `/v2/report`: Reports the IP to AbuseIPDB if necessary, ensuring efficient use of API calls.
@@ -18,6 +18,18 @@
 #   - **Prevents redundant reporting** by checking the local list before making a report to AbuseIPDB.
 #   - Provides **custom comments** for IP reports, helping to avoid the leakage of sensitive information.
 #
+# Example 'jail' configuration in 'jail.local' to prevent leaking sensitive information in AbuseIPDB reports:
+#   [nginx-botsearch]
+#   enabled    = true
+#   logpath    = /var/log/nginx/*.log
+#   port       = http,https
+#   backend    = polling
+#   tp_comment = Fail2Ban - NGINX bad requests 400-401-403-404-444, high level vulnerability scanning
+#   maxretry   = 3
+#   findtime   = 1d
+#   bantime    = 7200
+#   action     = %(action_mwl)s
+#                %(action_abuseipdb)s[matches="%(tp_comment)s", abuseipdb_apikey="YOUR_API_KEY", abuseipdb_category="21,15", bantime="%(bantime)s"]
 
 [Definition]
 # Option:  norestored
@@ -37,7 +49,7 @@
 #          ! Bypassing Fail2Ban on restarts (BYPASS_FAIL2BAN = 1) can overhelm your server and AbuseIPDB API on restarts
 #          ! Use this option if you want to completely isolate from Fail2Ban and rely solely on the local banned IP list for reporting.
 
-# BANNED_IP_LIST = "/var/log/abuseipdb/abuseipdb-banned.log"
+# SQLITE_DB="/var/lib/fail2ban/abuseipdb/fail2ban_abuseipdb"
 # LOG_FILE = "/var/log/abuseipdb/abuseipdb.log"
 # BYPASS_FAIL2BAN = 0
 
@@ -46,18 +58,18 @@
 ######################
 # Notes.:  DO NOT MODIFY, JUST UNCOMMENT
 # actionstart = nohup /etc/fail2ban/action.d/fail2ban_abuseipdb.sh \
-#     "--actionstart" "<BANNED_IP_LIST>" "<LOG_FILE>" &
+#     "--actionstart" "<SQLITE_DB>" "<LOG_FILE>" &
 
 
 # Option:  actionban
 ######################
 # Notes.:  DO NOT MODIFY, JUST UNCOMMENT
 # actionban = /etc/fail2ban/action.d/fail2ban_abuseipdb.sh \
-#     "<abuseipdb_apikey>" "<matches>" "<ip>" "<abuseipdb_category>" "<bantime>" "<restored>" "<BYPASS_FAIL2BAN>" "<BANNED_IP_LIST>" "<LOG_FILE>"
+#     "<abuseipdb_apikey>" "<matches>" "<ip>" "<abuseipdb_category>" "<bantime>" "<restored>" "<BYPASS_FAIL2BAN>" "<SQLITE_DB>" "<LOG_FILE>"
 
 
 [Init]
 # Option:  abuseipdb_apikey
 ######################
-# Notes    Set your API key and COMMENT OUT
+# Notes    Set your API key and UNCOMMENT
 # abuseipdb_apikey =
