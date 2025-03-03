@@ -793,7 +793,7 @@ class FileIPAddrSet(IPAddrSet):
 		return self._shortRepr
 
 	def __contains__(self, ip):
-		# check it is uptodate (not often than maxUpdateLatency):
+		# check it is up-to-date (not often than maxUpdateLatency):
 		if self.fileName:
 			self.load(ifNeeded=True)
 		# inherited contains:
