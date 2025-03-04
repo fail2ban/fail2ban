@@ -2,8 +2,8 @@
 # failJSON: { "time": "2004-10-11T01:06:47", "match": true , "host": "209.67.1.67" }
 Oct 11 01:06:47 ServerJV vsftpd: (pam_unix) authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=209.67.1.67
 
-# Pam pre 0.99.2.0 - https://github.com/fail2ban/fail2ban/pull/358
-# failJSON: { "time": "2005-02-06T12:02:29", "match": false , "host": "64.168.103.1" }
+# Pam pre 0.99.2.0 - https://github.com/fail2ban/fail2ban/pull/358 (format is obsolete, can be removed, but still match right now)
+# failJSON: { "time": "2005-02-06T12:02:29", "match": true , "host": "64.168.103.1", "desc": "obsolete, can be removed, but still match right now" }
 Feb 6 12:02:29 server vsftpd(pam_unix)[15522]: authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=64.168.103.1 user=user1
 
 #2 Internal
@@ -15,3 +15,13 @@ Oct 23 21:15:42 vps vsftpd: pam_unix(vsftpd:auth): authentication failure; logna
 
 # failJSON: { "time": "2016-09-08T00:39:49", "match": true , "host": "192.0.2.1" }
 Thu Sep  8 00:39:49 2016 [pid 15019] [guest] FAIL LOGIN: Client "::ffff:192.0.2.1", "User is not in the allow user list."
+
+# fileOptions: {"logtype": "journal"}
+
+# failJSON: { "match": true , "host": "192.0.2.222", "desc": "gh-3954" }
+2025-03-04T01:06:36.645577 ip-172-31-3-150.ap-southeast-2.compute.internal vsftpd[1658]: [username] FAIL LOGIN: Client "192.0.2.222"
+
+# failJSON: { "match": true , "host": "192.0.2.223", "desc": "gh-3954, more tests, without part `pam_unix(vsftpd:auth): ` (unknown if it is needed)" }
+2025-03-04T01:06:37.123456 ip-172-31-3-150.ap-southeast-2.compute.internal vsftpd[1659]: authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=192.0.2.223 user=tester
+# failJSON: { "match": true , "host": "192.0.2.224", "desc": "gh-3954, more tests, with part `pam_unix(vsftpd:auth): ` (unknown if it is needed, but it matches)" }
+2025-03-04T01:06:38.123456 ip-172-31-3-150.ap-southeast-2.compute.internal vsftpd[1660]: pam_unix(vsftpd:auth): authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=192.0.2.224 user=tester
