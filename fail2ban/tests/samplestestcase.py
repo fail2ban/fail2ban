@@ -205,6 +205,7 @@ def testSampleRegexsFactory(name, basedir):
 						raise ValueError("%s: %s:%i" %
 							(e, logFile.getFileName(), lnnum))
 					line = next(logFile)
+					lnnum += 1
 				elif ignoreBlock or line.startswith("#") or not line.strip():
 					continue
 				else: # pragma: no cover - normally unreachable
