@@ -16,5 +16,7 @@ Oct 23 21:15:42 vps vsftpd: pam_unix(vsftpd:auth): authentication failure; logna
 # failJSON: { "time": "2016-09-08T00:39:49", "match": true , "host": "192.0.2.1" }
 Thu Sep  8 00:39:49 2016 [pid 15019] [guest] FAIL LOGIN: Client "::ffff:192.0.2.1", "User is not in the allow user list."
 
-# systemd-journal
-2025-03-04T01:06:36.645577 ip-172-31-3-150.ap-southeast-2.compute.internal vsftpd[1658]: [username] FAIL LOGIN: Client "121.251.18.222"
+# fileOptions: {"logtype": "journal"}
+
+# failJSON: { "match": true , "host": "192.0.2.222" }
+2025-03-04T01:06:36.645577 ip-172-31-3-150.ap-southeast-2.compute.internal vsftpd[1658]: [username] FAIL LOGIN: Client "192.0.2.222"
