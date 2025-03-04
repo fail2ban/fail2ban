@@ -12,3 +12,7 @@
 2021-09-30 17:44:37: (mod_auth.c.791) digest: auth failed for  tester : wrong password, IP: 192.0.2.3
 # failJSON: { "time": "2021-09-30T17:44:37", "match": true , "host": "192.0.2.4", "desc": "gh-3116" }
 2021-09-30 17:44:37: (mod_auth.c.791) digest: auth failed: uri mismatch (/uri1 != /uri2), IP: 192.0.2.4
+
+# systemd-journal
+# failJSON: { "time": "2025-03-04T02:11:57", "match": true , "host": "192.0.2.211", "desc": "gh-3955" }
+2025-03-04T02:11:57.602061 ip-172-31-3-150.ap-southeast-2.compute.internal lighttpd[764]: (mod_auth.c.853) password doesn't match for / username: user1 IP: 192.0.2.211
