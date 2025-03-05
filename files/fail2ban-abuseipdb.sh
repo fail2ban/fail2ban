@@ -68,6 +68,7 @@ CATEGORIES="$4"
 BANTIME="$5"
 RESTORED="$6"
 BYPASS_FAIL2BAN="${7:-0}"
+
 if [[ "$1" == "--actionstart" ]]; then
     SQLITE_DB="${2:-/var/lib/fail2ban/abuseipdb/fail2ban_abuseipdb}"
     LOG_FILE="${3:-/var/log/abuseipdb/abuseipdb.log}"
@@ -76,35 +77,26 @@ else
     LOG_FILE="${9:-/var/log/abuseipdb/abuseipdb.log}"
 fi
 
-# Log messages
 log_message() {
     local message="$1"
     echo "$(date +"%Y-%m-%d %H:%M:%S") - ${message}" >> "${LOG_FILE}"
 }
 
-# Lock files for 'actionstart' status
-LOCK_BAN="/tmp/abuseipdb_actionstart.lock"
-LOCK_DONE="/tmp/abuseipdb_actionstart.done"
+LOCK_INIT="/tmp/abuseipdb_actionstart_init.lock"
+LOCK_BAN="/tmp/abuseipdb_actionstart_ban.lock"
+LOCK_DONE="/tmp/abuseipdb_actionstart_done.lock"
 
-# Remove lock file
 remove_lock() {
     [[ -f "${LOCK_BAN}" ]] && rm -f "${LOCK_BAN}"
 }
 
-# Create lock file
 create_lock() {
     [[ ! -f "${LOCK_BAN}" ]] && touch "${LOCK_BAN}"
 }
 
-# Pre-defined SQLite PRAGMAS
-SQLITE_PRAGMAS="
-    PRAGMA journal_mode=WAL;
-    PRAGMA synchronous=NORMAL;
-    PRAGMA temp_store=MEMORY;
-    PRAGMA locking_mode=NORMAL;
-    PRAGMA cache_size=-256000;
-    PRAGMA busy_timeout=10000;
-"
+SQLITE_NON_PERSISTENT_PRAGMAS="PRAGMA synchronous=NORMAL; \
+PRAGMA locking_mode=NORMAL; \
+PRAGMA busy_timeout=10000;"
 
 #######################################
 # HELPERS: (END)
@@ -124,53 +116,72 @@ SQLITE_PRAGMAS="
 #   on initial start to prevent latency.
 # - Listens for exit codes to control
 #   further 'actionban' events via the
-#   'lock' mechanism.
-# - Check 'abuseipdb.local' for
-#   integration details.
+#   'LOCK_BAN' mechanism.
+# - Use 'LOCK_INIT' and 'LOCK_DONE' to
+#   manage concurrent calls on restarts.
 ########################################
 
 if [[ "$1" == "--actionstart" ]]; then
-    if [[ ! -f "${LOCK_DONE}" ]]; then
-        trap 'if [[ $? -ne 0 ]]; then create_lock; else remove_lock; fi' EXIT
-
-        SQLITE_DIR=$(dirname "${SQLITE_DB}")
-        if [[ ! -d "${SQLITE_DIR}" ]]; then
-            mkdir -p "${SQLITE_DIR}" || exit 1
-        fi
-
-        if [[ ! -f "${LOG_FILE}" ]]; then
-            touch "${LOG_FILE}" || exit 1
-        fi
-
-        for dep in curl jq sqlite3; do
-            if ! command -v "${dep}" &>/dev/null; then
-                log_message "ERROR: ${dep} is not installed. Please install ${dep}"
-                exit 1
-            fi
-        done
-
-        if [[ ! -f "${SQLITE_DB}" ]]; then
-            sqlite3 "${SQLITE_DB}" "
-                ${SQLITE_PRAGMAS}
-                CREATE TABLE IF NOT EXISTS banned_ips (ip TEXT PRIMARY KEY, bantime INTEGER);
-                CREATE INDEX IF NOT EXISTS idx_ip ON banned_ips(ip);
-            "
-        fi
-
-        result=$(sqlite3 "file:${SQLITE_DB}?mode=ro" "SELECT name FROM sqlite_master WHERE type='table' AND name='banned_ips';")
-        if ! [[ -n "${result}" ]]; then
-            log_message "ERROR: AbuseIPDB database initialization failed."
-            rm -f "${SQLITE_DB:?}"
-            exit 1
-        else
-            log_message "SUCCESS: The AbuseIPDB database is now ready for connection."
-        fi
-
-        touch "${LOCK_DONE}" || exit 1
+(
+    flock -n 200 || {
+        [[ -f "${LOG_FILE}" ]] && log_message "WARNING: Another initialization is already running. Exiting."
         exit 0
-    else
+    }
+
+    if [[ -f "${LOCK_DONE}" ]]; then
+        log_message "INFO: Initialization already completed. Skipping further checks."
         exit 0
     fi
+
+    trap 'if [[ $? -ne 0 ]]; then create_lock; else remove_lock; fi' EXIT
+
+    SQLITE_DIR=$(dirname "${SQLITE_DB}")
+    if [[ ! -d "${SQLITE_DIR}" ]]; then
+        mkdir -p "${SQLITE_DIR}" || exit 1
+    fi
+
+    LOG_DIR=$(dirname "${LOG_FILE}")
+    if [[ ! -d "${LOG_DIR}" ]]; then
+        mkdir -p "${LOG_DIR}" || exit 1
+    fi
+
+
+    if [[ ! -f "${LOG_FILE}" ]]; then
+        touch "${LOG_FILE}" || exit 1
+    fi
+
+    for dep in curl jq sqlite3; do
+        if ! command -v "${dep}" &>/dev/null; then
+            log_message "ERROR: ${dep} is not installed. Please install ${dep}"
+            exit 1
+        fi
+    done
+
+    if [[ ! -f "${SQLITE_DB}" ]]; then
+        log_message "INFO: AbuseIPDB database not found. Initializing..."
+        sqlite3 "${SQLITE_DB}" "
+            PRAGMA journal_mode=WAL;
+            CREATE TABLE IF NOT EXISTS banned_ips (
+                ip TEXT PRIMARY KEY,
+                bantime INTEGER
+            );
+            CREATE INDEX IF NOT EXISTS idx_ip ON banned_ips(ip);
+        " &>/dev/null
+        log_message "INFO: AbuseIPDB database is initialized!"
+    fi
+
+    table=$(sqlite3 "${SQLITE_DB}" "SELECT name FROM sqlite_master WHERE type='table' AND name='banned_ips';")
+    if ! [[ -n "${table}" ]]; then
+        log_message "ERROR: AbuseIPDB database initialization failed."
+        exit 1
+    fi
+
+    touch "${LOCK_DONE}" || exit 1
+    log_message "SUCCESS: All (actionstart) checks completed!"
+    exit 0
+
+) 200>"${LOCK_INIT}"
+    exit 0
 fi
 
 #######################################
@@ -182,17 +193,7 @@ fi
 #######################################
 
 #######################################
-# 1) Prevent 'actionban' if
-# 'actionstart' fails.
-#
-# If 'actionstart' fails, block
-# 'actionban' to prevent issues from
-# missing dependencies or permission
-# errors.
-#######################################
-
-#######################################
-# 2) Fail2Ban restart handling &
+# 1) Fail2Ban restart handling &
 # duplicate report prevention.
 #
 # - If 'BYPASS_FAIL2BAN' is disabled,
@@ -203,8 +204,18 @@ fi
 # - If enabled, Fail2Ban is bypassed,
 #   and the script independently
 #   decides which IPs to report based
-#   on the AbuseIPDB db, even after
-#   restarts.
+#   on the local AbuseIPDB SQLite db,
+#   even after restarts.
+#######################################
+
+#######################################
+# 2) Prevent 'actionban' if
+# 'actionstart' fails.
+#
+# - If 'actionstart' fails, block
+#   'actionban' to prevent issues from
+#   missing dependencies or permission
+#   errors.
 #######################################
 
 #######################################
@@ -221,14 +232,14 @@ fi
 # EARLY CHECKS: (START)
 #######################################
 
+if [[ "${BYPASS_FAIL2BAN}" -eq 0 && "${RESTORED}" -eq 1 ]]; then
+    log_message "INFO: (RESTART) IP ${IP} was already reported in the previous Fail2Ban session."
+    exit 0
+fi
+
 if [[ -f "${LOCK_BAN}" ]]; then
     [[ -f "${LOG_FILE}" ]] && log_message "ERROR: Initialization failed! (actionstart). Reporting for IP ${IP} is blocked."
     exit 1
-fi
-
-if [[ "${BYPASS_FAIL2BAN}" -eq 0 && "${RESTORED}" -eq 1 ]]; then
-    log_message "INFO: IP ${IP} already reported."
-    exit 0
 fi
 
 if [[ -z "${APIKEY}" || -z "${COMMENT}" || -z "${IP}" || -z "${CATEGORIES}" || -z "${BANTIME}" ]]; then
@@ -246,82 +257,133 @@ fi
 
 check_ip_in_abuseipdb() {
     local response http_status body total_reports delimiter="HTTP_STATUS:"
-    response=$(curl -s -w "${delimiter}%{http_code}" -G "https://api.abuseipdb.com/api/v2/check" \
+    if ! response=$(curl -sS -w "${delimiter}%{http_code}" -G "https://api.abuseipdb.com/api/v2/check" \
         --data-urlencode "ipAddress=${IP}" \
         -H "Key: ${APIKEY}" \
-        -H "Accept: application/json" 2>&1)
-
-    if [[ $? -ne 0 ]]; then
-        log_message "ERROR: API failure. Response: ${response}"
-        return 1
+        -H "Accept: application/json" 2>&1); then
+        log_message "ERROR: curl failed. Response: ${response}"
+        return 2
     fi
 
-    http_status=$(echo "${response}" | tr -d '\n' | sed -e "s/.*${delimiter}//")
-    body=$(echo "${response}" | sed -e "s/${delimiter}[0-9]*//")
+    http_status="${response##*${delimiter}}"
+    body="${response%"${delimiter}${http_status}"}"
 
-    if [[ "${http_status}" =~ ^[0-9]+$ ]]; then
+
+    if [[ ! "${http_status}" =~ ^[0-9]+$ ]]; then
+        log_message "ERROR: Invalid HTTP status in Response: ${response}"
+        return 2
+    fi
+
+    if [[ "${http_status}" -ne 200 ]]; then
         if [[ "${http_status}" -eq 429 ]]; then
             log_message "ERROR: Rate limited (HTTP 429). Response: ${body}"
-            return 1
-        fi
-
-        if [[ "${http_status}" -ne 200 ]]; then
+        else
             log_message "ERROR: HTTP ${http_status}. Response: ${body}"
-            return 1
         fi
-    else
-        log_message "ERROR: API failure. Response: ${response}"
-        return 1
+        return 2
     fi
 
-    total_reports=$(echo "${body}" | jq '.data.totalReports')
-    if [[ "${total_reports}" -gt 0 ]]; then
+    total_reports=$(jq -r '.data.totalReports // 0' <<< "${body}")
+    if (( total_reports > 0 )); then
         return 0
-    else
-        return 1
     fi
+    return 1
+}
+
+convert_bantime() {
+    local bantime=$1
+    local time_value
+    local time_unit
+
+    if [[ "${bantime}" =~ ^[0-9]+$ ]]; then
+        echo "${bantime}"
+        return 0
+    fi
+
+    time_value="${bantime%"${bantime##*[0-9]}"}"
+    time_unit="${bantime#${time_value}}"
+
+    [[ -z "$time_unit" ]] && time_unit="s"
+
+    case "$time_unit" in
+        s) return $time_value ;;
+        m) return $((time_value * 60)) ;;
+        h) return $((time_value * 3600)) ;;
+        d) return $((time_value * 86400)) ;;
+        w) return $((time_value * 604800)) ;;
+        y) return $((time_value * 31536000)) ;;
+        *) return $time_value ;;
+    esac
 }
 
 report_ip_to_abuseipdb() {
-    local response
-    response=$(curl --fail -s 'https://api.abuseipdb.com/api/v2/report' \
+    local response http_status body delimiter="HTTP_STATUS:"
+    if ! response=$(curl -sS -w "${delimiter}%{http_code}" "https://api.abuseipdb.com/api/v2/report" \
         -H 'Accept: application/json' \
         -H "Key: ${APIKEY}" \
         --data-urlencode "comment=${COMMENT}" \
         --data-urlencode "ip=${IP}" \
-        --data "categories=${CATEGORIES}" 2>&1)
-
-    if [[ $? -ne 0 ]]; then
-        log_message "ERROR: API failure. Response: ${response} for IP: ${IP}"
-    else
-        log_message "SUCCESS: Reported IP ${IP} to AbuseIPDB."
+        --data "categories=${CATEGORIES}" 2>&1); then
+        log_message "ERROR: curl failed. Response: ${response}"
+        return 1
     fi
+
+    http_status="${response##*${delimiter}}"
+    body="${response%"${delimiter}${http_status}"}"
+
+    if [[ ! "${http_status}" =~ ^[0-9]+$ ]]; then
+        log_message "ERROR: Invalid HTTP status in response: ${response}"
+        return 1
+    fi
+
+    if [[ "${http_status}" -ne 200 ]]; then
+        if [[ "${http_status}" -eq 429 ]]; then
+            log_message "ERROR: Rate limited (HTTP 429). Response: ${body}"
+        else
+            log_message "ERROR: HTTP ${http_status}. Response: ${body}"
+        fi
+        return 1
+    fi
+
+    log_message "SUCCESS: Reported IP ${IP} to AbuseIPDB."
+    return 0
 }
 
 check_ip_in_db() {
     local ip=$1 result
-    result=$(sqlite3 "file:${SQLITE_DB}?mode=ro" "
-        ${SQLITE_PRAGMAS}
-        SELECT 1 FROM banned_ips WHERE ip = '${ip}' LIMIT 1;"
-    )
+    ip="${ip%"${ip##*[![:space:]]}"}"
+    ip="${ip#"${ip%%[^[:space:]]*}"}"
+    ip="${ip//\'/}"
+    ip="${ip//\"/}"
 
-    if [[ $? -ne 0 ]]; then
-        log_message "ERROR: AbuseIPDB database query failed while checking IP ${ip}. Response: ${result}"
-        return 1
-    fi
+    sqlite3 "${SQLITE_DB}" "${SQLITE_NON_PERSISTENT_PRAGMAS}" &>/dev/null
+    result=$(sqlite3 "${SQLITE_DB}" "SELECT EXISTS(SELECT 1 FROM banned_ips WHERE ip = '${ip}');")
 
-    if [[ -n "${result}" ]]; then
+    if [[ "${result}" -eq 1 ]]; then
         return 0
-    else
+    elif [[ "${result}" -eq 0 ]]; then
         return 1
+    else
+        return 2
     fi
 }
 
 insert_ip_to_db() {
-    local ip=$1
-    local bantime=$2
+    local ip=$1 bantime=$2
+    bantime=$(convert_bantime "${bantime}")
+
+    bantime="${bantime%"${bantime##*[![:space:]]}"}"
+    bantime="${bantime#"${bantime%%[^[:space:]]*}"}"
+    bantime="${bantime//\'/}"
+    bantime="${bantime//\"/}"
+
+    ip="${ip%"${ip##*[![:space:]]}"}"
+    ip="${ip#"${ip%%[^[:space:]]*}"}"
+    ip="${ip//\'/}"
+    ip="${ip//\"/}"
+
+    sqlite3 "${SQLITE_DB}" "${SQLITE_NON_PERSISTENT_PRAGMAS}" &>/dev/null
     sqlite3 "${SQLITE_DB}" "
-        ${SQLITE_PRAGMAS}
         BEGIN IMMEDIATE;
         INSERT INTO banned_ips (ip, bantime)
         VALUES ('${ip}', ${bantime})
@@ -329,9 +391,31 @@ insert_ip_to_db() {
         COMMIT;
     "
 
+    # TO-DO: Better handle SQLite INSERT ops. exit statuses
+    # $? -ne 0 | I think not the best approach here.
     if [[ $? -ne 0 ]]; then
-        log_message "ERROR: Failed to insert or update IP ${ip} in the AbuseIPDB database."
+        return 1
     fi
+    return 0
+}
+
+delete_ip_from_db() {
+    local ip=$1
+    ip="${ip%"${ip##*[![:space:]]}"}"
+    ip="${ip#"${ip%%[^[:space:]]*}"}"
+    ip="${ip//\'/}"
+    ip="${ip//\"/}"
+
+    sqlite3 "${SQLITE_DB}" "${SQLITE_NON_PERSISTENT_PRAGMAS}" &>/dev/null
+    sqlite3 "${SQLITE_DB}" "
+        BEGIN IMMEDIATE;
+        DELETE FROM banned_ips WHERE ip='${ip}';
+        COMMIT;
+    "
+
+    # TO-DO: Do we need to listen exit status DELETE
+    # I don't think so for now.
+    log_message "INFO: IP ${ip} deleted from the AbuseIPDB SQLite database."
 }
 
 #######################################
@@ -352,18 +436,33 @@ insert_ip_to_db() {
             log_message "INFO: IP ${IP} has already been reported and remains on AbuseIPDB."
             shouldBanIP=0
         else
-            log_message "INFO: IP ${IP} has already been reported but is no longer listed on AbuseIPDB."
-            shouldBanIP=1
+            status=$?
+            if [[ "${status}" -eq 1 ]]; then
+                log_message "INFO: IP ${IP} has already been reported but is no longer listed on AbuseIPDB. Resubmitting..."
+            else
+                log_message "ERROR: Failed to check IP ${IP} in the AbuseIPDB API. Skipping report."
+                exit 1
+            fi
         fi
     else
-        shouldBanIP=1
+        status=$?
+        if [[ "${status}" -eq 2 ]]; then
+            log_message "ERROR: Failed to check IP ${IP} in the local database. Skipping report."
+            exit 1
+        fi
     fi
 
     if [[ "${shouldBanIP}" -eq 1 ]]; then
         if [[ "${is_found_local}" -eq 0 ]]; then
-            insert_ip_to_db $IP $BANTIME
+            if ! insert_ip_to_db $IP $BANTIME; then
+                log_message "ERROR: Failed to insert IP ${IP} into the local database. Skipping report."
+                exit 1
+            fi
         fi
-        report_ip_to_abuseipdb
+
+        if ! report_ip_to_abuseipdb; then
+            delete_ip_from_db $IP
+        fi
     fi
 ) >> "${LOG_FILE}" 2>&1 &
 
