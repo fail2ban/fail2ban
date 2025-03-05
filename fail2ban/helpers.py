@@ -282,7 +282,18 @@ def excepthook(exctype, value, traceback):
 		"Unhandled exception in Fail2Ban:", exc_info=True)
 	return sys.__excepthook__(exctype, value, traceback)
 
-def splitwords(s):
+RE_REM_COMMENTS = re.compile(r'(?m)(?:^|\s)[\#;].*')
+def removeComments(s):
+	"""Helper to remove comments:
+		# comment ...
+		; comment ...
+		no comment # comment ...
+		no comment ; comment ...
+	"""
+	return RE_REM_COMMENTS.sub('', s)
+
+RE_SPLT_WORDS = re.compile(r'[\s,]+')
+def splitwords(s, ignoreComments=False):
 	"""Helper to split words on any comma, space, or a new line
 
 	Returns empty list if input is empty (or None) and filters
@@ -290,7 +301,9 @@ def splitwords(s):
 	"""
 	if not s:
 		return []
-	return list(filter(bool, [v.strip() for v in re.split(r'[\s,]+', s)]))
+	if ignoreComments:
+		s = removeComments(s)
+	return list(filter(bool, [v.strip() for v in RE_SPLT_WORDS.split(s)]))
 
 def _merge_dicts(x, y):
 	"""Helper to merge dicts.

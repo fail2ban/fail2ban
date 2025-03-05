@@ -163,6 +163,7 @@ def testSampleRegexsFactory(name, basedir):
 			ignoreBlock = False
 			lnnum = 0
 			for line in logFile:
+				jsonline = ''
 				lnnum += 1
 				jsonREMatch = re.match("^#+ ?(failJSON|(?:file|filter)Options|addFILE):(.+)$", line)
 				if jsonREMatch:
@@ -204,7 +205,9 @@ def testSampleRegexsFactory(name, basedir):
 					except ValueError as e: # pragma: no cover - we've valid json's
 						raise ValueError("%s: %s:%i" %
 							(e, logFile.getFileName(), lnnum))
+					jsonline = line
 					line = next(logFile)
+					lnnum += 1
 				elif ignoreBlock or line.startswith("#") or not line.strip():
 					continue
 				else: # pragma: no cover - normally unreachable
@@ -299,8 +302,9 @@ def testSampleRegexsFactory(name, basedir):
 						import pprint
 						raise AssertionError("%s: %s on: %s:%i, line:\n  %s\nregex (%s):\n  %s\n"
 							"faildata: %s\nfail: %s" % (
-								fltName, e, logFile.getFileName(), lnnum, 
-								line, failregex, regexList[failregex] if failregex != -1 else None,
+								fltName, e, logFile.getFileName(), lnnum,
+								(("%s\n\u25ba %s" % (jsonline, line)) if jsonline else line),
+								failregex, regexList[failregex] if failregex != -1 else None,
 								'\n'.join(pprint.pformat(faildata).splitlines()),
 								'\n'.join(pprint.pformat(fail).splitlines())))
 

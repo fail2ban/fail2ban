@@ -1,0 +1,4 @@
+test-local-net                     ; test local subnet
+test-subnet-a, test-subnet-b       ; further test subnets
+192.0.2.200, 2001:0db8::00c8       # 2 IPs
+192.0.2.216/29, 2001:db8::d8/125   # 2 subnets by IP/CIDR notation
