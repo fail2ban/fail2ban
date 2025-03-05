@@ -268,7 +268,6 @@ check_ip_in_abuseipdb() {
     http_status="${response##*${delimiter}}"
     body="${response%"${delimiter}${http_status}"}"
 
-
     if [[ ! "${http_status}" =~ ^[0-9]+$ ]]; then
         log_message "ERROR: Invalid HTTP status in Response: ${response}"
         return 2
@@ -291,10 +290,7 @@ check_ip_in_abuseipdb() {
 }
 
 convert_bantime() {
-    local bantime=$1
-    local time_value
-    local time_unit
-
+    local bantime=$1 time_value time_unit
     if [[ "${bantime}" =~ ^[0-9]+$ ]]; then
         echo "${bantime}"
         return 0
@@ -304,15 +300,14 @@ convert_bantime() {
     time_unit="${bantime#${time_value}}"
 
     [[ -z "$time_unit" ]] && time_unit="s"
-
     case "$time_unit" in
-        s) return $time_value ;;
-        m) return $((time_value * 60)) ;;
-        h) return $((time_value * 3600)) ;;
-        d) return $((time_value * 86400)) ;;
-        w) return $((time_value * 604800)) ;;
-        y) return $((time_value * 31536000)) ;;
-        *) return $time_value ;;
+        s) echo "$time_value" ;;
+        m) echo "$((time_value * 60))" ;;
+        h) echo "$((time_value * 3600))" ;;
+        d) echo "$((time_value * 86400))" ;;
+        w) echo "$((time_value * 604800))" ;;
+        y) echo "$((time_value * 31536000))" ;;
+        *) echo "${time_value}" ;;
     esac
 }
 
