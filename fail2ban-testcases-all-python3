@@ -5,7 +5,7 @@
 set -eu
 
 failed=
-for python in /usr/{,local/}bin/python3.[0-9]{,.*}{,-dbg}
+for python in /usr/{,local/}bin/python3.{0..13}{,.*}{,-dbg}
 do
 	[ -e "$python" ] || continue
 	echo "Testing using $python"
