@@ -55,6 +55,8 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   by substitution of rich rule (gh-3815)
 * `filter.d/proxmox.conf` - add support to Proxmox Web GUI (gh-2966)
 * `filter.d/openvpn.conf` - new filter and jail for openvpn recognizing failed TLS handshakes (gh-2702)
+* `action.d/firewallcmd-ipset.conf` - add an nft ipset backend, which replaces
+the outdated iptables based ipset backend
 
 ver. 1.1.0 (2024/04/25) - object-found--norad-59479-cospar-2024-069a--altitude-36267km
 -----------
