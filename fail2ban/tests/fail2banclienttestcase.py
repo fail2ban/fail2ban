@@ -826,6 +826,23 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"Errors in jail 'broken-jail'.",
 			"ERROR: test configuration failed", all=True)
 
+		# disable jail in .local (shall be again OK):
+		self.pruneLog("[test-phase 1]")
+		_write_file(pjoin(cfg, "jail.local"), "a", "",
+			"[broken-jail]", "enabled = false")
+		self.execCmd(SUCCESS, startparams, "--test")
+		self.assertLogged("OK: configuration test is successful")
+
+		# generate decoding error: ('utf-8' codec can't decode byte 0xfd):
+		self.pruneLog("[test-phase 1a]")
+		with open(pjoin(cfg, "jail.local"), "ab") as f:
+			f.write(b"\n# invalid char \xfd")
+		self.execCmd(FAILED, startparams, "-t")
+		self.assertLogged("Could not read config files",
+			"Read jails configuration failed.",
+			"ERROR: test configuration failed", all=True)
+
+
 	@with_tmpdir
 	def testKillAfterStart(self, tmp):
 		try:
