@@ -406,6 +406,8 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 				if ret is not None:
 					if ret:
 						return True
+					if self._conf.get("test", False) and not self._args: # test only
+						return False
 					raise ServerExecutionException("Init of command line failed")
 
 			# Commands
