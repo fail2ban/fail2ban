@@ -252,7 +252,7 @@ class Beautifier:
 					sep = " " if len(inC) <= 3 else inC[3]
 					if sep == "--with-time":
 						sep = "\n"
-					msg = sep.join(response)
+					msg = sep.join([str(res) for res in response])
 		except Exception:
 			logSys.warning("Beautifier error. Please report the error")
 			logSys.error("Beautify %r with %r failed", response, self.__inputCmd,
