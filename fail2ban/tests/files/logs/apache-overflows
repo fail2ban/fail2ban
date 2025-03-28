@@ -28,3 +28,8 @@
 
 # failJSON: { "time": "2024-06-26T05:20:26", "match": true , "host": "192.0.2.39", "desc": "AH10244: invalid URI path, gh-3778" }
 [Wed Jun 26 05:20:26.182799 2024] [core:error] [pid 2928] [client 192.0.2.39:37924] AH10244: invalid URI path (/cgi-bin/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/bin/sh)
+
+# failJSON: { "time": "2024-12-18T15:23:15", "match": true , "host": "192.0.2.74", "desc": "coverage for another log-format (gh-3900)" }
+[Wed Dec 18 15:23:15.495667 2024] [core:error] [pid 1672:tid 1839] [client 192.0.2.74:39140] AH10244: invalid URI path (/cgi-bin/%%32%65%%32%65/%%32%65%%32%65/%%32%65%%32%65/%%32%65%%32%65/%%32%65%%32%65/%%32%65%%32%65/%%32%65%%32%65/bin/sh)
+# failJSON: { "time": "2024-12-18T15:23:16", "match": true , "host": "192.0.2.74", "desc": "coverage for another log-format (gh-3900)" }
+[Wed Dec 18 15:23:16.304454 2024] [core:error] [pid 1673:tid 1845] [client 192.0.2.74:35446] AH10244: invalid URI path (/cgi-bin/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/.%2e/bin/sh)
