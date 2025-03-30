@@ -200,7 +200,7 @@ Optional space separated option 'tail' can be added to the end of the path to ca
 Ensure syslog or the program that generates the log file isn't configured to compress repeated log messages to "\fI*last message repeated 5 time*s\fR" otherwise it will fail to detect. This is called \fIRepeatedMsgReduction\fR in rsyslog and should be \fIOff\fR.
 .TP
 .B skip_if_nologs
-if no logpath matches found, skip the jail by start of fail2ban if \fIskip_if_nologs\fR set to true, otherwise (default: false) start of fail2ban will fail with an error "Have not found any log file", unless the backend is \fIauto\fR and the jail is able to swith backend to \fIsystemd\fR (see \fIauto\fR in section \fBBackends\fR below).
+if no logpath matches found, skip the jail by start of fail2ban if \fIskip_if_nologs\fR set to true, otherwise (default: false) start of fail2ban will fail with an error "Have not found any log file", unless the backend is \fIauto\fR and the jail is able to switch backend to \fIsystemd\fR (see \fIauto\fR in section \fBBackends\fR below).
 .TP
 .B systemd_if_nologs
 if no logpath matches found, switch backend \fIauto\fR to \fIsystemd\fR (see \fBBackends\fR section), unless disabled with \fBsystemd_if_nologs = false\fR (default \fBtrue\fR).
@@ -308,11 +308,11 @@ Available options are listed below.
 .B auto
 automatically selects best suitable \fBbackend\fR, starting with file-based like \fIpyinotify\fR or \fIpolling\fR to monitor the \fBlogpath\fR matching files, but can also automatically switch to backend \fIsystemd\fR, when the following is true:
 .RS
-.IP \(bu 4n
+.IP • 4n
 no files matching \fBlogpath\fR found for this jail;
-.IP \(bu 4n
+.IP • 4n
 no \fBsystemd_if_nologs = false\fR is specified for the jail;
-.IP \(bu 4n
+.IP • 4n
 option \fBjournalmatch\fR is set for the jail or its filter (otherwise it'd be too heavy to allow all auto-jails, even if they have never been foreseen for journal monitoring);
 .TP
 .br
@@ -575,7 +575,7 @@ There are several prefixes and words with special meaning that could be specifie
 .RE
 .TP
 .B journalmatch
-specifies the systemd journal match used to filter the journal entries. See \fBjournalctl(1)\fR and \fBsystemd.journal-fields(7)\fR for matches syntax and more details on special journal fields. This option is only applied by the \fIsystemd\fR and \fIauto\fR backends and it is mandatory for automatical switch to \fIsystemd\fR by \fIauto\fR backend.
+specifies the systemd journal match used to filter the journal entries. See \fBjournalctl(1)\fR and \fBsystemd.journal-fields(7)\fR for matches syntax and more details on special journal fields. This option is only applied by the \fIsystemd\fR and \fIauto\fR backends and it is mandatory for automatic switch to \fIsystemd\fR by \fIauto\fR backend.
 
 .RE
 .PP

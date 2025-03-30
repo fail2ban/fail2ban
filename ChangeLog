@@ -15,7 +15,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 * improve threaded clean-up of all filters, new thread functions `afterStop` (to force clean-up after stop) and `done`, invoking `afterStop` once
 * ensure journal-reader is always closed (additional prevention against leaks and "too many open files"), thereby avoid sporadic segfault
   in systemd module (see https://github.com/systemd/python-systemd/issues/143)
-* fixes `systemd` causing "too many open files" error for a lot of journal files and large amout of systemd jails 
+* fixes `systemd` causing "too many open files" error for a lot of journal files and large amount of systemd jails 
   (see new parameter `rotated` below, gh-3391);
 * `jail.conf`:
   - default banactions need to be specified in `paths-*.conf` (maintainer level) now
