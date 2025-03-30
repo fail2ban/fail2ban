@@ -355,6 +355,14 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		while self.active:
 			# wait for records (or for timeout in sleeptime seconds):
 			try:
+				if self.idle:
+					# because journal.wait will returns immediately if we have records in journal,
+					# just wait a little bit here for not idle, to prevent hi-load:
+					if not Utils.wait_for(lambda: not self.active or not self.idle, 
+						self.sleeptime * 10, self.sleeptime
+					):
+						self.ticks += 1
+						continue
 				## wait for entries using journal.wait:
 				if wcode == journal.NOP and self.inOperation:
 					## todo: find better method as wait_for to break (e.g. notify) journal.wait(self.sleeptime),
@@ -388,14 +396,6 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 							logSys.log(logging.MSG, "[%s] Journal reader seems to be offline, reopen journal", self.jailName)
 							self._reopenJournal()
 							wcode = journal.NOP
-				if self.idle:
-					# because journal.wait will returns immediately if we have records in journal,
-					# just wait a little bit here for not idle, to prevent hi-load:
-					if not Utils.wait_for(lambda: not self.active or not self.idle, 
-						self.sleeptime * 10, self.sleeptime
-					):
-						self.ticks += 1
-						continue
 				self.__modified = 0
 				while self.active:
 					logentry = None
