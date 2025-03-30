@@ -32,7 +32,7 @@ import tempfile
 import uuid
 
 try:
-	from systemd import journal
+	from ..server.filtersystemd import journal, _globJournalFiles
 except ImportError:
 	journal = None
 
@@ -1510,11 +1510,8 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				return MonitorJournalFailures._runtimeJournal
 			raise unittest.SkipTest('systemd journal seems to be not available (e. g. no rights to read)')
 		
-		@with_tmpdir
-		def testGlobJournal(self, tmp):
-			try:
-				from ..server.filtersystemd import journal, _globJournalFiles
-			except ImportError: # pragma: no cover
+		def testGlobJournal_System(self):
+			if not journal: # pragma: no cover
 				raise unittest.SkipTest("systemd python interface not available")
 			jrnlfile = self._getRuntimeJournal()
 			jrnlpath = os.path.dirname(jrnlfile)
@@ -1522,6 +1519,11 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.assertIn(jrnlfile, _globJournalFiles(journal.SYSTEM_ONLY, jrnlpath))
 			self.assertIn(jrnlfile, _globJournalFiles(journal.LOCAL_ONLY))
 			self.assertIn(jrnlfile, _globJournalFiles(journal.LOCAL_ONLY, jrnlpath))
+
+		@with_tmpdir
+		def testGlobJournal(self, tmp):
+			if not journal: # pragma: no cover
+				raise unittest.SkipTest("systemd python interface not available")
 			# no files yet in temp-path:
 			self.assertFalse(_globJournalFiles(None, tmp))
 			# test against temp-path, shall ignore all rotated files:
