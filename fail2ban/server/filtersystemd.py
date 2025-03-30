@@ -141,6 +141,11 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				elif rotated:
 					args['flags'] = journal.SYSTEM_ONLY
 
+		try:
+			args['namespace'] = kwargs.pop('namespace')
+		except KeyError:
+			pass
+
 		# To avoid monitoring rotated logs, as prevention against "Too many open files",
 		# set the files to system.journal and user-*.journal (without rotated *@*.journal):
 		if not rotated and not args.get('files') and not args.get('namespace'):
@@ -151,11 +156,6 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				args['path'] = None; # cannot be cannot be specified simultaneously with files
 			else:
 				args['files'] = None
-
-		try:
-			args['namespace'] = kwargs.pop('namespace')
-		except KeyError:
-			pass
 
 		return args
 
