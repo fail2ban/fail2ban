@@ -1477,7 +1477,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.filter.addFailRegex(r"(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 
 		def tearDown(self):
-			if self.filter and self.filter.active or self.filter.active is None:
+			if self.filter and (self.filter.active or self.filter.active is None):
 				self.filter.stop()
 				self.filter.join()		  # wait for the thread to terminate
 			super(MonitorJournalFailures, self).tearDown()
