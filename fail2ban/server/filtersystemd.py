@@ -456,8 +456,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 		logSys.debug("[%s] filter terminated", self.jailName)
 
-		# close journal:
-		self.closeJournal()
+		# call afterStop once (close journal, etc):
+		self.done()
 
 		logSys.debug("[%s] filter exited (systemd)", self.jailName)
 		return True
@@ -491,12 +491,10 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				break
 			db.updateJournal(self.jail, log, *args)
 
-	def onStop(self):
-		"""Stop monitoring of journal. Invoked after run method.
-		"""
+	def afterStop(self):
+		"""Cleanup"""
 		# close journal:
 		self.closeJournal()
 		# ensure positions of pending logs are up-to-date:
 		if self._pendDBUpdates and self.jail.database:
 			self._updateDBPending()
-
