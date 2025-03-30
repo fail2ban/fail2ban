@@ -126,6 +126,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			try:
 				# workaround for gh-3929 (no journal descriptor after rotation),
 				# to reopen journal we'd simply invoke inherited init again:
+				self.__journal.close()
 				ja = self.__jrnlargs
 				super(journal.Reader, self.__journal).__init__(ja.get('flags', 0), ja.get('path'), ja.get('files'), ja.get('namespace'))
 			except:
