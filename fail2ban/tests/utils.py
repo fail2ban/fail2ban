@@ -219,7 +219,7 @@ class F2B(DefaultTestOptions):
 		# short only integer interval (avoid by conditional wait with callable, and dual 
 		# wrapping in some routines, if it will be called twice):
 		if self.fast and isinstance(wtime, int):
-			wtime = float(wtime) / 10
+			wtime = float(wtime) / (10 if wtime < 10 else 5)
 		return wtime
 
 
