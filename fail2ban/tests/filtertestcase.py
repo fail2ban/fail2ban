@@ -32,7 +32,7 @@ import tempfile
 import uuid
 
 try:
-	from systemd import journal
+	from ..server.filtersystemd import journal, _globJournalFiles
 except ImportError:
 	journal = None
 
@@ -1477,7 +1477,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.filter.addFailRegex(r"(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 
 		def tearDown(self):
-			if self.filter and self.filter.active:
+			if self.filter and (self.filter.active or self.filter.active is None):
 				self.filter.stop()
 				self.filter.join()		  # wait for the thread to terminate
 			super(MonitorJournalFailures, self).tearDown()
@@ -1510,6 +1510,34 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				return MonitorJournalFailures._runtimeJournal
 			raise unittest.SkipTest('systemd journal seems to be not available (e. g. no rights to read)')
 		
+		def testGlobJournal_System(self):
+			if not journal: # pragma: no cover
+				raise unittest.SkipTest("systemd python interface not available")
+			jrnlfile = self._getRuntimeJournal()
+			jrnlpath = os.path.dirname(jrnlfile)
+			self.assertIn(jrnlfile, _globJournalFiles(journal.SYSTEM_ONLY))
+			self.assertIn(jrnlfile, _globJournalFiles(journal.SYSTEM_ONLY, jrnlpath))
+			self.assertIn(jrnlfile, _globJournalFiles(journal.LOCAL_ONLY))
+			self.assertIn(jrnlfile, _globJournalFiles(journal.LOCAL_ONLY, jrnlpath))
+
+		@with_tmpdir
+		def testGlobJournal(self, tmp):
+			if not journal: # pragma: no cover
+				raise unittest.SkipTest("systemd python interface not available")
+			# no files yet in temp-path:
+			self.assertFalse(_globJournalFiles(None, tmp))
+			# test against temp-path, shall ignore all rotated files:
+			tsysjrnl = os.path.join(tmp, 'system.journal')
+			tusrjrnl = os.path.join(tmp, 'user-%s.journal' % os.getuid())
+			def touch(fn): os.close(os.open(fn, os.O_CREAT|os.O_APPEND))
+			touch(tsysjrnl);
+			touch(tusrjrnl);
+			touch(os.path.join(tmp, 'system@test-rotated.journal'));
+			touch(os.path.join(tmp, 'user-%s@test-rotated.journal' % os.getuid()));
+			self.assertSortedEqual(_globJournalFiles(None, tmp), {tsysjrnl, tusrjrnl})
+			self.assertSortedEqual(_globJournalFiles(journal.SYSTEM_ONLY, tmp), {tsysjrnl})
+			self.assertSortedEqual(_globJournalFiles(journal.CURRENT_USER, tmp), {tusrjrnl})
+
 		def testJournalFilesArg(self):
 			# retrieve current system journal path
 			jrnlfile = self._getRuntimeJournal()
@@ -1533,9 +1561,16 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.assertTrue(self.isEmpty(1))
 			self.assertEqual(len(self.jail), 0)
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+		def testJournalPath_RotatedArg(self):
+			# retrieve current system journal path
+			jrnlpath = self._getRuntimeJournal()
+			jrnlpath = os.path.dirname(jrnlpath)
+			self._initFilter(journalpath=jrnlpath, rotated=1)
 
 		def testJournalFlagsArg(self):
-			self._initFilter(journalflags=0) # e. g. 2 - journal.RUNTIME_ONLY
+			self._initFilter(journalflags=0)
+		def testJournalFlags_RotatedArg(self):
+			self._initFilter(journalflags=0, rotated=1)
 
 		def assert_correct_ban(self, test_ip, test_attempts):
 			self.assertTrue(self.waitFailTotal(test_attempts, 10)) # give Filter a chance to react

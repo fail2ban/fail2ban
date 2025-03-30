@@ -25,16 +25,59 @@ __license__ = "GPL"
 import os
 import time
 
+from glob import glob
 from systemd import journal
 
 from .failmanager import FailManagerEmpty
 from .filter import JournalFilter, Filter
 from .mytime import MyTime
 from .utils import Utils
-from ..helpers import getLogger, logging, splitwords, uni_decode
+from ..helpers import getLogger, logging, splitwords, uni_decode, _as_bool
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
+
+
+_systemdPathCache = Utils.Cache()
+def _getSystemdPath(path):
+	"""Get systemd path using systemd-path command (cached)"""
+	p = _systemdPathCache.get(path)
+	if p: return p
+	p = Utils.executeCmd('systemd-path %s' % path, timeout=10, shell=True, output=True)
+	if p and p[0]:
+		p = str(p[1].decode('utf-8')).split('\n')[0]
+		_systemdPathCache.set(path, p)
+		return p
+	p = '/var/log' if path == 'system-state-logs' else ('/run/log' if path == 'system-runtime-logs' else None)
+	_systemdPathCache.set(path, p)
+	return p
+
+def _globJournalFiles(flags=None, path=None):
+	"""Get journal files without rotated files."""
+	filesSet = set()
+	_join = os.path.join
+	def _addJF(filesSet, p, flags):
+		"""add journal files to set corresponding path and flags (without rotated *@*.journal)"""
+		# system journal:
+		if (flags is None) or (flags & journal.SYSTEM_ONLY):
+			filesSet |= set(glob(_join(p,'system.journal'))) - set(glob(_join(p,'system*@*.journal')))
+		# current user-journal:
+		if (flags is not None) and (flags & journal.CURRENT_USER):
+			uid = os.getuid()
+			filesSet |= set(glob(_join(p,('user-%s.journal' % uid)))) - set(glob(_join(p,('user-%s@*.journal' % uid))))
+		# all local journals:
+		if (flags is None) or not (flags & (journal.SYSTEM_ONLY|journal.CURRENT_USER)):
+			filesSet |= set(glob(_join(p,'*.journal'))) - set(glob(_join(p,'*@*.journal')))
+	if path:
+		# journals relative given path only:
+		_addJF(filesSet, path, flags)
+	else:
+		# persistent journals corresponding flags:
+		if (flags is None) or not (flags & journal.RUNTIME_ONLY):
+			_addJF(filesSet, _join(_getSystemdPath('system-state-logs'), 'journal/*'), flags)
+		# runtime journals corresponding flags:
+		_addJF(filesSet, _join(_getSystemdPath('system-runtime-logs'), 'journal/*'), flags)
+	return filesSet
 
 
 ##
@@ -52,12 +95,13 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	# @param jail the jail object
 
 	def __init__(self, jail, **kwargs):
-		jrnlargs = FilterSystemd._getJournalArgs(kwargs)
+		self.__jrnlargs = FilterSystemd._getJournalArgs(kwargs)
 		JournalFilter.__init__(self, jail, **kwargs)
 		self.__modified = 0
 		# Initialise systemd-journal connection
-		self.__journal = journal.Reader(**jrnlargs)
+		self.__journal = journal.Reader(**self.__jrnlargs)
 		self.__matches = []
+		self.__bypassInvalidateMsg = 0
 		self.setDatePattern(None)
 		logSys.debug("Created FilterSystemd")
 
@@ -74,30 +118,85 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		except KeyError:
 			pass
 		else:
-			import glob
 			p = args['files']
 			if not isinstance(p, (list, set, tuple)):
 				p = splitwords(p)
 			files = []
 			for p in p:
-				files.extend(glob.glob(p))
+				files.extend(glob(p))
 			args['files'] = list(set(files))
 
-		# Default flags is SYSTEM_ONLY(4). This would lead to ignore user session files,
-		# so can prevent "Too many open files" errors on a lot of user sessions (see gh-2392):
+		rotated = _as_bool(kwargs.pop('rotated', 0))
+		# Default flags is SYSTEM_ONLY(4) or LOCAL_ONLY(1), depending on rotated parameter. 
+		# This could lead to ignore user session files, so together with ignoring rotated
+		# files would prevent "Too many open files" errors on a lot of user sessions (see gh-2392):
 		try:
 			args['flags'] = int(kwargs.pop('journalflags'))
 		except KeyError:
 			# be sure all journal types will be opened if files/path specified (don't set flags):
-			if ('files' not in args or not len(args['files'])) and ('path' not in args or not args['path']):
-				args['flags'] = int(os.getenv("F2B_SYSTEMD_DEFAULT_FLAGS", 4))
-				
+			if (not args.get('files') and not args.get('path')):
+				args['flags'] = os.getenv("F2B_SYSTEMD_DEFAULT_FLAGS", None)
+				if args['flags'] is not None:
+					args['flags'] = int(args['flags'])
+				elif rotated:
+					args['flags'] = journal.SYSTEM_ONLY
+
 		try:
 			args['namespace'] = kwargs.pop('namespace')
 		except KeyError:
 			pass
 
+		# To avoid monitoring rotated logs, as prevention against "Too many open files",
+		# set the files to system.journal and user-*.journal (without rotated *@*.journal):
+		if not rotated and not args.get('files') and not args.get('namespace'):
+			args['files'] = _globJournalFiles(
+				args.get('flags', journal.LOCAL_ONLY), args.get('path'))
+			if args['files']:
+				args['files'] = list(args['files'])
+				args['path'] = None; # cannot be cannot be specified simultaneously with files
+			else:
+				args['files'] = None
+
 		return args
+
+	@property
+	def _journalAlive(self):
+		"""Checks journal is online.
+		"""
+		try:
+			# open?
+			if self.__journal.closed: # pragma: no cover
+				return False
+			# has cursor? if it is broken (e. g. no descriptor) - it'd raise this:
+			# OSError: [Errno 99] Cannot assign requested address
+			if self.__journal._get_cursor():
+				return True
+		except OSError: # pragma: no cover
+			pass
+		return False
+
+	def _reopenJournal(self): # pragma: no cover
+		"""Reopen journal (if it becomes offline after rotation)
+		"""
+		if self.__journal.closed:
+			# recreate reader:
+			self.__journal = journal.Reader(**self.__jrnlargs)
+		else:
+			try:
+				# workaround for gh-3929 (no journal descriptor after rotation),
+				# to reopen journal we'd simply invoke inherited init again:
+				self.__journal.close()
+				ja = self.__jrnlargs
+				super(journal.Reader, self.__journal).__init__(
+					ja.get('flags', 0), ja.get('path'), ja.get('files'), ja.get('namespace'))
+			except:
+				# cannot reopen in that way, so simply recreate reader:
+				self.closeJournal()
+				self.__journal = journal.Reader(**self.__jrnlargs)
+		# restore journalmatch specified for the jail:
+		self.resetJournalMatches()
+		# just to avoid "Invalidate signaled" happening again after reopen:
+		self.__bypassInvalidateMsg = MyTime.time() + 1
 
 	##
 	# Add a journal match filters from list structure
@@ -257,6 +356,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	def inOperationMode(self):
 		self.inOperation = True
 		logSys.info("[%s] Jail is in operation now (process new journal entries)", self.jailName)
+		# just to avoid "Invalidate signaled" happening often at start:
+		self.__bypassInvalidateMsg = MyTime.time() + 1
 
 	##
 	# Main loop.
@@ -314,6 +415,14 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		while self.active:
 			# wait for records (or for timeout in sleeptime seconds):
 			try:
+				if self.idle:
+					# because journal.wait will returns immediately if we have records in journal,
+					# just wait a little bit here for not idle, to prevent hi-load:
+					if not Utils.wait_for(lambda: not self.active or not self.idle, 
+						self.sleeptime * 10, self.sleeptime
+					):
+						self.ticks += 1
+						continue
 				## wait for entries using journal.wait:
 				if wcode == journal.NOP and self.inOperation:
 					## todo: find better method as wait_for to break (e.g. notify) journal.wait(self.sleeptime),
@@ -328,8 +437,10 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 					## if invalidate (due to rotation, vacuuming or journal files added/removed etc):
 					if self.active and wcode == journal.INVALIDATE:
 						if self.ticks:
-							logSys.log(logging.DEBUG, "[%s] Invalidate signaled, take a little break (rotation ends)", self.jailName)
+							if not self.__bypassInvalidateMsg or MyTime.time() > self.__bypassInvalidateMsg:
+								logSys.log(logging.MSG, "[%s] Invalidate signaled, take a little break (rotation ends)", self.jailName)
 							time.sleep(self.sleeptime * 0.25)
+							self.__bypassInvalidateMsg = 0
 						Utils.wait_for(lambda: not self.active or \
 							self.__journal.wait(Utils.DEFAULT_SLEEP_INTERVAL) != journal.INVALIDATE,
 							self.sleeptime * 3, 0.00001)
@@ -340,14 +451,11 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 								if self.__journal.get_previous(): self.__journal.get_next()
 							except OSError:
 								pass
-				if self.idle:
-					# because journal.wait will returns immediately if we have records in journal,
-					# just wait a little bit here for not idle, to prevent hi-load:
-					if not Utils.wait_for(lambda: not self.active or not self.idle, 
-						self.sleeptime * 10, self.sleeptime
-					):
-						self.ticks += 1
-						continue
+						# if it is not alive - reopen:
+						if not self._journalAlive:
+							logSys.log(logging.MSG, "[%s] Journal reader seems to be offline, reopen journal", self.jailName)
+							self._reopenJournal()
+							wcode = journal.NOP
 				self.__modified = 0
 				while self.active:
 					logentry = None
@@ -408,8 +516,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 		logSys.debug("[%s] filter terminated", self.jailName)
 
-		# close journal:
-		self.closeJournal()
+		# call afterStop once (close journal, etc):
+		self.done()
 
 		logSys.debug("[%s] filter exited (systemd)", self.jailName)
 		return True
@@ -443,12 +551,10 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				break
 			db.updateJournal(self.jail, log, *args)
 
-	def onStop(self):
-		"""Stop monitoring of journal. Invoked after run method.
-		"""
+	def afterStop(self):
+		"""Cleanup"""
 		# close journal:
 		self.closeJournal()
 		# ensure positions of pending logs are up-to-date:
 		if self._pendDBUpdates and self.jail.database:
 			self._updateDBPending()
-

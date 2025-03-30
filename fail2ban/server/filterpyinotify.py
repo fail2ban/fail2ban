@@ -367,19 +367,18 @@ class FilterPyinotify(FileFilter):
 				self.commonError("unhandled", e)
 			
 		logSys.debug("[%s] filter exited (pyinotifier)", self.jailName)
-		self.__notifier = None
+		self.done()
 
 		return True
 
 	##
-	# Call super.stop() and then stop the 'Notifier'
+	# Clean-up: then stop the 'Notifier'
 
-	def stop(self):
-		# stop filter thread:
-		super(FilterPyinotify, self).stop()
+	def afterStop(self):
 		try:
 			if self.__notifier: # stop the notifier
 				self.__notifier.stop()
+				self.__notifier = None
 		except AttributeError: # pragma: no cover
 			if self.__notifier: raise
 

@@ -719,51 +719,67 @@ class JailsReaderTest(LogCaptureTestCase):
 		jails = JailsReader(basedir=IMPERFECT_CONFIG, share_config=IMPERFECT_CONFIG_SHARE_CFG)
 		self.assertTrue(jails.read())
 		self.assertFalse(jails.getOptions(ignoreWrong=False))
-		self.assertRaises(ValueError, jails.convert)
-		comm_commands = jails.convert(allow_no_files=True)
-		self.maxDiff = None
-		self.assertSortedEqual(comm_commands,
-			[['add', 'emptyaction', 'auto'],
-			 ['add', 'test-known-interp', 'auto'],
-			 ['multi-set', 'test-known-interp', 'addfailregex', [
-			   'failure test 1 (filter.d/test.conf) <HOST>',
-			   'failure test 2 (filter.d/test.local) <HOST>',
-			   'failure test 3 (jail.local) <HOST>'
-			 ]],
-			 ['start', 'test-known-interp'],
-			 ['add', 'missinglogfiles', 'auto'],
-			 ['set', 'missinglogfiles', 'addfailregex', '<IP>'],
-			 ['config-error', "Jail 'missinglogfiles_skip' skipped, because of missing log files."],
-			 ['add', 'brokenaction', 'auto'],
-			 ['set', 'brokenaction', 'addfailregex', '<IP>'],
-			 ['set', 'brokenaction', 'addaction', 'brokenaction'],
-			 ['multi-set', 'brokenaction', 'action', 'brokenaction', [
-				 ['actionban', 'hit with big stick <ip>'],
-				 ['actname', 'brokenaction'],
-				 ['name', 'brokenaction']
-			 ]],
-			 ['add', 'parse_to_end_of_jail.conf', 'auto'],
-			 ['set', 'parse_to_end_of_jail.conf', 'addfailregex', '<IP>'],
-			 ['set', 'tz_correct', 'addfailregex', '<IP>'],
-			 ['set', 'tz_correct', 'logtimezone', 'UTC+0200'],
-			 ['start', 'emptyaction'],
-			 ['start', 'missinglogfiles'],
-			 ['start', 'brokenaction'],
-			 ['start', 'parse_to_end_of_jail.conf'],
-		         ['add', 'tz_correct', 'auto'],
-			 ['start', 'tz_correct'],
-			 ['config-error',
-				"Jail 'brokenactiondef' skipped, because of wrong configuration: Invalid action definition 'joho[foo': unexpected option syntax"],
-			 ['config-error',
-				"Jail 'brokenfilterdef' skipped, because of wrong configuration: Invalid filter definition 'flt[test': unexpected option syntax"],
-			 ['config-error',
-				"Jail 'missingaction' skipped, because of wrong configuration: Unable to read action 'noactionfileforthisaction'"],
-			 ['config-error',
-				"Jail 'missingbitsjail' skipped, because of wrong configuration: Unable to read the filter 'catchallthebadies'"],
-			 ])
+		self.assertRaises(ValueError, lambda: jails.convert(systemd_if_nologs=False))
 		self.assertLogged("Errors in jail 'missingbitsjail'.")
 		self.assertNotLogged("Skipping...")
+		# check with allow no files (just to cover other jail problems), but without switch to systemd:
+		self.pruneLog('[test-phase] allow no files, no switch to systemd ...')
+		comm_commands = jails.convert(allow_no_files=True, systemd_if_nologs=False)
+		self.maxDiff = None
+		def _checkStream(comm_commands, backend='auto'):
+			self.assertSortedEqual(comm_commands,
+				[['add', 'emptyaction', 'auto'],
+				 ['add', 'test-known-interp', 'auto'],
+				 ['multi-set', 'test-known-interp', 'addfailregex', [
+				   'failure test 1 (filter.d/test.conf) <HOST>',
+				   'failure test 2 (filter.d/test.local) <HOST>',
+				   'failure test 3 (jail.local) <HOST>'
+				 ]],
+				 ['start', 'test-known-interp'],
+				 ['add', 'missinglogfiles', backend], # can switch backend because have journalmatch
+				 ['set', 'missinglogfiles', 'addfailregex', '<IP>'],
+				 ['set', 'missinglogfiles', 'addjournalmatch', '_COMM=test'],
+				 ['config-error', "Jail 'missinglogfiles_skip' skipped, because of missing log files."],
+				 ['add', 'brokenaction', 'auto'],
+				 ['set', 'brokenaction', 'addfailregex', '<IP>'],
+				 ['set', 'brokenaction', 'addaction', 'brokenaction'],
+				 ['multi-set', 'brokenaction', 'action', 'brokenaction', [
+					 ['actionban', 'hit with big stick <ip>'],
+					 ['actname', 'brokenaction'],
+					 ['name', 'brokenaction']
+				 ]],
+				 ['add', 'parse_to_end_of_jail.conf', 'auto'],
+				 ['set', 'parse_to_end_of_jail.conf', 'addfailregex', '<IP>'],
+				 ['set', 'tz_correct', 'addfailregex', '<IP>'],
+				 ['set', 'tz_correct', 'logtimezone', 'UTC+0200'],
+				 ['start', 'emptyaction'],
+				 ['start', 'missinglogfiles'],
+				 ['start', 'brokenaction'],
+				 ['start', 'parse_to_end_of_jail.conf'],
+			   ['add', 'tz_correct', 'auto'],
+				 ['start', 'tz_correct'],
+				 ['config-error',
+					"Jail 'brokenactiondef' skipped, because of wrong configuration: Invalid action definition 'joho[foo': unexpected option syntax"],
+				 ['config-error',
+					"Jail 'brokenfilterdef' skipped, because of wrong configuration: Invalid filter definition 'flt[test': unexpected option syntax"],
+				 ['config-error',
+					"Jail 'missingaction' skipped, because of wrong configuration: Unable to read action 'noactionfileforthisaction'"],
+				 ['config-error',
+					"Jail 'missingbitsjail' skipped, because of wrong configuration: Unable to read the filter 'catchallthebadies'"],
+				 ])
+		_checkStream(comm_commands, backend='auto')
+		self.assertNotLogged("Have not found any log file for 'missinglogfiles' jail. Jail will monitor systemd journal.")
 		self.assertLogged("No file(s) found for glob /weapons/of/mass/destruction")
+		self.assertLogged("Jail 'missinglogfiles_skip' skipped, because of missing log files.")
+		# switch backend auto to systemd if no files found, note that jail "missinglogfiles_skip" will be skipped yet,
+		# because for this jail configured skip_if_nologs = true, all other jails shall switch to systemd with warning
+		self.pruneLog('[test-phase] auto -> systemd')
+		comm_commands = jails.convert(allow_no_files=True)
+		_checkStream(comm_commands, backend='systemd')
+		self.assertNotLogged("Errors in jail 'missingbitsjail'.")
+		self.assertLogged("Have not found any log file for 'missinglogfiles' jail. Jail will monitor systemd journal.")
+		self.assertLogged("No file(s) found for glob /weapons/of/mass/destruction")
+		self.assertLogged("Jail 'missinglogfiles_skip' skipped, because of missing log files.")
 
 	def testReadStockActionConf(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)

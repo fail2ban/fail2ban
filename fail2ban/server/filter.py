@@ -1288,24 +1288,15 @@ class FileFilter(Filter):
 				break
 			db.updateLog(self.jail, log)
 			
-	def onStop(self):
+	def afterStop(self):
 		"""Stop monitoring of log-file(s). Invoked after run method.
 		"""
-		# ensure positions of pending logs are up-to-date:
-		if self._pendDBUpdates and self.jail.database:
-			self._updateDBPending()
 		# stop files monitoring:
 		for path in list(self.__logs.keys()):
 			self.delLogPath(path)
-
-	def stop(self):
-		"""Stop filter
-		"""
-		# normally onStop will be called automatically in thread after its run ends, 
-		# but for backwards compatibilities we'll invoke it in caller of stop method.
-		self.onStop()
-		# stop thread:
-		super(Filter, self).stop()
+		# ensure positions of pending logs are up-to-date:
+		if self._pendDBUpdates and self.jail.database:
+			self._updateDBPending()
 
 ##
 # FileContainer class.

@@ -335,7 +335,9 @@ class Jail(object):
 			try:
 				## signal to stop filter / actions:
 				if stop:
-					obj.stop()
+					if obj.isAlive():
+						obj.stop()
+					obj.done(); # and clean-up everything
 				## wait for end of threads:
 				if join:
 					obj.join()
