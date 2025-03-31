@@ -1,0 +1,14 @@
+# failJSON: { "time": "07-04-2023 22:41:38", "match": true , "host": "181.214.99.24" }
+time="07-04-2023 22:41:38" level=info msg="(f634c63a174305da8cdedWzbYmW/cscli) manual 'ban' from 'f634c63a174305da8cdedWzbYmW' by ip 181.214.99.24 : 4h ban on Ip 181.214.99.24"
+
+
+# failJSON: { "time": "2025-01-24T11:33:35+08:00", "match": true , "host": "5.45.69.120" }
+time="2025-01-24T11:33:35+08:00" level=info msg="(f634c63a174305da8cdedWzbYmW/cscli) crowdsecurity/http-open-proxy by ip 5.45.69.120 (NL/58061) : 4h ban on Ip 5.45.69.120"
+
+
+# failJSON: { "time": "2024-11-15T07:17:05+08:00", "match": true , "host": "138.68.82.23" }
+time="2024-11-15T07:17:05+08:00" level=info msg="(f634c63a174305da8cdedWzbYmW/crowdsec) crowdsecurity/jira_cve-2021-26086 by ip 138.68.82.23 (DE/14061) : 4h ban on Ip 138.68.82.23"
+
+
+# failJSON: { "time": "2024-02-02T10:42:52Z", "match": true , "host": "5.45.69.120" }
+time="2024-02-02T10:42:52Z" level=info msg="(f634c63a174305da8cdedWzbYmW/crowdsec) crowdsecurity/http-open-proxy by ip 5.45.69.120 (NL/58061) : 4h ban on Ip 5.45.69.120"
