@@ -62,7 +62,6 @@ protocol = [
 ["stat[istic]s", "gets the current statistics of all jails as table"],
 ["ping", "tests if the server is alive"],
 ["echo", "for internal usage, returns back and outputs a given string"],
-["help", "return this output"], 
 ["version", "return the server version"],
 ['', "LOGGING", ""],
 ["set loglevel <LEVEL>", "sets logging level to <LEVEL>. Levels: CRITICAL, ERROR, WARNING, NOTICE, INFO, "
