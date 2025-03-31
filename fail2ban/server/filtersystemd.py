@@ -63,7 +63,7 @@ def _globJournalFiles(flags=None, path=None):
 			filesSet |= set(glob(_join(p,'system.journal'))) - set(glob(_join(p,'system*@*.journal')))
 		# current user-journal:
 		if (flags is not None) and (flags & journal.CURRENT_USER):
-			uid = os.getuid()
+			uid = os.geteuid()
 			filesSet |= set(glob(_join(p,('user-%s.journal' % uid)))) - set(glob(_join(p,('user-%s@*.journal' % uid))))
 		# all local journals:
 		if (flags is None) or not (flags & (journal.SYSTEM_ONLY|journal.CURRENT_USER)):
@@ -77,7 +77,10 @@ def _globJournalFiles(flags=None, path=None):
 			_addJF(filesSet, _join(_getSystemdPath('system-state-logs'), 'journal/*'), flags)
 		# runtime journals corresponding flags:
 		_addJF(filesSet, _join(_getSystemdPath('system-runtime-logs'), 'journal/*'), flags)
-	return filesSet
+	# if not root, filter readable only:
+	if os.geteuid() != 0:
+		filesSet = [f for f in filesSet if os.access(f, os.R_OK)]
+	return filesSet if filesSet else None
 
 
 ##
