@@ -1,0 +1,17 @@
+# This is normal closing of connection
+# failJSON: { "match": false }
+Oct 15 12:31:31 localhost.localdomain rsyslogd[284640]: unexpected GnuTLS error -54 in nsd_gtls.c:612: Error in the pull function.  [v8.2102.0-13.el8 try https://www.rsyslog.com/e/2078 ]
+# failJSON: { "match": false }
+Oct 15 12:31:31 localhost.localdomain rsyslogd[284640]: netstream session 0x7f97d00021e0 from 73.189.107.42 will be closed due to error [v8.2102.0-13.el8 try https://www.rsyslog.com/e/2078 ]
+# This is failed connection
+# failJSON: { "match": false }
+Oct 15 15:15:20 localhost.localdomain rsyslogd[284640]: peer did not provide a certificate, not permitted to talk to it [v8.2102.0-13.el8 try https://www.rsyslog.com/e/2085 ]
+# failJSON: { "time": "2004-10-15T15:15:20", "match": true , "host": "185.233.19.152" }
+Oct 15 15:15:20 localhost.localdomain rsyslogd[284640]: netstream session 0x7f97d0061b70 from 185.233.19.152 will be closed due to error [v8.2102.0-13.el8 try https://www.rsyslog.com/e/2089 ]
+# This is failed connection
+# failJSON: { "match": false }
+Oct 15 15:15:20 localhost.localdomain rsyslogd[284640]: gnutls returned error on handshake: An unexpected TLS packet was received.  [v8.2102.0-13.el8 try https://www.rsyslog.com/e/2083 ]
+# failJSON: { "match": false }
+Oct 15 15:15:30 localhost.localdomain rsyslogd[284640]: GnuTLS handshake retry returned error: The TLS connection was non-properly terminated.  [v8.2102.0-13.el8 try https://www.rsyslog.com/e/2083 ]
+# failJSON: { "time": "2004-10-15T15:15:30", "match": true , "host": "185.233.19.152" }
+Oct 15 15:15:30 localhost.localdomain rsyslogd[284640]: netstream session 0x7f97d0036b00 from 185.233.19.152 will be closed due to error [v8.2102.0-13.el8 try https://www.rsyslog.com/e/2089 ]
