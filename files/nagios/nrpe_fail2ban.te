@@ -1,0 +1,36 @@
+
+module nrpe_fail2ban 1.0;
+
+require {
+	type admin_home_t;
+	type nrpe_t;
+	class unix_dgram_socket sendto;
+	class file execute;
+	class file getattr;
+	class file { read getattr open };
+	class file execute_no_trans;
+	type fail2ban_client_exec_t;
+	class file { ioctl getattr };
+	class file { read open };
+	class file execute_no_trans;
+	type fail2ban_var_run_t;
+	class sock_file write;
+	class file ioctl;
+	type fail2ban_t;
+	class unix_stream_socket connectto;
+}
+
+#============= nrpe_t ==============
+allow nrpe_t admin_home_t:file execute;
+allow nrpe_t self:unix_dgram_socket sendto;
+allow nrpe_t admin_home_t:file getattr;
+allow nrpe_t admin_home_t:file { read open };
+allow nrpe_t admin_home_t:file execute_no_trans;
+allow nrpe_t admin_home_t:file ioctl;
+allow nrpe_t fail2ban_client_exec_t:file getattr;
+allow nrpe_t fail2ban_client_exec_t:file execute;
+allow nrpe_t fail2ban_client_exec_t:file { read open };
+allow nrpe_t fail2ban_client_exec_t:file execute_no_trans;
+allow nrpe_t fail2ban_client_exec_t:file ioctl;
+allow nrpe_t fail2ban_var_run_t:sock_file write;
+allow nrpe_t fail2ban_t:unix_stream_socket connectto;
