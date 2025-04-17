@@ -11,6 +11,9 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Compatibility
+* `action.d/iptables.conf` rewritten due to support of multiple chains (gh-3909), therefore user-level derivations 
+  (action including iptables-based action) may become incompatible, e. g. some tags if used need to be replaced,
+  e. g. `<chain>` with `$chain` or `<_ipt_for_proto-iter>` with `<_ipt-iter>`;
 * `filter.d/exim.conf` - several rules of mode `normal` moved to new mode `more`, because of too risky handling (see [gh-3940](https://github.com/fail2ban/fail2ban/pull/3940)),
   to use it as before set `mode = more` for exim jail, but be aware of the consequences.
 
@@ -74,6 +77,8 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   `#` or `;` after space or newline would be ignored up to next newline)
 * `action.d/*-ipset.conf`:
   - parameter `ipsettype` to set type of ipset, e. g. hash:ip, hash:net, etc (gh-3760)
+* `action.d/iptables.conf` - action and few derivatives of it extended to handle multiple chains,
+  e. g. would also accept `chain = INPUT,FORWARD` (gh-3909)
 * `action.d/firewallcmd-rich-*.conf` - fixed incorrect quoting, disabling port variable expansion
   by substitution of rich rule (gh-3815)
 * `filter.d/proxmox.conf` - add support to Proxmox Web GUI (gh-2966)
