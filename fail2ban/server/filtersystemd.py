@@ -156,7 +156,9 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				args.get('flags', journal.LOCAL_ONLY), args.get('path'))
 			if args['files']:
 				args['files'] = list(args['files'])
-				args['path'] = None; # cannot be cannot be specified simultaneously with files
+				# flags and path cannot be specified simultaneously with files:
+				args['flags'] = None;
+				args['path'] = None; 
 			else:
 				args['files'] = None
 
