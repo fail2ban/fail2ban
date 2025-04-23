@@ -350,7 +350,7 @@ class TestsUtilsTest(LogCaptureTestCase):
 		unittest.F2B.fast = True
 		try:
 			self.assertEqual(unittest.F2B.maxWaitTime(lambda: 50)(), 50)
-			self.assertEqual(unittest.F2B.maxWaitTime(25), 5)
+			self.assertEqual(unittest.F2B.maxWaitTime(25), 10)
 			self.assertEqual(unittest.F2B.maxWaitTime(25.), 25.0)
 		finally:
 			unittest.F2B.fast = orgfast
