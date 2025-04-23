@@ -1569,8 +1569,10 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 
 		def testJournalFlagsArg(self):
 			self._initFilter(journalflags=0)
+			self._initFilter(journalflags=1)
 		def testJournalFlags_RotatedArg(self):
 			self._initFilter(journalflags=0, rotated=1)
+			self._initFilter(journalflags=1, rotated=1)
 
 		def assert_correct_ban(self, test_ip, test_attempts):
 			self.assertTrue(self.waitFailTotal(test_attempts, 10)) # give Filter a chance to react
