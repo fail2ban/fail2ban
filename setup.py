@@ -23,8 +23,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2008-2016 Fail2Ban Contributo
 __license__ = "GPL"
 
 import platform
-
 import setuptools
+import shutil
+
 from setuptools import setup
 from setuptools.command.install import install
 from setuptools.command.install_scripts import install_scripts
@@ -45,6 +46,28 @@ source_dir = os.path.realpath(os.path.dirname(
 ))
 
 with_tests = True
+
+def _generate_scripts(buildroot, install_dir, dry_run=False, quiet=False):
+	scripts = ['fail2ban.service', 'fail2ban-openrc.init']
+	for script in scripts:
+		if not quiet: print(('Creating %s/%s (from %s.in): @BINDIR@ -> %s' % (buildroot, script, script, install_dir)))
+		with open(join(source_dir, 'files/%s.in' % script), 'r') as fn:
+			lines = fn.readlines()
+		fn = None
+		if not dry_run:
+			fn = open(join(buildroot, script), 'w')
+		try:
+			for ln in lines:
+				ln = re.sub(r'@BINDIR@', lambda v: install_dir, ln)
+				if dry_run:
+					if not quiet: sys.stdout.write(' | ' + ln)
+					continue
+				fn.write(ln)
+		finally:
+			if fn: fn.close()
+		if dry_run:
+			if not quiet: print(' `')
+
 
 # Wrapper to install python binding (to current python version):
 class install_scripts_f2b(install_scripts):
@@ -79,27 +102,7 @@ class install_scripts_f2b(install_scripts):
 				install_dir = install_dir[len(root):]
 		except: # pragma: no cover
 			print('WARNING: Cannot find root-base option, check the bin-path to fail2ban-scripts in "fail2ban.service" and "fail2ban-openrc.init".')
-
-		scripts = ['fail2ban.service', 'fail2ban-openrc.init']
-		for script in scripts:
-			print(('Creating %s/%s (from %s.in): @BINDIR@ -> %s' % (buildroot, script, script, install_dir)))
-			with open(os.path.join(source_dir, 'files/%s.in' % script), 'r') as fn:
-				lines = fn.readlines()
-			fn = None
-			if not dry_run:
-				fn = open(os.path.join(buildroot, script), 'w')
-			try:
-				for ln in lines:
-					ln = re.sub(r'@BINDIR@', lambda v: install_dir, ln)
-					if dry_run:
-						sys.stdout.write(' | ' + ln)
-						continue
-					fn.write(ln)
-			finally:
-				if fn: fn.close()
-			if dry_run:
-				print(' `')
-
+		_generate_scripts(buildroot, install_dir, dry_run)
 
 # Wrapper to specify fail2ban own options:
 class install_command_f2b(install):
@@ -111,19 +114,23 @@ class install_command_f2b(install):
 		install.initialize_options(self)
 	def finalize_options(self):
 		if self.without_tests:
-			self.distribution.scripts.remove('bin/fail2ban-testcases')
-
-			self.distribution.packages.remove('fail2ban.tests')
-			self.distribution.packages.remove('fail2ban.tests.action_d')
-
-			del self.distribution.package_data['fail2ban.tests']
+			try:
+				self.distribution.scripts.remove('bin/fail2ban-testcases')
+			except ValueError: pass
+			try:
+				self.distribution.packages.remove('fail2ban.tests')
+				self.distribution.packages.remove('fail2ban.tests.action_d')
+			except ValueError: pass
+			try:
+				del self.distribution.package_data['fail2ban.tests']
+			except KeyError: pass
 		install.finalize_options(self)
 	def run(self):
 		install.run(self)
 
 
 # Update fail2ban-python env to current python version (where f2b-modules located/installed)
-updatePyExec(os.path.join(source_dir, 'bin'))
+updatePyExec(join(source_dir, 'bin'))
 
 if setuptools and "test" in sys.argv:
 	import logging
@@ -145,10 +152,9 @@ elif "test" in sys.argv:
 	print("")
 
 # if build without tests:
-if "build" in sys.argv:
-	if "--without-tests" in sys.argv:
-		with_tests = False
-		sys.argv.remove("--without-tests")
+if "--without-tests" in sys.argv:
+	with_tests = False
+	sys.argv.remove("--without-tests")
 
 longdesc = '''
 Fail2Ban scans log files like /var/log/pwdfail or
@@ -183,38 +189,37 @@ if platform_system in ('linux', 'solaris', 'sunos') or platform_system.startswit
 		('/usr/share/doc/fail2ban', doc_files)
 	)
 
-
-setup(
-	name = "fail2ban",
-	version = version,
-	description = "Ban IPs that make too many password failures",
-	long_description = longdesc,
-	author = "Cyril Jaquier & Fail2Ban Contributors",
-	author_email = "cyril.jaquier@fail2ban.org",
-	url = "http://www.fail2ban.org",
-	license = "GPL",
-	platforms = "Posix",
-	cmdclass = {
+params = {
+	"name": "fail2ban",
+	"version": version,
+	"description": "Ban IPs that make too many password failures",
+	"long_description": longdesc,
+	"author": "Cyril Jaquier & Fail2Ban Contributors",
+	"author_email": "cyril.jaquier@fail2ban.org",
+	"url": "http://www.fail2ban.org",
+	"license": "GPL",
+	"platforms": "Posix",
+	"cmdclass": {
 		'install_scripts': install_scripts_f2b, 'install': install_command_f2b
 	},
-	scripts = [
+	"scripts": [
 		'bin/fail2ban-client',
 		'bin/fail2ban-server',
 		'bin/fail2ban-regex',
 		# 'bin/fail2ban-python', -- link (binary), will be installed via install_scripts_f2b wrapper
-	] + [
+	] + ([
 		'bin/fail2ban-testcases',
-	] if with_tests else [],
-	packages = [
+	] if with_tests else []),
+	"packages": [
 		'fail2ban',
 		'fail2ban.client',
 		'fail2ban.compat',
 		'fail2ban.server',
-	] + [
+	] + ([
 		'fail2ban.tests',
 		'fail2ban.tests.action_d',
-	]  if with_tests else [],
-	package_data = {
+	]  if with_tests else []),
+	"package_data": {
 		'fail2ban.tests':
 			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
 				for w in os.walk('fail2ban/tests/files')
@@ -226,7 +231,7 @@ setup(
 				for w in os.walk('fail2ban/tests/action_d')
 				for f in w[2]]
 	} if with_tests else {},
-	data_files = [
+	"data_files": [
 		('/etc/fail2ban',
 			glob("config/*.conf")
 		),
@@ -249,9 +254,114 @@ setup(
 		('/var/lib/fail2ban',
 			''
 		),
-	] + data_files_extra,
-	**setup_extra
-)
+	] + data_files_extra
+}
+params.update(setup_extra)
+
+def _dispInstallFooter():
+	print("")
+	print("Please do not forget to update your configuration files.")
+	print("They are in \"/etc/fail2ban/\".")
+	print("")
+	print("You can also install systemd service-unit file from \"build/fail2ban.service\"")
+	print("resp. corresponding init script from \"files/*-initd\".")
+	print("")
+
+# if new packaging mechanism:
+if "f2b-install" in sys.argv or "f2b-build" in sys.argv:
+	import getopt
+	build_base = 'build'
+	cfg = {'dry-run':False, 'quiet':False}
+	# Reads the command line options.
+	def _dispUsage():
+		print(("usage: %s comand [options]\n"
+			"Commands:\n"
+			"  f2b-build       build the package underneath\n"
+			"  f2b-install     will install the package\n"
+			"Options:\n"
+			"  --quiet (-q)    run quietly (turns verbosity off)\n"
+			"  --dry-run (-n)  don't actually do anything\n"
+			"  --help (-h)     show detailed help message\n"
+			"Options of 'f2b-install' and 'f2b-build' commands:\n"
+			"  --prefix=            installation prefix\n"
+			"  --build-base= (-b)   base directory for build ()\n"
+			"  --root=              install everything relative to this\n"
+			"                       alternate root directory\n"
+			"  --lib=               directory for library\n"
+			"  --bin=               build directory for binary\n"
+			"  --without-tests      don't enclose fail2ban test-suite\n")
+		% (sys.argv[0],))
+	try:
+		optList, args = getopt.gnu_getopt(sys.argv[1:],
+			'b:qnh',
+			['prefix=', 'build-base=', 'root=', 'lib=', 'bin=', 'dry-run', 'quiet', 'help']
+		)
+		if len(args) != 1 or args[0] not in ('f2b-install', 'f2b-build'):
+			raise getopt.GetoptError("invalid arguments %r" % (args,))
+		for opt in optList:
+			o = opt[0]
+			if o in ("-q", "--quiet"):
+				cfg["quiet"] = True
+			elif o in ("-n", "--dry-run"):
+				cfg["dry-run"] = True
+			elif o in ("-b", "--build-base"):
+				build_base = opt[1]
+			elif o in ("-h", "--help"):
+				_dispUsage()
+				sys.exit(0)
+			elif o.startswith("--"):
+				cfg[o[2:]] = opt[1]
+			else: # unexpected:
+				raise getopt.GetoptError("unexpected option %r" % (o,))
+	except getopt.GetoptError as e:
+		sys.stdout.write("%s\n" % (e,))
+		_dispUsage()
+		sys.exit(1)
+	def _rootpath(p, build_base=build_base):
+		if os.path.isabs(p):
+			p = os.path.relpath(p, '/')
+		return join(build_base, p)
+	print("running f2b-build")
+	if not cfg.get("lib"):
+		cfg["lib"] = next(filter(lambda x: x.endswith("dist-packages"), sys.path), None)
+	build_lib = _rootpath(cfg["lib"])
+	if not cfg.get("bin"):
+		cfg["bin"] = re.sub(r'/lib(?=^|/).*', '/bin', cfg["lib"]); # /usr/local/lib/... =>/usr/local/bin
+	build_scripts = _rootpath(cfg["bin"])
+	add_args = []
+	if cfg["dry-run"]: add_args.append('--dry-run')
+	if cfg["quiet"]: add_args.append('--quiet')
+	# build:
+	sys.argv = ['setup.py', 'build', '--build-base=' + build_base, '--build-lib=' + build_lib, '--build-scripts=' + build_scripts] + add_args
+	setup(**params)
+	updatePyExec(build_scripts); # bin/fail2ban-python link
+	_generate_scripts(build_base, cfg["bin"], dry_run=cfg["dry-run"], quiet=cfg["quiet"]); # fail2ban.service, fail2ban-openrc.init
+	# /etc, /var/lib:
+	for p in params['data_files']:
+		p, lst = p
+		p = _rootpath(p)
+		if not cfg["quiet"]: print('creating %s' % (p,))
+		if not cfg["dry-run"]:
+			os.makedirs(p, exist_ok=True)
+		for n in lst:
+			n2 = join(p, os.path.basename(n))
+			if not cfg["quiet"]: print('copying %s -> %s' % (n, n2))
+			if not cfg["dry-run"]:
+				shutil.copy2(n, n2)
+	# egg_info:
+	sys.argv = ['setup.py', 'egg_info', '--egg-base=' + build_lib] + add_args
+	setup(**params)
+	print("f2b-build done.")
+	# build done - now install if wanted:
+	if args[0] == 'f2b-install':
+		print("running f2b-install")
+		raise Exception("Not yet implemented.")
+		_dispInstallFooter()
+	# done
+	sys.exit(0)
+
+# original install, build, etc.
+setup(**params)
 
 # Do some checks after installation
 # Search for obsolete files.
@@ -296,11 +406,5 @@ if isdir("/usr/lib/fail2ban"):
 	print("")
 
 # Update config file
-if sys.argv[1] == "install":
-	print("")
-	print("Please do not forget to update your configuration files.")
-	print("They are in \"/etc/fail2ban/\".")
-	print("")
-	print("You can also install systemd service-unit file from \"build/fail2ban.service\"")
-	print("resp. corresponding init script from \"files/*-initd\".")
-	print("")
+if "install" in sys.argv:
+	_dispInstallFooter()
