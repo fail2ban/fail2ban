@@ -163,13 +163,6 @@ too many password failures. It updates firewall rules
 to reject the IP address or executes user defined
 commands.'''
 
-if setuptools:
-	setup_extra = {
-		'test_suite': "fail2ban.tests.utils.gatherTests",
-	}
-else:
-	setup_extra = {}
-
 data_files_extra = []
 if os.path.exists('/var/run'):
 	# if we are on the system with /var/run -- we are to use it for having fail2ban/
@@ -256,7 +249,6 @@ params = {
 		),
 	] + data_files_extra
 }
-params.update(setup_extra)
 
 def _dispInstallFooter():
 	print("")
@@ -344,10 +336,9 @@ if "install-ex" in sys.argv or "build-ex" in sys.argv:
 		if not cfg["dry-run"]:
 			os.makedirs(p, exist_ok=True)
 		for n in lst:
-			n2 = join(p, os.path.basename(n))
-			if not cfg["quiet"]: print('copying %s -> %s' % (n, n2))
+			if not cfg["quiet"]: print('copying %s -> %s' % (n, p))
 			if not cfg["dry-run"]:
-				shutil.copy2(n, n2)
+				shutil.copy2(n, p)
 	# egg_info:
 	sys.argv = ['setup.py', 'egg_info', '--egg-base=' + build_lib] + add_args
 	setup(**params)
