@@ -262,6 +262,7 @@ def _dispInstallFooter():
 # if new packaging mechanism:
 if "install-ex" in sys.argv or "build-ex" in sys.argv:
 	import getopt
+	import sysconfig
 	build_base = 'build'
 	cfg = {'dry-run':False, 'quiet':False}
 	# Reads the command line options.
@@ -315,10 +316,16 @@ if "install-ex" in sys.argv or "build-ex" in sys.argv:
 		return join(build_base, p)
 	print("running build-ex")
 	if not cfg.get("lib"):
-		cfg["lib"] = next(filter(lambda x: x.endswith("dist-packages"), sys.path), None)
+		cfg["lib"] = sysconfig.get_paths().get("purelib")
+		if not cfg["lib"]:
+			cfg["lib"] = next(filter(lambda x: x.endswith("dist-packages"), sys.path), None)
+			if not cfg["lib"]:
+				raise Exception("cannot estimate library path, set it with --lib")
 	build_lib = _rootpath(cfg["lib"])
 	if not cfg.get("bin"):
-		cfg["bin"] = re.sub(r'/lib(?=^|/).*', '/bin', cfg["lib"]); # /usr/local/lib/... =>/usr/local/bin
+		cfg["bin"] = sysconfig.get_paths().get("scripts")
+		if not cfg["lib"]:
+			raise Exception("cannot estimate binary path, set it with --bin")
 	build_scripts = _rootpath(cfg["bin"])
 	add_args = []
 	if cfg["dry-run"]: add_args.append('--dry-run')
