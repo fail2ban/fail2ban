@@ -268,7 +268,7 @@ def _dispInstallFooter():
 	print("")
 
 # if new packaging mechanism:
-if "f2b-install" in sys.argv or "f2b-build" in sys.argv:
+if "install-ex" in sys.argv or "build-ex" in sys.argv:
 	import getopt
 	build_base = 'build'
 	cfg = {'dry-run':False, 'quiet':False}
@@ -276,15 +276,15 @@ if "f2b-install" in sys.argv or "f2b-build" in sys.argv:
 	def _dispUsage():
 		print(("usage: %s comand [options]\n"
 			"Commands:\n"
-			"  f2b-build       build the package underneath\n"
-			"  f2b-install     will install the package\n"
+			"  build-ex        build the package underneath ./build (or --build-base)\n"
+			"  install-ex      will install the package\n"
 			"Options:\n"
 			"  --quiet (-q)    run quietly (turns verbosity off)\n"
 			"  --dry-run (-n)  don't actually do anything\n"
 			"  --help (-h)     show detailed help message\n"
-			"Options of 'f2b-install' and 'f2b-build' commands:\n"
+			"Options of 'install-ex' and 'build-ex' commands:\n"
 			"  --prefix=            installation prefix\n"
-			"  --build-base= (-b)   base directory for build ()\n"
+			"  --build-base= (-b)   base directory for build (default ./build)\n"
 			"  --root=              install everything relative to this\n"
 			"                       alternate root directory\n"
 			"  --lib=               directory for library\n"
@@ -296,7 +296,7 @@ if "f2b-install" in sys.argv or "f2b-build" in sys.argv:
 			'b:qnh',
 			['prefix=', 'build-base=', 'root=', 'lib=', 'bin=', 'dry-run', 'quiet', 'help']
 		)
-		if len(args) != 1 or args[0] not in ('f2b-install', 'f2b-build'):
+		if len(args) != 1 or args[0] not in ('install-ex', 'build-ex'):
 			raise getopt.GetoptError("invalid arguments %r" % (args,))
 		for opt in optList:
 			o = opt[0]
@@ -321,7 +321,7 @@ if "f2b-install" in sys.argv or "f2b-build" in sys.argv:
 		if os.path.isabs(p):
 			p = os.path.relpath(p, '/')
 		return join(build_base, p)
-	print("running f2b-build")
+	print("running build-ex")
 	if not cfg.get("lib"):
 		cfg["lib"] = next(filter(lambda x: x.endswith("dist-packages"), sys.path), None)
 	build_lib = _rootpath(cfg["lib"])
@@ -351,10 +351,10 @@ if "f2b-install" in sys.argv or "f2b-build" in sys.argv:
 	# egg_info:
 	sys.argv = ['setup.py', 'egg_info', '--egg-base=' + build_lib] + add_args
 	setup(**params)
-	print("f2b-build done.")
+	print("build-ex done.")
 	# build done - now install if wanted:
-	if args[0] == 'f2b-install':
-		print("running f2b-install")
+	if args[0] == 'install-ex':
+		print("running install-ex")
 		raise Exception("Not yet implemented.")
 		_dispInstallFooter()
 	# done

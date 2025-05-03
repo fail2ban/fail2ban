@@ -96,7 +96,7 @@ jobs:
          #run: python bin/fail2ban-testcases --verbosity=2 -l 5 "test_WrongChar"
 
       - name: Build
-        run: python setup.py build
+        run: python setup.py build-ex --build-base=build --bin=/usr/local/bin --lib=/usr/local/lib/python$F2B_PYV/dist-packages --without-tests
 
       #- name: Test initd scripts
       #  run: shellcheck -s bash -e SC1090,SC1091 files/debian-initd
