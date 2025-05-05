@@ -8,3 +8,4 @@ systemd-run.diff
 update_backend_system.diff
 update-ssh-9.8.diff
 replace-distutils.patch
+update-ssh-10.0.diff
