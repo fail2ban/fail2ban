@@ -262,6 +262,7 @@ def _dispInstallFooter():
 # if new packaging mechanism:
 if "install-ex" in sys.argv or "build-ex" in sys.argv:
 	import getopt
+	import subprocess
 	import sysconfig
 	build_base = 'build'
 	cfg = {'dry-run':False, 'quiet':False}
@@ -310,23 +311,34 @@ if "install-ex" in sys.argv or "build-ex" in sys.argv:
 		sys.stdout.write("%s\n" % (e,))
 		_dispUsage()
 		sys.exit(1)
-	def _rootpath(p, build_base=build_base):
+	def _buildpath(p, build_base=build_base):
 		if os.path.isabs(p):
 			p = os.path.relpath(p, '/')
 		return join(build_base, p)
 	print("running build-ex")
+	replPrefRE = None
+	if cfg.get("prefix"):
+		p = sysconfig.get_paths().get("data")
+		if cfg.get("prefix").endswith("/") and not p.endswith("/"):
+			p += "/"
+		if p:
+			replPrefRE = re.compile(r"^"+re.escape(p)+(r"(?=/)" if not p.endswith("/") else ""))
 	if not cfg.get("lib"):
 		cfg["lib"] = sysconfig.get_paths().get("purelib")
 		if not cfg["lib"]:
 			cfg["lib"] = next(filter(lambda x: x.endswith("dist-packages"), sys.path), None)
 			if not cfg["lib"]:
 				raise Exception("cannot estimate library path, set it with --lib")
-	build_lib = _rootpath(cfg["lib"])
+		# replace prefix if given:
+		if replPrefRE: cfg["lib"] = replPrefRE.sub(cfg.get("prefix"), cfg["lib"], 1)
+	build_lib = _buildpath(cfg["lib"])
 	if not cfg.get("bin"):
 		cfg["bin"] = sysconfig.get_paths().get("scripts")
 		if not cfg["lib"]:
 			raise Exception("cannot estimate binary path, set it with --bin")
-	build_scripts = _rootpath(cfg["bin"])
+		# replace prefix if given:
+		if replPrefRE: cfg["bin"] = replPrefRE.sub(cfg.get("prefix"), cfg["bin"], 1)
+	build_scripts = _buildpath(cfg["bin"])
 	add_args = []
 	if cfg["dry-run"]: add_args.append('--dry-run')
 	if cfg["quiet"]: add_args.append('--quiet')
@@ -338,7 +350,7 @@ if "install-ex" in sys.argv or "build-ex" in sys.argv:
 	# /etc, /var/lib:
 	for p in params['data_files']:
 		p, lst = p
-		p = _rootpath(p)
+		p = _buildpath(p)
 		if not cfg["quiet"]: print('creating %s' % (p,))
 		if not cfg["dry-run"]:
 			os.makedirs(p, exist_ok=True)
@@ -353,7 +365,16 @@ if "install-ex" in sys.argv or "build-ex" in sys.argv:
 	# build done - now install if wanted:
 	if args[0] == 'install-ex':
 		print("running install-ex")
-		raise Exception("Not yet implemented.")
+		p = cfg.get("root", "/")
+		if p != "/":
+			if not cfg["quiet"]: print("creating %s" % (p, ))
+			if not cfg["dry-run"]:
+				os.makedirs(p, exist_ok=True)
+		# copy every directory from build to root (bypass .service and .init files in root of build):
+		for n in glob(join(build_base, '*/')):
+			if not cfg["quiet"]: print("install %s to %s" % (n, p))
+			if not cfg["dry-run"]:
+				subprocess.run(["cp", "-dr", "--preserve=mode,timestamp", "--no-preserve=ownership", "-t", p, n])
 		_dispInstallFooter()
 	# done
 	sys.exit(0)
