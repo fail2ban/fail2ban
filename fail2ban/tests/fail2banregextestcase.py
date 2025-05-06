@@ -432,8 +432,16 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('output: %s' % "['192.0.2.0'", "'ip4': '192.0.2.0'", "'user': 'kevin'", all=True)
 		self.pruneLog()
 		# log msg :
-		self.assertTrue(_test_exec('-o', 'msg', STR_00, RE_00_USER))
+		nmline = "Dec 31 12:00:00 [sshd] error: PAM: No failure for user from 192.0.2.123"
+		lines = STR_00+"\n"+nmline
+		self.assertTrue(_test_exec('-o', 'msg', lines, RE_00_USER))
 		self.assertLogged('output: %s' % STR_00)
+		self.assertNotLogged('output: %s' % nmline)
+		self.pruneLog()
+		# log msg (inverted) :
+		self.assertTrue(_test_exec('-o', 'msg', '-i', lines, RE_00_USER))
+		self.assertLogged('output: %s' % nmline)
+		self.assertNotLogged('output: %s' % STR_00)
 		self.pruneLog()
 		# item of match (user):
 		self.assertTrue(_test_exec('-o', 'user', STR_00, RE_00_USER))
@@ -442,6 +450,17 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		# complex substitution using tags (ip, user, family):
 		self.assertTrue(_test_exec('-o', '<ip>, <F-USER>, <family>', STR_00, RE_00_USER))
 		self.assertLogged('output: %s' % '192.0.2.0, kevin, inet4')
+		self.pruneLog()
+		# log msg :
+		lines = nmline+"\n"+STR_00; # just reverse lines (to cover possible order dependencies)
+		self.assertTrue(_test_exec('-o', '<time> : <msg>', lines, RE_00_USER))
+		self.assertLogged('output: %s : %s' % (1104490799.0, STR_00))
+		self.assertNotLogged('output: %s' % nmline)
+		self.pruneLog()
+		# log msg (inverted) :
+		self.assertTrue(_test_exec('-o', '<time> : <msg>', '-i', lines, RE_00_USER))
+		self.assertLogged('output: %s : %s' % (1104490800.0, nmline))
+		self.assertNotLogged('output: %s' % STR_00)
 		self.pruneLog()
 
 	def testStalledIPByNoFailFrmtOutput(self):

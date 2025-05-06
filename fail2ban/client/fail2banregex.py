@@ -172,6 +172,8 @@ def get_opt_parser():
 			   help="Disable check for all regex's"),
 		Option("-o", "--out", action="store", dest="out", default=None,
 			   help="Set token to print failure information only (row, id, ip, msg, host, ip4, ip6, dns, matches, ...)"),
+		Option("-i", "--invert", action="store_true", dest="invert",
+			   help="Invert the sense of matching, to output non-matching lines."),
 		Option("--print-no-missed", action='store_true',
 			   help="Do not print any missed lines"),
 		Option("--print-no-ignored", action='store_true',
@@ -529,7 +531,7 @@ class Fail2banRegex(object):
 		except RegexException as e: # pragma: no cover
 			output( 'ERROR: %s' % e )
 			return None, 0, None
-		if self._filter.getMaxLines() > 1:
+		if self._filter.getMaxLines() > 1 and not self._opts.out:
 			for bufLine in orgLineBuffer[int(fullBuffer):]:
 				if bufLine not in self._filter._Filter__lineBuffer:
 					try:
@@ -619,8 +621,10 @@ class Fail2banRegex(object):
 
 	def process(self, test_lines):
 		t0 = time.time()
+		out = None
 		if self._opts.out: # get out function
 			out = self._prepaireOutput()
+			outinv = self._opts.invert
 		for line in test_lines:
 			if isinstance(line, tuple):
 				line_datetimestripped, ret, is_ignored = self.testRegex(line[0], line[1])
@@ -632,8 +636,13 @@ class Fail2banRegex(object):
 					continue
 				line_datetimestripped, ret, is_ignored = self.testRegex(line)
 
-			if self._opts.out: # (formatted) output:
-				if len(ret) > 0 and not is_ignored: out(ret)
+			if out: # (formatted) output:
+				if len(ret) > 0 and not is_ignored:
+					if not outinv: out(ret)
+				elif outinv: # inverted output (currently only time and message as matches):
+					if not len(ret): # [failRegexIndex, fid, date, fail]
+						ret = [[-1, "", self._filter._Filter__lastDate, {"fid":"", "matches":[line]}]]
+					out(ret)
 				continue
 
 			if is_ignored:
