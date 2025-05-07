@@ -1,5 +1,7 @@
 fail2ban (1.1.0-8) UNRELEASED; urgency=medium
 
+  * Team upload.
+
   [ Sylvestre Ledru ]
   * Add autopkgtest testing.  Thanks to Zaiba Sanglikar for the patch
   * Remove patch deb_path_to_common. Thanks to Zaiba Sanglikar
@@ -9,6 +11,9 @@ fail2ban (1.1.0-8) UNRELEASED; urgency=medium
   * Revert patch to fail on any invalid ssh public key, since this would ban
     legitimate users with multiple public keys.  See
     https://github.com/fail2ban/fail2ban/issues/3922 for the rationale.
+
+  [ Antoine Beaupré ]
+  * Remove runtime calls to distutils, crashing in trixie (Closes: #1104790)
 
  -- Sylvestre Ledru <sylvestre@debian.org>  Mon, 23 Sep 2024 16:10:15 +0200
 
