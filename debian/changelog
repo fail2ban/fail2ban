@@ -1,4 +1,4 @@
-fail2ban (1.1.0-8) UNRELEASED; urgency=medium
+fail2ban (1.1.0-8) unstable; urgency=medium
 
   * Team upload.
 
@@ -18,7 +18,7 @@ fail2ban (1.1.0-8) UNRELEASED; urgency=medium
   [ MichaIng ]
   * Fix log identifier for OpenSSH 10.0.
 
- -- Sylvestre Ledru <sylvestre@debian.org>  Mon, 23 Sep 2024 16:10:15 +0200
+ -- Colin Watson <cjwatson@debian.org>  Fri, 09 May 2025 11:19:16 +0100
 
 fail2ban (1.1.0-7) unstable; urgency=medium
 
