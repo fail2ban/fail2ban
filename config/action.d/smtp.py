@@ -19,7 +19,8 @@
 
 import socket
 import smtplib
-from email.mime.text import MIMEText
+import email.policy
+from email.message import EmailMessage
 from email.utils import formatdate, formataddr
 
 from fail2ban.server.actions import ActionBase, CallingMap
@@ -151,7 +152,8 @@ class SMTPAction(ActionBase):
 			See Python `smtplib` for full list of other possible
 			exceptions.
 		"""
-		msg = MIMEText(text)
+		msg = EmailMessage(policy=email.policy.SMTP)
+		msg.set_content(text)
 		msg['Subject'] = subject
 		msg['From'] = formataddr((self.fromname, self.fromaddr))
 		msg['To'] = self.toaddr
