@@ -84,6 +84,8 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 * `filter.d/proxmox.conf` - add support to Proxmox Web GUI (gh-2966)
 * `filter.d/openvpn.conf` - new filter and jail for openvpn recognizing failed TLS handshakes (gh-2702)
 * `filter.d/vaultwarden.conf` - new filter and jail for Vaultwarden (gh-3979)
+* `fail2ban-regex` extended with new option `-i` or `--invert` to output not-matched lines by `-o` or `--out` (gh-4001)
+
 
 ver. 1.1.0 (2024/04/25) - object-found--norad-59479-cospar-2024-069a--altitude-36267km
 -----------
