@@ -1,0 +1,8 @@
+# Apache 2.2
+# failJSON: { "time": "2025-04-16T16:18:16", "match": true , "host": "13.82.231.149" }
+[Sat Apr 16 16:18:16 2025] [error] [client 13.82.231.149] Directory index forbidden by Options directive: /some/path/to/public/wp-includes/
+
+# Apache 2.4
+# failJSON: { "time": "2025-04-16T16:18:17", "match": true , "host": "13.82.231.149" }
+[Wed Apr 16 16:18:17.927866 2025] [autoindex:error] [pid 27978] [client 13.82.231.149:11585] AH01276: Cannot serve directory /some/path/to/public/wp-includes/: No matching DirectoryIndex (index.html,index.php) found, and server-generated directory index forbidden by Options directive
+
