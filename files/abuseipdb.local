@@ -1,0 +1,74 @@
+# Fail2Ban AbuseIPDB Integration (Enhanced)
+#
+# Author: Hasan CALISIR
+# GitHub: https://github.com/hsntgm
+#
+# Description:
+#   Enhanced AbuseIPDB integration for Fail2Ban with improved control,
+#   tracking, and isolation for IP abuse reporting.
+#
+# Key Features:
+#   - Isolated AbuseIPDB SQLite database to track reports independently.
+#   - Dual API calls: /v2/check and /v2/report for efficient reporting.
+#   - Optimizes AbuseIPDB daily API usage by reducing unnecessary report calls
+#   - Supports norestored=1 to avoid duplicate reports on restart.
+#   - Maintains a separate, long-term persistent database of banned IPs to ensure accurate tracking
+#     and avoid reliance on Fail2Ban’s bantimes or ban state, even if Fail2Ban’s
+#     internal ban management becomes inconsistent over time.
+#   - Customizable report comments to avoid leaking sensitive info.
+#
+# Example 'jail' configuration in 'jail.local' to prevent leaking sensitive information in AbuseIPDB reports:
+#   [nginx-botsearch]
+#   enabled    = true
+#   logpath    = /var/log/nginx/*.log
+#   port       = http,https
+#   backend    = polling
+#   tp_comment = Fail2Ban - NGINX bad requests 400-401-403-404-444, high level vulnerability scanning
+#   maxretry   = 3
+#   findtime   = 1d
+#   bantime    = 7200
+#   action     = %(action_mwl)s
+#                %(action_abuseipdb)s[matches="%(tp_comment)s", abuseipdb_apikey="YOUR_API_KEY", abuseipdb_category="21,15", bantime="%(bantime)s"]
+
+
+[Definition]
+# Option:  norestored
+######################
+# Notes.:  Ensure norestored is set to 0
+#          We control this at the script level to provide users with more control over how restored tickets are handled.
+#          We will also be able to log all triggered events by norestored
+#          Do not modify this value directly. Instead, adjust 'BYPASS_FAIL2BAN' below as needed.
+# norestored = 0
+
+
+# Option:  User defined settings
+######################
+# Notes.:  * Path to AbuseIPDB SQLite database used by the action script.
+#          * Path to the log file where actions and events are recorded by the action script.
+#          * Rely on Fail2Ban for restarts (0) or completely isolate it by bypassing Fail2Ban (1)
+#          ! Bypassing Fail2Ban on restarts (BYPASS_FAIL2BAN = 1) can overhelm your server and AbuseIPDB API on restarts.
+#          ! SET 1 if you want to completely isolate from Fail2Ban and rely solely on the AbuseIPDB SQLite database for reporting on restart.
+# SQLITE_DB = "/var/lib/fail2ban/abuseipdb/fail2ban_abuseipdb"
+# LOG_FILE = "/var/log/abuseipdb/abuseipdb.log"
+# BYPASS_FAIL2BAN = 0
+
+
+# Option:  actionstart
+######################
+# Notes.:  Uncomment and leave as-is
+# actionstart = nohup /etc/fail2ban/action.d/fail2ban-abuseipdb.sh \
+#     "--actionstart" "<SQLITE_DB>" "<LOG_FILE>" &
+
+
+# Option:  actionban
+######################
+# Notes.:  Uncomment and leave as-is
+# actionban = /etc/fail2ban/action.d/fail2ban-abuseipdb.sh \
+#     "<abuseipdb_apikey>" "<matches>" "<ip>" "<abuseipdb_category>" "<bantime>" "<restored>" "<BYPASS_FAIL2BAN>" "<SQLITE_DB>" "<LOG_FILE>"
+
+
+[Init]
+# Option:  abuseipdb_apikey
+######################
+# Notes    Set your API key and uncomment
+# abuseipdb_apikey =
