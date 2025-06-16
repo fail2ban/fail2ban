@@ -11,6 +11,7 @@ config/action.d/bsd-ipfw.conf
 config/action.d/cloudflare.conf
 config/action.d/cloudflare-token.conf
 config/action.d/complain.conf
+config/action.d/csf.conf
 config/action.d/dshield.conf
 config/action.d/dummy.conf
 config/action.d/firewallcmd-allports.conf
@@ -129,6 +130,7 @@ config/filter.d/nginx-http-auth.conf
 config/filter.d/nginx-limit-req.conf
 config/filter.d/nsd.conf
 config/filter.d/openhab.conf
+config/filter.d/openvpn.conf
 config/filter.d/openwebmail.conf
 config/filter.d/oracleims.conf
 config/filter.d/pam-generic.conf
@@ -138,6 +140,7 @@ config/filter.d/php-url-fopen.conf
 config/filter.d/portsentry.conf
 config/filter.d/postfix.conf
 config/filter.d/proftpd.conf
+config/filter.d/proxmox.conf
 config/filter.d/pure-ftpd.conf
 config/filter.d/qmail.conf
 config/filter.d/recidive.conf
@@ -162,6 +165,7 @@ config/filter.d/suhosin.conf
 config/filter.d/tine20.conf
 config/filter.d/traefik-auth.conf
 config/filter.d/uwimap-auth.conf
+config/filter.d/vaultwarden.conf
 config/filter.d/vsftpd.conf
 config/filter.d/webmin-auth.conf
 config/filter.d/wuftpd.conf
@@ -340,6 +344,7 @@ fail2ban/tests/files/logs/nginx-http-auth
 fail2ban/tests/files/logs/nginx-limit-req
 fail2ban/tests/files/logs/nsd
 fail2ban/tests/files/logs/openhab
+fail2ban/tests/files/logs/openvpn
 fail2ban/tests/files/logs/openwebmail
 fail2ban/tests/files/logs/oracleims
 fail2ban/tests/files/logs/pam-generic
@@ -349,6 +354,7 @@ fail2ban/tests/files/logs/php-url-fopen
 fail2ban/tests/files/logs/portsentry
 fail2ban/tests/files/logs/postfix
 fail2ban/tests/files/logs/proftpd
+fail2ban/tests/files/logs/proxmox
 fail2ban/tests/files/logs/pure-ftpd
 fail2ban/tests/files/logs/qmail
 fail2ban/tests/files/logs/recidive
@@ -373,6 +379,7 @@ fail2ban/tests/files/logs/suhosin
 fail2ban/tests/files/logs/tine20
 fail2ban/tests/files/logs/traefik-auth
 fail2ban/tests/files/logs/uwimap-auth
+fail2ban/tests/files/logs/vaultwarden
 fail2ban/tests/files/logs/vsftpd
 fail2ban/tests/files/logs/webmin-auth
 fail2ban/tests/files/logs/wuftpd
@@ -390,6 +397,7 @@ fail2ban/tests/files/testcase-journal.log
 fail2ban/tests/files/testcase-multiline.log
 fail2ban/tests/files/testcase-usedns.log
 fail2ban/tests/files/testcase-wrong-char.log
+fail2ban/tests/files/test-ign-ips-file
 fail2ban/tests/files/zzz-sshd-obsolete-multiline.log
 fail2ban/tests/filtertestcase.py
 fail2ban/tests/__init__.py
