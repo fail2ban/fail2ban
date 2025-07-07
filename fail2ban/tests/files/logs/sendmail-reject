@@ -94,13 +94,13 @@ Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026252: <anton@domain.com>...
 # failJSON: { "match": false, "desc": "Different mail ID shouldn't match" }
 Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026255: from=<anton@domain.com>, size=0, class=0, nrcpts=0, bodytype=8BITMIME, proto=ESMTP, daemon=MTA, relay=163.23.32.95.dsl-dynamic.vsi.ru [95.32.23.163]
 
-# failJSON: { "time": "2024-06-17T13:03:43", "match": true }
+# failJSON: { "time": "2024-06-17T13:03:43", "match": false,  "host": "127.0.0.1", "desc": "no failure, just cache host for mlfid" }
 Jun 17 13:03:43 <mail.info> alarmpi sm-mta[26864]: 55HH324M026864: from=<foo@example.com>, size=0, class=0, nrcpts=0, proto=SMTP, daemon=MTA-v4, relay=localhost [127.0.0.1]
 
 # failJSON: { "time": "2024-06-17T14:37:39", "match": true, "host": "192.168.1.44" }
 Jun 17 14:37:39 <mail.notice> alarmpi sm-mta[2794]: 55HIbcGI002794: <baduser@yourhost.com>... User unknown
 
-# failJSON: { "time": "2024-06-17T14:37:39", "match": true, "host": "192.168.1.44" }
+# failJSON: { "time": "2024-06-17T14:37:39", "match": false, "host": "192.168.1.44", "desc": "no failure, just cache host for mlfid" }
 Jun 17 14:37:39 <mail.info> alarmpi sm-mta[2794]: 55HIbcGI002794: from=<root@yourhost.com>, size=108, class=0, nrcpts=0, proto=ESMTP, daemon=MTA-v4, relay=yourrelay [192.168.1.44]
 
 
