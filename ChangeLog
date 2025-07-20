@@ -37,6 +37,8 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   - rename `ipsettype` to `ipsetbackend` (gh-2620), parameter `ipsettype` will be used now to the real set type (gh-3760)
 * `filter.d/apache-noscript.conf` - consider new log-format with "AH02811: stderr from /..." (gh-3900)
 * `filter.d/apache-overflows.conf` - consider AH10244: invalid URI path (gh-3778, gh-3900)
+* `filter.d/asterisk.conf` - fixed RE for "no matching endpoint" with retry info (like `after X tries in Y ms`) at end, 
+  loosening of end anchor (ignore any simple text tokens at end if no single quote found), gh-4037
 * `filter.d/exim.conf`:
   - several rules of mode `normal` moved to new mode `more`, because of too risky handling (gh-3940),
     thereby mode `aggressive` is not affected, because it fully includes mode `more` now;
