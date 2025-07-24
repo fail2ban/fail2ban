@@ -33,6 +33,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 * `paths-debian.conf`:
   - default banactions are `nftables`
   - sshd backend switched to `systemd` (gh-3292)
+  - postfix backend switched to `systemd` (gh-3527)
 * `action.d/firewallcmd-ipset.conf`:
   - rename `ipsettype` to `ipsetbackend` (gh-2620), parameter `ipsettype` will be used now to the real set type (gh-3760)
 * `filter.d/apache-noscript.conf` - consider new log-format with "AH02811: stderr from /..." (gh-3900)
