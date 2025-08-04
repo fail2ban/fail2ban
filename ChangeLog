@@ -85,6 +85,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 * `action.d/firewallcmd-rich-*.conf` - fixed incorrect quoting, disabling port variable expansion
   by substitution of rich rule (gh-3815)
 * `filter.d/dovecot.conf` - add support for latest Dovecot 2.4 release (gh-4016)
+* `filter.d/nginx-limit-req.conf` - extended to ban hosts failed by limit connection in ngx_http_limit_conn_module (gh-3674, gh-4047)
 * `filter.d/proxmox.conf` - add support to Proxmox Web GUI (gh-2966)
 * `filter.d/openvpn.conf` - new filter and jail for openvpn recognizing failed TLS handshakes (gh-2702)
 * `filter.d/sendmail-reject.conf` - also recognize "Domain of sender address ... does not resolve" (gh-4035)
