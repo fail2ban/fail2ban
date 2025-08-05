@@ -1111,8 +1111,8 @@ class FileFilter(Filter):
 	def getFailures(self, filename, inOperation=None):
 		if self.idle: return False
 		log = self.getLog(filename)
-		if log is None:
-			logSys.error("Unable to get failures in %s", filename)
+		if log is None and self.active:
+			logSys.log(logging.MSG, "Unable to get failures in %s", filename)
 			return False
 		# We should always close log (file), otherwise may be locked (log-rotate, etc.)
 		try:

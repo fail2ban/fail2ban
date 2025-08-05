@@ -11,6 +11,18 @@
 # failJSON: { "time": "2016-09-30T08:36:06", "match": true, "host": "2001:db8::80da:af6b:8b2c" }
 2016/09/30 08:36:06 [error] 22923#0: *4758725916 limiting requests, excess: 15.243 by zone "one", client: 2001:db8::80da:af6b:8b2c, server: example.com, request: "GET / HTTP/1.1", host: "example.com"
 
+# failJSON: { "time": "2025-08-01T04:24:17", "match": true , "host": "206.189.215.97" }
+2025/08/01 04:24:17 [warn] 4772#4772: *68 delaying request, excess: 0.841, by zone "req_limit", client: 206.189.215.97, server: myserver.net, request: "GET /ab2h HTTP/1.1", host: "22.18.134.49"
+
+# failJSON: { "time": "2025-08-01T14:32:27", "match": true , "host": "104.248.81.143" }
+2025/08/01 14:32:27 [warn] 31733#31733: *21 delaying request, excess: 0.850, by zone "req_limit", client: 104.248.81.143, server: myserver.net, request: "GET /favicon.ico HTTP/1.1", host: "myserver.net", referrer: "https://myserver.net/"
+
+# failJSON: { "time": "2025-08-03T03:17:28", "match": true , "host": "128.199.22.141" }
+2025/08/03 03:17:28 [error] 25808#25808: *598 limiting connections by zone "conn_limit", client: 128.199.22.141, server: myserver.net, request: "GET /favicon.ico HTTP/1.1", host: "84.108.142.49", referrer: "https://xxx.com/"
+
+# failJSON: { "time": "2025-08-03T13:56:22", "match": true , "host": "162.240.161.123" }
+2025/08/03 13:56:22 [error] 943#943: *60 limiting connections by zone "conn_limit", client: 162.240.161.123, server: myserver.net, request: "GET /.env HTTP/1.1", host: "app.myserver.net"
+
 # filterOptions: [{"logtype": "journal"}]
 
 # failJSON: { "match": true , "host": "192.0.2.2" }

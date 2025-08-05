@@ -21,3 +21,6 @@
 
 # failJSON: { "time": "2024-08-30T20:11:28", "match": true , "host": "2001:db8::b6d3:95d7:1425:766d" }
 [2024-08-31 02:11:28.892+0800][vaultwarden::api::core::two_factor::authenticator][ERROR] Invalid TOTP code! Server time: 2024-08-30 18:11:28 UTC IP: 2001:db8::b6d3:95d7:1425:766d
+
+# failJSON: { "time": "2024-08-30T20:11:30", "match": true , "host": "192.0.2.7" }
+[2024-08-31 02:11:30.123+0800][vaultwarden::api::admin][ERROR] Invalid admin token! IP: 192.0.2.7. Username: alice

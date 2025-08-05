@@ -108,6 +108,8 @@ Nov 4 18:30:40 localhost asterisk[32229]: NOTICE[32257]: chan_sip.c:23417 in han
 # PJSip Errors
 # failJSON: { "time": "2016-05-06T07:08:09", "match": true, "host": "192.0.2.6" }
 [2016-05-06 07:08:09] NOTICE[17103] res_pjsip/pjsip_distributor.c: Request from '"test1" <sip:test1@2.3.4.5>' failed for '192.0.2.6:5678' (callid: deadbeef) - No matching endpoint found
+# failJSON: { "time": "2016-05-06T07:08:09", "match": true, "host": "192.0.2.7", "desc": "Test for No matching endpoint found with retry counts (pattern 1)" }
+[2016-05-06 07:08:09] NOTICE[17103] res_pjsip/pjsip_distributor.c: Request 'INVITE' from '"test2" <sip:test2@3.4.5.6>' failed for '192.0.2.7:5679' (callid: cafebabe) - No matching endpoint found after 5 tries in 2.500 ms
 
 # # FreePBX Warnings
 # #_dis_failJSON: { "time": "2016-05-06T07:08:09", "match": true, "host": "192.0.2.4" }
