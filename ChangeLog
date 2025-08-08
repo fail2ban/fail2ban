@@ -82,6 +82,9 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   - parameter `ipsettype` to set type of ipset, e. g. hash:ip, hash:net, etc (gh-3760)
 * `action.d/iptables.conf` - action and few derivatives of it extended to handle multiple chains,
   e. g. would also accept `chain = INPUT,FORWARD` (gh-3909)
+* `action.d/nftables.conf` (gh-3291):
+  - new parameter `addr_options` for addr-set (default `flags interval\;`, allows to store CIDR or address ranges);
+    can be set to empty value to create simple addresses set (restore previous behavior).
 * `action.d/firewallcmd-rich-*.conf` - fixed incorrect quoting, disabling port variable expansion
   by substitution of rich rule (gh-3815)
 * `filter.d/dovecot.conf` - add support for latest Dovecot 2.4 release (gh-4016)
