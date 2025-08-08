@@ -1343,11 +1343,11 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					r"`done`",
 				),
 				'ip4-start': (
-					r"`nft add set inet f2b-table addr-set-j-w-nft-mp \{ type ipv4_addr\; \}`",
+					r"`nft add set inet f2b-table addr-set-j-w-nft-mp \{ type ipv4_addr\; flags interval\; \}`",
 					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ $(echo 'http,https' | sed s/:/-/g) \} ip saddr @addr-set-j-w-nft-mp reject`",
 				), 
 				'ip6-start': (
-					r"`nft add set inet f2b-table addr6-set-j-w-nft-mp \{ type ipv6_addr\; \}`",
+					r"`nft add set inet f2b-table addr6-set-j-w-nft-mp \{ type ipv6_addr\; flags interval\; \}`",
 					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ $(echo 'http,https' | sed s/:/-/g) \} ip6 saddr @addr6-set-j-w-nft-mp reject`",
 				),
 				'flush': (
@@ -1389,11 +1389,11 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					r"`nft -- add chain inet f2b-table f2b-chain \{ type filter hook input priority -1 \; \}`",
 				),
 				'ip4-start': (
-					r"`nft add set inet f2b-table addr-set-j-w-nft-ap \{ type ipv4_addr\; \}`",
+					r"`nft add set inet f2b-table addr-set-j-w-nft-ap \{ type ipv4_addr\; flags interval\; \}`",
 					r"`nft add rule inet f2b-table f2b-chain meta l4proto \{ tcp,udp \} ip saddr @addr-set-j-w-nft-ap reject`",
 				), 
 				'ip6-start': (
-					r"`nft add set inet f2b-table addr6-set-j-w-nft-ap \{ type ipv6_addr\; \}`",
+					r"`nft add set inet f2b-table addr6-set-j-w-nft-ap \{ type ipv6_addr\; flags interval\; \}`",
 					r"`nft add rule inet f2b-table f2b-chain meta l4proto \{ tcp,udp \} ip6 saddr @addr6-set-j-w-nft-ap reject`",
 				),
 				'flush': (
