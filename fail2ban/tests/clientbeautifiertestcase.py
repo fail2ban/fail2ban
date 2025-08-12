@@ -25,7 +25,7 @@ import unittest
 
 from ..client.beautifier import Beautifier
 from ..version import version
-from ..server.ipdns import IPAddr
+from ..server.ipdns import IPAddr, FileIPAddrSet
 from ..exceptions import UnknownJailException, DuplicateJailException
 
 class BeautifierTest(unittest.TestCase):
@@ -295,6 +295,13 @@ class BeautifierTest(unittest.TestCase):
 		output += "|- ::1\n"
 		output += "|- 2001:db8::/32\n"
 		output += "`- 10.0.2.1"
+		self.assertEqual(self.b.beautify(response), output)
+
+	def testIgnoreIPFile(self):
+		self.b.setInputCmd(["set", "sshd", "addignoreip"])
+		response = [FileIPAddrSet("/test/file-ipaddr-set")]
+		output = ("These IP addresses/networks are ignored:\n"
+			"`- file://test/file-ipaddr-set")
 		self.assertEqual(self.b.beautify(response), output)
 
 	def testFailRegex(self):
