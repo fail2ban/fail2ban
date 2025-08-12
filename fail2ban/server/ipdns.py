@@ -739,11 +739,11 @@ class IPAddrSet(set):
 
 class FileIPAddrSet(IPAddrSet):
 
-	# RE matching file://...
-	RE_FILE_IGN_IP = re.compile(r'^file:/{0,2}(.*)$')
+	# RE matching file://... (absolute as well as relative file name)
+	RE_FILE_IGN_IP = re.compile(r'^file:(?:/{0,2}(?=/(?!/|.{1,2}/))|/{0,2})(.*)$')
 
 	fileName = ''
-	_shortRepr = None
+	_reprName = None
 	maxUpdateLatency = 1 # latency in seconds to update by changes
 	_nextCheck = 0
 	_fileStats = ()
@@ -798,12 +798,9 @@ class FileIPAddrSet(IPAddrSet):
 			logSys.warning("Retrieving IPs set from %r failed: %s", self.fileName, e)
 
 	def __repr__(self):
-		if not self._shortRepr:
-			shortfn = os.path.basename(self.fileName)
-			if shortfn != self.fileName:
-				shortfn = '.../' + shortfn
-			self._shortRepr = 'file:' + shortfn + ')'
-		return self._shortRepr
+		if self._reprName is None:
+			self._reprName = 'file:' + ('/' if self.fileName.startswith('/') else '') + self.fileName
+		return self._reprName
 
 	def __contains__(self, ip):
 		# load if needed:
