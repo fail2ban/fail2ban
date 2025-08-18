@@ -191,3 +191,12 @@ Jun  8 23:14:54 proxy2 postfix/postscreen[473]: COMMAND COUNT LIMIT from [192.0.
 # filterOptions: [{}, {"mode": "ddos"}, {"mode": "aggressive"}]
 # failJSON: { "match": false, "desc": "don't affect lawful data (sporadical connection aborts within DATA-phase, see gh-1813 for discussion)" }
 Feb 18 09:50:05 xxx postfix/smtpd[42]: lost connection after DATA from good-host.example.com[192.0.2.10]
+
+
+# ---------------------------------------
+# Test-cases of postfix screendnsbl mode:
+# ---------------------------------------
+
+# filterOptions: [{"mode": "screendnsbl"}]
+# failJSON: { "time": "2023-07-01T03:55:34", "match": true , "host": "192.0.2.30" }
+Jul  1 03:55:34 xxx postfix/postscreen[188902]: DNSBL rank 6 for [192.0.2.30]:52340
