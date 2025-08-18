@@ -1425,8 +1425,12 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			all=True, wait=MID_WAITTIME
 		)
 
-		# unban 1, 2 and 5:
-		self.execCmd(SUCCESS, startparams, 'unban', '125-000-001', '125-000-002', '125-000-005')
+		# unban 1, 2 and 5 (as expr):
+		self.execCmd(SUCCESS, startparams, 'unban', '125-000-001', '125-000-002')
+		self.execCmd(SUCCESS, startparams, 'unban', '--expr', '"125-000-005"')
+		# check tuple IDs don't consider as a list of IDs to unban:
+		self.execCmd(SUCCESS, startparams, 'unban', '--expr', '("125-000-003","125-000-004")')
+		self.assertLogged('%r is not banned' % (('125-000-003', '125-000-004'),))
 		_out_file(mpfn)
 		# check really unbanned but other sessions are still present (blacklisted in map-file):
 		mp = _read_file(mpfn)

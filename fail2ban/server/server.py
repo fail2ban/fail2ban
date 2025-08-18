@@ -24,13 +24,13 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import threading
-from threading import Lock, RLock
 import logging
 import os
 import signal
 import stat
 import sys
+import threading
+from threading import Lock, RLock
 
 from .observer import Observers, ObserverThread
 from .jails import Jails
@@ -522,24 +522,24 @@ class Server:
 	def setBanTime(self, name, value):
 		self.__jails[name].actions.setBanTime(value)
 	
-	def addAttemptIP(self, name, *args):
-		return self.__jails[name].filter.addAttempt(*args)
+	def addAttemptIP(self, name, ip, failures):
+		return self.__jails[name].filter.addAttempt(ip, *failures)
 
 	def setBanIP(self, name, value):
 		return self.__jails[name].actions.addBannedIP(value)
 
-	def setUnbanIP(self, name=None, value=None, ifexists=True):
+	def setUnbanIP(self, name=None, values=None, ifexists=True):
 		if name is not None:
 			# single jail:
 			jails = [self.__jails[name]]
 		else:
 			# in all jails:
 			jails = list(self.__jails.values())
-		# unban given or all (if value is None):
+		# unban given or all (if values is None):
 		cnt = 0
 		ifexists |= (name is None)
 		for jail in jails:
-			cnt += jail.actions.removeBannedIP(value, ifexists=ifexists)
+			cnt += jail.actions.removeMultiBannedIP(values, ifexists=ifexists)
 		return cnt
 		
 	def banned(self, name=None, ids=None):
@@ -563,7 +563,6 @@ class Server:
 				ret = jail.actions.getBanned(ids)
 				if name is not None:
 					return ret
-					res.append(ret)
 				else:
 					res.append({jail.name: ret})
 		return res

@@ -28,6 +28,7 @@ import re
 import sys
 import traceback
 
+from ast import literal_eval
 from threading import Lock
 
 from .server.mytime import MyTime
@@ -316,6 +317,16 @@ def _merge_copy_dicts(x, y):
 	"""Helper to merge dicts to guarantee a copy result (r is never x).
 	"""
 	return {**x, **y}
+
+def parseExpressions(value):
+	def parseExpr(v):
+		try:
+			return literal_eval(v)
+		except SyntaxError:
+			return v
+	if value:
+		return list(map(parseExpr, value)) if isinstance(value, (list, tuple)) else parseExpr(value)
+	return None
 
 #
 # Following function used for parse options from parameter (e.g. `name[p1=0, p2="..."][p3='...']`).

@@ -468,7 +468,7 @@ class Filter(JailThread):
 
 	def addAttempt(self, ip, *matches):
 		"""Generate a failed attempt for ip"""
-		if not isinstance(ip, IPAddr):
+		if not isinstance(ip, (IPAddr, list, tuple)):
 			ip = IPAddr(ip)
 		matches = list(matches) # tuple to list
 
