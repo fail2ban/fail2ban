@@ -640,12 +640,12 @@ class Actions(JailThread, Mapping):
 		If actions specified, don't flush list - just execute unban for 
 		given actions (reload, obsolete resp. removed actions).
 		"""
-		log = True
+		log = "Unban" if not stop else "Repeal Ban"
 		if actions is None:
 			logSys.debug("  Flush ban list")
 			lst = self.banManager.flushBanList()
 		else:
-			log = False # don't log "[jail] Unban ..." if removing actions only.
+			log = None # don't log "[jail] Unban ..." if removing actions only.
 			lst = iter(self.banManager)
 		cnt = 0
 		# first we'll execute flush for actions supporting this operation:
@@ -686,7 +686,7 @@ class Actions(JailThread, Mapping):
 			cnt, self.banManager.size(), self._jail.name)
 		return cnt
 
-	def __unBan(self, ticket, actions=None, log=True):
+	def __unBan(self, ticket, actions=None, log="Unban"):
 		"""Unbans host corresponding to the ticket.
 
 		Executes the actions in order to unban the host given in the
@@ -704,7 +704,7 @@ class Actions(JailThread, Mapping):
 		ip = ticket.getID()
 		aInfo = self._getActionInfo(ticket)
 		if log:
-			logSys.notice("[%s] Unban %s", self._jail.name, ip)
+			logSys.notice("[%s] %s %s", self._jail.name, log, ip)
 		for name, action in unbactions.items():
 			try:
 				logSys.debug("[%s] action %r: unban %s", self._jail.name, name, ip)

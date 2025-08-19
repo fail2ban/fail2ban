@@ -1125,9 +1125,9 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"3 ticket(s) in 'test-jail2", all=True, wait=MID_WAITTIME)
 		# stop/start and unban/restore ban:
 		self.assertLogged(
-			"[test-jail2] Unban 192.0.2.4",
-			"[test-jail2] Unban 192.0.2.8",
-			"[test-jail2] Unban 192.0.2.9",
+			"[test-jail2] Repeal Ban 192.0.2.4",
+			"[test-jail2] Repeal Ban 192.0.2.8",
+			"[test-jail2] Repeal Ban 192.0.2.9",
 			"Jail 'test-jail2' stopped",
 			"Jail 'test-jail2' started",
 			"[test-jail2] Restore Ban 192.0.2.4",
