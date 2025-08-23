@@ -175,7 +175,8 @@ try:
 			super(SMTPActionTest, self).tearDown()
 
 except ImportError as e:
-	print("I: Skipping smtp tests: %s" % e)
+	if tuple(sys.version_info) <= (3, 11):
+		print("I: Skipping smtp tests: %s" % e)
 
 
 try:
@@ -309,4 +310,5 @@ try:
 			super(AIOSMTPActionTest, self).tearDown()
 	
 except ImportError as e:
-	print("I: Skipping SSL smtp tests: %s" % e)
+	if tuple(sys.version_info) >= (3, 10):
+		print("I: Skipping SSL smtp tests: %s" % e)
