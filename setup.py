@@ -157,13 +157,6 @@ too many password failures. It updates firewall rules
 to reject the IP address or executes user defined
 commands.'''
 
-if setuptools:
-	setup_extra = {
-		'test_suite': "fail2ban.tests.utils.gatherTests",
-	}
-else:
-	setup_extra = {}
-
 data_files_extra = []
 if os.path.exists('/var/run'):
 	# if we are on the system with /var/run -- we are to use it for having fail2ban/
@@ -249,8 +242,7 @@ setup(
 		('/var/lib/fail2ban',
 			''
 		),
-	] + data_files_extra,
-	**setup_extra
+	] + data_files_extra
 )
 
 # Do some checks after installation
