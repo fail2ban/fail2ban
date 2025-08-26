@@ -475,6 +475,10 @@ class Filter(JailThread):
 		# Generate the failure attempt for the IP:
 		unixTime = MyTime.time()
 		ticket = FailTicket(ip, unixTime, matches=matches)
+		# check it shall be ignored:
+		if self._inIgnoreIPList(ip, ticket):
+			return 0
+		# add attempt (found failure):
 		logSys.info(
 			"[%s] Attempt %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
 		)
@@ -485,7 +489,6 @@ class Filter(JailThread):
 		# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
 		if Observers.Main is not None:
 			Observers.Main.add('failureFound', self.jail, ticket)
-
 		return 1
 
 	##

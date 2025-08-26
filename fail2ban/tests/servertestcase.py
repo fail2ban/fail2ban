@@ -393,6 +393,13 @@ class Transmitter(TransmitterBase):
 		# resulted to ban for "192.0.2.2" but not for "192.0.2.1":
 		self.assertLogged("Ban 192.0.2.2", wait=True)
 		self.assertNotLogged("Ban 192.0.2.1")
+		# check attempt will be ignored by ignore facilities:
+		ip = "192.0.2.1"
+		self.transm.proceed(["set", self.jailName, "addignoreip", ip])
+		self.assertLogged("Add %r to ignore list" % (ip,), wait=True)
+		self.assertEqual(attempt(ip, ["test failure %d" % i for i in (3,4,5)]), (0, 0))
+		self.assertLogged("Ignore %s by ip" % (ip,), wait=True)
+		self.assertNotLogged("Ban 192.0.2.1")
 
 	@with_alt_time
 	def testJailBanList(self):
