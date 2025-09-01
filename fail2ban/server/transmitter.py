@@ -353,7 +353,6 @@ class Transmitter:
 			return self.__server.getBanTime(name)
 		elif command[1] == "attempt":
 			value = command[2:]
-			if self.__quiet: return
 			return self.__server.addAttemptIP(name, *value)
 		elif command[1].startswith("bantime."):
 			value = command[2]
