@@ -291,9 +291,9 @@ class DateDetector(object):
 
 			DD_patternCache.set(key, template)
 
-		self._appendTemplate(template)
 		logSys.info("  date pattern `%s`: `%s`",
 			getattr(template, 'pattern', ''), template.name)
+		self._appendTemplate(template)
 
 	def addDefaultTemplate(self, filterTemplate=None, preMatch=None, allDefaults=True):
 		"""Add Fail2Ban's default set of date templates.
