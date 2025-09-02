@@ -55,6 +55,11 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   - failregex extended to match different format of "Exit before auth" message (gh-3791)
 * `filter.d/recidive.conf` - restore possibility to set jail name in the filter, _jailname is positive now (gh-3769)
 * `filter.d/roundcube-auth.conf` - improved RE better matching log format of roundcube version 1.4+ (gh-3816)
+* `filter.d/sendmail-reject.conf`: (gh-4020)
+  - support `<F-MLFID>` for BSD-style logfiles
+  - add match for `User unknown` to default
+  - the relay field may not always have a hostname before the ip address
+  - mode `aggressive` enables match for `lost input channel` and `Cannot resolve PTR record`
 * `filter.d/sshd.conf`:
   - adapted to conform possible new daemon name sshd-session, since OpenSSH 9.8 
     several log messages will be tagged with as originating from a process named "sshd-session" rather than "sshd" (gh-3782)
