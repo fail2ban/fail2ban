@@ -125,8 +125,8 @@ Mar 29 22:51:46 server sm-mta[50438]: 06QDQnNf050438: example.com [IPv6:2001:DB8
 
 # filterOptions: {"mode": "aggressive"}
 
-# failJSON: { "time": "2005-06-17T13:03:43", "match": true, "host": "127.0.0.1" }
-Jun 17 13:03:43 <mail.notice> robin sm-mta[26864]: 55HH324M026864: lost input channel from localhost [127.0.0.1] to MTA-v4 after rcpt
+# failJSON: { "time": "2005-07-31T13:03:43", "match": true, "host": "139.162.120.196" }
+Jul 31 13:03:43 <mail.notice> alarmpi sm-mta[24291]: 56VFYCxS024291: lost input channel from mail.aqicn.org [139.162.120.196] to MTA-v4 after rcpt
 
 # failJSON: { "time": "2005-06-18T08:05:17", "match": true, "host": "45.125.66.67" }
 Jun 18 08:05:17 <mail.notice> myhost sm-mta[17002]: 55IC59VD017002: ruleset=check_rcpt, arg1=<spameri@tiscali.it>, relay=[45.125.66.67], reject=450 4.4.0 <spameri@tiscali.it>... Relaying temporarily denied. Cannot resolve PTR record for 45.125.66.67
