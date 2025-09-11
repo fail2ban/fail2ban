@@ -1676,6 +1676,55 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					r"`ipset -exist del f2b-j-w-iptables-ipset-ap6 2001:db8::`",
 				),					
 			}),
+			# iptables-ipset-allports-drop --
+			('j-w-ipt-ipset-ap-drp', 'iptables-ipset[name=%(__name__)s, type="allports", blocktype="DROP"]', {
+				'ip4': (' f2b-j-w-ipt-ipset-ap-drp ',), 'ip6': (' f2b-j-w-ipt-ipset-ap-drp6 ',),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					"`for chain in $(echo 'INPUT' | sed 's/,/ /g'); do for proto in $(echo 'tcp' | sed 's/,/ /g'); do`",
+					"`done; done`",
+				),
+				'ip4-start': (
+					"`ipset -exist create f2b-j-w-ipt-ipset-ap-drp hash:ip timeout 0 maxelem 65536 `",
+					"`{ iptables -w -C $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-drp src -j DROP >/dev/null 2>&1; } || "
+					 "{ iptables -w -I $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-drp src -j DROP; }",
+				), 
+				'ip6-start': (
+					"`ipset -exist create f2b-j-w-ipt-ipset-ap-drp6 hash:ip timeout 0 maxelem 65536 family inet6`",
+					"`{ ip6tables -w -C $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-drp6 src -j DROP >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-drp6 src -j DROP; }",
+				),
+				'flush': (
+					"`ipset flush f2b-j-w-ipt-ipset-ap-drp`",
+					"`ipset flush f2b-j-w-ipt-ipset-ap-drp6`",
+				),
+				'stop': (
+					"`iptables -w -D $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-drp src -j DROP`",
+					"`ipset flush f2b-j-w-ipt-ipset-ap-drp`",
+					"`ipset destroy f2b-j-w-ipt-ipset-ap-drp 2>/dev/null || { sleep 1; ipset destroy f2b-j-w-ipt-ipset-ap-drp; }`",
+					"`ip6tables -w -D $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-drp6 src -j DROP`",
+					"`ipset flush f2b-j-w-ipt-ipset-ap-drp6`",
+					"`ipset destroy f2b-j-w-ipt-ipset-ap-drp6 2>/dev/null || { sleep 1; ipset destroy f2b-j-w-ipt-ipset-ap-drp6; }`",
+				),
+				'ip4-check': (
+					r"""`iptables -w -C $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-drp src -j DROP`""",
+				),
+				'ip6-check': (
+					r"""`ip6tables -w -C $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-drp6 src -j DROP`""",
+				),
+				'ip4-ban': (
+					r"`ipset -exist add f2b-j-w-ipt-ipset-ap-drp 192.0.2.1 timeout 0`",
+				),
+				'ip4-unban': (
+					r"`ipset -exist del f2b-j-w-ipt-ipset-ap-drp 192.0.2.1`",
+				),
+				'ip6-ban': (
+					r"`ipset -exist add f2b-j-w-ipt-ipset-ap-drp6 2001:db8:: timeout 0`",
+				),
+				'ip6-unban': (
+					r"`ipset -exist del f2b-j-w-ipt-ipset-ap-drp6 2001:db8::`",
+				),					
+			}),
 			# iptables (oneport) --
 			('j-w-iptables', 'iptables[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
