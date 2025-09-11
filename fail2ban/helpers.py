@@ -323,15 +323,17 @@ def _merge_copy_dicts(x, y):
 
 # regex, to extract list of options:
 OPTION_CRE = re.compile(r"^([^\[]+)(?:\[(.*)\])?\s*$", re.DOTALL)
+# regex, matching option name (inclusive conditional option, like n?family=inet6):
+OPTION_NAME_CRE = r'[\w\-_\.]+(?:\?[\w\-_\.]+=[\w\-_\.]+)?'
 # regex, to iterate over single option in option list, syntax:
 # `action = act[p1="...", p2='...', p3=...]`, where the p3=... not contains `,` or ']'
 # since v0.10 separator extended with `]\s*[` for support of multiple option groups, syntax 
 # `action = act[p1=...][p2=...]`
 OPTION_EXTRACT_CRE = re.compile(
-	r'\s*([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$|(?P<wrngA>.+))|,?\s*$|(?P<wrngB>.+)', re.DOTALL)
+	r'\s*('+OPTION_NAME_CRE+r')=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$|(?P<wrngA>.+))|,?\s*$|(?P<wrngB>.+)', re.DOTALL)
 # split by new-line considering possible new-lines within options [...]:
 OPTION_SPLIT_CRE = re.compile(
-	r'(?:[^\[\s]+(?:\s*\[\s*(?:[\w\-_\.]+=(?:"[^"]*"|\'[^\']*\'|[^,\]]*)\s*(?:,|\]\s*\[)?\s*)*\])?\s*|\S+)(?=\n\s*|\s+|$)', re.DOTALL)
+	r'(?:[^\[\s]+(?:\s*\[\s*(?:'+OPTION_NAME_CRE+r'=(?:"[^"]*"|\'[^\']*\'|[^,\]]*)\s*(?:,|\]\s*\[)?\s*)*\])?\s*|\S+)(?=\n\s*|\s+|$)', re.DOTALL)
 
 def extractOptions(option):
 	match = OPTION_CRE.match(option)

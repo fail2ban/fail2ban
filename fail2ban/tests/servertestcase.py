@@ -1676,7 +1676,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					r"`ipset -exist del f2b-j-w-iptables-ipset-ap6 2001:db8::`",
 				),					
 			}),
-			# iptables-ipset-allports-drop --
+			# iptables-ipset (allports + drop) --
 			('j-w-ipt-ipset-ap-drp', 'iptables-ipset[name=%(__name__)s, type="allports", blocktype="DROP"]', {
 				'ip4': (' f2b-j-w-ipt-ipset-ap-drp ',), 'ip6': (' f2b-j-w-ipt-ipset-ap-drp6 ',),
 				'*-start-stop-check': (
@@ -1723,6 +1723,57 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),
 				'ip6-unban': (
 					r"`ipset -exist del f2b-j-w-ipt-ipset-ap-drp6 2001:db8::`",
+				),					
+			}),
+			# iptables-ipset (allports + REJECT with icmp?6? host-unreachable) --
+			('j-w-ipt-ipset-ap-rwhu', 'iptables-ipset[name=%(__name__)s, type="allports", '
+				+'blocktype="REJECT --reject-with icmp-host-unreachable", '
+				+'blocktype?family=inet6="REJECT --reject-with icmp6-host-unreachable"]', {
+				'ip4': (' f2b-j-w-ipt-ipset-ap-rwhu ',), 'ip6': (' f2b-j-w-ipt-ipset-ap-rwhu6 ',),
+				'*-start-stop-check': (
+					# iterator over protocol is same for both families:
+					"`for chain in $(echo 'INPUT' | sed 's/,/ /g'); do for proto in $(echo 'tcp' | sed 's/,/ /g'); do`",
+					"`done; done`",
+				),
+				'ip4-start': (
+					"`ipset -exist create f2b-j-w-ipt-ipset-ap-rwhu hash:ip timeout 0 maxelem 65536 `",
+					"`{ iptables -w -C $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-rwhu src -j REJECT --reject-with icmp-host-unreachable >/dev/null 2>&1; } || "
+					 "{ iptables -w -I $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-rwhu src -j REJECT --reject-with icmp-host-unreachable; }",
+				), 
+				'ip6-start': (
+					"`ipset -exist create f2b-j-w-ipt-ipset-ap-rwhu6 hash:ip timeout 0 maxelem 65536 family inet6`",
+					"`{ ip6tables -w -C $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-rwhu6 src -j REJECT --reject-with icmp6-host-unreachable >/dev/null 2>&1; } || "
+					 "{ ip6tables -w -I $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-rwhu6 src -j REJECT --reject-with icmp6-host-unreachable; }",
+				),
+				'flush': (
+					"`ipset flush f2b-j-w-ipt-ipset-ap-rwhu`",
+					"`ipset flush f2b-j-w-ipt-ipset-ap-rwhu6`",
+				),
+				'stop': (
+					"`iptables -w -D $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-rwhu src -j REJECT --reject-with icmp-host-unreachable`",
+					"`ipset flush f2b-j-w-ipt-ipset-ap-rwhu`",
+					"`ipset destroy f2b-j-w-ipt-ipset-ap-rwhu 2>/dev/null || { sleep 1; ipset destroy f2b-j-w-ipt-ipset-ap-rwhu; }`",
+					"`ip6tables -w -D $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-rwhu6 src -j REJECT --reject-with icmp6-host-unreachable`",
+					"`ipset flush f2b-j-w-ipt-ipset-ap-rwhu6`",
+					"`ipset destroy f2b-j-w-ipt-ipset-ap-rwhu6 2>/dev/null || { sleep 1; ipset destroy f2b-j-w-ipt-ipset-ap-rwhu6; }`",
+				),
+				'ip4-check': (
+					r"""`iptables -w -C $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-rwhu src -j REJECT --reject-with icmp-host-unreachable`""",
+				),
+				'ip6-check': (
+					r"""`ip6tables -w -C $chain -p $proto -m set --match-set f2b-j-w-ipt-ipset-ap-rwhu6 src -j REJECT --reject-with icmp6-host-unreachable`""",
+				),
+				'ip4-ban': (
+					r"`ipset -exist add f2b-j-w-ipt-ipset-ap-rwhu 192.0.2.1 timeout 0`",
+				),
+				'ip4-unban': (
+					r"`ipset -exist del f2b-j-w-ipt-ipset-ap-rwhu 192.0.2.1`",
+				),
+				'ip6-ban': (
+					r"`ipset -exist add f2b-j-w-ipt-ipset-ap-rwhu6 2001:db8:: timeout 0`",
+				),
+				'ip6-unban': (
+					r"`ipset -exist del f2b-j-w-ipt-ipset-ap-rwhu6 2001:db8::`",
 				),					
 			}),
 			# iptables (oneport) --
