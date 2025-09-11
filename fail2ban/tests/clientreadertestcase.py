@@ -878,7 +878,7 @@ class JailsReaderTest(LogCaptureTestCase):
 		self.assertTrue(jails.getOptions())       # reads fine
 		# grab all filter names
 		filters = set(os.path.splitext(os.path.split(a)[1])[0]
-			for a in glob.glob(os.path.join('config', 'filter.d', '*.conf'))
+			for a in glob.glob(os.path.join(CONFIG_DIR, 'filter.d', '*.conf'))
 				if not (a.endswith('common.conf') or a.endswith('-aggressive.conf')))
 		# get filters of all jails (filter names without options inside filter[...])
 		filters_jail = set(
