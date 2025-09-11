@@ -354,6 +354,11 @@ class DefinitionInitConfigReader(ConfigReader):
 					if v is None: v = getopt(opt)
 					self._initOpts['known/'+opt] = v
 				if opt not in self._initOpts:
+					# overwrite also conditional init options (from init?... section):
+					cond = SafeConfigParserWithIncludes.CONDITIONAL_RE.match(opt)
+					if cond:
+						optc, cond = cond.groups()
+						v = pOpts.get(optc, v)
 					if v is None: v = getopt(opt)
 					self._initOpts[opt] = v
 		if all and self.has_section("Definition"):
