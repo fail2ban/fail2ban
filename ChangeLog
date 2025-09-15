@@ -96,6 +96,9 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   - add support for latest Dovecot 2.4 release (gh-4016)
   - mode `aggressive` covered new variant for `no auth attempts in X secs` with `Login aborted` and `(no_auth_attempts)`
   - mode `aggressive` extended to match `disconnected during TLS handshake` with `no application protocol` and `no shared cipher`
+* `filter.d/nginx-http-auth.conf`:
+  - extended with `prefregex` to capture content of error only (bypass common prefix and suffix, like server, request, host, referrer);
+  - extended to match PAM authentication failures (gh-4071)
 * `filter.d/nginx-limit-req.conf` - extended to ban hosts failed by limit connection in ngx_http_limit_conn_module (gh-3674, gh-4047)
 * `filter.d/proxmox.conf` - add support to Proxmox Web GUI (gh-2966)
 * `filter.d/openvpn.conf` - new filter and jail for openvpn recognizing failed TLS handshakes (gh-2702)
