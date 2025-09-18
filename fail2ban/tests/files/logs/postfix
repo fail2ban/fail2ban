@@ -187,6 +187,9 @@ Jun  8 23:14:28 proxy2 postfix/postscreen[473]: COMMAND TIME LIMIT from [192.0.2
 # failJSON: { "time": "2005-06-08T23:14:54", "match": true , "host": "192.0.2.26", "desc": "abusive clients hitting command limit (gh-3040)" }
 Jun  8 23:14:54 proxy2 postfix/postscreen[473]: COMMAND COUNT LIMIT from [192.0.2.26]:15592 after RCPT
 
+# failJSON: { "time": "2004-09-17T18:19:20", "match": true , "host": "192.0.2.25" }
+Sep 17 18:19:20 mxhost postfix/smtpd[12345]: NOQUEUE: lost connection after CONNECT from unknown[192.0.2.25]
+
 
 # filterOptions: [{}, {"mode": "ddos"}, {"mode": "aggressive"}]
 # failJSON: { "match": false, "desc": "don't affect lawful data (sporadical connection aborts within DATA-phase, see gh-1813 for discussion)" }
