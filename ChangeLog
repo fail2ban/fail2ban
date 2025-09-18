@@ -52,6 +52,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   - consider CONNECT and other rejected commands as a valid `_pref` (gh-3800)
   - default `_daemon` in prefix-line is loosened - can match everything starting with word postfix, like `postfix-example.com/smtpd` (gh-3297)
   - add optional `NOQUEUE:` prefix to ddos regex (gh-4072)
+  - internal parameter `_pref` is renamed to `_cmd`, `_pref` matches now optional prefix like `NOQUEUE: ` etc
 * `filter.d/dropbear.conf`:
   - recognizes extra pid/timestamp if logged into stdout/journal, added `journalmatch` (gh-3597)
   - failregex extended to match different format of "Exit before auth" message (gh-3791)
