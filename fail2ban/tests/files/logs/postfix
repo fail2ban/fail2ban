@@ -190,6 +190,10 @@ Jun  8 23:14:54 proxy2 postfix/postscreen[473]: COMMAND COUNT LIMIT from [192.0.
 # failJSON: { "time": "2004-09-17T18:19:20", "match": true , "host": "192.0.2.25" }
 Sep 17 18:19:20 mxhost postfix/smtpd[12345]: NOQUEUE: lost connection after CONNECT from unknown[192.0.2.25]
 
+# failJSON: { "time": "2004-09-19T12:10:57", "match": true , "host": "192.0.2.123", "desc": "Connection rate limit exceeded, gh-4073" }
+Sep 19 12:10:57 hostname postfix/smtpd[23244]: warning: Connection rate limit exceeded: 31 from spamhost.domain.org[192.0.2.123] for service smtpd
+# failJSON: { "time": "2004-09-19T12:10:58", "match": true , "host": "192.0.2.227", "desc": "Message delivery request rate limit exceeded, gh-3265" }
+Sep 19 12:10:58 hostname postfix/smtpd[14059]: warning: Message delivery request rate limit exceeded: 334 from spam.example.com[192.0.2.227] for service submission
 
 # filterOptions: [{}, {"mode": "ddos"}, {"mode": "aggressive"}]
 # failJSON: { "match": false, "desc": "don't affect lawful data (sporadical connection aborts within DATA-phase, see gh-1813 for discussion)" }
