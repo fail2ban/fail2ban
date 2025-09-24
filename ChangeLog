@@ -24,6 +24,10 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   in systemd module (see https://github.com/systemd/python-systemd/issues/143)
 * fixes `systemd` causing "too many open files" error for a lot of journal files and large amount of systemd jails 
   (see new parameter `rotated` below, gh-3391);
+* passing of arguments from jails to action or filter will affect conditional section too (gh-4069), 
+  e. g. setting `blocktype="DROP"` via jail for action would now apply for IPv4 and IPv6 chains,
+  to submit different `blocktype` for IPv4 and IPv6 from jail, one can pass them like in this example:
+  `banaction = iptables-ipset[blocktype="...", blocktype?family=inet6="..."]`
 * `jail.conf`:
   - default banactions need to be specified in `paths-*.conf` (maintainer level) now
   - since stock fail2ban includes `paths-debian.conf` by default, banactions are `nftables`

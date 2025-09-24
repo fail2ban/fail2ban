@@ -245,8 +245,23 @@ Arguments can be passed to actions to override the default values from the [Init
 [name=value,name2=value,name3="values,values"]
 
 .RE
-Values can also be quoted (required when value includes a ","). More that one action can be specified (in separate lines).
+Values can also be quoted (required when value includes a "," or space). More that one action can be specified (in separate lines).
+.br
+The action specific arguments can also affect conditional parameters, so for instance to submit different values to different chains
+firstly pass the argument affecting all chains, e.g. \fIblocktype\fR, then for IPv6 chain, e. g. \fIblocktype?family=inet6\fR.
+Examples:
+.RS
+.nf
+
+# pass blocktype to DROP for all chains:
+banaction_allports = iptables-ipset[type=allports, blocktype=DROP]
+# pass different blocktype for IPv4 and IPv6 chains:
+banaction = iptables-ipset[type=multiport, blocktype="REJECT --reject-with icmp-host-unreachable", blocktype?family=inet6="REJECT --reject-with icmp6-host-unreachable"]
+
+.fi
 .RE
+.RE
+
 .TP
 .B ignoreself
 boolean value (default true) indicates the banning of own IP addresses should be prevented
