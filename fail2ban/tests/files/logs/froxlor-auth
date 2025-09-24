@@ -1,5 +1,11 @@
+# filterOptions: [{"type": "1"}]
 # failJSON: { "time": "2005-05-21T00:56:27", "match": true , "host": "1.2.3.4" }
 May 21 00:56:27 jomu Froxlor: [Login Action 1.2.3.4] Unknown user 'user' tried to login.
 # failJSON: { "time": "2005-05-21T00:57:38", "match": true , "host": "1.2.3.4" }
 May 21 00:57:38 jomu Froxlor: [Login Action 1.2.3.4] User 'admin' tried to login with wrong password.
 
+# filterOptions: [{}, {"type": "2"}]
+# failJSON: { "time": "2025-09-21T17:46:18", "match": true , "host": "1.2.3.4" }
+2025-09-21T17:46:18.311379+02:00 hostname froxlor[1055219]: froxlor.WARNING: User tried to login with wrong password. {"source":"login","action":"50","user":"1.2.3.4"} []
+# failJSON: { "time": "2025-09-21T16:30:13", "match": true , "host": "1.2.3.4" }
+2025-09-21T16:30:13.118232+02:00 hostname froxlor[1054438]: froxlor.WARNING: Unknown user tried to login. {"source":"login","action":"50","user":"1.2.3.4"} []
