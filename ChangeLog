@@ -76,6 +76,8 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 * `filter.d/froxlor-auth.conf` - updated the regex to the new logging situation for froxlor and changed logpath in jail.conf (gh-4075).	
 
 ### New Features and Enhancements
+* `action.d/ellio.conf` - new action to send blocked IPs to ELLIO EDL (External Dynamic List) Management for centralized
+  IP blocking and multi-firewall deployment
 * backend `systemd` extended with new parameter `rotated` (default `false`, as prevention against "too many open files"),
   that allows to monitor only actual journals and ignore now a lot of rotated files by default; so can drastically reduce
   amount of used file descriptors, normally to 1 or 2 descriptors per jail (gh-3391)
