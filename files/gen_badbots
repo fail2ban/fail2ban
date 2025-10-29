@@ -34,16 +34,12 @@
 #
 #-----------------\____________________________________/------------------
 
-url=http://www.user-agents.org/index.shtml
+url=https://raw.githubusercontent.com/mitchellkrogza/nginx-ultimate-bad-bot-blocker/master/_generator_lists/bad-user-agents.list
 badbots=$(
-for f in "" "?g_m" "?moz" "?n_s" "?t_z"; do
-	wget -q -O- $url$f;
-done \
-| grep -h -B4 '<td class="smallcell" nowrap>S&nbsp;</td>'\
-| sed -e 's/&nbsp;//g' \
-| awk '/^--/{getline; gsub("  ",""); print $0}' \
-| sed -e 's/\([.\:|()+]\)/\\\1/g' \
+curl -sS $url \
 | uniq \
+| sed -e 's/\\ / /g' \
+| sed -e 's/\([.\:|()+]\)/\\\1/g' \
 | tr '\n' '|' \
 | sed -e 's/|$//g'
 )
@@ -60,12 +56,17 @@ cat >| config/filter.d/apache-badbots.conf <<EOF
 
 [Definition]
 
-badbotscustom = EmailCollector|WebEMailExtrac|TrackBack/1\.02|sogou music spider
+badbotscustom = EmailCollector|WebEMailExtrac|TrackBack/1\.02|sogou music spider|(?:Mozilla/\d+\.\d+ )?Jorgee
 badbots = $badbots
 
-failregex = ^<HOST> -.*"(GET|POST).*HTTP.*"(?:%(badbots)s|%(badbotscustom)s)"$
+requri = /\S*
+rescode = \d+
+failregex = ^<ADDR> [^"]*"[A-Z]+\s+%(requri)s\s+[^"]*" %(rescode)s \d+ "[^"]*" "(?:%(badbots)s|%(badbotscustom)s)"$
 
 ignoreregex =
+
+datepattern = ^[^\[]*\[({DATE})
+              {^LN-BEG}
 
 # DEV Notes:
 # List of bad bots fetched from http://www.user-agents.org
