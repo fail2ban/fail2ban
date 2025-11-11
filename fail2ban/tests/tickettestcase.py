@@ -135,6 +135,15 @@ class TicketTests(unittest.TestCase):
     self.assertIsInstance(t.getIP(), IPAddr)
     self.assertEqual(t.getIP(), '192.0.2.1')
 
+    # invalid ip type causes an error
+    with self.assertRaises(TypeError):
+        Ticket('123-456-789', tm, data={'ip':192021})
+
+    # no IPAddr causes an error
+    t = Ticket(('192.0.2.1', '5000'), tm, data={})
+    with self.assertRaises(ValueError):
+        t.getIP()
+
   def testTicketFlags(self):
     flags = ('restored', 'banned')
     ticket = Ticket('test', 0)

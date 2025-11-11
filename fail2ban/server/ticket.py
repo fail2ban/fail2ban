@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from ..helpers import getLogger
-from .ipdns import IPAddr
+from .ipdns import IPAddr, asip
 from .mytime import MyTime
 
 # Gets the instance of the logger.
@@ -56,8 +56,11 @@ class Ticket(object):
 		self._data = {'matches': matches or [], 'failures': 0}
 		if data is not None:
 			for k,v in data.items():
-				if v is not None:
-					self._data[k] = v
+				if v is None:
+					continue
+				if k == 'ip':
+					v = asip(v)
+				self._data[k] = v
 		if ticket:
 			# ticket available - copy whole information from ticket:
 			self.update(ticket)
@@ -95,8 +98,12 @@ class Ticket(object):
 	def getID(self):
 		return self._id
 	
-	def getIP(self):
-		return self._data.get('ip', self._id)
+	def getIP(self) -> IPAddr:
+		if 'ip' in self._data:
+			return self._data['ip']
+		if isinstance(self._id, IPAddr):
+			return self._id
+		raise ValueError("No IP available")
 	
 	def setTime(self, value):
 		self._time = value
