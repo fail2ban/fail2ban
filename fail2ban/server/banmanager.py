@@ -115,6 +115,9 @@ class BanManager:
 				) for t in lst]
 		return [t[0].getID() for t in lst]
 
+	def getBannedIPs(self):
+		return list(sorted(ticket.getIP() for ticket in self.__banList.values()))
+
 	##
 	# Returns a iterator to ban list (used in reload, so idle).
 	#
