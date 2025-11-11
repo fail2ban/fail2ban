@@ -24,6 +24,8 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+from typing import Union
+
 from ..helpers import getLogger
 from .ipdns import IPAddr, asip
 from .mytime import MyTime
@@ -89,13 +91,17 @@ class Ticket(object):
 			if v is not None:
 				setattr(self, n, v)
 
-	def setID(self, value):
+	def setID(self, value: Union[str, IPAddr, tuple, None]) -> None:
 		# guarantee using IPAddr instead of unicode, str for the IP
 		if isinstance(value, str):
 			value = IPAddr(value)
+		if not isinstance(value, (IPAddr, tuple, type(None))):
+			raise TypeError(f"ID has unsupported type: {type(value).__name__}")
 		self._id = value
 	
-	def getID(self):
+	def getID(self) -> Union[IPAddr, tuple, None]:
+		if isinstance(self._id, IPAddr):
+			return str(self._id)
 		return self._id
 	
 	def getIP(self) -> IPAddr:
