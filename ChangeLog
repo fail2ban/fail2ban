@@ -41,6 +41,9 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 * `action.d/firewallcmd-ipset.conf`:
   - rename `ipsettype` to `ipsetbackend` (gh-2620), parameter `ipsettype` will be used now to the real set type (gh-3760)
 * `action.d/xarf-login-attack.conf` - ignore errors or warnings in output of `dig` provided as comment (gh-4068)
+* `filter.d/apache-badbots.conf`, `filter.d/apache-fakegooglebot.conf`:
+  - regexs rewritten more strict (removed catch-alls, etc);
+  - regexs fixed to match lines with vhost in accesslog (gh-1594)
 * `filter.d/apache-noscript.conf` - consider new log-format with "AH02811: stderr from /..." (gh-3900)
 * `filter.d/apache-overflows.conf` - consider AH10244: invalid URI path (gh-3778, gh-3900)
 * `filter.d/asterisk.conf` - fixed RE for "no matching endpoint" with retry info (like `after X tries in Y ms`) at end, 
