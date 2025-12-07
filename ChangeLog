@@ -116,6 +116,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 * `filter.d/openvpn.conf` - new filter and jail for openvpn recognizing failed TLS handshakes (gh-2702)
 * `filter.d/sendmail-reject.conf` - also recognize "Domain of sender address ... does not resolve" (gh-4035)
 * `filter.d/vaultwarden.conf` - new filter and jail for Vaultwarden (gh-3979)
+* `filter.d/xrdp.conf` - new filter for XRDP, an open source RDP server (gh-3254)
 * `fail2ban-regex` extended with new option `-i` or `--invert` to output not-matched lines by `-o` or `--out` (gh-4001)
 
 

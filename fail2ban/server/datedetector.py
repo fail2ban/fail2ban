@@ -165,8 +165,8 @@ class DateDetectorCache(object):
 		r"%b %d, %ExY %I:%M:%S %p",
 		# ASSP: Apr-27-13 02:33:06
 		r"^%b-%d-%Exy %k:%M:%S",
-		# 20050123T215959, 20050123 215959, 20050123  85959
-		r"%ExY%Exm%Exd(?:T|  ?)%ExH%ExM%ExS(?:[.,]%f)?(?:\s*%z)?",
+		# 20050123T215959, 20050123 215959, 20050123  85959, 20050123-21:59:59
+		r"%ExY%Exm%Exd(?:-|T|  ?)%ExH:?%ExM:?%ExS(?:[.,]%f)?(?:\s*%z)?",
 		# prefixed with optional named time zone (monit):
 		# PDT Apr 16 21:05:29
 		r"(?:%Z )?(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
