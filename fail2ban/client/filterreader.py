@@ -71,7 +71,7 @@ class FilterReader(DefinitionInitConfigReader):
 	@staticmethod
 	def _fillStream(stream, opts, jailName):
 		prio0idx = 0
-		for opt, value in opts.iteritems():
+		for opt, value in opts.items():
 			# Do not send a command if the value is not set (empty).
 			if value is None: continue
 			if opt in ("failregex", "ignoreregex"):
@@ -89,7 +89,7 @@ class FilterReader(DefinitionInitConfigReader):
 				stream.insert(0 if opt == 'usedns' else prio0idx,
 					["set", jailName, opt, value])
 				prio0idx += 1
-			elif opt in ('datepattern'):
+			elif opt == 'datepattern':
 				stream.append(["set", jailName, opt, value])
 			elif opt == 'journalmatch':
 				for match in value.split("\n"):

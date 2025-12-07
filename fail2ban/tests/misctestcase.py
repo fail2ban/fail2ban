@@ -29,12 +29,12 @@ import tempfile
 import shutil
 import fnmatch
 from glob import glob
-from StringIO import StringIO
+from io import StringIO
 
-from utils import LogCaptureTestCase, logSys as DefLogSys
+from .utils import LogCaptureTestCase, logSys as DefLogSys
 
 from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger, \
-	getVerbosityFormat, splitwords, uni_decode, uni_string
+	getVerbosityFormat, removeComments, splitwords, uni_decode, uni_string
 from ..server.mytime import MyTime
 
 
@@ -66,8 +66,17 @@ class HelpersTest(unittest.TestCase):
 		self.assertEqual(splitwords(' 1, 2 , '), ['1', '2'])
 		self.assertEqual(splitwords(' 1\n  2'), ['1', '2'])
 		self.assertEqual(splitwords(' 1\n  2, 3'), ['1', '2', '3'])
-		# string as unicode:
-		self.assertEqual(splitwords(u' 1\n  2, 3'), ['1', '2', '3'])
+		self.assertEqual(splitwords('\t1\t  2,\r\n 3\n'), ['1', '2', '3']); # other spaces
+
+	def testSplitNoComments(self):
+		s = '''
+			# comment ...
+			; comment ...
+			line1 A # comment ...
+			line2 B ; comment ...
+		'''
+		self.assertEqual(splitwords(s, ignoreComments=True), ['line1', 'A', 'line2', 'B'])
+		self.assertEqual(splitwords(removeComments(s)), ['line1', 'A', 'line2', 'B'])
 
 
 def _sh_call(cmd):
@@ -121,7 +130,7 @@ class SetupTest(unittest.TestCase):
 		# suppress stdout (and stderr) if not heavydebug
 		supdbgout = ' >/dev/null' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
 		try:
-			self.assertEqual(os.system("%s %s install --root=%s%s"
+			self.assertEqual(os.system("%s -W 'ignore:setup.py install is deprecated' %s install --root=%s%s"
 					  % (sys.executable, self.setup, tmp, supdbgout)), 0)
 
 			def strippath(l):
@@ -191,12 +200,10 @@ class TestsUtilsTest(LogCaptureTestCase):
 
 	def testUniConverters(self):
 		self.assertRaises(Exception, uni_decode, 
-			(b'test' if sys.version_info >= (3,) else u'test'), 'f2b-test::non-existing-encoding')
-		uni_decode((b'test\xcf' if sys.version_info >= (3,) else u'test\xcf'))
+			b'test', 'f2b-test::non-existing-encoding')
+		uni_decode(b'test\xcf')
 		uni_string(b'test\xcf')
 		uni_string('test\xcf')
-		if sys.version_info < (3,) and 'PyPy' not in sys.version:
-			uni_string(u'test\xcf')
 
 	def testSafeLogging(self):
 		# logging should be exception-safe, to avoid possible errors (concat, str. conversion, representation failures, etc)
@@ -206,19 +213,19 @@ class TestsUtilsTest(LogCaptureTestCase):
 				self.err = err
 			def __repr__(self):
 				if self.err:
-					raise Exception('no represenation for test!')
+					raise Exception('no representation for test!')
 				else:
-					return u'conv-error (\xf2\xf0\xe5\xf2\xe8\xe9), unterminated utf \xcf'
+					return 'conv-error (\xf2\xf0\xe5\xf2\xe8\xe9), unterminated utf \xcf'
 		test = Test()
 		logSys.log(logging.NOTICE, "test 1a: %r", test)
-		self.assertLogged("Traceback", "no represenation for test!")
+		self.assertLogged("Traceback", "no representation for test!")
 		self.pruneLog()
 		logSys.notice("test 1b: %r", test)
-		self.assertLogged("Traceback", "no represenation for test!")
+		self.assertLogged("Traceback", "no representation for test!")
 
 		self.pruneLog('[phase 2] test error conversion by encoding %s' % sys.getdefaultencoding())
 		test = Test(0)
-		# this may produce coversion error on ascii default encoding:
+		# this may produce conversion error on ascii default encoding:
 		#str(test)
 		logSys.log(logging.NOTICE, "test 2a: %r, %s", test, test)
 		self.assertLogged("test 2a", "Error by logging handler", all=False)
@@ -256,7 +263,7 @@ class TestsUtilsTest(LogCaptureTestCase):
 					func_raise()
 
 			try:
-				print deep_function(3)
+				print(deep_function(3))
 			except ValueError:
 				s = tb()
 
@@ -273,7 +280,7 @@ class TestsUtilsTest(LogCaptureTestCase):
 			self.assertIn(':', s)
 
 	def _testAssertionErrorRE(self, regexp, fun, *args, **kwargs):
-		self.assertRaisesRegexp(AssertionError, regexp, fun, *args, **kwargs)
+		self.assertRaisesRegex(AssertionError, regexp, fun, *args, **kwargs)
 	
 	def testExtendedAssertRaisesRE(self):
 		## test _testAssertionErrorRE several fail cases:
@@ -311,13 +318,13 @@ class TestsUtilsTest(LogCaptureTestCase):
 		self._testAssertionErrorRE(r"'a' unexpectedly found in 'cba'",
 			self.assertNotIn, 'a', 'cba')
 		self._testAssertionErrorRE(r"1 unexpectedly found in \[0, 1, 2\]",
-			self.assertNotIn, 1, xrange(3))
+			self.assertNotIn, 1, range(3))
 		self._testAssertionErrorRE(r"'A' unexpectedly found in \['C', 'A'\]",
 			self.assertNotIn, 'A', (c.upper() for c in 'cba' if c != 'b'))
 		self._testAssertionErrorRE(r"'a' was not found in 'xyz'",
 			self.assertIn, 'a', 'xyz')
 		self._testAssertionErrorRE(r"5 was not found in \[0, 1, 2\]",
-			self.assertIn, 5, xrange(3))
+			self.assertIn, 5, range(3))
 		self._testAssertionErrorRE(r"'A' was not found in \['C', 'B'\]",
 			self.assertIn, 'A', (c.upper() for c in 'cba' if c != 'a'))
 		## assertLogged, assertNotLogged positive case:
@@ -343,7 +350,7 @@ class TestsUtilsTest(LogCaptureTestCase):
 		unittest.F2B.fast = True
 		try:
 			self.assertEqual(unittest.F2B.maxWaitTime(lambda: 50)(), 50)
-			self.assertEqual(unittest.F2B.maxWaitTime(25), 2.5)
+			self.assertEqual(unittest.F2B.maxWaitTime(25), 10)
 			self.assertEqual(unittest.F2B.maxWaitTime(25.), 25.0)
 		finally:
 			unittest.F2B.fast = orgfast

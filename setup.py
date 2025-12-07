@@ -24,21 +24,10 @@ __license__ = "GPL"
 
 import platform
 
-try:
-	import setuptools
-	from setuptools import setup
-	from setuptools.command.install import install
-	from setuptools.command.install_scripts import install_scripts
-except ImportError:
-	setuptools = None
-	from distutils.core import setup
-
-# all versions
-from distutils.command.build_py import build_py
-from distutils.command.build_scripts import build_scripts
-if setuptools is None:
-	from distutils.command.install import install
-	from distutils.command.install_scripts import install_scripts
+import setuptools
+from setuptools import setup
+from setuptools.command.install import install
+from setuptools.command.install_scripts import install_scripts
 
 import os
 from os.path import isfile, join, isdir, realpath
@@ -68,15 +57,15 @@ class install_scripts_f2b(install_scripts):
 		if dry_run:
 			#bindir = self.install_dir
 			bindir = self.build_dir
-			print('creating fail2ban-python binding -> %s (dry-run, real path can be different)' % (bindir,))
-			print('Copying content of %s to %s' % (self.build_dir, self.install_dir));
+			print(('creating fail2ban-python binding -> %s (dry-run, real path can be different)' % (bindir,)))
+			print(('Copying content of %s to %s' % (self.build_dir, self.install_dir)));
 			return outputs
 		fn = None
 		for fn in outputs:
 			if os.path.basename(fn) == 'fail2ban-server':
 				break
 		bindir = os.path.dirname(fn)
-		print('creating fail2ban-python binding -> %s' % (bindir,))
+		print(('creating fail2ban-python binding -> %s' % (bindir,)))
 		updatePyExec(bindir)
 		return outputs
 
@@ -93,7 +82,7 @@ class install_scripts_f2b(install_scripts):
 
 		scripts = ['fail2ban.service', 'fail2ban-openrc.init']
 		for script in scripts:
-			print('Creating %s/%s (from %s.in): @BINDIR@ -> %s' % (buildroot, script, script, install_dir))
+			print(('Creating %s/%s (from %s.in): @BINDIR@ -> %s' % (buildroot, script, script, install_dir)))
 			with open(os.path.join(source_dir, 'files/%s.in' % script), 'r') as fn:
 				lines = fn.readlines()
 			fn = None
@@ -168,13 +157,6 @@ too many password failures. It updates firewall rules
 to reject the IP address or executes user defined
 commands.'''
 
-if setuptools:
-	setup_extra = {
-		'test_suite': "fail2ban.tests.utils.gatherTests",
-	}
-else:
-	setup_extra = {}
-
 data_files_extra = []
 if os.path.exists('/var/run'):
 	# if we are on the system with /var/run -- we are to use it for having fail2ban/
@@ -206,7 +188,6 @@ setup(
 	license = "GPL",
 	platforms = "Posix",
 	cmdclass = {
-		'build_py': build_py, 'build_scripts': build_scripts,
 		'install_scripts': install_scripts_f2b, 'install': install_command_f2b
 	},
 	scripts = [
@@ -220,6 +201,7 @@ setup(
 	packages = [
 		'fail2ban',
 		'fail2ban.client',
+		'fail2ban.compat',
 		'fail2ban.server',
 	] + [
 		'fail2ban.tests',
@@ -260,8 +242,7 @@ setup(
 		('/var/lib/fail2ban',
 			''
 		),
-	] + data_files_extra,
-	**setup_extra
+	] + data_files_extra
 )
 
 # Do some checks after installation
@@ -296,7 +277,7 @@ if obsoleteFiles:
 	print("Please delete them:")
 	print("")
 	for f in obsoleteFiles:
-		print("\t" + f)
+		print(("\t" + f))
 	print("")
 
 if isdir("/usr/lib/fail2ban"):

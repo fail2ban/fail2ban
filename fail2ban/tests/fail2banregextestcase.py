@@ -36,7 +36,7 @@ from .utils import CONFIG_DIR
 
 fail2banregex.logSys = logSys
 def _test_output(*args):
-	logSys.notice(args[0])
+	logSys.notice('output: %s', args[0])
 
 fail2banregex.output = _test_output
 
@@ -140,13 +140,21 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"test", r".** from <HOST>$"
 		))
 		self.assertLogged("Unable to compile regular expression")
+		self.assertLogged("multiple repeat", "at position 2", all=False); # details of failed compilation
+		self.pruneLog()
+		self.assertFalse(_test_exec(
+			"test", r"^(?:(?P<type>A)|B)? (?(typo)...) from <ADDR>"
+		))
+		self.assertLogged("Unable to compile regular expression")
+		self.assertLogged("unknown group name", "at position 23", all=False); # details of failed compilation
 
-	def testWrongIngnoreRE(self):
+	def testWrongIgnoreRE(self):
 		self.assertFalse(_test_exec(
 			"--datepattern", "{^LN-BEG}EPOCH",
 			"test", r".*? from <HOST>$", r".**"
 		))
 		self.assertLogged("Unable to compile regular expression")
+		self.assertLogged("multiple repeat", "at position 2", all=False); # details of failed compilation
 
 	def testWrongFilterOptions(self):
 		self.assertFalse(_test_exec(
@@ -213,10 +221,17 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.pruneLog()
 		self.assertTrue(_test_exec(
 			"-d", "^Epoch",
-			"1490349000 test failed.dns.ch", "^\s*test <F-ID>\S+</F-ID>"
+			"1490349000 test failed.dns.ch", r"^\s*test <F-ID>\S+</F-ID>"
 		))
 		self.assertLogged('Lines: 1 lines, 0 ignored, 1 matched, 0 missed', all=True)
 		self.assertNotLogged('Unable to find a corresponding IP address')
+		# no confusion to IP/CIDR
+		self.pruneLog()
+		self.assertTrue(_test_exec(
+			"-d", "^Epoch", "-o", "id",
+			"1490349000 test this/is/some/path/32", r"^\s*test <F-ID>\S+</F-ID>"
+		))
+		self.assertLogged('this/is/some/path/32', all=True)
 
 	def testDirectRE_2(self):
 		self.assertTrue(_test_exec(
@@ -243,7 +258,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		"-l", "notice", # put down log-level, because of too many debug-messages
 			"-v", "--verbose-date", "--print-all-matched", "--print-all-ignored",
 			"-c", CONFIG_DIR,
-			FILENAME_SSHD, "sshd"
+			FILENAME_SSHD, "sshd.conf"
 		))
 		# test failure line and not-failure lines both presents:
 		self.assertLogged("[29116]: User root not allowed because account is locked",
@@ -254,7 +269,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		"-l", "notice", # put down log-level, because of too many debug-messages
 			"-vv", "-c", CONFIG_DIR,
 			"Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.0.2.1",
-			"sshd[logtype=short]"
+			"filter.d/sshd[logtype=short]"
 		))
 		# tet logtype is specified and set in real options:
 		self.assertLogged("Real  filter options :", "'logtype': 'short'", all=True)
@@ -272,6 +287,16 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"[29116]: Connection from 192.0.2.4",
 			"[29116]: User root not allowed because account is locked",
 			"[29116]: Received disconnect from 192.0.2.4", all=True)
+
+	def testLoadFromJail(self):
+		self.assertTrue(_test_exec(
+		"-l", "notice", # put down log-level, because of too many debug-messages
+			"-c", CONFIG_DIR, '-vv',
+			FILENAME_ZZZ_SSHD, "sshd[logtype=short]"
+		))
+		# test it was jail not filter:
+		self.assertLogged(
+			"Use %11s jail : %s" % ('','sshd'))
 
 	def testMultilineSshd(self):
 		# by the way test of missing lines by multiline in `for bufLine in orgLineBuffer[int(fullBuffer):]`
@@ -291,6 +316,20 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		"-l", "notice", # put down log-level, because of too many debug-messages
 			FILENAME_ZZZ_GEN, FILTER_ZZZ_GEN+"[mode=test]"
 		))
+		self.assertLogged("Ignoreregex: 2 total",
+			"Lines: 23 lines, 2 ignored, 16 matched, 5 missed", all=True)
+		# cover filter ignoreregex gets overwritten by command argument:
+		self.pruneLog("[test-phase 2]")
+		self.assertTrue(_test_exec(
+		"-l", "notice", # put down log-level, because of too many debug-messages
+			"[Jun 21 16:56:03] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.251\n"
+			"[Jun 21 16:56:04] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.252\n"
+			"[Jun 21 16:56:05] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.255\n",
+			FILTER_ZZZ_GEN+"[mode=test]",
+			"F2B: error from 192.0.2.255$"
+		))
+		self.assertLogged("Use ignoreregex line", "Ignoreregex: 1 total",
+			"Lines: 3 lines, 1 ignored, 2 matched, 0 missed", all=True)
 
 	def testDirectMultilineBuf(self):
 		# test it with some pre-lines also to cover correct buffer scrolling (all multi-lines printed):
@@ -352,57 +391,76 @@ class Fail2banRegexTest(LogCaptureTestCase):
 	def testFrmtOutput(self):
 		# id/ip only:
 		self.assertTrue(_test_exec('-o', 'id', STR_00, RE_00_ID))
-		self.assertLogged('kevin')
+		self.assertLogged('output: %s' % 'kevin')
 		self.pruneLog()
 		# multiple id combined to a tuple (id, tuple_id):
 		self.assertTrue(_test_exec('-o', 'id', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 192.0.2.1 192.0.2.2',
 			r'^\s*<F-ID/> <F-TUPLE_ID>\S+</F-TUPLE_ID>'))
-		self.assertLogged(str(('192.0.2.1', '192.0.2.2')))
+		self.assertLogged('output: %s' % str(('192.0.2.1', '192.0.2.2')))
 		self.pruneLog()
 		# multiple id combined to a tuple, id first - (id, tuple_id_1, tuple_id_2):
 		self.assertTrue(_test_exec('-o', 'id', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left 192.0.2.3 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID/> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
-		self.assertLogged(str(('192.0.2.3', 'left', 'right')))
+		self.assertLogged('output: %s' % str(('192.0.2.3', 'left', 'right')))
 		self.pruneLog()
 		# id had higher precedence as ip-address:
 		self.assertTrue(_test_exec('-o', 'id', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left [192.0.2.4]:12345 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
-		self.assertLogged(str(('[192.0.2.4]:12345', 'left', 'right')))
+		self.assertLogged('output: %s' % str(('[192.0.2.4]:12345', 'left', 'right')))
 		self.pruneLog()
 		# ip is not id anymore (if IP-address deviates from ID):
 		self.assertTrue(_test_exec('-o', 'ip', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left [192.0.2.4]:12345 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
-		self.assertNotLogged(str(('[192.0.2.4]:12345', 'left', 'right')))
-		self.assertLogged('192.0.2.4')
+		self.assertNotLogged('output: %s' % str(('[192.0.2.4]:12345', 'left', 'right')))
+		self.assertLogged('output: %s' % '192.0.2.4')
 		self.pruneLog()
 		self.assertTrue(_test_exec('-o', 'ID:<fid> | IP:<ip>', '-d', '{^LN-BEG}EPOCH',
 			'1591983743.667 left [192.0.2.4]:12345 right',
 			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
-		self.assertLogged('ID:'+str(('[192.0.2.4]:12345', 'left', 'right'))+' | IP:192.0.2.4')
+		self.assertLogged('output: %s' % 'ID:'+str(('[192.0.2.4]:12345', 'left', 'right'))+' | IP:192.0.2.4')
 		self.pruneLog()
 		# row with id :
 		self.assertTrue(_test_exec('-o', 'row', STR_00, RE_00_ID))
-		self.assertLogged("['kevin'", "'ip4': '192.0.2.0'", "'fid': 'kevin'", all=True)
+		self.assertLogged('output: %s' % "['kevin'", "'ip4': '192.0.2.0'", "'fid': 'kevin'", all=True)
 		self.pruneLog()
 		# row with ip :
 		self.assertTrue(_test_exec('-o', 'row', STR_00, RE_00_USER))
-		self.assertLogged("['192.0.2.0'", "'ip4': '192.0.2.0'", "'user': 'kevin'", all=True)
+		self.assertLogged('output: %s' % "['192.0.2.0'", "'ip4': '192.0.2.0'", "'user': 'kevin'", all=True)
 		self.pruneLog()
 		# log msg :
-		self.assertTrue(_test_exec('-o', 'msg', STR_00, RE_00_USER))
-		self.assertLogged(STR_00)
+		nmline = "Dec 31 12:00:00 [sshd] error: PAM: No failure for user from 192.0.2.123"
+		lines = STR_00+"\n"+nmline
+		self.assertTrue(_test_exec('-o', 'msg', lines, RE_00_USER))
+		self.assertLogged('output: %s' % STR_00)
+		self.assertNotLogged('output: %s' % nmline)
+		self.pruneLog()
+		# log msg (inverted) :
+		self.assertTrue(_test_exec('-o', 'msg', '-i', lines, RE_00_USER))
+		self.assertLogged('output: %s' % nmline)
+		self.assertNotLogged('output: %s' % STR_00)
 		self.pruneLog()
 		# item of match (user):
 		self.assertTrue(_test_exec('-o', 'user', STR_00, RE_00_USER))
-		self.assertLogged('kevin')
+		self.assertLogged('output: %s' % 'kevin')
 		self.pruneLog()
 		# complex substitution using tags (ip, user, family):
 		self.assertTrue(_test_exec('-o', '<ip>, <F-USER>, <family>', STR_00, RE_00_USER))
-		self.assertLogged('192.0.2.0, kevin, inet4')
+		self.assertLogged('output: %s' % '192.0.2.0, kevin, inet4')
+		self.pruneLog()
+		# log msg :
+		lines = nmline+"\n"+STR_00; # just reverse lines (to cover possible order dependencies)
+		self.assertTrue(_test_exec('-o', '<time> : <msg>', lines, RE_00_USER))
+		self.assertLogged('output: %s : %s' % (1104490799.0, STR_00))
+		self.assertNotLogged('output: %s' % nmline)
+		self.pruneLog()
+		# log msg (inverted) :
+		self.assertTrue(_test_exec('-o', '<time> : <msg>', '-i', lines, RE_00_USER))
+		self.assertLogged('output: %s : %s' % (1104490800.0, nmline))
+		self.assertNotLogged('output: %s' % STR_00)
 		self.pruneLog()
 
 	def testStalledIPByNoFailFrmtOutput(self):
@@ -416,31 +474,31 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		)
 		_test = lambda *args: _test_exec(*(opts + args))
 		# with MLFID from prefregex and IP after failure obtained from F-NOFAIL RE:
-		self.assertTrue(_test('-o', 'IP:<ip>', log, 'sshd'))
+		self.assertTrue(_test('-o', 'IP:<ip>', log, 'sshd.conf'))
 		self.assertLogged('IP:192.0.2.76')
 		self.pruneLog()
 		# test diverse ID/IP constellations:
-		def _test_variants(flt="sshd", prefix=""):
+		def _test_variants(flt="sshd.conf", prefix=""):
 			# with different ID/IP from failregex (ID/User from first, IP from second message):
 			self.assertTrue(_test('-o', 'ID:"<fid>" | IP:<ip> | U:<F-USER>', log, 
 				flt+'[failregex="'
-				  '^'+prefix+'<F-ID>User <F-USER>\S+</F-USER></F-ID> not allowed\n'
-				  '^'+prefix+'Received disconnect from <ADDR>'
+				  '^'+prefix+r'<F-ID>User <F-USER>\S+</F-USER></F-ID> not allowed'+'\n'
+				  '^'+prefix+r'Received disconnect from <ADDR>'
 				'"]'))
 			self.assertLogged('ID:"User root" | IP:192.0.2.76 | U:root')
 			self.pruneLog()
 			# with different ID/IP from failregex (User from first, ID and IP from second message):
 			self.assertTrue(_test('-o', 'ID:"<fid>" | IP:<ip> | U:<F-USER>', log, 
 				flt+'[failregex="'
-				  '^'+prefix+'User <F-USER>\S+</F-USER> not allowed\n'
-				  '^'+prefix+'Received disconnect from <F-ID><ADDR> port \d+</F-ID>'
+				  '^'+prefix+r'User <F-USER>\S+</F-USER> not allowed'+'\n'
+				  '^'+prefix+r'Received disconnect from <F-ID><ADDR> port \d+</F-ID>'
 				'"]'))
 			self.assertLogged('ID:"192.0.2.76 port 58846" | IP:192.0.2.76 | U:root')
 			self.pruneLog()
 		# first with sshd and prefregex:
 		_test_variants()
 		# the same without prefregex and MLFID directly in failregex (no merge with prefregex groups):
-		_test_variants('common', prefix="\s*\S+ sshd\[<F-MLFID>\d+</F-MLFID>\]:\s+")
+		_test_variants('common.conf', prefix=r"\s*\S+ sshd\[<F-MLFID>\d+</F-MLFID>\]:\s+")
 
 	def testNoDateTime(self):
 		# datepattern doesn't match:
@@ -475,7 +533,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		# complex substitution using tags and message (ip, user, msg):
 		self.assertTrue(_test_exec('-o', '<ip>, <F-USER>, <msg>',
 			'-c', CONFIG_DIR, '--usedns', 'no',
-			STR_ML_SSHD + "\n" + STR_ML_SSHD_OK, 'sshd[logtype=short, publickey=invalid]'))
+			STR_ML_SSHD + "\n" + STR_ML_SSHD_OK, 'sshd.conf[logtype=short, publickey=invalid]'))
 		# be sure we don't have IP in one line and have it in another:
 		lines = STR_ML_SSHD.split("\n")
 		self.assertTrue('192.0.2.2' not in lines[-2] and '192.0.2.2' in lines[-1])
@@ -491,7 +549,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.pruneLog("[test-phase 1] mode=aggressive & publickey=nofail + OK (accepted)")
 		self.assertTrue(_test_exec('-o', '<ip>, <F-USER>, <msg>',
 			'-c', CONFIG_DIR, '--usedns', 'no',
-			STR_ML_SSHD + "\n" + STR_ML_SSHD_OK, 'sshd[logtype=short, mode=aggressive]'))
+			STR_ML_SSHD + "\n" + STR_ML_SSHD_OK, 'sshd.conf[logtype=short, mode=aggressive]'))
 		self.assertLogged(
 			'192.0.2.2, git, '+lines[-4],
 			'192.0.2.2, git, '+lines[-3],
@@ -505,7 +563,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.pruneLog("[test-phase 2] mode=aggressive & publickey=nofail + FAIL (closed on preauth)")
 		self.assertTrue(_test_exec('-o', '<ip>, <F-USER>, <msg>',
 			'-c', CONFIG_DIR, '--usedns', 'no',
-			STR_ML_SSHD + "\n" + STR_ML_SSHD_FAIL, 'sshd[logtype=short, mode=aggressive]'))
+			STR_ML_SSHD + "\n" + STR_ML_SSHD_FAIL, 'sshd.conf[logtype=short, mode=aggressive]'))
 		# 192.0.2.1 should be found for every failure (2x failed key + 1x closed):
 		lines = STR_ML_SSHD.split("\n")[0:2] + STR_ML_SSHD_FAIL.split("\n")[-1:]
 		self.assertLogged(
@@ -526,7 +584,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			'svc[2] connect started 192.0.2.4\n'
 			'svc[2] connect authorized 192.0.2.4\n'
 			'svc[2] connect finished 192.0.2.4\n',
-			'common[prefregex="^svc\[<F-MLFID>\d+</F-MLFID>\] connect <F-CONTENT>.+</F-CONTENT>$"'
+			r'common.conf[prefregex="^svc\[<F-MLFID>\d+</F-MLFID>\] connect <F-CONTENT>.+</F-CONTENT>$"'
 			', failregex="'
 			'^started\n'
 			'^<F-NOFAIL><F-MLFFORGET>finished</F-MLFFORGET></F-NOFAIL> <ADDR>\n'
@@ -537,12 +595,12 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertNotLogged('failure from == 192.0.2.4 ==')
 
 	def testWrongFilterFile(self):
-		# use test log as filter file to cover eror cases...
+		# use test log as filter file to cover error cases...
 		self.assertFalse(_test_exec(
 			FILENAME_ZZZ_GEN, FILENAME_ZZZ_GEN
 		))
 
-	def testWronChar(self):
+	def testWrongChar(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
 		self.assertTrue(_test_exec(
 		"-l", "notice", # put down log-level, because of too many debug-messages
@@ -557,7 +615,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('Nov  8 00:16:12 main sshd[32548]: input_userauth_request: invalid user llinco')
 		self.assertLogged('Nov  8 00:16:12 main sshd[32547]: pam_succeed_if(sshd:auth): error retrieving information about user llinco')
 
-	def testWronCharDebuggex(self):
+	def testWrongCharDebuggex(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
 		self.assertTrue(_test_exec(
 		"-l", "notice", # put down log-level, because of too many debug-messages
@@ -581,8 +639,8 @@ class Fail2banRegexTest(LogCaptureTestCase):
 				# test on unicode string containing \x0A as part of uni-char,
 				# it must produce exactly 2 lines (both are failures):
 				for l in (
-					u'1490349000 \u20AC Failed auth: invalid user Test\u020A from 192.0.2.1\n',
-					u'1490349000 \u20AC Failed auth: invalid user TestI from 192.0.2.2\n'
+					'1490349000 \u20AC Failed auth: invalid user Test\u020A from 192.0.2.1\n',
+					'1490349000 \u20AC Failed auth: invalid user TestI from 192.0.2.2\n'
 				):
 					fout.write(l.encode(enc))
 				fout.close()

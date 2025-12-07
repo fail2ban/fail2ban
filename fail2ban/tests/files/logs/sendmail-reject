@@ -57,6 +57,9 @@ Feb 27 15:49:02 batman sm-mta[88377]: s1REn1un088377: ruleset=check_rcpt, arg1=<
 # failJSON: { "time": "2005-02-27T22:44:42", "match": true , "host": "123.69.106.50" }
 Feb 27 22:44:42 batman sm-mta[30972]: s1RLieRP030972: ruleset=check_rcpt, arg1=<existing-user@example.com>, relay=[123.69.106.50], reject=553 5.1.8 <existing-user@example.com>... Domain of sender address lf@ibuv.net does not exist
 
+# failJSON: { "time": "2005-02-27T22:44:43", "match": true , "host": "192.0.2.100" }
+Feb 27 22:44:43 batman sm-mta[4012]: 56CF8Qni004012: ruleset=check_rcpt, arg1=<existing-user@example.com>, relay=[192.0.2.100] (may be forged), reject=451 4.1.8 Domain of sender address test.whatever@service.example.com does not resolve
+
 # failJSON: { "time": "2005-02-23T21:18:47", "match": true , "host": "76.72.174.70" }
 Feb 23 21:18:47 batman sm-mta[93301]: s1NKIkZa093301: [76.72.174.70]: EXPN root [rejected]
 
@@ -94,6 +97,11 @@ Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026252: <anton@domain.com>...
 # failJSON: { "match": false, "desc": "Different mail ID shouldn't match" }
 Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026255: from=<anton@domain.com>, size=0, class=0, nrcpts=0, bodytype=8BITMIME, proto=ESMTP, daemon=MTA, relay=163.23.32.95.dsl-dynamic.vsi.ru [95.32.23.163]
 
+# failJSON: { "match": false, "desc": "Add User unknown" }
+Jun 17 14:37:39 <mail.notice> robin sm-mta[2794]: 55HIbcGI002794: <baduser@yourhost.com>... User unknown
+# failJSON: { "time": "2005-06-17T14:37:39", "match": true, "host": "192.168.1.45", "desc": "BSD style log format with no hostname for the relay." }
+Jun 17 14:37:39 <mail.info> robin sm-mta[2794]: 55HIbcGI002794: from=<root@yourhost.com>, size=108, class=0, nrcpts=0, proto=ESMTP, daemon=MTA-v4, relay=[192.168.1.45]
+
 # filterOptions: {"mode": "extra"}
 
 # failJSON: { "time": "2005-03-06T16:55:28", "match": true , "host": "192.0.2.194", "desc": "wrong resp. non RFC compiant (ddos prelude?), MTA-mode" }
@@ -112,3 +120,12 @@ Mar 29 22:51:43 server sendmail[3529565]: xA32R2PQ3529565: [192.0.2.2] did not i
 Mar 29 22:51:45 server sm-mta[50437]: 06QDQnNf050437: example.com [192.0.2.3] did not issue MAIL/EXPN/VRFY/ETRN during connection to IPv4
 # failJSON: { "time": "2005-03-29T22:51:46", "match": true , "host": "2001:DB8::1", "desc": "IPv6" }
 Mar 29 22:51:46 server sm-mta[50438]: 06QDQnNf050438: example.com [IPv6:2001:DB8::1] did not issue MAIL/EXPN/VRFY/ETRN during connection to IPv6
+
+# filterOptions: {"mode": "aggressive"}
+
+# failJSON: { "time": "2005-07-31T13:03:43", "match": true, "host": "139.162.120.196" }
+Jul 31 13:03:43 <mail.notice> alarmpi sm-mta[24291]: 56VFYCxS024291: lost input channel from mail.aqicn.org [139.162.120.196] to MTA-v4 after rcpt
+
+# failJSON: { "time": "2005-06-18T08:05:17", "match": true, "host": "45.125.66.67" }
+Jun 18 08:05:17 <mail.notice> myhost sm-mta[17002]: 55IC59VD017002: ruleset=check_rcpt, arg1=<spameri@tiscali.it>, relay=[45.125.66.67], reject=450 4.4.0 <spameri@tiscali.it>... Relaying temporarily denied. Cannot resolve PTR record for 45.125.66.67
+

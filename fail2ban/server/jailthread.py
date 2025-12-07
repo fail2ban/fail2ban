@@ -78,14 +78,9 @@ class JailThread(Thread):
 					print(e)
 		self.run = run_with_except_hook
 
-	if sys.version_info >= (3,): # pragma: 2.x no cover
-		def _bootstrap(self):
-			prctl_set_th_name(self.name)
-			return super(JailThread, self)._bootstrap();
-	else: # pragma: 3.x no cover
-		def __bootstrap(self):
-			prctl_set_th_name(self.name)
-			return Thread._Thread__bootstrap(self)
+	def _bootstrap(self):
+		prctl_set_th_name(self.name)
+		return super(JailThread, self)._bootstrap();
 
 	@abstractmethod
 	def status(self, flavor="basic"): # pragma: no cover - abstract
@@ -108,7 +103,21 @@ class JailThread(Thread):
 	def stop(self):
 		"""Sets `active` property to False, to flag run method to return.
 		"""
-		self.active = False
+		if self.active: self.active = False
+		# normally onStop will be called automatically in thread after its run ends,
+		# but for backwards compatibilities we'll invoke it in caller of stop method.
+		self.onStop()
+		self.onStop = lambda:()
+		self.done()
+
+	def done(self):
+		self.done = lambda:()
+		# if still runniung - wait a bit before initiate clean-up:
+		if self.is_alive():
+			Utils.wait_for(lambda: not self.is_alive(), 5)
+		# now clean-up everything:
+		self.afterStop()
+
 
 	@abstractmethod
 	def run(self): # pragma: no cover - absract
@@ -116,18 +125,19 @@ class JailThread(Thread):
 		"""
 		pass
 
+	def afterStop(self):
+		"""Cleanup resources."""
+		pass
+
 	def join(self):
 		""" Safer join, that could be called also for not started (or ended) threads (used for cleanup).
 		"""
-		## if cleanup needed - create derivate and call it before join...
-
+		## if cleanup needed - create derivative and call it before join...
+		self.done()
 		## if was really started - should call join:
 		if self.active is not None:
 			super(JailThread, self).join()
 
-## python 2.x replace binding of private __bootstrap method:
-if sys.version_info < (3,): # pragma: 3.x no cover
-	JailThread._Thread__bootstrap = JailThread._JailThread__bootstrap
 ## python 3.9, restore isAlive method:
-elif not hasattr(JailThread, 'isAlive'): # pragma: 2.x no cover
+if not hasattr(JailThread, 'isAlive'):
 	 JailThread.isAlive = JailThread.is_alive

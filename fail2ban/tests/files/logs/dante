@@ -1,0 +1,8 @@
+# failJSON: { "time": "2005-04-14T15:35:03", "match": true , "host": "1.2.3.4" }
+Apr 14 15:35:03 vps111111 danted[17969]: info: block(1): tcp/accept ]: 1.2.3.4.50550 0.0.0.0.1080: error after reading 35 bytes in 0 seconds: could not access user "roooooooot"'s records in the system password file: no system error
+# failJSON: { "time": "2005-04-14T15:44:26", "match": true , "host": "1.2.3.4" }
+Apr 14 15:44:26 vps111111 danted[1846]: info: block(1): tcp/accept ]: 1.2.3.4.57178 0.0.0.0.1080: error after reading 18 bytes in 0 seconds: system password authentication failed for user "aland"
+# failJSON: { "time": "2005-04-14T15:44:26", "match": true , "host": "1.2.3.4" }
+Apr 14 15:44:26 vps111111 danted[1846]: info: block(1): tcp/accept ]: 1.2.3.4.57178 0.0.0.0.1080: error after reading 1 byte in 1 second: system password authentication failed for user "aland"
+# failJSON: { "time": "2005-04-14T15:44:27", "match": true , "host": "192.0.2.169", "desc": "pam auth failure, gh-3410" }
+Apr 14 15:44:27 srv danted[3374579]: info: block(1): tcp/accept ]: 192.0.2.169.8490 192.0.2.83.52483: error after reading 31 bytes in 2 seconds: pam_authenticate() for user "socks5_user" failed: Authentication failure

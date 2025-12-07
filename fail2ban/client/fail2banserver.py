@@ -44,14 +44,18 @@ class Fail2banServer(Fail2banCmdLine):
 	# Start the Fail2ban server in background/foreground (daemon mode or not).
 
 	@staticmethod
-	def startServerDirect(conf, daemon=True):
-		logSys.debug("  direct starting of server in %s, deamon: %s", os.getpid(), daemon)
+	def startServerDirect(conf, daemon=True, setServer=None):
+		logSys.debug("  direct starting of server in %s, daemon: %s", os.getpid(), daemon)
 		from ..server.server import Server
 		server = None
 		try:
 			# Start it in foreground (current thread, not new process),
 			# server object will internally fork self if daemon is True
 			server = Server(daemon)
+			# notify caller - set server handle:
+			if setServer:
+				setServer(server)
+			# run:
 			server.start(conf["socket"],
 							conf["pidfile"], conf["force"],
 							conf=conf)
@@ -63,6 +67,10 @@ class Fail2banServer(Fail2banCmdLine):
 				if conf["verbose"] > 1:
 					logSys.exception(e2)
 			raise
+		finally:
+			# notify waiting thread server ready resp. done (background execution, error case, etc):
+			if conf.get('onstart'):
+				conf['onstart']()
 
 		return server
 
@@ -112,7 +120,7 @@ class Fail2banServer(Fail2banCmdLine):
 				if frk: # pragma: no cover
 					os.execv(exe, args)
 				else:
-					# use P_WAIT instead of P_NOWAIT (to prevent defunct-zomby process), it startet as daemon, so parent exit fast after fork):
+					# use P_WAIT instead of P_NOWAIT (to prevent defunct-zomby process), it started as daemon, so parent exit fast after fork):
 					ret = os.spawnv(os.P_WAIT, exe, args)
 					if ret != 0: # pragma: no cover
 						raise OSError(ret, "Unknown error by executing server %r with %r" % (args[1], exe))
@@ -179,27 +187,15 @@ class Fail2banServer(Fail2banCmdLine):
 				# Start new thread with client to read configuration and
 				# transfer it to the server:
 				cli = self._Fail2banClient()
+				cli._conf = self._conf
 				phase = dict()
 				logSys.debug('Configure via async client thread')
 				cli.configureServer(phase=phase)
-				# wait, do not continue if configuration is not 100% valid:
-				Utils.wait_for(lambda: phase.get('ready', None) is not None, self._conf["timeout"], 0.001)
-				logSys.log(5, '  server phase %s', phase)
-				if not phase.get('start', False):
-					raise ServerExecutionException('Async configuration of server failed')
-				# event for server ready flag:
-				def _server_ready():
-					phase['start-ready'] = True
-					logSys.log(5, '  server phase %s', phase)
-				# notify waiting thread if server really ready
-				self._conf['onstart'] = _server_ready
 
 			# Start server, daemonize it, etc.
 			pid = os.getpid()
-			server = Fail2banServer.startServerDirect(self._conf, background)
-			# notify waiting thread server ready resp. done (background execution, error case, etc):
-			if not nonsync:
-				_server_ready()
+			server = Fail2banServer.startServerDirect(self._conf, background,
+				 cli._set_server if cli else None)
 			# If forked - just exit other processes
 			if pid != os.getpid(): # pragma: no cover
 				os._exit(0)

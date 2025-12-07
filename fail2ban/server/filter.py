@@ -32,7 +32,7 @@ import time
 
 from .actions import Actions
 from .failmanager import FailManagerEmpty, FailManager
-from .ipdns import DNSUtils, IPAddr
+from .ipdns import DNSUtils, IPAddr, FileIPAddrSet
 from .observer import Observers
 from .ticket import FailTicket
 from .jailthread import JailThread
@@ -307,7 +307,7 @@ class Filter(JailThread):
 			dd = DateDetector()
 			dd.default_tz = self.__logtimezone
 			if not isinstance(pattern, (list, tuple)):
-				pattern = filter(bool, map(str.strip, re.split('\n+', pattern)))
+				pattern = list(filter(bool, list(map(str.strip, re.split('\n+', pattern)))))
 			for pattern in pattern:
 				dd.appendTemplate(pattern)
 			self.dateDetector = dd
@@ -475,6 +475,10 @@ class Filter(JailThread):
 		# Generate the failure attempt for the IP:
 		unixTime = MyTime.time()
 		ticket = FailTicket(ip, unixTime, matches=matches)
+		# check it shall be ignored:
+		if self._inIgnoreIPList(ip, ticket):
+			return 0
+		# add attempt (found failure):
 		logSys.info(
 			"[%s] Attempt %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
 		)
@@ -482,7 +486,9 @@ class Filter(JailThread):
 		# Perform the ban if this attempt is resulted to:
 		if attempts >= self.failManager.getMaxRetry():
 			self.performBan(ip)
-
+		# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
+		if Observers.Main is not None:
+			Observers.Main.add('failureFound', self.jail, ticket)
 		return 1
 
 	##
@@ -507,6 +513,12 @@ class Filter(JailThread):
 		# An empty string is always false
 		if ipstr == "":
 			return
+		# File?
+		ip = FileIPAddrSet.RE_FILE_IGN_IP.match(ipstr)
+		if ip:
+			ip = DNSUtils.getIPsFromFile(ip.group(1)) # FileIPAddrSet
+			self.__ignoreIpList.append(ip)
+			return
 		# Create IP address object
 		ip = IPAddr(ipstr)
 		# Avoid exact duplicates
@@ -529,6 +541,11 @@ class Filter(JailThread):
 			return
 		# delete by ip:
 		logSys.debug("  Remove %r from ignore list", ip)
+		# File?
+		if FileIPAddrSet.RE_FILE_IGN_IP.match(ip):
+			self.__ignoreIpList.remove(ip)
+			return
+		# IP / DNS
 		if ip in self.__ignoreIpSet:
 			self.__ignoreIpSet.remove(ip)
 		else:
@@ -585,7 +602,7 @@ class Filter(JailThread):
 			return True
 		for net in self.__ignoreIpList:
 			if ip.isInNet(net):
-				self.logIgnoreIp(ip, log_ignore, ignore_source=("ip" if net.isValid else "dns"))
+				self.logIgnoreIp(ip, log_ignore, ignore_source=(net.instanceType))
 				if self.__ignoreCache: c.set(key, True)
 				return True
 
@@ -635,7 +652,7 @@ class Filter(JailThread):
 				e = m.end(1)
 				m = line[s:e]
 				tupleLine = (line[:s], m, line[e:])
-				if m: # found and not empty - retrive date:
+				if m: # found and not empty - retrieve date:
 					date = self.dateDetector.getTime(m, timeMatch)
 					if date is not None:
 						# Lets get the time part
@@ -666,7 +683,7 @@ class Filter(JailThread):
 		if self.checkFindTime and date is not None:
 			# if in operation (modifications have been really found):
 			if self.inOperation:
-				# if weird date - we'd simulate now for timeing issue (too large deviation from now):
+				# if weird date - we'd simulate now for timing issue (too large deviation from now):
 				delta = int(date - MyTime.time())
 				if abs(delta) > 60:
 					# log timing issue as warning once per day:
@@ -800,7 +817,7 @@ class Filter(JailThread):
 			if (nfflgs & 4) == 0 and not mlfidGroups.get('mlfpending', 0):
 				mlfidGroups.pop("matches", None)
 			# overwrite multi-line failure with all values, available in fail:
-			mlfidGroups.update(((k,v) for k,v in fail.iteritems() if v is not None))
+			mlfidGroups.update(((k,v) for k,v in fail.items() if v is not None))
 			# new merged failure data:
 			fail = mlfidGroups
 			# if forget (disconnect/reset) - remove cached entry:
@@ -944,7 +961,7 @@ class Filter(JailThread):
 							ip = fid
 							raw = True
 				# if mlfid case (not failure):
-				if ip is None:
+				if fid is None and ip is None:
 					if ll <= 7: logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
 						mlfid, failRegexIndex, fail.get('mlfforget', "waiting for identifier"))
 					fail['mlfpending'] = 1; # mark failure is pending
@@ -978,6 +995,8 @@ class Filter(JailThread):
 	def status(self, flavor="basic"):
 		"""Status of failures detected by filter.
 		"""
+		if flavor == "stats":
+			return (self.failManager.size(), self.failManager.getFailTotal())
 		ret = [("Currently failed", self.failManager.size()),
 		       ("Total failed", self.failManager.getFailTotal())]
 		return ret
@@ -1045,7 +1064,7 @@ class FileFilter(Filter):
 	# @return log paths
 
 	def getLogPaths(self):
-		return self.__logs.keys()
+		return list(self.__logs.keys())
 
 	##
 	# Get the log containers
@@ -1053,7 +1072,7 @@ class FileFilter(Filter):
 	# @return log containers
 
 	def getLogs(self):
-		return self.__logs.values()
+		return list(self.__logs.values())
 
 	##
 	# Get the count of log containers
@@ -1079,7 +1098,7 @@ class FileFilter(Filter):
 
 	def setLogEncoding(self, encoding):
 		encoding = super(FileFilter, self).setLogEncoding(encoding)
-		for log in self.__logs.itervalues():
+		for log in self.__logs.values():
 			log.setEncoding(encoding)
 
 	def getLog(self, path):
@@ -1095,8 +1114,8 @@ class FileFilter(Filter):
 	def getFailures(self, filename, inOperation=None):
 		if self.idle: return False
 		log = self.getLog(filename)
-		if log is None:
-			logSys.error("Unable to get failures in %s", filename)
+		if log is None and self.active:
+			logSys.log(logging.MSG, "Unable to get failures in %s", filename)
 			return False
 		# We should always close log (file), otherwise may be locked (log-rotate, etc.)
 		try:
@@ -1255,7 +1274,9 @@ class FileFilter(Filter):
 		"""Status of Filter plus files being monitored.
 		"""
 		ret = super(FileFilter, self).status(flavor=flavor)
-		path = self.__logs.keys()
+		if flavor == "stats":
+			return ret
+		path = list(self.__logs.keys())
 		ret.append(("File list", path))
 		return ret
 
@@ -1270,24 +1291,15 @@ class FileFilter(Filter):
 				break
 			db.updateLog(self.jail, log)
 			
-	def onStop(self):
+	def afterStop(self):
 		"""Stop monitoring of log-file(s). Invoked after run method.
 		"""
+		# stop files monitoring:
+		for path in list(self.__logs.keys()):
+			self.delLogPath(path)
 		# ensure positions of pending logs are up-to-date:
 		if self._pendDBUpdates and self.jail.database:
 			self._updateDBPending()
-		# stop files monitoring:
-		for path in self.__logs.keys():
-			self.delLogPath(path)
-
-	def stop(self):
-		"""Stop filter
-		"""
-		# normally onStop will be called automatically in thread after its run ends, 
-		# but for backwards compatibilities we'll invoke it in caller of stop method.
-		self.onStop()
-		# stop thread:
-		super(Filter, self).stop()
 
 ##
 # FileContainer class.
@@ -1530,7 +1542,7 @@ class FileContainer:
 
 	def __iter__(self):
 		return self
-	def next(self):
+	def __next__(self):
 		line = self.readline()
 		if line is None:
 			self.close()

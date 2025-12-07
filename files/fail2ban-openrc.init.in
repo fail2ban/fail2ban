@@ -44,7 +44,7 @@ retry="30"
 
 depend() {
 	use logger
-	after iptables
+	after iptables nftables
 }
 
 checkconfig() {

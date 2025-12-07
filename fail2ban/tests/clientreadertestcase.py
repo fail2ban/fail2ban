@@ -61,6 +61,7 @@ class ConfigReaderTest(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 		shutil.rmtree(self.d)
+		super(ConfigReaderTest, self).tearDown()
 
 	def _write(self, fname, value=None, content=None):
 		# verify if we don't need to create .d directory
@@ -337,7 +338,7 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertTrue(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
 		stream = jail.convert()
-		# check filter options are overriden with values specified directly in jail:
+		# check filter options are overridden with values specified directly in jail:
 		# prefregex:
 		self.assertEqual([['set', 'sshd-override-flt-opts', 'prefregex', '^Test']],
 			[o for o in stream if len(o) > 2 and o[2] == 'prefregex'])
@@ -419,7 +420,7 @@ class JailReaderTest(LogCaptureTestCase):
 		# And multiple groups (`][` instead of `,`)
 		result = extractOptions(option.replace(',', ']['))
 		expected2 = (expected[0],
-		 dict((k, v.replace(',', '][')) for k, v in expected[1].iteritems())
+		 dict((k, v.replace(',', '][')) for k, v in expected[1].items())
 		)
 		self.assertEqual(expected2, result)
 
@@ -563,9 +564,9 @@ class FilterReaderTest(LogCaptureTestCase):
 		self.assertNotEqual(opts['maxlines'], 'X'); # wrong int value 'X' for 'maxlines'
 		self.assertLogged("Wrong int value 'X' for 'maxlines'. Using default one:")
 
-	def testFilterReaderSubstitionDefault(self):
+	def testFilterReaderSubstitutionDefault(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sweet@example.com fromip=<IP>']]
-		filterReader = FilterReader('substition', "jailname", {},
+		filterReader = FilterReader('substitution', "jailname", {},
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
@@ -583,46 +584,46 @@ class FilterReaderTest(LogCaptureTestCase):
 		opts = filterReader.getCombined()
 		self.assertTrue('sshd' in opts['failregex'])
 		
-	def testFilterReaderSubstitionSet(self):
+	def testFilterReaderSubstitutionSet(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sour@example.com fromip=<IP>']]
-		filterReader = FilterReader('substition', "jailname", {'honeypot': 'sour@example.com'},
+		filterReader = FilterReader('substitution', "jailname", {'honeypot': 'sour@example.com'},
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
 		c = filterReader.convert()
 		self.assertSortedEqual(c, output)
 
-	def testFilterReaderSubstitionKnown(self):
+	def testFilterReaderSubstitutionKnown(self):
 		output = [['set', 'jailname', 'addfailregex', '^to=test,sweet@example.com,test2,sweet@example.com fromip=<IP>$']]
 		filterName, filterOpt = extractOptions(
-			'substition[failregex="^<known/failregex>$", honeypot="<sweet>,<known/honeypot>", sweet="test,<known/honeypot>,test2"]')
-		filterReader = FilterReader('substition', "jailname", filterOpt,
+			'substitution[failregex="^<known/failregex>$", honeypot="<sweet>,<known/honeypot>", sweet="test,<known/honeypot>,test2"]')
+		filterReader = FilterReader('substitution', "jailname", filterOpt,
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
 		c = filterReader.convert()
 		self.assertSortedEqual(c, output)
 
-	def testFilterReaderSubstitionSection(self):
+	def testFilterReaderSubstitutionSection(self):
 		output = [['set', 'jailname', 'addfailregex', '^\\s*to=fail2ban@localhost fromip=<IP>\\s*$']]
 		filterName, filterOpt = extractOptions(
-			'substition[failregex="^\\s*<Definition/failregex>\\s*$", honeypot="<default/honeypot>"]')
-		filterReader = FilterReader('substition', "jailname", filterOpt,
+			'substitution[failregex="^\\s*<Definition/failregex>\\s*$", honeypot="<default/honeypot>"]')
+		filterReader = FilterReader('substitution', "jailname", filterOpt,
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
 		c = filterReader.convert()
 		self.assertSortedEqual(c, output)
 
-	def testFilterReaderSubstitionFail(self):
+	def testFilterReaderSubstitutionFail(self):
 		# directly subst the same var :
-		filterReader = FilterReader('substition', "jailname", {'honeypot': '<honeypot>'},
+		filterReader = FilterReader('substitution', "jailname", {'honeypot': '<honeypot>'},
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
 		self.assertRaises(ValueError, FilterReader.convert, filterReader)
 		# cross subst the same var :
-		filterReader = FilterReader('substition', "jailname", {'honeypot': '<sweet>', 'sweet': '<honeypot>'},
+		filterReader = FilterReader('substitution', "jailname", {'honeypot': '<sweet>', 'sweet': '<honeypot>'},
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
@@ -718,50 +719,67 @@ class JailsReaderTest(LogCaptureTestCase):
 		jails = JailsReader(basedir=IMPERFECT_CONFIG, share_config=IMPERFECT_CONFIG_SHARE_CFG)
 		self.assertTrue(jails.read())
 		self.assertFalse(jails.getOptions(ignoreWrong=False))
-		self.assertRaises(ValueError, jails.convert)
-		comm_commands = jails.convert(allow_no_files=True)
-		self.maxDiff = None
-		self.assertSortedEqual(comm_commands,
-			[['add', 'emptyaction', 'auto'],
-			 ['add', 'test-known-interp', 'auto'],
-			 ['multi-set', 'test-known-interp', 'addfailregex', [
-			   'failure test 1 (filter.d/test.conf) <HOST>',
-			   'failure test 2 (filter.d/test.local) <HOST>',
-			   'failure test 3 (jail.local) <HOST>'
-			 ]],
-			 ['start', 'test-known-interp'],
-			 ['add', 'missinglogfiles', 'auto'],
-			 ['set', 'missinglogfiles', 'addfailregex', '<IP>'],
-			 ['add', 'brokenaction', 'auto'],
-			 ['set', 'brokenaction', 'addfailregex', '<IP>'],
-			 ['set', 'brokenaction', 'addaction', 'brokenaction'],
-			 ['multi-set', 'brokenaction', 'action', 'brokenaction', [
-				 ['actionban', 'hit with big stick <ip>'],
-				 ['actname', 'brokenaction'],
-				 ['name', 'brokenaction']
-			 ]],
-			 ['add', 'parse_to_end_of_jail.conf', 'auto'],
-			 ['set', 'parse_to_end_of_jail.conf', 'addfailregex', '<IP>'],
-			 ['set', 'tz_correct', 'addfailregex', '<IP>'],
-			 ['set', 'tz_correct', 'logtimezone', 'UTC+0200'],
-			 ['start', 'emptyaction'],
-			 ['start', 'missinglogfiles'],
-			 ['start', 'brokenaction'],
-			 ['start', 'parse_to_end_of_jail.conf'],
-		         ['add', 'tz_correct', 'auto'],
-			 ['start', 'tz_correct'],
-			 ['config-error',
-				"Jail 'brokenactiondef' skipped, because of wrong configuration: Invalid action definition 'joho[foo': unexpected option syntax"],
-			 ['config-error',
-				"Jail 'brokenfilterdef' skipped, because of wrong configuration: Invalid filter definition 'flt[test': unexpected option syntax"],
-			 ['config-error',
-				"Jail 'missingaction' skipped, because of wrong configuration: Unable to read action 'noactionfileforthisaction'"],
-			 ['config-error',
-				"Jail 'missingbitsjail' skipped, because of wrong configuration: Unable to read the filter 'catchallthebadies'"],
-			 ])
+		self.assertRaises(ValueError, lambda: jails.convert(systemd_if_nologs=False))
 		self.assertLogged("Errors in jail 'missingbitsjail'.")
 		self.assertNotLogged("Skipping...")
+		# check with allow no files (just to cover other jail problems), but without switch to systemd:
+		self.pruneLog('[test-phase] allow no files, no switch to systemd ...')
+		comm_commands = jails.convert(allow_no_files=True, systemd_if_nologs=False)
+		self.maxDiff = None
+		def _checkStream(comm_commands, backend='auto'):
+			self.assertSortedEqual(comm_commands,
+				[['add', 'emptyaction', 'auto'],
+				 ['add', 'test-known-interp', 'auto'],
+				 ['multi-set', 'test-known-interp', 'addfailregex', [
+				   'failure test 1 (filter.d/test.conf) <HOST>',
+				   'failure test 2 (filter.d/test.local) <HOST>',
+				   'failure test 3 (jail.local) <HOST>'
+				 ]],
+				 ['start', 'test-known-interp'],
+				 ['add', 'missinglogfiles', backend], # can switch backend because have journalmatch
+				 ['set', 'missinglogfiles', 'addfailregex', '<IP>'],
+				 ['set', 'missinglogfiles', 'addjournalmatch', '_COMM=test'],
+				 ['config-error', "Jail 'missinglogfiles_skip' skipped, because of missing log files."],
+				 ['add', 'brokenaction', 'auto'],
+				 ['set', 'brokenaction', 'addfailregex', '<IP>'],
+				 ['set', 'brokenaction', 'addaction', 'brokenaction'],
+				 ['multi-set', 'brokenaction', 'action', 'brokenaction', [
+					 ['actionban', 'hit with big stick <ip>'],
+					 ['actname', 'brokenaction'],
+					 ['name', 'brokenaction']
+				 ]],
+				 ['add', 'parse_to_end_of_jail.conf', 'auto'],
+				 ['set', 'parse_to_end_of_jail.conf', 'addfailregex', '<IP>'],
+				 ['set', 'tz_correct', 'addfailregex', '<IP>'],
+				 ['set', 'tz_correct', 'logtimezone', 'UTC+0200'],
+				 ['start', 'emptyaction'],
+				 ['start', 'missinglogfiles'],
+				 ['start', 'brokenaction'],
+				 ['start', 'parse_to_end_of_jail.conf'],
+			   ['add', 'tz_correct', 'auto'],
+				 ['start', 'tz_correct'],
+				 ['config-error',
+					"Jail 'brokenactiondef' skipped, because of wrong configuration: Invalid action definition 'joho[foo': unexpected option syntax"],
+				 ['config-error',
+					"Jail 'brokenfilterdef' skipped, because of wrong configuration: Invalid filter definition 'flt[test': unexpected option syntax"],
+				 ['config-error',
+					"Jail 'missingaction' skipped, because of wrong configuration: Unable to read action 'noactionfileforthisaction'"],
+				 ['config-error',
+					"Jail 'missingbitsjail' skipped, because of wrong configuration: Unable to read the filter 'catchallthebadies'"],
+				 ])
+		_checkStream(comm_commands, backend='auto')
+		self.assertNotLogged("Have not found any log file for 'missinglogfiles' jail. Jail will monitor systemd journal.")
 		self.assertLogged("No file(s) found for glob /weapons/of/mass/destruction")
+		self.assertLogged("Jail 'missinglogfiles_skip' skipped, because of missing log files.")
+		# switch backend auto to systemd if no files found, note that jail "missinglogfiles_skip" will be skipped yet,
+		# because for this jail configured skip_if_nologs = true, all other jails shall switch to systemd with warning
+		self.pruneLog('[test-phase] auto -> systemd')
+		comm_commands = jails.convert(allow_no_files=True)
+		_checkStream(comm_commands, backend='systemd')
+		self.assertNotLogged("Errors in jail 'missingbitsjail'.")
+		self.assertLogged("Have not found any log file for 'missinglogfiles' jail. Jail will monitor systemd journal.")
+		self.assertLogged("No file(s) found for glob /weapons/of/mass/destruction")
+		self.assertLogged("Jail 'missinglogfiles_skip' skipped, because of missing log files.")
 
 	def testReadStockActionConf(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
@@ -860,7 +878,7 @@ class JailsReaderTest(LogCaptureTestCase):
 		self.assertTrue(jails.getOptions())       # reads fine
 		# grab all filter names
 		filters = set(os.path.splitext(os.path.split(a)[1])[0]
-			for a in glob.glob(os.path.join('config', 'filter.d', '*.conf'))
+			for a in glob.glob(os.path.join(CONFIG_DIR, 'filter.d', '*.conf'))
 				if not (a.endswith('common.conf') or a.endswith('-aggressive.conf')))
 		# get filters of all jails (filter names without options inside filter[...])
 		filters_jail = set(
@@ -1018,8 +1036,13 @@ filter = testfilter1
 		self.assertEqual(add_actions[-1][-1], "{}")
 
 	def testLogPathFileFilterBackend(self):
-		self.assertRaisesRegexp(ValueError, r"Have not found any log file for .* jail", 
+		self.assertRaisesRegex(ValueError, r"Have not found any log file for .* jail", 
 			self._testLogPath, backend='polling')
+
+	def testLogPathSkipJailIfNoLogs(self):
+		s = self._testLogPath(backend='polling', skip_if_nologs=True)
+		self.assertLogged('Have not found any log file for')
+		self.assertEqual(s, [['config-error', "Jail 'testjail1' skipped, because of missing log files."]])
 
 	def testLogPathSystemdBackend(self):
 		try: # pragma: systemd no cover
@@ -1030,7 +1053,7 @@ filter = testfilter1
 		self._testLogPath(backend='systemd[journalflags=2]')
 	
 	@with_tmpdir
-	def _testLogPath(self, basedir, backend):
+	def _testLogPath(self, basedir, backend, skip_if_nologs=False):
 		jailfd = open(os.path.join(basedir, "jail.conf"), 'w')
 		jailfd.write("""
 [testjail1]
@@ -1042,8 +1065,10 @@ action =
 filter = 
 failregex = test <HOST>
 """ % (backend, basedir))
+		if skip_if_nologs:
+			jailfd.write("skip_if_nologs = true\n")
 		jailfd.close()
 		jails = JailsReader(basedir=basedir)
 		self.assertTrue(jails.read())
 		self.assertTrue(jails.getOptions())
-		jails.convert()
+		return jails.convert()

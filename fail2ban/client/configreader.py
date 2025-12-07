@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 import glob
 import os
-from ConfigParser import NoOptionError, NoSectionError
+from configparser import NoOptionError, NoSectionError
 
 from .configparserinc import sys, SafeConfigParserWithIncludes, logLevel
 from ..helpers import getLogger, _as_bool, _merge_dicts, substituteRecursiveTags
@@ -98,7 +98,7 @@ class ConfigReader():
 	def read(self, name, once=True):
 		""" Overloads a default (not shared) read of config reader.
 
-	  To prevent mutiple reads of config files with it includes, reads into 
+	  To prevent multiple reads of config files with it includes, reads into 
 	  the config reader, if it was not yet cached/shared by 'name'.
 	  """
 		# already shared ?
@@ -183,7 +183,7 @@ class ConfigReader():
 class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	"""Unshared config reader (previously ConfigReader).
 
-	Do not use this class (internal not shared/cached represenation).
+	Do not use this class (internal not shared/cached representation).
 	Use ConfigReader instead.
 	"""
 
@@ -221,7 +221,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 		config_files += sorted(glob.glob('%s/*.local' % config_dir))
 
 		# choose only existing ones
-		config_files = filter(os.path.exists, config_files)
+		config_files = list(filter(os.path.exists, config_files))
 
 		if len(config_files):
 			# at least one config exists and accessible
@@ -230,6 +230,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 			missed = [ cf for cf in config_files if cf not in config_files_read ]
 			if missed:
 				logSys.error("Could not read config files: %s", ', '.join(missed))
+				return False
 			if config_files_read:
 				return True
 			logSys.error("Found no accessible config files for %r under %s",
@@ -277,7 +278,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 				# TODO: validate error handling here.
 			except NoOptionError:
 				if not optvalue is None:
-					logSys.warning("'%s' not defined in '%s'. Using default one: %r"
+					logSys.debug("'%s' not defined in '%s'. Using default one: %r"
 								% (optname, sec, optvalue))
 					values[optname] = optvalue
 				# elif logSys.getEffectiveLevel() <= logLevel:
@@ -353,6 +354,11 @@ class DefinitionInitConfigReader(ConfigReader):
 					if v is None: v = getopt(opt)
 					self._initOpts['known/'+opt] = v
 				if opt not in self._initOpts:
+					# overwrite also conditional init options (from init?... section):
+					cond = SafeConfigParserWithIncludes.CONDITIONAL_RE.match(opt)
+					if cond:
+						optc, cond = cond.groups()
+						v = pOpts.get(optc, v)
 					if v is None: v = getopt(opt)
 					self._initOpts[opt] = v
 		if all and self.has_section("Definition"):
@@ -406,7 +412,7 @@ class DefinitionInitConfigReader(ConfigReader):
 			if cond:
 				n, cond = cond.groups()
 				ignore.add(n)
-		# substiture options already specified direct:
+		# substitute options already specified direct:
 		opts = substituteRecursiveTags(combinedopts, 
 			ignore=ignore, addrepl=self.getCombOption)
 		if not opts:

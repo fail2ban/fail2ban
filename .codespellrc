@@ -1,0 +1,12 @@
+[codespell]
+# THANKS - names
+skip = .git,*.pdf,*.svg,venv,.codespellrc,.typos.toml,THANKS,*test*.log,logs
+check-hidden = true
+# Ignore all acronyms etc as plenty e.g. in fail2ban/server/strptime.py
+# Try to identify incomplete words which are part of a regex, hence having [] at the beginning
+# Ignore all urls as something with :// in it
+# Ignore all lines with codespell-ignore in them for pragma annotation
+ignore-regex = (\b([A-Z][A-Z][A-Z]+|gir\.st)\b)|\[[a-zA-Z]+\][a-z]+\b|[a-z]+://\S+|.*codespell-ignore.*
+# some oddly named variables, some names, etc
+# wee -- comes in regex etc for weeks
+ignore-words-list = assertIn,theis,timere,alls,wee,wight,ans,re-use,pre-emptive

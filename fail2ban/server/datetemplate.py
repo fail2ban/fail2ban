@@ -35,6 +35,7 @@ logSys = getLogger(__name__)
 # check already grouped contains "(", but ignores char "\(" and conditional "(?(id)...)":
 RE_GROUPED = re.compile(r'(?<!(?:\(\?))(?<!\\)\((?!\?)')
 RE_GROUP = ( re.compile(r'^((?:\(\?\w+\))?\^?(?:\(\?\w+\))?)(.*?)(\$?)$'), r"\1(\2)\3" )
+RE_GLOBALFLAGS = re.compile(r'((?:^|(?<!\\))\(\?[a-z]+\))')
 
 RE_EXLINE_NO_BOUNDS = re.compile(r'^\{UNB\}')
 RE_EXLINE_BOUND_BEG = re.compile(r'^\{\^LN-BEG\}')
@@ -110,6 +111,11 @@ class DateTemplate(object):
 		# because it may be very slow in negative case (by long log-lines not matching pattern)
 
 		regex = regex.strip()
+		# cut global flags like (?iu) from RE in order to pre-set it after processing:
+		gf = RE_GLOBALFLAGS.search(regex)
+		if gf:
+			regex = RE_GLOBALFLAGS.sub('', regex, count=1)
+		# check word boundaries needed:
 		boundBegin = wordBegin and not RE_NO_WRD_BOUND_BEG.search(regex)
 		boundEnd = wordEnd and not RE_NO_WRD_BOUND_END.search(regex)
 		# if no group add it now, should always have a group(1):
@@ -135,6 +141,8 @@ class DateTemplate(object):
 			self.flags |= DateTemplate.LINE_END
 		# remove possible special pattern "**" in front and end of regex:
 		regex = RE_DEL_WRD_BOUNDS[0].sub(RE_DEL_WRD_BOUNDS[1], regex)
+		if gf: # restore global flags:
+			regex = gf.group(1) + regex
 		self._regex = regex
 		logSys.log(4, '  constructed regex %s', regex)
 		self._cRegex = None
@@ -219,8 +227,10 @@ class DateEpoch(DateTemplate):
 			self.name = "LongEpoch" if not pattern else pattern
 			epochRE = r"\d{10,11}(?:\d{3}(?:\.\d{1,6}|\d{3})?)?"
 		if pattern:
-			# pattern should capture/cut out the whole match:
-			regex = "(" + RE_EPOCH_PATTERN.sub(lambda v: "(%s)" % epochRE, pattern) + ")"
+			# pattern should find the whole pattern, but cut out grouped match (or whole match if no groups specified):
+			regex = RE_EPOCH_PATTERN.sub(lambda v: "(%s)" % epochRE, pattern)
+			if not RE_GROUPED.search(pattern):
+				regex = "(" + regex + ")"
 			self._grpIdx = 2
 			self.setRegex(regex)
 		elif not lineBeginOnly:
@@ -347,7 +357,7 @@ class DatePatternRegex(DateTemplate):
 
 
 class DateTai64n(DateTemplate):
-	"""A date template which matches TAI64N formate timestamps.
+	"""A date template which matches TAI64N format timestamps.
 
 	Attributes
 	----------

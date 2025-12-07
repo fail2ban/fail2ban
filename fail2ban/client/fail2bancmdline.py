@@ -27,7 +27,7 @@ import sys
 
 from ..version import version, normVersion
 from ..protocol import printFormatted
-from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, BrokenPipeError
+from ..helpers import getLogger, str2LogLevel, getVerbosityFormat
 
 # Gets the instance of the logger.
 logSys = getLogger("fail2ban")
@@ -260,12 +260,15 @@ class Fail2banCmdLine():
 				if readcfg:
 					readcfg = False
 					ret, stream = self.readConfig()
-				if not ret:
-					raise ServerExecutionException("ERROR: test configuration failed")
 				# exit after test if no commands specified (test only):
 				if not len(self._args):
-					output("OK: configuration test is successful")
+					if ret:
+						output("OK: configuration test is successful")
+					else:
+						output("ERROR: test configuration failed")
 					return ret
+				if not ret:
+					raise ServerExecutionException("ERROR: test configuration failed")
 
 			# Nothing to do here, process in client/server
 			return None

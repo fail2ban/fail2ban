@@ -22,6 +22,12 @@ Jun 14 00:48:21 platypus dovecot: imap-login: Disconnected (auth failed, 1 attem
 # failJSON: { "time": "2005-06-23T00:52:43", "match": true , "host": "193.95.245.163" }
 Jun 23 00:52:43 vhost1-ua dovecot: pop3-login: Disconnected: Inactivity (auth failed, 1 attempts): user=<info>, method=PLAIN, rip=193.95.245.163, lip=176.214.13.210
 
+# Dovecot version 2.4
+# failJSON: { "time": "2005-06-12T19:07:29", "match": true , "host": "192.0.2.241" }
+Jun 12 19:07:29 hostname dovecot[241]: imap-login: Login aborted: Connection closed (auth failed, 3 attempts in 16 secs) (auth_failed): user=<test>, method=PLAIN, rip=192.0.2.241, lip=203.0.113.104, TLS, session=<9ZHq02g3J8S60fan>
+# failJSON: { "time": "2005-06-13T16:35:56", "match": true , "host": "192.0.2.241" }
+Jun 13 16:35:56 mx dovecot[241]: managesieve-login: Login aborted: Logged out (auth failed, 1 attempts in 10 secs) (auth_failed): user=<user@domain>, method=PLAIN, rip=192.0.2.241, lip=203.0.113.104, TLS, session=<Dp8j1Ho3suQYdo+k>
+
 # failJSON: { "time": "2005-07-02T13:49:31", "match": true , "host": "192.51.100.13" }
 Jul 02 13:49:31 hostname dovecot[442]: pop3-login: Aborted login (auth failed, 1 attempts in 17 secs): user=<test>, method=PLAIN, rip=192.51.100.13, lip=203.0.113.17, session=<YADINsQCDs5BH8Pg>
 
@@ -115,6 +121,17 @@ Aug 28 06:38:51 s166-62-100-187 dovecot: imap-login: Disconnected (auth failed, 
 # failJSON: { "time": "2004-08-28T06:38:52", "match": true , "host": "192.0.2.4", "desc": "open parenthesis in optional part between Disconnected and (auth failed ...), gh-3210" }
 Aug 28 06:38:52 s166-62-100-187 dovecot: imap-login: Disconnected: Connection closed: read(size=1003) failed: Connection reset by peer (auth failed, 1 attempts in 0 secs): user=<test@example.com>, rip=192.0.2.4, lip=127.0.0.19, session=<Lsz0Oo7WXti3b7xe>
 
+# failJSON: { "time": "2004-08-29T01:49:33", "match": false , "desc": "avoid slow RE, gh-3370" }
+Aug 29 01:49:33 server dovecot[459]: imap-login: Disconnected: Connection closed: read(size=1026) failed: Connection reset by peer (no auth attempts in 0 secs): user=<>, rip=192.0.2.5, lip=127.0.0.1, TLS handshaking: read(size=1026) failed: Connection reset by peer
+# failJSON: { "time": "2004-08-29T01:49:33", "match": false , "desc": "avoid slow RE, gh-3370" }
+Aug 29 01:49:33 server dovecot[459]: imap-login: Disconnected: Connection closed: SSL_accept() failed: error:1408F10B:SSL routines:ssl3_get_record:wrong version number (no auth attempts in 0 secs): user=<>, rip=192.0.2.5, lip=127.0.0.1, TLS handshaking: SSL_accept() failed: error:1408F10B:SSL routines:ssl3_get_record:wrong version number
+# failJSON: { "time": "2004-08-29T01:49:33", "match": false , "desc": "avoid slow RE, gh-3370" }
+Aug 29 01:49:33 server dovecot[459]: managesieve-login: Disconnected: Too many invalid commands. (no auth attempts in 0 secs): user=<>, rip=192.0.2.5, lip=127.0.0.1
+# failJSON: { "time": "2004-08-29T01:49:33", "match": false , "desc": "avoid slow RE, gh-3370" }
+Aug 29 01:49:33 server dovecot[459]: managesieve-login: Disconnected: Connection closed: read(size=1007) failed: Connection reset by peer (no auth attempts in 1 secs): user=<>, rip=192.0.2.5, lip=127.0.0.1
+# failJSON: { "time": "2004-08-29T01:49:33", "match": false , "desc": "avoid slow RE, gh-3370" }
+Aug 29 01:49:33 server dovecot[472]: imap-login: Disconnected: Connection closed: SSL_accept() failed: error:14209102:SSL routines:tls_early_post_process_client_hello:unsupported protocol (no auth attempts in 0 secs): user=<>, rip=192.0.2.5, lip=127.0.0.1, TLS handshaking: SSL_accept() failed: error:14209102:SSL routines:tls_early_post_process_client_hello:unsupported protocol
+
 # failJSON: { "time": "2004-08-29T03:17:18", "match": true , "host": "192.0.2.133" }
 Aug 29 03:17:18 server dovecot: submission-login: Client has quit the connection (auth failed, 1 attempts in 2 secs): user=<user1>, method=LOGIN, rip=192.0.2.133, lip=0.0.0.0
 # failJSON: { "time": "2004-08-29T03:53:52", "match": true , "host": "192.0.2.169" }
@@ -128,9 +145,28 @@ Aug 29 15:33:53 server dovecot: managesieve-login: Disconnected: Too many invali
 
 # filterOptions: [{"mode": "aggressive"}]
 
+# failJSON: { "time": "2004-08-29T01:49:33", "match": true , "host": "192.0.2.5", "desc": "matches in aggressive mode, avoid slow RE, gh-3370" }
+Aug 29 01:49:33 server dovecot[459]: imap-login: Disconnected: Connection closed: read(size=1026) failed: Connection reset by peer (no auth attempts in 0 secs): user=<>, rip=192.0.2.5, lip=127.0.0.1, TLS handshaking: read(size=1026) failed: Connection reset by peer
+# failJSON: { "time": "2004-08-22T12:09:41", "match": true , "host": "192.0.2.6", "desc": "matches in aggressive mode, new format with `Login aborted` and `(no_auth_attempts)`" }
+Aug 22 12:09:41 server dovecot: imap-login: Login aborted: Connection closed: read(size=653) failed: Connection reset by peer (no auth attempts in 1 secs) (no_auth_attempts): user=<>, rip=192.0.2.6, lip=192.0.2.1, TLS: read(size=653) failed: Connection reset by peer, session=<qMLsbvY8PLSkXGoP>
+
+# failJSON: { "time": "2004-08-29T01:49:33", "match": true , "host": "192.0.2.5", "desc": "matches in aggressive mode, avoid slow RE, gh-3370" }
+Aug 29 01:49:33 server dovecot[459]: imap-login: Disconnected: Connection closed: SSL_accept() failed: error:1408F10B:SSL routines:ssl3_get_record:wrong version number (no auth attempts in 0 secs): user=<>, rip=192.0.2.5, lip=127.0.0.1, TLS handshaking: SSL_accept() failed: error:1408F10B:SSL routines:ssl3_get_record:wrong version number
+# failJSON: { "time": "2004-08-29T01:49:33", "match": true , "host": "192.0.2.5", "desc": "matches in aggressive mode, avoid slow RE, gh-3370" }
+Aug 29 01:49:33 server dovecot[459]: managesieve-login: Disconnected: Too many invalid commands. (no auth attempts in 0 secs): user=<>, rip=192.0.2.5, lip=127.0.0.1
+# failJSON: { "time": "2004-08-29T01:49:33", "match": true , "host": "192.0.2.5", "desc": "matches in aggressive mode, avoid slow RE, gh-3370" }
+Aug 29 01:49:33 server dovecot[459]: managesieve-login: Disconnected: Connection closed: read(size=1007) failed: Connection reset by peer (no auth attempts in 1 secs): user=<>, rip=192.0.2.5, lip=127.0.0.1
+# failJSON: { "time": "2004-08-29T01:49:33", "match": true , "host": "192.0.2.5", "desc": "matches in aggressive mode, avoid slow RE, gh-3370" }
+Aug 29 01:49:33 server dovecot[472]: imap-login: Disconnected: Connection closed: SSL_accept() failed: error:14209102:SSL routines:tls_early_post_process_client_hello:unsupported protocol (no auth attempts in 0 secs): user=<>, rip=192.0.2.5, lip=127.0.0.1, TLS handshaking: SSL_accept() failed: error:14209102:SSL routines:tls_early_post_process_client_hello:unsupported protocol
+
 # failJSON: { "time": "2004-08-29T16:06:58", "match": true , "host": "192.0.2.5" }
 Aug 29 16:06:58 s166-62-100-187 dovecot: imap-login: Disconnected (disconnected before auth was ready, waited 0 secs): user=<>, rip=192.0.2.5, lip=192.168.1.2, TLS handshaking: SSL_accept() syscall failed: Connection reset by peer
 # failJSON: { "time": "2004-08-31T16:15:10", "match": true , "host": "192.0.2.6" }
 Aug 31 16:15:10 s166-62-100-187 dovecot: imap-login: Disconnected (client didn't finish SASL auth, waited 2 secs): user=<>, method=PLAIN, rip=192.0.2.6, lip=192.168.1.2, TLS: SSL_read() syscall failed: Connection reset by peer, TLSv1.2 with cipher DHE-RSA-AES256-GCM-SHA384 (256/256 bits)
 # failJSON: { "time": "2004-08-31T16:21:53", "match": true , "host": "192.0.2.7" }
 Aug 31 16:21:53 s166-62-100-187 dovecot: imap-login: Disconnected (no auth attempts in 4 secs): user=<>, rip=192.0.2.7, lip=192.168.1.2, TLS handshaking: SSL_accept() syscall failed: Connection reset by peer
+
+# failJSON: { "time": "2004-08-22T12:09:41", "match": true , "host": "192.0.2.7", "desc": "disconnected during TLS handshake (no application protocol)" }
+Aug 22 12:09:41 server dovecot: imap-login: Login aborted: Connection closed: SSL_accept() failed: error:0A0000EB:SSL routines::no application protocol (disconnected during TLS handshake) (tls_handshake_not_finished): user=<>, rip=192.0.2.7, lip=192.0.2.1, TLS handshaking: SSL_accept() failed: error:0A0000EB:SSL routines::no application protocol, session=<J5HwbvY8QrSkXGoP>
+# failJSON: { "time": "2004-08-22T12:09:41", "match": true , "host": "192.0.2.7", "desc": "disconnected during TLS handshake (no shared cipher)" }
+Aug 22 12:09:41 server dovecot: imap-login: Login aborted: Connection closed: SSL_accept() failed: error:0A0000C1:SSL routines::no shared cipher (disconnected during TLS handshake) (tls_handshake_not_finished): user=<>, rip=192.0.2.7, lip=192.0.2.1, TLS handshaking: SSL_accept() failed: error:0A0000C1:SSL routines::no shared cipher, session=<Q23ybvY8RLSkXGoP>

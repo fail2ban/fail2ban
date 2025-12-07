@@ -29,15 +29,18 @@ import json
 import os.path
 import re
 
-from .configreader import ConfigReaderUnshared, ConfigReader
+from .configreader import ConfigReaderUnshared, ConfigReader, NoSectionError
 from .filterreader import FilterReader
 from .actionreader import ActionReader
 from ..version import version
-from ..helpers import getLogger, extractOptions, splitWithOptions, splitwords
+from ..helpers import _merge_dicts, getLogger, extractOptions, splitWithOptions, splitwords
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
+class NoJailError(ValueError):
+	pass
 
 class JailReader(ConfigReader):
 	
@@ -64,7 +67,7 @@ class JailReader(ConfigReader):
 		# Before returning -- verify that requested section
 		# exists at all
 		if not (self.__name in self.sections()):
-			raise ValueError("Jail %r was not found among available"
+			raise NoJailError("Jail %r was not found among available"
 							 % self.__name)
 		return out
 	
@@ -113,13 +116,18 @@ class JailReader(ConfigReader):
 		"logtimezone": ["string", None],
 		"logencoding": ["string", None],
 		"logpath": ["string", None],
+		"skip_if_nologs": ["bool", False],
+		"systemd_if_nologs": ["bool", True],
 		"action": ["string", ""]
 	}
 	_configOpts.update(FilterReader._configOpts)
 
-	_ignoreOpts = set(['action', 'filter', 'enabled'] + FilterReader._configOpts.keys())
+	_ignoreOpts = set(
+		['action', 'filter', 'enabled', 'backend', 'skip_if_nologs', 'systemd_if_nologs'] +
+		list(FilterReader._configOpts.keys())
+	)
 
-	def getOptions(self):
+	def getOptions(self, addOpts=None):
 
 		basedir = self.getBaseDir()
 
@@ -136,6 +144,8 @@ class JailReader(ConfigReader):
 				shouldExist=True)
 			if not self.__opts: # pragma: no cover
 				raise JailDefError("Init jail options failed")
+			if addOpts:
+				self.__opts = _merge_dicts(self.__opts, addOpts)
 		
 			if not self.isEnabled():
 				return True
@@ -147,6 +157,8 @@ class JailReader(ConfigReader):
 					filterName, filterOpt = extractOptions(flt)
 				except ValueError as e:
 					raise JailDefError("Invalid filter definition %r: %s" % (flt, e))
+				if addOpts:
+					filterOpt = _merge_dicts(filterOpt, addOpts)
 				self.__filter = FilterReader(
 					filterName, self.__name, filterOpt, 
 					share_config=self.share_config, basedir=basedir)
@@ -219,7 +231,16 @@ class JailReader(ConfigReader):
 			return False
 		return True
 	
-	def convert(self, allow_no_files=False):
+	@property
+	def filter(self):
+		return self.__filter
+
+	def getCombined(self):
+		if not self.__filter:
+			return self.__opts
+		return _merge_dicts(self.__opts, self.__filter.getCombined())
+
+	def convert(self, allow_no_files=False, systemd_if_nologs=True):
 		"""Convert read before __opts to the commands stream
 
 		Parameters
@@ -235,14 +256,15 @@ class JailReader(ConfigReader):
 		if e:
 			stream.extend([['config-error', "Jail '%s' skipped, because of wrong configuration: %s" % (self.__name, e)]])
 			return stream
-		# fill jail with filter options, using filter (only not overriden in jail):
+		# fill jail with filter options, using filter (only not overridden in jail):
 		if self.__filter:
 			stream.extend(self.__filter.convert())
 		# and using options from jail:
 		FilterReader._fillStream(stream, self.__opts, self.__name)
-		for opt, value in self.__opts.iteritems():
+		backend = self.__opts.get('backend', 'auto')
+		for opt, value in self.__opts.items():
 			if opt == "logpath":
-				if self.__opts.get('backend', '').startswith("systemd"): continue
+				if backend.startswith("systemd"): continue
 				found_files = 0
 				for path in value.split("\n"):
 					path = path.rsplit(" ", 1)
@@ -256,12 +278,26 @@ class JailReader(ConfigReader):
 						stream2.append(
 							["set", self.__name, "addlogpath", p, tail])
 				if not found_files:
-					msg = "Have not found any log file for %s jail" % self.__name
-					if not allow_no_files:
+					msg = "Have not found any log file for '%s' jail." % self.__name
+					skip_if_nologs = self.__opts.get('skip_if_nologs', False)
+					# if auto and we can switch to systemd backend (only possible if jail have journalmatch):
+					if backend.startswith("auto") and systemd_if_nologs and (
+					  self.__opts.get('systemd_if_nologs', True) and
+					  self.__opts.get('journalmatch', None) is not None
+					):
+						# switch backend to systemd:
+						backend = 'systemd'
+						msg += " Jail will monitor systemd journal."
+						skip_if_nologs = False
+					elif not allow_no_files and not skip_if_nologs:
 						raise ValueError(msg)
 					logSys.warning(msg)
-			elif opt == "backend":
-				backend = value
+					if skip_if_nologs:
+						self.__opts['runtime-error'] = msg
+						msg = "Jail '%s' skipped, because of missing log files." % (self.__name,)
+						logSys.warning(msg)
+						stream = [['config-error', msg]]
+						return stream
 			elif opt == "ignoreip":
 				stream.append(["set", self.__name, "addignoreip"] + splitwords(value))
 			elif opt not in JailReader._ignoreOpts:

@@ -123,7 +123,7 @@ filter = test[test.method=POST, baduseragents="badagent|<known/baduseragents>"]
 .fi
 .RE
 
-Comments: use '#' for comment lines and '; ' (space is important) for inline comments. When using Python2.X, '; ' can only be used on the first line due to an Python library bug.
+Comments: use '#' for comment lines and '; ' (space is important) for inline comments.
 
 .SH "FAIL2BAN CONFIGURATION FILE(S) (\fIfail2ban.conf\fB)"
 
@@ -182,6 +182,8 @@ This specifies the stack size (in KiB) to be used for subsequently created threa
 
 .SH "JAIL CONFIGURATION FILE(S) (\fIjail.conf\fB)"
 The following options are applicable to any jail. They appear in a section specifying the jail name or in the \fI[DEFAULT]\fR section which defines default values to be used if not specified in the individual section.
+.sp
+It is also possible to specify or to overwrite any option of filter file directly in jail (see section FILTER FILES).
 .TP
 .B filter
 name of the filter -- filename of the filter in /etc/fail2ban/filter.d/ without the .conf/.local extension.
@@ -196,6 +198,12 @@ Globs -- paths containing * and ? or [0-9] -- can be used however only the files
 Optional space separated option 'tail' can be added to the end of the path to cause the log file to be read from the end, else default 'head' option reads file from the beginning
 
 Ensure syslog or the program that generates the log file isn't configured to compress repeated log messages to "\fI*last message repeated 5 time*s\fR" otherwise it will fail to detect. This is called \fIRepeatedMsgReduction\fR in rsyslog and should be \fIOff\fR.
+.TP
+.B skip_if_nologs
+if no logpath matches found, skip the jail by start of fail2ban if \fIskip_if_nologs\fR set to true, otherwise (default: false) start of fail2ban will fail with an error "Have not found any log file", unless the backend is \fIauto\fR and the jail is able to switch backend to \fIsystemd\fR (see \fIauto\fR in section \fBBackends\fR below).
+.TP
+.B systemd_if_nologs
+if no logpath matches found, switch backend \fIauto\fR to \fIsystemd\fR (see \fBBackends\fR section), unless disabled with \fBsystemd_if_nologs = false\fR (default \fBtrue\fR).
 .TP
 .B logencoding
 encoding of log files used for decoding. Default value of "auto" uses current system locale.
@@ -237,23 +245,39 @@ Arguments can be passed to actions to override the default values from the [Init
 [name=value,name2=value,name3="values,values"]
 
 .RE
-Values can also be quoted (required when value includes a ","). More that one action can be specified (in separate lines).
+Values can also be quoted (required when value includes a "," or space). More that one action can be specified (in separate lines).
+.br
+The action specific arguments can also affect conditional parameters, so for instance to submit different values to different chains
+firstly pass the argument affecting all chains, e.g. \fIblocktype\fR, then for IPv6 chain, e. g. \fIblocktype?family=inet6\fR.
+Examples:
+.RS
+.nf
+
+# pass blocktype to DROP for all chains:
+banaction_allports = iptables-ipset[type=allports, blocktype=DROP]
+# pass different blocktype for IPv4 and IPv6 chains:
+banaction = iptables-ipset[type=multiport, blocktype="REJECT --reject-with icmp-host-unreachable", blocktype?family=inet6="REJECT --reject-with icmp6-host-unreachable"]
+
+.fi
 .RE
+.RE
+
 .TP
 .B ignoreself
 boolean value (default true) indicates the banning of own IP addresses should be prevented
 .TP
 .B ignoreip
-list of IPs not to ban. They can include a DNS resp. CIDR mask too. The option affects additionally to \fBignoreself\fR (if true) and don't need to contain own DNS resp. IPs of the running host.
+list of IPs not to ban. They can also include CIDR mask or can be DNS (FQDN), or even raw string (if jail banning IDs instead of IPs). The option affects additionally to \fBignoreself\fR (if true) and don't need to contain own DNS resp. IPs of the running host.
+This can also contain a filename (prefixed with "file:") with entries to ignore, which will be lazy loaded to the runtime on demand by first ban and automatically reloaded by update after small latency.
 .TP
 .B ignorecommand
-command that is executed to determine if the current candidate IP for banning (or failure-ID for raw IDs) should not be banned. The option affects additionally to \fBignoreself\fR and \fBignoreip\fR and will be first executed if both don't hit.
+command that is executed to determine if the current candidate IP for banning (or failure-ID for raw IDs) should not be banned. This option operates alongside the \fBignoreself\fR and \fBignoreip\fR options. It is executed first, only if neither \fBignoreself\fR nor \fBignoreip\fR match the criteria.
 .br
 IP will not be banned if command returns successfully (exit code 0).
 Like ACTION FILES, tags like <ip> are can be included in the ignorecommand value and will be substituted before execution.
 .TP
 .B ignorecache
-provide cache parameters (default disabled) for ignore failure check (caching of the result from `ignoreip`, `ignoreself` and `ignorecommand`), syntax:
+provide cache parameters (default disabled) for ignore failure check (caching of the result from \fBignoreip\fR, \fBignoreself\fR and \fBignorecommand\fR), syntax:
 
 .RS
 .nf
@@ -276,7 +300,7 @@ number of failures that have to occur in the last \fBfindtime\fR seconds to ban 
 .B backend
 backend to be used to detect changes in the logpath.
 .br
-It defaults to "auto" which will try "pyinotify", "gamin", "systemd" before "polling". Any of these can be specified. "pyinotify" is only valid on Linux systems with the "pyinotify" Python libraries. "gamin" requires the "gamin" libraries.
+It defaults to "auto" which will try "pyinotify" before "polling" and may switch to "systemd" if no files matching \fBlogpath\fR will be found (see section \fBBackends\fR below). Any of these can be specified. "pyinotify" is only valid on Linux systems with the "pyinotify" Python libraries.
 .TP
 .B usedns
 use DNS to resolve HOST names that appear in the logs. By default it is "warn" which will resolve hostnames to IPs however it will also log a warning. If you are using DNS here you could be blocking the wrong IPs due to the asymmetric nature of reverse DNS (that the application used to write the domain name to log) compared to forward DNS that fail2ban uses to resolve this back to an IP (but not necessarily the same one). Ideally you should configure your applications to log a real IP. This can be set to "yes" to prevent warnings in the log or "no" to disable DNS resolution altogether (thus ignoring entries where hostname, not an IP is logged)..
@@ -296,24 +320,46 @@ max number of matched log-lines the jail would hold in memory per ticket. By def
 .SS Backends
 Available options are listed below.
 .TP
-.B pyinotify
-requires pyinotify (a file alteration monitor) to be installed. If pyinotify is not installed, Fail2ban will use auto.
+.B auto
+automatically selects best suitable \fBbackend\fR, starting with file-based like \fIpyinotify\fR or \fIpolling\fR to monitor the \fBlogpath\fR matching files, but can also automatically switch to backend \fIsystemd\fR, when the following is true:
+.RS
+.IP • 4n
+no files matching \fBlogpath\fR found for this jail;
+.IP • 4n
+no \fBsystemd_if_nologs = false\fR is specified for the jail;
+.IP • 4n
+option \fBjournalmatch\fR is set for the jail or its filter (otherwise it'd be too heavy to allow all auto-jails, even if they have never been foreseen for journal monitoring);
 .TP
-.B gamin
-requires Gamin (a file alteration monitor) to be installed. If Gamin is not installed, Fail2ban will use auto.
+.br
+Option \fBskip_if_nologs\fR will be ignored if we could switch \fBbackend\fR to \fIsystemd\fR.
+.RE
+.TP
+.B pyinotify
+requires pyinotify (a file alteration monitor) to be installed. The backend would receive modification events from a built-in Linux kernel \fIinotify\fR feature used to watch for changes on tracking files and directories, and therefore is better suitable for monitoring of logfiles than \fIpolling\fR.
 .TP
 .B polling
-uses a polling algorithm which does not require external libraries.
+uses a polling algorithm which does not require additional libraries.
 .TP
 .B systemd
-uses systemd python library to access the systemd journal. Specifying \fBlogpath\fR is not valid for this backend and instead utilises \fBjournalmatch\fR from the jails associated filter config. Multiple systemd-specific flags can be passed to the backend, including \fBjournalpath\fR and \fBjournalfiles\fR, to explicitly set the path to a directory or set of files. \fBjournalflags\fR, which by default is 4 and excludes user session files, can be set to include them with \fBjournalflags=1\fR, see the python-systemd documentation for other settings and further details. Examples:
+uses systemd python library to access the systemd journal. Specifying \fBlogpath\fR is not valid for this backend and instead utilises \fBjournalmatch\fR from the jails associated filter config. Multiple systemd-specific flags can be passed to the backend, including \fBjournalpath\fR and \fBjournalfiles\fR, to explicitly set the path to a directory or set of files, \fBjournalflags\fR, which by default is 1 (LOCAL_ONLY) and opens journal on local machine only, can be set to 4 (SYSTEM_ONLY) with \fBjournalflags=4\fR to exclude user session files, or \fBnamespace\fR.
+.br
+Note that \fBjournalflags\fR, \fBjournalpath\fR, \fBjournalfiles\fR and \fBnamespace\fR are exclusive. See the python-systemd documentation for other settings and further details.
+.sp 1
+Examples:
 .PP
 .RS
 .nf
-backend = systemd[journalpath=/run/log/journal/machine-1]
-backend = systemd[journalfiles="/path/to/system.journal, /path/to/user.journal"]
-backend = systemd[journalflags=1]
+        backend = systemd[journalpath=/run/log/journal/machine-1]
+        backend = systemd[journalfiles="/path/to/system.journal, /path/to/user.journal"]
+        backend = systemd[journalflags=4, rotated=on]
 .fi
+.sp 1
+To avoid "too many open files" situation (descriptors exhaustion), fail2ban will ignore rotated journal files by default and has own specific parameter \fBrotated\fR (default \fBfalse\fR), so it'd automatically retrieve non-rotated set of \fBjournalfiles\fR corresponding \fBjournalflags\fR (and \fBjournalpath\fR if set). 
+Thus \fBsystemd\fR backend works by default similar to file-based backends and can find only actual (not rotated) messages and could seek (findtime etc) maximally to the time point of last rotation only.
+.br
+The same is valid for \fBfail2ban-regex systemd-journal ...\fR, so it will ignore messages from rotated journal files by default. To search across whole journal one shall use \fBfail2ban-regex systemd-journal[rotated=on] ...\fR.
+.RE
+
 
 .SS Actions
 Each jail can be configured with only a single filter, but may have multiple actions. By default, the name of a action is the action filename, and in the case of Python actions, the ".py" file extension is stripped. Where multiple of the same action are to be used, the \fBactname\fR option can be assigned to the action to avoid duplication e.g.:
@@ -492,11 +538,11 @@ is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. T
 \fI<F-ID>...</F-ID>\fR - free regex capturing group targeting identifier used for ban (instead of IP address or hostname).
 .IP
 \fI<F-*>...</F-*>\fR - free regex capturing named group stored in ticket, which can be used in action.
-.nf
+.br
 For example \fI<F-USER>[^@]+</F-USER>\fR matches and stores a user name, that can be used in action with interpolation tag \fI<F-USER>\fR.
 .IP
 \fI<F-ALT_*n>...</F-ALT_*n>\fR - free regex capturing alternative named group stored in ticket.
-.nf
+.br
 For example first found matched value defined in regex as \fI<F-ALT_USER>\fR, \fI<F-ALT_USER1>\fR or \fI<F-ALT_USER2>\fR would be stored as <F-USER> (if direct match is not found or empty).
 .PP
 Every of abovementioned tags can be specified in \fBprefregex\fR and in \fBfailregex\fR, thereby if specified in both, the value matched in \fBfailregex\fR overwrites a value matched in \fBprefregex\fR.
@@ -517,10 +563,10 @@ This is an obsolete handling and if the lines contain some common identifier, be
 is the regex to identify log entries that should be ignored by Fail2Ban, even if they match failregex.
 
 .TP
-\fBmaxlines\fR
+.B maxlines
 specifies the maximum number of lines to buffer to match multi-line regexs. For some log formats this will not required to be changed. Other logs may require to increase this value if a particular log file is frequently written to.
 .TP
-\fBdatepattern\fR
+.B datepattern
 specifies a custom date pattern/regex as an alternative to the default date detectors e.g. %%Y-%%m-%%d %%H:%%M(?::%%S)?.
 For a list of valid format directives, see Python library documentation for strptime behaviour.
 .br
@@ -543,11 +589,13 @@ There are several prefixes and words with special meaning that could be specifie
 \fI{NONE}\fR - value would allow one to find failures totally without date-time in log message. Filter will use now as a timestamp (or last known timestamp from previous line with timestamp).
 .RE
 .TP
-\fBjournalmatch\fR
-specifies the systemd journal match used to filter the journal entries. See \fBjournalctl(1)\fR and \fBsystemd.journal-fields(7)\fR for matches syntax and more details on special journal fields. This option is only valid for the \fIsystemd\fR backend.
+.B journalmatch
+specifies the systemd journal match used to filter the journal entries. See \fBjournalctl(1)\fR and \fBsystemd.journal-fields(7)\fR for matches syntax and more details on special journal fields. This option is only applied by the \fIsystemd\fR and \fIauto\fR backends and it is mandatory for automatic switch to \fIsystemd\fR by \fIauto\fR backend.
+
+.RE
 .PP
 Similar to actions, filters may have an [Init] section also (optional since v.0.10). All parameters of both sections [Definition] and [Init] can be overridden (redefined or extended) in \fIjail.conf\fR or \fIjail.local\fR (or in related \fIfilter.d/filter-name.local\fR).
-Every option supplied in the jail to the filter overwrites the value specified in [Init] section, which in turm would overwrite the value in [Definition] section.
+Every option supplied in the jail to the filter overwrites the value specified in [Init] section, which in turn would overwrite the value in [Definition] section.
 Besides the standard settings of filter both sections can be used to initialize filter-specific options.
 
 Filters can also have a section called [INCLUDES]. This is used to read other configuration files.
