@@ -21,3 +21,6 @@
 
 # failJSON: { "time": "2014-12-12T22:59:02", "match": true , "host": "2.5.2.5" }
 2.5.2.5 - tomcat [12/Dec/2014:22:59:02 +0100] "GET /cgi-bin/tools/tools.pl HTTP/1.1" 400 162 "-" "-" "-"
+
+# failJSON: { "time": "2014-12-12T22:59:02", "match": true , "host": "192.168.144.1" }
+192.168.144.1 - - [12/Dec/2014:22:59:02 +0100] "GET /adsf HTTP/1.1" 404 118 "-" "-" "-"
