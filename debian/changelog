@@ -1,9 +1,9 @@
-fail2ban (1.1.0-9) UNRELEASED; urgency=medium
+fail2ban (1.1.0-9) unstable; urgency=medium
 
   * Team upload.
   * Depend on python3-all in the autopkgtest.
 
- -- Stefano Rivera <stefanor@debian.org>  Sun, 21 Dec 2025 16:14:28 -0400
+ -- Stefano Rivera <stefanor@debian.org>  Sun, 21 Dec 2025 16:14:58 -0400
 
 fail2ban (1.1.0-8) unstable; urgency=medium
 
