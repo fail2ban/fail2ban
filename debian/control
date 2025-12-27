@@ -23,7 +23,6 @@ Package: fail2ban
 Architecture: all
 Depends: ${python3:Depends}, ${misc:Depends}, python3-systemd
 Recommends: nftables | iptables, whois, python3-pyinotify,
- python3-setuptools
 Suggests: mailx, system-log-daemon, monit, sqlite3
 Description: ban hosts that cause multiple authentication errors
  Fail2ban monitors log files (e.g. /var/log/auth.log,

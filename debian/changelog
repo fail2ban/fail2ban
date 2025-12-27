@@ -1,3 +1,13 @@
+fail2ban (1.1.0-10) UNRELEASED; urgency=medium
+
+  * Delete python3-setuptools from Recommends:
+     - It was added to fix runtime crashes (See: #1076494).
+     - The various references to distutils.version's LooseVersion were
+       removed (via replace-distutils.patch), rendering that obsolete
+       (See: #1104790).
+
+ -- Cyril Brulebois <cyril@debamax.com>  Sat, 27 Dec 2025 02:56:34 +0100
+
 fail2ban (1.1.0-9) unstable; urgency=medium
 
   * Team upload.
