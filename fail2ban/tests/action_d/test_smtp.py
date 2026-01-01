@@ -22,6 +22,7 @@ import threading
 import unittest
 import re
 import sys
+import types
 import importlib
 
 from ..dummyjail import DummyJail
@@ -296,10 +297,11 @@ try:
 			self.jail = DummyJail()
 			pythonModule = os.path.join(CONFIG_DIR, "action.d", "smtp.py")
 			pythonModuleName = os.path.basename(pythonModule.rstrip(".py"))
-			customActionModule = importlib.machinery.SourceFileLoader(
-				pythonModuleName, pythonModule).load_module()
+			ldr = importlib.machinery.SourceFileLoader(pythonModuleName, pythonModule)
+			mod = types.ModuleType(ldr.name)
+			ldr.exec_module(mod)
 
-			self.action = customActionModule.Action(
+			self.action = mod.Action(
 				self.jail, "test", host="localhost:%i" % self.port)
 
 			self.action.ssl = True
