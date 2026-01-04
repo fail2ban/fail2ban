@@ -54,7 +54,7 @@ class BanManager:
 		self.__banList = dict()
 		## The amount of time an IP address gets banned.
 		self.__banTime = 600
-		## Total number of banned IP address
+		## Total number of banned IP addresses
 		self.__banTotal = 0
 		## The time for next unban process (for performance and load reasons):
 		self._nextUnbanTime = BanTicket.MAX_TIME
@@ -62,7 +62,7 @@ class BanManager:
 	##
 	# Set the ban time.
 	#
-	# Set the amount of time an IP address get banned.
+	# Set the amount of time an IP address gets banned.
 	# @param value the time
 	
 	def setBanTime(self, value):
@@ -71,14 +71,14 @@ class BanManager:
 	##
 	# Get the ban time.
 	#
-	# Get the amount of time an IP address get banned.
+	# Get the amount of time an IP address gets banned.
 	# @return the time
 	
 	def getBanTime(self):
 			return self.__banTime
 	
 	##
-	# Set the total number of banned address.
+	# Set the total number of banned addresses.
 	#
 	# @param value total number
 	
@@ -86,7 +86,7 @@ class BanManager:
 			self.__banTotal = value
 	
 	##
-	# Get the total number of banned address.
+	# Get the total number of banned addresses.
 	#
 	# @return the total number
 	
@@ -317,7 +317,7 @@ class BanManager:
 		return ticket.getID() in self.__banList
 	
 	##
-	# Get the list of IP address to unban.
+	# Get the list of IP addresses to unban.
 	#
 	# Return a list of BanTicket which need to be unbanned.
 	# @param time the time
