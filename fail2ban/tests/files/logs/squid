@@ -11,3 +11,6 @@
 
 # failJSON: { "time": "2013-12-09T00:09:06.000", "match": true , "host": "175.42.91.151" }
 1386544146.000      1 175.42.91.151 TCP_DENIED/403 3745 GET http://pkfsp.ru/wp-content/uploads/proxyc/engine.php - HIER_NONE/- text/html
+
+# failJSON: { "time": "2016-11-21T01:12:54.000", "match": true, "host": "98.189.78.228" }
+1479687174.000      1 98.189.78.228 TCP_DENIED/407 4259 CONNECT www.google.com:443 tgu1 HIER_NONE/- text/html
