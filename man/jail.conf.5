@@ -452,28 +452,67 @@ two commands to be executed.
 The following tags are substituted in the actionban, actionunban and actioncheck (when called before actionban/actionunban) commands.
 .TP
 .B ip
-IPv4 IP address to be banned. e.g. 192.168.0.2
+IPv4 or IPv6 IP address to be banned. e.g. 192.168.0.2 or 2001:db8::1
+.TP
+.B family
+IP address family as a string. e.g. inet4 or inet6
+.TP
+.B ip-rev
+Reverse DNS PTR record for the IP address, or empty string if unavailable.
+.TP
+.B ip-host
+Hostname resolved from the IP address.
+.TP
+.B fid
+Failure ID (ticket identifier) for this ban event.
 .TP
 .B failures
-number of times the failure occurred in the log file. e.g. 3
-.TP
-.B ipfailures
-As per \fBfailures\fR, but total of all failures for that ip address across all jails from the fail2ban persistent database. Therefore the database must be set for this tag to function.
-.TP
-.B ipjailfailures
-As per \fBipfailures\fR, but total based on the IPs failures for the current jail.
+Number of times the failure occurred in the log file for this specific ticket. e.g. 3
 .TP
 .B time
 UNIX (epoch) time of the ban. e.g. 1357508484
 .TP
+.B bantime
+Effective ban duration in seconds for this ticket.
+.TP
+.B bancount
+Number of times this IP address has been banned (cumulative count).
+.TP
 .B matches
-concatenated string of the log file lines of the matches that generated the ban. Many characters interpreted by shell get escaped to prevent injection, nevertheless use with caution.
+Concatenated string of the log file lines of the matches that generated the ban. Many characters interpreted by shell get escaped to prevent injection, nevertheless use with caution.
+.TP
+.B restored
+Flag indicating whether the ticket was restored from database (1) or is a new ban (0). Can be used in actions to skip certain operations for restored bans.
+.TP
+.B F-*
+Free-form match tags captured from the filter using \fI<F-TAG>...</F-TAG>\fR syntax in failregex. For example, if filter captures \fI<F-USER>john</F-USER>\fR, the tag \fI<F-USER>\fR will contain "john" and can be used in action commands.
+.TP
+.B ipfailures
+As per \fBfailures\fR, but total of all failures for that IP address across all jails from the fail2ban persistent database. Therefore the database must be set for this tag to function.
+.TP
+.B ipjailfailures
+As per \fBipfailures\fR, but total based on the IP's failures for the current jail only.
 .TP
 .B ipmatches
-As per \fBmatches\fR, but includes all lines for the IP which are contained with the fail2ban persistent database. Therefore the database must be set for this tag to function.
+As per \fBmatches\fR, but includes all lines for the IP which are contained within the fail2ban persistent database across all jails. Therefore the database must be set for this tag to function.
 .TP
 .B ipjailmatches
-As per \fBipmatches\fR, but matches are limited for the IP and for the current jail.
+As per \fBipmatches\fR, but matches are limited to the IP and the current jail only.
+.TP
+.B raw-ticket
+String representation of the raw ticket object. Primarily useful for debugging purposes.
+.TP
+.B jail.banned
+Number of currently banned IP addresses in the jail at the time of this action.
+.TP
+.B jail.banned_total
+Total cumulative number of bans that have occurred in this jail since fail2ban started.
+.TP
+.B jail.found
+Number of current failure tickets in the jail's fail manager.
+.TP
+.B jail.found_total
+Total cumulative number of failures that have been detected in this jail since fail2ban started.
 
 .SH "PYTHON ACTION FILES"
 Python based actions can also be used, where the file name must be \fI[actionname].py\fR. The Python file must contain a variable \fIAction\fR which points to Python class. This class must implement a minimum interface as described by \fIfail2ban.server.action.ActionBase\fR, which can be inherited from to ease implementation.
