@@ -40,6 +40,9 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   - postfix backend switched to `systemd` (gh-3527)
 * `action.d/firewallcmd-ipset.conf`:
   - rename `ipsettype` to `ipsetbackend` (gh-2620), parameter `ipsettype` will be used now to the real set type (gh-3760)
+* `action.d/nftables.conf`:
+  - action fixed for SELinux without execmem permission, rewrite capturing with `grep -P` using `grep -E` or `sed`
+    (PCRE-JIT by `grep -P` may cause SELinux denial for execmem, see gh-4137)
 * `action.d/xarf-login-attack.conf` - ignore errors or warnings in output of `dig` provided as comment (gh-4068)
 * `filter.d/apache-badbots.conf`, `filter.d/apache-fakegooglebot.conf`:
   - regexs rewritten more strict (removed catch-alls, etc);
