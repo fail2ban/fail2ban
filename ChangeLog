@@ -98,6 +98,8 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   by first ban (and automatically reloaded by update after small latency to avoid expensive stats check on every compare);
   the entries inside the file can be separated by comma, space or new line with optional comments (text following chars
   `#` or `;` after space or newline would be ignored up to next newline)
+  * `action.d/ellio.conf` - new action to send blocked IPs to ELLIO EDL (External Dynamic List) Management for centralized
+  IP blocking and multi-firewall deployment
 * `action.d/*-ipset.conf`:
   - parameter `ipsettype` to set type of ipset, e. g. hash:ip, hash:net, etc (gh-3760)
 * `action.d/iptables.conf` - action and few derivatives of it extended to handle multiple chains,
