@@ -69,7 +69,7 @@ to see if everything is alright. You should always use fail2ban-client and
 never call fail2ban-server directly.
 You can verify that you have the correct version installed with 
 
-    fail2ban-client version
+    fail2ban-client --version
 
 Please note that the system init/service script is not automatically installed.
 To enable fail2ban as an automatic service, simply copy the script for your
