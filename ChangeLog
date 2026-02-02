@@ -11,9 +11,6 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Compatibility
-* `action.d/apprise.conf` updated to support tagging and other command line
-* `jail.conf` updated apprise inline reference/documentation
-options
 * `action.d/iptables.conf` rewritten due to support of multiple chains (gh-3909), therefore user-level derivations 
   (action including iptables-based action) may become incompatible, e. g. some tags if used need to be replaced,
   e. g. `<chain>` with `$chain` or `<_ipt_for_proto-iter>` with `<_ipt-iter>`;
@@ -101,6 +98,7 @@ options
   by first ban (and automatically reloaded by update after small latency to avoid expensive stats check on every compare);
   the entries inside the file can be separated by comma, space or new line with optional comments (text following chars
   `#` or `;` after space or newline would be ignored up to next newline)
+* `action.d/apprise.conf` - updated to support tagging and other command line args (gh-4141)
 * `action.d/*-ipset.conf`:
   - parameter `ipsettype` to set type of ipset, e. g. hash:ip, hash:net, etc (gh-3760)
 * `action.d/iptables.conf` - action and few derivatives of it extended to handle multiple chains,
