@@ -123,6 +123,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 * `filter.d/vaultwarden.conf` - new filter and jail for Vaultwarden (gh-3979)
 * `filter.d/xrdp.conf` - new filter for XRDP, an open source RDP server (gh-3254)
 * `fail2ban-regex` extended with new option `-i` or `--invert` to output not-matched lines by `-o` or `--out` (gh-4001)
+* `action.d/arxignis.conf` - Integrate with Arxignis Signal API.
 
 
 ver. 1.1.0 (2024/04/25) - object-found--norad-59479-cospar-2024-069a--altitude-36267km
