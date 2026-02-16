@@ -178,7 +178,7 @@ class Beautifier:
 					msg = "Database currently disabled"
 				else:
 					msg = "Current database purge age is:\n"
-					msg += "`- %iseconds" % response
+					msg += "`- %i seconds" % response
 			elif len(inC) < 3:
 				pass # to few cmd args for below
 			elif inC[2] in ("logpath", "addlogpath", "dellogpath"):
