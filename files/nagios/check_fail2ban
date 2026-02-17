@@ -228,6 +228,7 @@ $plugstate = "WARNING" if (($how_many_banned >= $warning) && ($how_many_banned <
 
 $return_print = $display." - ".$plugstate." - ".$return_print;
 $return_print .= " | $perf_print" if ($perfdata_value);
+$return_print .= "\n";
 
 print $return_print;
 exit $ERRORS{"$plugstate"};
