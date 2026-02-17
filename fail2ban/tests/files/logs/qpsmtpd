@@ -1,0 +1,4 @@
+Thu Aug 19 23:37:09 2021 host.domain.example.com[11793]: 535 LOGIN authentication failed for marta from 2.56.59.87
+Thu Aug 19 23:40:19 2021 host.domain.example.com[11798]: 535 LOGIN authentication failed for diana from 45.144.225.204
+Thu Aug 19 23:41:24 2021 host.domain.example.com[11799]: 535 LOGIN authentication failed for irene from 45.144.225.206
+Thu Aug 19 23:43:45 2021 host.domain.example.com[11843]: 535 LOGIN authentication failed for reality from 37.0.11.124
