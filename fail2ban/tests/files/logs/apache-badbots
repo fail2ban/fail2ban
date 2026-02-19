@@ -6,3 +6,6 @@
 
 # failJSON: { "time": "2007-03-05T14:41:21", "match": true , "host": "1.2.3.4" }
 1.2.3.4 - - [05/Mar/2007:14:41:21 +0100] "HEAD /123.html/trackback/ HTTP/1.0" 301 459 "http://www.mydomain.tld/123.html/trackback" "TrackBack/1.02"
+
+# failJSON: { "time": "2024-08-18T22:08:39", "match": true , "host": "192.0.2.222", "desc": "vhost in accesslog, gh-1594" }
+www.sitename.com 192.0.2.222 - - [18/Aug/2024:21:08:39 +0100] "GET /filename.jpg HTTP/1.1" 403 332 "-" "TrackBack/1.02"

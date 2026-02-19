@@ -47,12 +47,9 @@ copyright = u'2014'
 #
 
 from fail2ban.version import version as fail2ban_version
-from distutils.version import LooseVersion
-
-fail2ban_loose_version = LooseVersion(fail2ban_version)
 
 # The short X.Y version.
-version = ".".join(str(_) for _ in fail2ban_loose_version.version[:2])
+version = ".".join(str(_) for _ in fail2ban_version.split(".")[:2])
 # The full version, including alpha/beta/rc tags.
 release = fail2ban_version
 

@@ -58,11 +58,6 @@ except ImportError: # pragma: no cover
 def _thread_name():
 	return threading.current_thread().__class__.__name__
 
-try:
-	FileExistsError
-except NameError: # pragma: 3.x no cover
-	FileExistsError = OSError
-
 def _make_file_path(name):
 	"""Creates path of file (last level only) on demand"""
 	name = os.path.dirname(name)
@@ -209,7 +204,7 @@ class Server:
 
 		# Restore default signal handlers:
 		if _thread_name() == '_MainThread':
-			for s, sh in self.__prev_signals.iteritems():
+			for s, sh in self.__prev_signals.items():
 				signal.signal(s, sh)
 
 		# Give observer a small chance to complete its work before exit
@@ -227,7 +222,7 @@ class Server:
 			obsMain.stop()
 
 		# Explicit close database (server can leave in a thread, 
-		# so delayed GC can prevent commiting changes)
+		# so delayed GC can prevent committing changes)
 		if self.__db:
 			self.__db.close()
 			self.__db = None
@@ -287,10 +282,10 @@ class Server:
 		logSys.info("Stopping all jails")
 		with self.__lock:
 			# 1st stop all jails (signal and stop actions/filter thread):
-			for name in self.__jails.keys():
+			for name in list(self.__jails.keys()):
 				self.delJail(name, stop=True, join=False)
 			# 2nd wait for end and delete jails:
-			for name in self.__jails.keys():
+			for name in list(self.__jails.keys()):
 				self.delJail(name, stop=False, join=True)
 
 	def clearCaches(self):
@@ -328,7 +323,7 @@ class Server:
 					if "--restart" in opts:
 						self.stopAllJail()
 				# first set all affected jail(s) to idle and reset filter regex and other lists/dicts:
-				for jn, jail in self.__jails.iteritems():
+				for jn, jail in self.__jails.items():
 					if name == '--all' or jn == name:
 						jail.idle = True
 						self.__reload_state[jn] = jail
@@ -339,7 +334,7 @@ class Server:
 			# end reload, all affected (or new) jails have already all new parameters (via stream) and (re)started:
 			with self.__lock:
 				deljails = []
-				for jn, jail in self.__jails.iteritems():
+				for jn, jail in self.__jails.items():
 					# still in reload state:
 					if jn in self.__reload_state:
 						# remove jails that are not reloaded (untouched, so not in new configuration)
@@ -391,7 +386,7 @@ class Server:
 		if isinstance(filter_, FileFilter):
 			return filter_.getLogPaths()
 		else: # pragma: systemd no cover
-			logSys.info("Jail %s is not a FileFilter instance" % name)
+			logSys.debug("Jail %s is not a FileFilter instance" % name)
 			return []
 	
 	def addJournalMatch(self, name, match): # pragma: systemd no cover
@@ -409,7 +404,7 @@ class Server:
 		if isinstance(filter_, JournalFilter):
 			return filter_.getJournalMatch()
 		else:
-			logSys.info("Jail %s is not a JournalFilter instance" % name)
+			logSys.debug("Jail %s is not a JournalFilter instance" % name)
 			return []
 	
 	def setLogEncoding(self, name, encoding):
@@ -539,7 +534,7 @@ class Server:
 			jails = [self.__jails[name]]
 		else:
 			# in all jails:
-			jails = self.__jails.values()
+			jails = list(self.__jails.values())
 		# unban given or all (if value is None):
 		cnt = 0
 		ifexists |= (name is None)
@@ -553,7 +548,7 @@ class Server:
 			jails = [self.__jails[name]]
 		else:
 			# in all jails:
-			jails = self.__jails.values()
+			jails = list(self.__jails.values())
 		# check banned ids:
 		res = []
 		if name is None and ids:
@@ -603,20 +598,29 @@ class Server:
 	def isAlive(self, jailnum=None):
 		if jailnum is not None and len(self.__jails) != jailnum:
 			return 0
-		for jail in self.__jails.values():
+		for jail in list(self.__jails.values()):
 			if not jail.isAlive():
 				return 0
 		return 1
 
 	# Status
-	def status(self):
+	def status(self, name="", flavor="basic"):
 		try:
 			self.__lock.acquire()
-			jails = list(self.__jails)
-			jails.sort()
-			jailList = ", ".join(jails)
-			ret = [("Number of jail", len(self.__jails)),
-				   ("Jail list", jailList)]
+			jails = sorted(self.__jails.items())
+			if flavor != "stats":
+				jailList = [n for n, j in jails]
+				ret = [
+					("Number of jail", len(jailList)),
+					("Jail list", ", ".join(jailList))
+				]
+			if name == '--all':
+				jstat = dict(jails)
+				for n, j in jails:
+					jstat[n] = j.status(flavor=flavor)
+				if flavor == "stats":
+					return jstat
+				ret.append(jstat)
 			return ret
 		finally:
 			self.__lock.release()
@@ -678,7 +682,10 @@ class Server:
 				return True
 			padding = logOptions.get('padding')
 			# set a format which is simpler for console use
-			if systarget == "SYSLOG":
+			if systarget == "SYSTEMD-JOURNAL":
+				from systemd.journal import JournalHandler
+				hdlr = JournalHandler(SYSLOG_IDENTIFIER='fail2ban')
+			elif systarget == "SYSLOG":
 				facility = logOptions.get('facility', 'DAEMON').upper()
 				# backwards compatibility - default no padding for syslog handler:
 				if padding is None: padding = '0'
@@ -722,16 +729,8 @@ class Server:
 				# Remove the handler.
 				logger.removeHandler(handler)
 				# And try to close -- it might be closed already
-				try:
-					handler.flush()
-					handler.close()
-				except (ValueError, KeyError): # pragma: no cover
-					# Is known to be thrown after logging was shutdown once
-					# with older Pythons -- seems to be safe to ignore there
-					# At least it was still failing on 2.6.2-0ubuntu1 (jaunty)
-					if (2, 6, 3) <= sys.version_info < (3,) or \
-							(3, 2) <= sys.version_info:
-						raise
+				handler.flush()
+				handler.close()
 			# detailed format by deep log levels (as DEBUG=10):
 			if logger.getEffectiveLevel() <= logging.DEBUG: # pragma: no cover
 				if self.__verbose is None:
@@ -756,7 +755,8 @@ class Server:
 					verbose = self.__verbose-1
 				fmt = getVerbosityFormat(verbose, addtime=addtime, padding=padding)
 			# tell the handler to use this format
-			hdlr.setFormatter(logging.Formatter(fmt))
+			if target != "SYSTEMD-JOURNAL":
+				hdlr.setFormatter(logging.Formatter(fmt))
 			logger.addHandler(hdlr)
 			# Does not display this message at startup.
 			if self.__logTarget is not None:
@@ -795,7 +795,7 @@ class Server:
 			return self.__syslogSocket
 
 	def flushLogs(self):
-		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
+		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG', 'SYSTEMD-JOURNAL']:
 			for handler in getLogger("fail2ban").handlers:
 				try:
 					handler.doRollover()
@@ -816,7 +816,7 @@ class Server:
 		return DNSUtils.setIPv6IsAllowed(value)
 
 	def setThreadOptions(self, value):
-		for o, v in value.iteritems():
+		for o, v in value.items():
 			if o == 'stacksize':
 				threading.stack_size(int(v)*1024)
 			else: # pragma: no cover
@@ -850,6 +850,26 @@ class Server:
 	
 	def getDatabase(self):
 		return self.__db
+
+	@staticmethod
+	def __get_fdlist():
+		"""Generate a list of open file descriptors.
+		
+		This wouldn't work on some platforms, or if proc/fdescfs not mounted, or a chroot environment,
+		then it'd raise a FileExistsError.
+		"""
+		for path in (
+			'/proc/self/fd', # Linux, Cygwin and NetBSD
+			'/proc/fd',      # MacOS and FreeBSD
+		):
+			if os.path.exists(path):
+				def fdlist():
+					for name in os.listdir(path):
+						if name.isdigit():
+							yield int(name)
+				return fdlist()
+		# other platform or unmounted, chroot etc:
+		raise FileExistsError("fd-list not found")
 
 	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the
@@ -908,26 +928,22 @@ class Server:
 			# Signal to exit, parent of the first child.
 			return None
 	
-		# Close all open files.  Try the system configuration variable, SC_OPEN_MAX,
+		# Close all open files. Try to obtain the range of open descriptors directly.
+		# As a fallback try the system configuration variable, SC_OPEN_MAX,
 		# for the maximum number of open files to close.  If it doesn't exist, use
 		# the default value (configurable).
 		try:
-			maxfd = os.sysconf("SC_OPEN_MAX")
-		except (AttributeError, ValueError):
-			maxfd = 256	   # default maximum
-	
-		# urandom should not be closed in Python 3.4.0. Fixed in 3.4.1
-		# http://bugs.python.org/issue21207
-		if sys.version_info[0:3] == (3, 4, 0): # pragma: no cover
-			urandom_fd = os.open("/dev/urandom", os.O_RDONLY)
-			for fd in range(0, maxfd):
+			fdlist = self.__get_fdlist()
+			for fd in fdlist:
 				try:
-					if not os.path.sameopenfile(urandom_fd, fd):
-						os.close(fd)
+					os.close(fd)
 				except OSError:   # ERROR (ignore)
 					pass
-			os.close(urandom_fd)
-		else:
+		except:
+			try:
+				maxfd = os.sysconf("SC_OPEN_MAX")
+			except (AttributeError, ValueError):
+				maxfd = 256	   # default maximum
 			os.closerange(0, maxfd)
 	
 		# Redirect the standard file descriptors to /dev/null.

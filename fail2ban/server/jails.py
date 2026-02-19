@@ -67,8 +67,7 @@ class Jails(Mapping):
 		"""
 		with self.__lock:
 			if name in self._jails:
-				if noduplicates:
-					raise DuplicateJailException(name)
+				raise DuplicateJailException(name)
 			else:
 				self._jails[name] = Jail(name, backend, db)
 

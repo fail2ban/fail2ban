@@ -367,10 +367,10 @@ def with_foreground_server_thread(startextra={}):
 				# several commands to server in body of decorated function:
 				return f(self, tmp, startparams, *args, **kwargs)
 			except Exception as e: # pragma: no cover
-				print('=== Catch an exception: %s' % e)
+				print(('=== Catch an exception: %s' % e))
 				log = self.getLog()
 				if log:
-					print('=== Error of server, log: ===\n%s===' % log)
+					print(('=== Error of server, log: ===\n%s===' % log))
 					self.pruneLog()
 				raise
 			finally:
@@ -440,7 +440,7 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 					)
 		except:  # pragma: no cover
 			if _inherited_log(startparams):
-				print('=== Error by wait fot server, log: ===\n%s===' % self.getLog())
+				print(('=== Error by wait for server, log: ===\n%s===' % self.getLog()))
 				self.pruneLog()
 			log = pjoin(tmp, "f2b.log")
 			if isfile(log):
@@ -490,6 +490,39 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		self.execCmd(SUCCESS, startparams, "ping")
 		self.execCmd(FAILED, startparams, "~~unknown~cmd~failed~~")
 		self.execCmd(SUCCESS, startparams, "echo", "TEST-ECHO")
+
+	@with_tmpdir
+	@with_kill_srv
+	def testStartFailsInForeground(self, tmp):
+		if not server.Fail2BanDb: # pragma: no cover
+			raise unittest.SkipTest('Skip test because no database')
+		dbname = pjoin(tmp,"tmp.db")
+		db = server.Fail2BanDb(dbname)
+		# set inappropriate DB version to simulate an irreparable error by start:
+		cur = db._db.cursor()
+		cur.executescript("UPDATE fail2banDb SET version = 555")
+		cur.close()
+		# timeout (thread will stop foreground server):
+		startparams = _start_params(tmp, db=dbname, logtarget='INHERITED')
+		phase = {'stop': True}
+		def _stopTimeout(startparams, phase):
+			if not Utils.wait_for(lambda: not phase['stop'], MAX_WAITTIME):
+				# print('==== STOP ====')
+				self.execCmdDirect(startparams, 'stop')
+		th = Thread(
+			name="_TestCaseWorker",
+			target=_stopTimeout,
+			args=(startparams, phase)
+		)		
+		th.start()
+		# test:
+		try:
+			self.execCmd(FAILED, ("-f",) + startparams, "start")
+		finally:
+			phase['stop'] = False
+			th.join()
+		self.assertLogged("Attempt to travel to future version of database", 
+			"Exit with code 255", all=True)
 
 
 class Fail2banClientTest(Fail2banClientServerBase):
@@ -600,6 +633,11 @@ class Fail2banClientTest(Fail2banClientServerBase):
 				os.kill(pid, signal.SIGCONT)
 			self.assertLogged("timed out")
 			self.pruneLog()
+			# check readline module available (expected by interactive client)
+			try:
+				import readline
+			except ImportError as e:
+				raise unittest.SkipTest('Skip test because of import error: %s' % e)
 			# interactive client chat with started server:
 			INTERACT += [
 				"echo INTERACT-ECHO",
@@ -788,6 +826,23 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"Errors in jail 'broken-jail'.",
 			"ERROR: test configuration failed", all=True)
 
+		# disable jail in .local (shall be again OK):
+		self.pruneLog("[test-phase 1]")
+		_write_file(pjoin(cfg, "jail.local"), "a", "",
+			"[broken-jail]", "enabled = false")
+		self.execCmd(SUCCESS, startparams, "--test")
+		self.assertLogged("OK: configuration test is successful")
+
+		# generate decoding error: ('utf-8' codec can't decode byte 0xfd):
+		self.pruneLog("[test-phase 1a]")
+		with open(pjoin(cfg, "jail.local"), "ab") as f:
+			f.write(b"\n# invalid char \xfd")
+		self.execCmd(FAILED, startparams, "-t")
+		self.assertLogged("Could not read config files",
+			"Read jails configuration failed.",
+			"ERROR: test configuration failed", all=True)
+
+
 	@with_tmpdir
 	def testKillAfterStart(self, tmp):
 		try:
@@ -821,8 +876,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# Very complicated test-case, that expected running server (foreground in thread).
 		#
 		# In this test-case, each phase is related from previous one, 
-		# so it cannot be splitted in multiple test cases.
-		# Additionaly many log-messages used as ready-sign (to wait for end of phase).
+		# so it cannot be split in multiple test cases.
+		# Additionally many log-messages used as ready-sign (to wait for end of phase).
 		#
 		# Used file database (instead of :memory:), to restore bans and log-file positions,
 		# after restart/reload between phases.
@@ -1070,9 +1125,9 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"3 ticket(s) in 'test-jail2", all=True, wait=MID_WAITTIME)
 		# stop/start and unban/restore ban:
 		self.assertLogged(
-			"[test-jail2] Unban 192.0.2.4",
-			"[test-jail2] Unban 192.0.2.8",
-			"[test-jail2] Unban 192.0.2.9",
+			"[test-jail2] Repeal Ban 192.0.2.4",
+			"[test-jail2] Repeal Ban 192.0.2.8",
+			"[test-jail2] Repeal Ban 192.0.2.9",
 			"Jail 'test-jail2' stopped",
 			"Jail 'test-jail2' started",
 			"[test-jail2] Restore Ban 192.0.2.4",
@@ -1664,6 +1719,6 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			self.stopAndWaitForServerEnd(SUCCESS)
 
 		def testServerStartStop(self):
-			for i in xrange(2000):
+			for i in range(2000):
 				self._testServerStartStop()
 

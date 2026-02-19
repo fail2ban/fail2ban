@@ -39,6 +39,7 @@ class TicketTests(unittest.TestCase):
 
     # Ticket
     t = Ticket('193.168.0.128', tm, matches)
+    self.assertEqual(t.getID(), '193.168.0.128')
     self.assertEqual(t.getIP(), '193.168.0.128')
     self.assertEqual(t.getTime(), tm)
     self.assertEqual(t.getMatches(), matches2)
@@ -65,6 +66,7 @@ class TicketTests(unittest.TestCase):
     matches = ['first', 'second']
     ft = FailTicket('193.168.0.128', tm, matches)
     ft.setBanTime(60*60)
+    self.assertEqual(ft.getID(), '193.168.0.128')
     self.assertEqual(ft.getIP(), '193.168.0.128')
     self.assertEqual(ft.getTime(), tm)
     self.assertEqual(ft.getMatches(), matches2)
@@ -116,6 +118,17 @@ class TicketTests(unittest.TestCase):
     self.assertEqual(ft2.getTime(), ft.getTime())
     self.assertEqual(ft2.getBanTime(), ft.getBanTime())
 
+  def testDiffIDAndIPTicket(self):
+    tm = MyTime.time()
+    # different ID (string) and IP:
+    t = Ticket('123-456-678', tm, data={'ip':'192.0.2.1'})
+    self.assertEqual(t.getID(), '123-456-678')
+    self.assertEqual(t.getIP(), '192.0.2.1')
+    # different ID (tuple) and IP:
+    t = Ticket(('192.0.2.1', '5000'), tm, data={'ip':'192.0.2.1'})
+    self.assertEqual(t.getID(), ('192.0.2.1', '5000'))
+    self.assertEqual(t.getIP(), '192.0.2.1')
+
   def testTicketFlags(self):
     flags = ('restored', 'banned')
     ticket = Ticket('test', 0)
@@ -141,12 +154,12 @@ class TicketTests(unittest.TestCase):
     self.assertEqual(
       t.getData(), 
       {'matches': ['first', 'second'], 'failures':0, 'region': 'Hamburg', 'country': 'DE', 'city': 'Hamburg'})
-    # at once as dict (single argument, overwrites it completelly, no more matches/failures) :
+    # at once as dict (single argument, overwrites it completely, no more matches/failures) :
     t.setData({'region': None, 'country': 'FR', 'city': 'Paris'},)
     self.assertEqual(
       t.getData(), 
       {'city': 'Paris', 'country': 'FR'})
-    # at once as dict (overwrites it completelly, no more matches/failures) :
+    # at once as dict (overwrites it completely, no more matches/failures) :
     t.setData({'region': 'Hamburg', 'country': 'DE', 'city': None})
     self.assertEqual(
       t.getData(), 
@@ -172,7 +185,7 @@ class TicketTests(unittest.TestCase):
     self.assertEqual(
       t.getData(), 
       {'city':'Berlin', 'region': 'Brandenburg', 'country': 'DE'})
-    # interator filter :
+    # iterator filter :
     self.assertEqual(
       t.getData(('city', 'country')), 
       {'city':'Berlin', 'country': 'DE'})

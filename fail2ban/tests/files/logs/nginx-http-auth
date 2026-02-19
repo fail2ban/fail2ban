@@ -13,6 +13,17 @@
 # failJSON: { "time": "2014-04-03T22:20:40", "match": true, "host": "192.0.2.2", "desc": "trying injection on user name"}
 2014/04/03 22:20:40 [error] 30708#0: *3 user "test": password mismatch, client: 127.0.0.1, server: test, request: "GET / HTTP/1.1", host: "localhost:8443"": was not found in "/etc/nginx/.htpasswd", client: 192.0.2.2, server: , request: "GET / HTTP/1.1", host: "localhost:8443"
 
+# failJSON: { "time": "2025-09-07T21:20:40", "match": true, "host": "192.0.2.120", "desc": "PAM auth failure, gh-4071"}
+2025/09/07 21:20:40 [error] 23141#23141: *24470 PAM: user 'username' - not authenticated: Authentication failure, client: 192.0.2.120, server: webdav.sub.domain, request: "GET / HTTP/2.0", host: "webdav.sub.domain"
+
+# filterOptions: [{"logtype": "journal"}]
+
+# failJSON: { "match": true, "host": "192.0.2.3", "desc": "systemd journal message, with optional extra timestamp, gh-3646"}
+host nginx[983478]: 2023/12/09 21:35:20 [error] 983478#983478: *3 user "fakeusername" was not found in "/var/lib/nginx/htpasswd-for-host.example.com", client: 192.0.2.3, server: host.example.com, request: "GET / HTTP/2.0", host: "host.example.com"
+
+# failJSON: { "match": true, "host": "192.0.2.120", "desc": "systemd journal message, PAM auth failure, gh-4071"}
+host nginx[23141]: host nginx: 2025/09/07 21:20:40 [error] 23141#23141: *24470 PAM: user 'username' - not authenticated: Authentication failure, client: 192.0.2.120, server: webdav.sub.domain, request: "GET / HTTP/2.0", host: "webdav.sub.domain"
+
 # filterOptions: [{"mode": "fallback"}]
 
 # failJSON: { "time": "2020-11-25T14:42:16", "match": true , "host": "142.93.180.14" }
@@ -23,6 +34,13 @@
 2020/11/25 16:48:08 [crit] 76952#76952: *7976400 SSL_do_handshake() failed (SSL: error:1408F096:SSL routines:ssl3_get_record:encrypted length too long) while SSL handshaking, client: 5.126.32.148, server: 0.0.0.0:443
 # failJSON: { "time": "2020-11-25T16:02:45", "match": false }
 2020/11/25 16:02:45 [error] 76952#76952: *5645766 connect() failed (111: Connection refused) while connecting to upstream, client: 5.126.32.148, server: www.google.de, request: "GET /admin/config HTTP/2.0", upstream: "http://127.0.0.1:3000/admin/config", host: "www.google.de"
+
+# failJSON: { "time": "2025-07-09T19:20:38", "match": true , "host": "192.0.2.23", "desc": "SSL failure: bad key share (gh-4142)" }
+2025/07/09 19:20:38 [crit] 3075615#3075615: *2489 SSL_do_handshake() failed (SSL: error:0A00006C:SSL routines::bad key share) while SSL handshaking, client: 192.0.2.23, server: 0.0.0.0:443
+# failJSON: { "time": "2025-07-09T20:18:52", "match": true , "host": "192.0.2.24", "desc": "SSL failure: bad record type (gh-4142)" }
+2025/07/09 20:18:52 [crit] 60993#60993: *16611546 SSL_do_handshake() failed (SSL: error:0A0001BB:SSL routines::bad record type error:0A000139:SSL routines::record layer failure) while SSL handshaking, client: 192.0.2.24, server: 0.0.0.0:443
+# failJSON: { "time": "2025-07-09T22:27:36", "match": true , "host": "192.0.2.17", "desc": "SSL failure: alert number 121 (gh-4142)" }
+2025/07/09 22:27:36 [crit] 60993#60993: *16700609 SSL_read() failed (SSL: error:0A000461:SSL routines::reason(1121):SSL alert number 121) while waiting for request, client: 192.0.2.17, server: 0.0.0.0:443
 
 # filterOptions: [{"mode": "aggressive"}]
 # failJSON: { "time": "2020-11-25T14:42:16", "match": true , "host": "142.93.180.14" }

@@ -19,7 +19,8 @@
 
 import socket
 import smtplib
-from email.mime.text import MIMEText
+import email.policy
+from email.message import EmailMessage
 from email.utils import formatdate, formataddr
 
 from fail2ban.server.actions import ActionBase, CallingMap
@@ -75,7 +76,7 @@ class SMTPAction(ActionBase):
 	"""
 
 	def __init__(
-		self, jail, name, host="localhost", user=None, password=None,
+		self, jail, name, host="localhost", ssl=False, user=None, password=None,
 		sendername="Fail2Ban", sender="fail2ban", dest="root", matches=None):
 		"""Initialise action.
 
@@ -88,6 +89,8 @@ class SMTPAction(ActionBase):
 		host : str, optional
 			SMTP host, of host:port format. Default host "localhost" and
 			port "25"
+		ssl : bool, optional
+			Whether to use TLS for the SMTP connection or not.  Default False.
 		user : str, optional
 			Username used for authentication with SMTP server.
 		password : str, optional
@@ -109,7 +112,7 @@ class SMTPAction(ActionBase):
 		super(SMTPAction, self).__init__(jail, name)
 
 		self.host = host
-		#TODO: self.ssl = ssl
+		self.ssl = ssl
 
 		self.user = user
 		self.password =password
@@ -149,16 +152,25 @@ class SMTPAction(ActionBase):
 			See Python `smtplib` for full list of other possible
 			exceptions.
 		"""
-		msg = MIMEText(text)
+		msg = EmailMessage(policy=email.policy.SMTP)
+		msg.set_content(text)
 		msg['Subject'] = subject
 		msg['From'] = formataddr((self.fromname, self.fromaddr))
 		msg['To'] = self.toaddr
 		msg['Date'] = formatdate()
 
-		smtp = smtplib.SMTP()
+		smtp_host, smtp_port = self.host.split(':')
+		smtp = smtplib.SMTP(host=smtp_host, port=smtp_port)
 		try:
+			r = smtp.connect(host=smtp_host, port=smtp_port)
 			self._logSys.debug("Connected to SMTP '%s', response: %i: %s",
-				self.host, *smtp.connect(self.host))
+				self.host, *r)
+
+			if self.ssl: # pragma: no cover
+				r = smtp.starttls()[0];
+				if r != 220: # pragma: no cover
+					raise Exception("Failed to starttls() on '%s': %s" % (self.host, r))
+
 			if self.user and self.password: # pragma: no cover (ATM no tests covering that)
 				smtp.login(self.user, self.password)
 			failed_recipients = smtp.sendmail(

@@ -70,66 +70,64 @@ class CommandActionTest(LogCaptureTestCase):
 			lambda: substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
 		self.assertRaises(ValueError,
 			lambda: substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
-		# Unresolveable substition
+		# Unresolveable substitution
 		self.assertRaises(ValueError,
 			lambda: substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
 		self.assertRaises(ValueError,
 			lambda: substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP>', 'sweet': '<honeypot>', 'honeypot': '<sweet>', 'ignoreregex': ''}))
-		# We need here an ordered, because the sequence of iteration is very important for this test
-		if OrderedDict:
-			# No cyclic recursion, just multiple replacement of tag <T>, should be successful:
-			self.assertEqual(substituteRecursiveTags( OrderedDict(
-					(('X', 'x=x<T>'), ('T', '1'), ('Z', '<X> <T> <Y>'), ('Y', 'y=y<T>')))
-				), {'X': 'x=x1', 'T': '1', 'Y': 'y=y1', 'Z': 'x=x1 1 y=y1'}
-			)
-			# No cyclic recursion, just multiple replacement of tag <T> in composite tags, should be successful:
-			self.assertEqual(substituteRecursiveTags( OrderedDict(
-				  (('X', 'x=x<T> <Z> <<R1>> <<R2>>'), ('R1', 'Z'), ('R2', 'Y'), ('T', '1'), ('Z', '<T> <Y>'), ('Y', 'y=y<T>')))
-				), {'X': 'x=x1 1 y=y1 1 y=y1 y=y1', 'R1': 'Z', 'R2': 'Y', 'T': '1', 'Z': '1 y=y1', 'Y': 'y=y1'}
-			)
-			# No cyclic recursion, just multiple replacement of same tags, should be successful:
-			self.assertEqual(substituteRecursiveTags( OrderedDict((
-					('actionstart', 'ipset create <ipmset> hash:ip timeout <bantime> family <ipsetfamily>\n<iptables> -I <chain> <actiontype>'),
-					('ipmset', 'f2b-<name>'),
-					('name', 'any'),
-					('bantime', '600'),
-					('ipsetfamily', 'inet'),
-					('iptables', 'iptables <lockingopt>'),
-					('lockingopt', '-w'),
-					('chain', 'INPUT'),
-					('actiontype', '<multiport>'),
-					('multiport', '-p <protocol> -m multiport --dports <port> -m set --match-set <ipmset> src -j <blocktype>'),
-					('protocol', 'tcp'),
-					('port', 'ssh'),
-					('blocktype', 'REJECT',),
-				))
-				), OrderedDict((
-					('actionstart', 'ipset create f2b-any hash:ip timeout 600 family inet\niptables -w -I INPUT -p tcp -m multiport --dports ssh -m set --match-set f2b-any src -j REJECT'),
-					('ipmset', 'f2b-any'),
-					('name', 'any'),
-					('bantime', '600'),
-					('ipsetfamily', 'inet'),
-					('iptables', 'iptables -w'),
-					('lockingopt', '-w'),
-					('chain', 'INPUT'),
-					('actiontype', '-p tcp -m multiport --dports ssh -m set --match-set f2b-any src -j REJECT'),
-					('multiport', '-p tcp -m multiport --dports ssh -m set --match-set f2b-any src -j REJECT'),
-					('protocol', 'tcp'),
-					('port', 'ssh'),
-					('blocktype', 'REJECT')
-				))
-			)
-			# Cyclic recursion by composite tag creation, tags "create" another tag, that closes cycle:
-			self.assertRaises(ValueError, lambda: substituteRecursiveTags( OrderedDict((
-					('A', '<<B><C>>'),
-					('B', 'D'), ('C', 'E'),
-					('DE', 'cycle <A>'),
-			)) ))
-			self.assertRaises(ValueError, lambda: substituteRecursiveTags( OrderedDict((
-					('DE', 'cycle <A>'),
-					('A', '<<B><C>>'),
-					('B', 'D'), ('C', 'E'),
-			)) ))
+		# No cyclic recursion, just multiple replacement of tag <T>, should be successful:
+		self.assertEqual(substituteRecursiveTags( OrderedDict(
+				(('X', 'x=x<T>'), ('T', '1'), ('Z', '<X> <T> <Y>'), ('Y', 'y=y<T>')))
+			), {'X': 'x=x1', 'T': '1', 'Y': 'y=y1', 'Z': 'x=x1 1 y=y1'}
+		)
+		# No cyclic recursion, just multiple replacement of tag <T> in composite tags, should be successful:
+		self.assertEqual(substituteRecursiveTags( OrderedDict(
+			  (('X', 'x=x<T> <Z> <<R1>> <<R2>>'), ('R1', 'Z'), ('R2', 'Y'), ('T', '1'), ('Z', '<T> <Y>'), ('Y', 'y=y<T>')))
+			), {'X': 'x=x1 1 y=y1 1 y=y1 y=y1', 'R1': 'Z', 'R2': 'Y', 'T': '1', 'Z': '1 y=y1', 'Y': 'y=y1'}
+		)
+		# No cyclic recursion, just multiple replacement of same tags, should be successful:
+		self.assertEqual(substituteRecursiveTags( OrderedDict((
+				('actionstart', 'ipset create <ipmset> hash:ip timeout <bantime> family <ipsetfamily>\n<iptables> -I <chain> <actiontype>'),
+				('ipmset', 'f2b-<name>'),
+				('name', 'any'),
+				('bantime', '600'),
+				('ipsetfamily', 'inet'),
+				('iptables', 'iptables <lockingopt>'),
+				('lockingopt', '-w'),
+				('chain', 'INPUT'),
+				('actiontype', '<multiport>'),
+				('multiport', '-p <protocol> -m multiport --dports <port> -m set --match-set <ipmset> src -j <blocktype>'),
+				('protocol', 'tcp'),
+				('port', 'ssh'),
+				('blocktype', 'REJECT',),
+			))
+			), OrderedDict((
+				('actionstart', 'ipset create f2b-any hash:ip timeout 600 family inet\niptables -w -I INPUT -p tcp -m multiport --dports ssh -m set --match-set f2b-any src -j REJECT'),
+				('ipmset', 'f2b-any'),
+				('name', 'any'),
+				('bantime', '600'),
+				('ipsetfamily', 'inet'),
+				('iptables', 'iptables -w'),
+				('lockingopt', '-w'),
+				('chain', 'INPUT'),
+				('actiontype', '-p tcp -m multiport --dports ssh -m set --match-set f2b-any src -j REJECT'),
+				('multiport', '-p tcp -m multiport --dports ssh -m set --match-set f2b-any src -j REJECT'),
+				('protocol', 'tcp'),
+				('port', 'ssh'),
+				('blocktype', 'REJECT')
+			))
+		)
+		# Cyclic recursion by composite tag creation, tags "create" another tag, that closes cycle:
+		self.assertRaises(ValueError, lambda: substituteRecursiveTags( OrderedDict((
+				('A', '<<B><C>>'),
+				('B', 'D'), ('C', 'E'),
+				('DE', 'cycle <A>'),
+		)) ))
+		self.assertRaises(ValueError, lambda: substituteRecursiveTags( OrderedDict((
+				('DE', 'cycle <A>'),
+				('A', '<<B><C>>'),
+				('B', 'D'), ('C', 'E'),
+		)) ))
 			
 		# missing tags are ok
 		self.assertEqual(substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
@@ -244,14 +242,14 @@ class CommandActionTest(LogCaptureTestCase):
 		setattr(self.__action, 'ab', "<ac>")
 		setattr(self.__action, 'x?family=inet6', "")
 		# produce self-referencing properties except:
-		self.assertRaisesRegexp(ValueError, r"properties contain self referencing definitions",
+		self.assertRaisesRegex(ValueError, r"properties contain self referencing definitions",
 			lambda: self.__action.replaceTag("<a><b>", 
 				self.__action._properties, conditional="family=inet4")
 		)
-		# remore self-referencing in props:
+		# remote self-referencing in props:
 		delattr(self.__action, 'ac')
 		# produce self-referencing query except:
-		self.assertRaisesRegexp(ValueError, r"possible self referencing definitions in query",
+		self.assertRaisesRegex(ValueError, r"possible self referencing definitions in query",
 			lambda: self.__action.replaceTag("<x"*30+">"*30,
 				self.__action._properties, conditional="family=inet6")
 		)
@@ -278,7 +276,7 @@ class CommandActionTest(LogCaptureTestCase):
 					conditional="family=inet6", cache=cache),
 				"Text 890-567 text 567 '567'")
 		self.assertTrue(len(cache) >= 3)
-		# set one parameter - internal properties and cache should be reseted:
+		# set one parameter - internal properties and cache should be reset:
 		setattr(self.__action, 'xyz', "000-<abc>")
 		self.assertEqual(len(cache), 0)
 		# test againg, should have 000 instead of 890:

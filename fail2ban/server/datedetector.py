@@ -165,8 +165,8 @@ class DateDetectorCache(object):
 		r"%b %d, %ExY %I:%M:%S %p",
 		# ASSP: Apr-27-13 02:33:06
 		r"^%b-%d-%Exy %k:%M:%S",
-		# 20050123T215959, 20050123 215959, 20050123  85959
-		r"%ExY%Exm%Exd(?:T|  ?)%ExH%ExM%ExS(?:[.,]%f)?(?:\s*%z)?",
+		# 20050123T215959, 20050123 215959, 20050123  85959, 20050123-21:59:59
+		r"%ExY%Exm%Exd(?:-|T|  ?)%ExH:?%ExM:?%ExS(?:[.,]%f)?(?:\s*%z)?",
 		# prefixed with optional named time zone (monit):
 		# PDT Apr 16 21:05:29
 		r"(?:%Z )?(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
@@ -252,6 +252,8 @@ class DateDetector(object):
 				"There is already a template with name %s" % name)
 		self.__known_names.add(name)
 		self.__templates.append(DateDetectorTemplate(template))
+		logSys.debug("  date pattern regex for `%s`: `%s`",
+			getattr(template, 'pattern', ''), template.regex)
 
 	def appendTemplate(self, template):
 		"""Add a date template to manage and use in search of dates.
@@ -289,16 +291,15 @@ class DateDetector(object):
 
 			DD_patternCache.set(key, template)
 
-		self._appendTemplate(template)
-		logSys.info("  date pattern `%r`: `%s`",
+		logSys.info("  date pattern `%s`: `%s`",
 			getattr(template, 'pattern', ''), template.name)
-		logSys.debug("  date pattern regex for %r: %s",
-			getattr(template, 'pattern', ''), template.regex)
+		self._appendTemplate(template)
 
 	def addDefaultTemplate(self, filterTemplate=None, preMatch=None, allDefaults=True):
 		"""Add Fail2Ban's default set of date templates.
 		"""
 		ignoreDup = len(self.__templates) > 0
+		cnt = 0
 		for template in (
 			DateDetector._defCache.templates if allDefaults else DateDetector._defCache.defaultTemplates
 		):
@@ -311,6 +312,11 @@ class DateDetector(object):
 					wrap=lambda s: RE_DATE_PREMATCH.sub(lambda m: DateTemplate.unboundPattern(s), preMatch))
 			# append date detector template (ignore duplicate if some was added before default):
 			self._appendTemplate(template, ignoreDup=ignoreDup)
+			cnt += 1
+		if preMatch:
+			logSys.info("  default date pattern for `%r`: %d template(s)", preMatch, cnt)
+		else:
+			logSys.info("  default %sdate pattern: %d template(s)", "filtered " if filterTemplate else "", cnt)
 
 	@property
 	def templates(self):

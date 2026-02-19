@@ -29,17 +29,11 @@ import subprocess
 import sys
 from	 threading import Lock
 import time
+import types
 from ..helpers import getLogger, _merge_dicts, uni_decode
+from collections import OrderedDict
 
-try:
-	from collections import OrderedDict
-except ImportError: # pragma: 3.x no cover
-	OrderedDict = dict
-
-if sys.version_info >= (3, 3):
-	import importlib.machinery
-else:
-	import imp
+import importlib.machinery
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -57,7 +51,7 @@ _RETCODE_HINTS = {
 
 # Dictionary to lookup signal name from number
 signame = dict((num, name)
-	for name, num in signal.__dict__.iteritems() if name.startswith("SIG"))
+	for name, num in signal.__dict__.items() if name.startswith("SIG"))
 
 class Utils():
 	"""Utilities provide diverse static methods like executes OS shell commands, etc.
@@ -100,24 +94,12 @@ class Utils():
 			with self.__lock:
 				# clean cache if max count reached:
 				if len(cache) >= self.maxCount:
-					if OrderedDict is not dict:
-						# ordered (so remove some from ahead, FIFO)
-						while cache:
-							(ck, cv) = cache.popitem(last=False)
-							# if not yet expired (but has free slot for new entry):
-							if cv[1] > t and len(cache) < self.maxCount:
-								break
-					else: # pragma: 3.x no cover (dict is in 2.6 only)
-						remlst = []
-						for (ck, cv) in cache.iteritems():
-							# if expired:
-							if cv[1] <= t:
-								remlst.append(ck)
-						for ck in remlst:
-							self._cache.pop(ck, None)
-						# if still max count - remove any one:
-						while cache and len(cache) >= self.maxCount:
-							cache.popitem()
+					# ordered (so remove some from ahead, FIFO)
+					while cache:
+						(ck, cv) = cache.popitem(last=False)
+						# if not yet expired (but has free slot for new entry):
+						if cv[1] > t and len(cache) < self.maxCount:
+							break
 				# set now:
 				cache[k] = (v, t + self.maxTime)
 
@@ -156,7 +138,7 @@ class Utils():
 		if not isinstance(realCmd, list):
 			realCmd = [realCmd]
 		i = len(realCmd)-1
-		for k, v in varsDict.iteritems():
+		for k, v in varsDict.items():
 			varsStat += "%s=$%s " % (k, i)
 			realCmd.append(v)
 			i += 1
@@ -371,10 +353,7 @@ class Utils():
 	def load_python_module(pythonModule):
 		pythonModuleName = os.path.splitext(
 			os.path.basename(pythonModule))[0]
-		if sys.version_info >= (3, 3):
-			mod = importlib.machinery.SourceFileLoader(
-				pythonModuleName, pythonModule).load_module()
-		else:
-			mod = imp.load_source(
-				pythonModuleName, pythonModule)
+		ldr = importlib.machinery.SourceFileLoader(pythonModuleName, pythonModule)
+		mod = types.ModuleType(ldr.name)
+		ldr.exec_module(mod)
 		return mod

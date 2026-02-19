@@ -8,8 +8,12 @@ Feb 21 09:21:54 xxx postfix/smtpd[14398]: NOQUEUE: reject: RCPT from example.com
 Jul 12 07:47:48 saturn postfix/smtpd[8738]: NOQUEUE: reject: RCPT from 1-2-3-4-example.com[1.2.3.4]: 554 5.7.1 <smtp@example.com>: Relay access denied; from=<john@example.com> to=<smtp@example.org> proto=SMTP helo=<198.51.100.17>
 # failJSON: { "time": "2005-07-18T23:12:56", "match": true , "host": "192.51.100.65" }
 Jul 18 23:12:56 xxx postfix/smtpd[8738]: NOQUEUE: reject: RCPT from foo[192.51.100.65]: 554 5.7.1 <bad.domain>: Helo command rejected: match bad.domain; from=<foo@good.domain> to=<foo@porcupine.org> proto=SMTP helo=<bad.domain>
+# failJSON: { "time": "2005-07-18T23:12:56", "match": true , "host": "192.0.2.236", "desc": "gh-3474" }
+Jul 18 23:12:56 xxx postfix/smtpd[1938]: NOQUEUE: reject: RCPT from unknown[192.0.2.236]: 554 5.7.1 <dom.tld>: Helo command rejected: Access denied; from=<ADMINISTRATOR@dom.tld> to=<lp@dom.tld> proto=ESMTP helo=<dom.tld>
 # failJSON: { "time": "2005-07-18T23:12:56", "match": true , "host": "192.51.100.43" }
 Jul 18 23:12:56 xxx postfix/smtpd[8738]: NOQUEUE: reject: RCPT from foo[192.51.100.43]: 554 5.7.1 <foo@bad.domain>: Sender address rejected: match bad.domain; from=<foo@bad.domain> to=<foo@porcupine.org> proto=SMTP helo=<192.51.100.43>
+# failJSON: { "time": "2005-07-18T23:12:57", "match": true , "host": "192.51.100.143", "desc": "gh-3590" }
+Jul 18 23:12:57 xxx postfix/smtpd[8722]: NOQUEUE: reject: RCPT from foo[192.51.100.143]: 450 4.1.8 <foo@bad.domain>: Sender address rejected: Malformed DNS server reply; from=<foo@bad.domain> to=<foo@porcupine.org> proto=SMTP helo=<192.51.100.143>
 # failJSON: { "time": "2005-08-10T10:55:38", "match": true , "host": "72.53.132.234" }
 Aug 10 10:55:38 f-vanier-bourgeois postfix/smtpd[2162]: NOQUEUE: reject: VRFY from 72-53-132-234.cpe.distributel.net[72.53.132.234]: 550 5.1.1 : Recipient address rejected: User unknown in local recipient tab
 # failJSON: { "time": "2005-08-13T15:45:46", "match": true , "host": "192.0.2.1" }
@@ -65,6 +69,9 @@ Jun 12 08:58:35 xxx postfix/smtpd[13533]: improper command pipelining after AUTH
 
 # failJSON: { "time": "2005-05-05T15:51:11", "match": true , "host": "216.245.194.173", "desc": "postfix postscreen / gh-1764" }
 May  5 15:51:11 xxx postfix/postscreen[1148]: NOQUEUE: reject: RCPT from [216.245.194.173]:60591: 550 5.7.1 Service unavailable; client [216.245.194.173] blocked using rbl.example.com; from=<spammer@example.com>, to=<goodguy@example.com>, proto=ESMTP, helo=<badguy.example.com>
+
+# failJSON: { "time": "2005-06-01T19:00:55", "match": true , "host": "192.0.2.114", "desc": "postfix client restriction / gh-3800" }
+Jun  1 19:00:55 mail postfix/smtpd[7749]: NOQUEUE: reject: CONNECT from unknown[192.0.2.114]: 450 4.7.25 Client host rejected: cannot find your hostname, [178.215.236.114]; proto=SMTP
 
 # failJSON: { "time": "2005-06-03T06:25:43", "match": true , "host": "192.0.2.11", "desc": "too many errors / gh-2439" }
 Jun  3 06:25:43 srv postfix/smtpd[29306]: too many errors after RCPT from example.com[192.0.2.11]
@@ -144,6 +151,9 @@ Jan 14 16:18:16 xxx postfix/smtpd[14933]: warning: host[192.0.2.5]: SASL CRAM-MD
 # failJSON: { "time": "2005-01-14T16:18:16", "match": true , "host": "192.0.2.5", "desc": "aggressive only" }
 Jan 14 16:18:16 xxx postfix/smtpd[14933]: warning: host[192.0.2.5]: SASL CRAM-MD5 authentication failed: Invalid authentication mechanism
 
+# failJSON: { "time": "2004-11-04T09:11:01", "match": true , "host": "192.0.2.152", "desc": "reason unavailable" }
+Nov  4 09:11:01 mail postfix/smtpd[1234]: warning: unknown[192.0.2.152]: SASL LOGIN authentication failed: (reason unavailable), sasl_username=admin
+
 # ---------------------------------------
 # Test-cases of postfix DDOS mode:
 # ---------------------------------------
@@ -152,6 +162,8 @@ Jan 14 16:18:16 xxx postfix/smtpd[14933]: warning: host[192.0.2.5]: SASL CRAM-MD
 
 # failJSON: { "time": "2005-02-10T13:26:34", "match": true , "host": "192.0.2.1" }
 Feb 10 13:26:34 srv postfix/smtpd[123]: disconnect from unknown[192.0.2.1] helo=1 auth=0/1 quit=1 commands=2/3
+# failJSON: { "time": "2005-02-10T13:26:34", "match": true , "host": "192.0.2.1" }
+Feb 10 13:26:34 srv postfix/smtp-25/smtpd[123]: disconnect from unknown[192.0.2.1] helo=1 auth=0/1 quit=1 commands=2/3
 # failJSON: { "time": "2005-02-10T13:26:34", "match": true , "host": "192.0.2.2" }
 Feb 10 13:26:34 srv postfix/smtpd[123]: disconnect from unknown[192.0.2.2] ehlo=1 auth=0/1 rset=1 quit=1 commands=3/4
 
@@ -159,10 +171,11 @@ Feb 10 13:26:34 srv postfix/smtpd[123]: disconnect from unknown[192.0.2.2] ehlo=
 Feb 18 09:45:10 xxx postfix/smtpd[42]: lost connection after CONNECT from spammer.example.com[192.0.2.10]
 # failJSON: { "time": "2005-02-18T09:45:12", "match": true , "host": "192.0.2.42" }
 Feb 18 09:45:12 xxx postfix/smtpd[42]: lost connection after STARTTLS from spammer.example.com[192.0.2.42]
+
+# failJSON: { "match": false, "desc": "avoid double counting (with next failure message 'disconnect ...'), gh-3505" }
+Feb 18 09:48:04 xxx postfix/smtpd[50903]: lost connection after AUTH from unknown[192.0.2.23]
 # failJSON: { "time": "2005-02-18T09:48:04", "match": true , "host": "192.0.2.23" }
-Feb 18 09:48:04 xxx postfix/smtpd[23]: lost connection after AUTH from unknown[192.0.2.23]
-# failJSON: { "time": "2005-02-18T09:48:04", "match": true , "host": "192.0.2.23" }
-Feb 18 09:48:04 xxx postfix/smtpd[23]: lost connection after AUTH from unknown[192.0.2.23]
+Feb 18 09:48:04 xxx postfix/smtpd[50903]: disconnect from unknown[192.0.2.23] ehlo=1 auth=0/1 rset=1 commands=2/3
 
 # failJSON: { "time": "2004-12-23T19:39:13", "match": true , "host": "192.0.2.2" }
 Dec 23 19:39:13 xxx postfix/postscreen[21057]: PREGREET 14 after 0.08 from [192.0.2.2]:59415: EHLO ylmf-pc\r\n
@@ -174,6 +187,13 @@ Jun  8 23:14:28 proxy2 postfix/postscreen[473]: COMMAND TIME LIMIT from [192.0.2
 # failJSON: { "time": "2005-06-08T23:14:54", "match": true , "host": "192.0.2.26", "desc": "abusive clients hitting command limit (gh-3040)" }
 Jun  8 23:14:54 proxy2 postfix/postscreen[473]: COMMAND COUNT LIMIT from [192.0.2.26]:15592 after RCPT
 
+# failJSON: { "time": "2004-09-17T18:19:20", "match": true , "host": "192.0.2.25" }
+Sep 17 18:19:20 mxhost postfix/smtpd[12345]: NOQUEUE: lost connection after CONNECT from unknown[192.0.2.25]
+
+# failJSON: { "time": "2004-09-19T12:10:57", "match": true , "host": "192.0.2.123", "desc": "Connection rate limit exceeded, gh-4073" }
+Sep 19 12:10:57 hostname postfix/smtpd[23244]: warning: Connection rate limit exceeded: 31 from spamhost.domain.org[192.0.2.123] for service smtpd
+# failJSON: { "time": "2004-09-19T12:10:58", "match": true , "host": "192.0.2.227", "desc": "Message delivery request rate limit exceeded, gh-3265" }
+Sep 19 12:10:58 hostname postfix/smtpd[14059]: warning: Message delivery request rate limit exceeded: 334 from spam.example.com[192.0.2.227] for service submission
 
 # filterOptions: [{}, {"mode": "ddos"}, {"mode": "aggressive"}]
 # failJSON: { "match": false, "desc": "don't affect lawful data (sporadical connection aborts within DATA-phase, see gh-1813 for discussion)" }
