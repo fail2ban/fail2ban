@@ -202,7 +202,7 @@ after = 1.conf
 				rplcmnt = 1
 				try: # set it in map-vars (consider different python versions):
 					defaults[sopt] = v
-				except:
+				except Exception:
 					# try to set in first default map (corresponding vars):
 					try:
 						defaults._maps[0][sopt] = v

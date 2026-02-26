@@ -36,7 +36,7 @@ import importlib
 try:
 	import ctypes
 	_libcap = ctypes.CDLL('libcap.so.2')
-except:
+except Exception:
 	_libcap = None
 
 
@@ -187,7 +187,7 @@ def __stopOnIOError(logSys=None, logHndlr=None): # pragma: no cover
 	if logging.exitOnIOError:
 		try:
 			sys.stderr.close()
-		except:
+		except Exception:
 			pass
 		sys.exit(0)
 

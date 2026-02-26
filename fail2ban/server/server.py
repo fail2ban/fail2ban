@@ -939,7 +939,7 @@ class Server:
 					os.close(fd)
 				except OSError:   # ERROR (ignore)
 					pass
-		except:
+		except Exception:
 			try:
 				maxfd = os.sysconf("SC_OPEN_MAX")
 			except (AttributeError, ValueError):

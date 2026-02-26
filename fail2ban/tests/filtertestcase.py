@@ -70,11 +70,11 @@ def open(*args):
 def _killfile(f, name):
 	try:
 		f.close()
-	except:
+	except Exception:
 		pass
 	try:
 		os.unlink(name)
-	except:
+	except Exception:
 		pass
 
 	# there might as well be the .bak file

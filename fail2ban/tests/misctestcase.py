@@ -43,7 +43,7 @@ class HelpersTest(unittest.TestCase):
 	def testFormatExceptionInfoBasic(self):
 		try:
 			raise ValueError("Very bad exception")
-		except:
+		except Exception:
 			name, args = formatExceptionInfo()
 			self.assertEqual(name, "ValueError")
 			self.assertEqual(args, "Very bad exception")
@@ -51,7 +51,7 @@ class HelpersTest(unittest.TestCase):
 	def testFormatExceptionConvertArgs(self):
 		try:
 			raise ValueError("Very bad", None)
-		except:
+		except Exception:
 			name, args = formatExceptionInfo()
 			self.assertEqual(name, "ValueError")
 			# might be fragile due to ' vs "
