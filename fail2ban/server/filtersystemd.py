@@ -301,7 +301,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		date = logentry.get('_SOURCE_REALTIME_TIMESTAMP')
 		if date is None:
 				date = logentry.get('__REALTIME_TIMESTAMP')
-		return (date.isoformat(), time.mktime(date.timetuple()) + date.microsecond/1.0E6)
+		return (date.isoformat(), date.timestamp())
 
 	##
 	# Format journal log entry into syslog style
