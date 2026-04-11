@@ -617,14 +617,14 @@ class IgnoreIP(LogCaptureTestCase):
 		self.pruneLog()
 		self.assertFalse(self.filter.inIgnoreIPList(FailTicket("2001:db8::ffff")))
 		self.assertLogged("returned successfully 1")
-		# by user-name (ignore tester):
-		self.filter.ignoreCommand = 'if [ "<F-USER>" = "tester" ]; then exit 0; fi; exit 1'
+		# by user-name (ignore tester), also test jail.name tag:
+		self.filter.ignoreCommand = 'echo "jail:<jail.name>"; if [ "<F-USER>" = "tester" ]; then exit 0; fi; exit 1'
 		self.pruneLog()
 		self.assertTrue(self.filter.inIgnoreIPList(FailTicket("tester", data={'user': 'tester'})))
-		self.assertLogged("returned successfully 0")
+		self.assertLogged("stdout: %r" % 'jail:DummyJail', "returned successfully 0", all=True)
 		self.pruneLog()
 		self.assertFalse(self.filter.inIgnoreIPList(FailTicket("root", data={'user': 'root'})))
-		self.assertLogged("returned successfully 1", all=True)
+		self.assertLogged("stdout: %r" % 'jail:DummyJail', "returned successfully 1", all=True)
 
 	def testIgnoreCache(self):
 		# like both test-cases above, just cached (so once per key)...

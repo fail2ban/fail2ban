@@ -394,6 +394,7 @@ class Actions(JailThread, Mapping):
 			# raw ticket info:
 			"raw-ticket":			lambda self: repr(self.__ticket),
 			# jail info:
+			"jail.name":         lambda self: self.__jail.name,
 			"jail.banned":       lambda self: self.__jail.actions.banManager.size(),
 			"jail.banned_total": lambda self: self.__jail.actions.banManager.getBanTotal(),
 			"jail.found":        lambda self: self.__jail.filter.failManager.size(),
