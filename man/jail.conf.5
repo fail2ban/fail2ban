@@ -87,6 +87,28 @@ indicates that the specified file is to be parsed before the current file.
 .TP
 .B after
 indicates that the specified file is to be parsed after the current file.
+.PP
+The [INCLUDES] section allows you to include configuration files relative to the directory of the current configuration file. Multiple files can be specified by separating them with whitespace. Globbing patterns using '*' and '?' are supported.
+.PP
+Examples:
+.RS
+.nf
+# Include a single file before the current configuration
+[INCLUDES]
+before = common.conf
+
+# Include multiple files
+[INCLUDES]
+before = common.conf paths-debian.conf
+after = custom.local
+
+# Include files matching a glob pattern
+[INCLUDES]
+before = /etc/fail2ban/paths-*.conf
+.fi
+.RE
+.PP
+Note: If an included file does not exist, fail2ban will currently ignore it without warning. Ensure that file paths are correct to avoid misconfigurations.
 .RE
 
 Using Python "string interpolation" mechanisms, other definitions are allowed and can later be used within other definitions as %(name)s.
