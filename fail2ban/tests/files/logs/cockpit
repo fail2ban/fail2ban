@@ -1,0 +1,29 @@
+# Cockpit authentication failures from /var/log/auth.log or journal
+
+#1 PAM auth failure with user
+# failJSON: { "time": "2005-03-08T09:37:44", "match": true , "host": "192.0.2.1", "user": "admin" }
+Mar  8 09:37:44 server cockpit-session[12345]: pam_unix(cockpit:auth): authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=192.0.2.1  user=admin
+
+#2 PAM auth failure without user
+# failJSON: { "time": "2005-03-09T03:32:27", "match": true , "host": "192.0.2.2" }
+Mar  9 03:32:27 server cockpit-session[23456]: pam_unix(cockpit:auth): authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=192.0.2.2 
+
+#3 PAM SSSD auth failure
+# failJSON: { "time": "2005-03-10T14:15:30", "match": true , "host": "192.0.2.3", "user": "testuser" }
+Mar 10 14:15:30 server cockpit-session[34567]: pam_sss(cockpit:auth): authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=192.0.2.3  user=testuser
+
+#4 PAM LDAP auth failure
+# failJSON: { "time": "2005-03-11T08:22:11", "match": true , "host": "192.0.2.4", "user": "ldapuser" }
+Mar 11 08:22:11 server cockpit-session[45678]: pam_ldap(cockpit:auth): authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=192.0.2.4  user=ldapuser
+
+#5 IPv6 rhost
+# failJSON: { "time": "2005-03-12T16:45:00", "match": true , "host": "::1", "user": "root" }
+Mar 12 16:45:00 server cockpit-session[56789]: pam_unix(cockpit:auth): authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=::1  user=root
+
+#6 Successful login should NOT match (negative test)
+# failJSON: { "time": "2005-03-13T11:20:33", "match": false }
+Mar 13 11:20:33 server cockpit-session[67890]: pam_unix(cockpit:auth): authentication success; logname= uid=0 euid=0 tty= ruser= rhost=192.0.2.10  user=validuser
+
+#7 SSH PAM failure should NOT match (wrong service, negative test)
+# failJSON: { "time": "2005-03-14T08:00:00", "match": false }
+Mar 14 08:00:00 server sshd[78901]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=192.0.2.1  user=admin
