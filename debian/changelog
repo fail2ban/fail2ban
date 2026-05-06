@@ -1,12 +1,23 @@
-fail2ban (1.1.0-10) UNRELEASED; urgency=medium
+fail2ban (1.1.0-10) unstable; urgency=medium
 
+  * Team upload.
+
+  [ Cyril Brulebois ]
   * Delete python3-setuptools from Recommends:
      - It was added to fix runtime crashes (See: #1076494).
      - The various references to distutils.version's LooseVersion were
        removed (via replace-distutils.patch), rendering that obsolete
        (See: #1104790).
 
- -- Cyril Brulebois <cyril@debamax.com>  Sat, 27 Dec 2025 02:56:34 +0100
+  [ Alexandre Detiste ]
+  * Bump Standards-Version to 4.7.4, drop Priority: tag
+  * Rewrite d/watch in v5 format
+  * Use dh-sequence-python3
+  * Rename files under debian/ for debhelper 14/15 compatibility
+  * Use dh-cruft to register & purge volatile files
+  * Add debian/salsa-ci.yml
+
+ -- Alexandre Detiste <tchet@debian.org>  Wed, 06 May 2026 14:36:05 +0200
 
 fail2ban (1.1.0-9) unstable; urgency=medium
 
