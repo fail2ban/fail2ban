@@ -1,0 +1,3 @@
+/etc/fail2ban.conf
+/var/log/fail2ban*
+/var/lib/fail2ban/fail2ban.sqlite3
