@@ -6,7 +6,7 @@ Uploaders: Yaroslav Halchenko <debian@onerussian.com>,
 Build-Depends:
  debhelper-compat (= 13)
  , debhelper
- , dh-python
+ , dh-sequence-python3
  , python3
  , python3-setuptools
  , python3-pyinotify
