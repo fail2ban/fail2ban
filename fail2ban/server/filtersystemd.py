@@ -194,7 +194,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				ja = self.__jrnlargs
 				super(journal.Reader, self.__journal).__init__(
 					ja.get('flags', 0), ja.get('path'), ja.get('files'), ja.get('namespace'))
-			except:
+			except Exception:
 				# cannot reopen in that way, so simply recreate reader:
 				self.closeJournal()
 				self.__journal = journal.Reader(**self.__jrnlargs)

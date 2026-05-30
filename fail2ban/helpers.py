@@ -36,7 +36,7 @@ import importlib
 try:
 	import ctypes
 	_libcap = ctypes.CDLL('libcap.so.2')
-except:
+except Exception:
 	_libcap = None
 
 

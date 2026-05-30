@@ -94,7 +94,7 @@ R_MAP = {
 try:
 	re.search("^re(?i:val)$", "reVAL")
 	R_GLOB2LOCFLAGS = ( re.compile(r"(?<!\\)\((?:\?:)?(\(\?[a-z]+)\)"), r"\1:" )
-except:
+except Exception:
 	R_GLOB2LOCFLAGS = ()
 
 def mapTag2Opt(tag):

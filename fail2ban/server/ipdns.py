@@ -204,7 +204,7 @@ class DNSUtils:
 		# try to obtain from network interfaces if possible (implemented for this platform):
 		try:
 			ips = IPAddrSet([a for ni, a in DNSUtils._NetworkInterfacesAddrs()])
-		except:
+		except Exception:
 			ips = IPAddrSet()
 		# cache and return :
 		DNSUtils.CACHE_nameToIp.set(DNSUtils._getNetIntrfIPs_key, ips)
@@ -257,7 +257,7 @@ class DNSUtils:
 			with open('/proc/sys/net/ipv6/conf/all/disable_ipv6', 'rb') as f:
 				# if 1 - disabled, 0 - enabled
 				return not int(f.read())
-		except:
+		except Exception:
 			pass
 		s = None
 		try:

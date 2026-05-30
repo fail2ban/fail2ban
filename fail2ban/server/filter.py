@@ -1314,7 +1314,7 @@ try:
 		md5sum = hashlib.md5
 		# try to use it (several standards like FIPS forbid it):
 		md5sum(' ').hexdigest()
-	except: # pragma: no cover
+	except Exception: # pragma: no cover
 		md5sum = hashlib.sha1
 except ImportError: # pragma: no cover
 	# hashlib was introduced in Python 2.5.  For compatibility with those
