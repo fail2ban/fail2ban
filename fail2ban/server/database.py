@@ -443,7 +443,7 @@ class Fail2BanDb(object):
 		if enabled is None:
 			cur.execute("SELECT name FROM jails")
 		else:
-			cur.execute("SELECT name FROM jails WHERE enabled=%s" %
+			cur.execute("SELECT name FROM jails WHERE enabled=?",
 				(int(enabled),))
 		return set(row[0] for row in cur.fetchmany())
 
