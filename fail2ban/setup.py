@@ -30,8 +30,6 @@ def updatePyExec(bindir, executable=None):
 	bindir = os.path.realpath(bindir)
 	if executable is None:
 		executable = sys.executable
-	if sys.platform == 'win32':
-		return
 	pypath = os.path.join(bindir, 'fail2ban-python')
 	# if not exists or point to another version - update link:
 	isfile = os.path.isfile(os.path.realpath(pypath))

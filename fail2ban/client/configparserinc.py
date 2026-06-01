@@ -202,11 +202,11 @@ after = 1.conf
 				rplcmnt = 1
 				try: # set it in map-vars (consider different python versions):
 					defaults[sopt] = v
-				except Exception:
+				except:
 					# try to set in first default map (corresponding vars):
 					try:
 						defaults._maps[0][sopt] = v
-					except Exception: # pragma: no cover
+					except: # pragma: no cover
 						# no way to update vars chain map - overwrite defaults:
 						self._defaults[sopt] = v
 		return rplcmnt
