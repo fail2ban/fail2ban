@@ -25,7 +25,12 @@ transport (RFC 5965 multipart/report). Requires the ``dig`` command
 (bind-utils) for contact resolution.
 """
 
+import json
 import subprocess
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from fail2ban.server.actions import ActionBase
 from fail2ban.server import xarfreport
@@ -101,6 +106,40 @@ class XarfV4Action(ActionBase):
 				if part:
 					addrs.append(part)
 		return addrs
+
+	def _build_email(self, report):
+		"""Wrap a XARF v4 report dict in the official XARF email transport.
+
+		The returned message has no recipient header; the caller is
+		responsible for setting the recipients when sending.
+		"""
+		ip = report.get("source_identifier", "")
+		msg = MIMEMultipart("report")
+		msg.set_param("report-type", "feedback-report")
+		msg["Subject"] = "Abuse report (login-attack) about %s" % ip
+		msg["From"] = self.envelope_from
+		msg["Auto-Submitted"] = "auto-generated"
+
+		human = ("An abuse login-attack report follows.\n\n"
+			"Report-Type: %s\nSource: %s\nTimestamp: %s\nReport-ID: %s\n\n"
+			"The machine-readable XARF v4 report is attached as xarf.json.\n"
+			% (report.get("type", "login_attack"), ip,
+				report.get("timestamp", ""), report.get("report_id", "")))
+		msg.attach(MIMEText(human, "plain", "us-ascii"))
+
+		fb = MIMEBase("message", "feedback-report")
+		fb.set_payload(
+			"Feedback-Type: xarf\nUser-Agent: Fail2Ban\nVersion: 1\n")
+		fb.add_header("Content-Disposition", "inline")
+		msg.attach(fb)
+
+		jsonpart = MIMEBase("application", "json", name="xarf.json")
+		jsonpart.set_payload(json.dumps(report).encode("utf-8"))
+		encoders.encode_base64(jsonpart)
+		jsonpart.add_header(
+			"Content-Disposition", "attachment", filename="xarf.json")
+		msg.attach(jsonpart)
+		return msg
 
 	def ban(self, aInfo):
 		if aInfo.get('restored'):

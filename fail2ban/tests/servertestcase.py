@@ -2470,3 +2470,28 @@ class XarfV4ActionTest(LogCaptureTestCase):
 		act = self._mk()
 		act._dig_txt = lambda fqdn: ''
 		self.assertEqual(act._resolveAbuseContacts('87.142.124.10'), [])
+
+	def testBuildEmailStructure(self):
+		import base64 as _b64, json as _json
+		act = self._mk()
+		report = {"xarf_version": "4.2.0", "type": "login_attack",
+			"source_identifier": "87.142.124.10",
+			"timestamp": "2025-01-11T12:17:20Z", "report_id": "abc-123"}
+		msg = act._build_email(report)
+		self.assertEqual(msg.get_content_type(), "multipart/report")
+		self.assertEqual(msg.get_param("report-type"), "feedback-report")
+		parts = msg.get_payload()
+		self.assertEqual(len(parts), 3)
+		self.assertEqual(parts[0].get_content_type(), "text/plain")
+		self.assertEqual(parts[1].get_content_type(), "message/feedback-report")
+		fbtext = parts[1].get_payload()
+		self.assertIn("Feedback-Type: xarf", fbtext)
+		self.assertIn("User-Agent", fbtext)
+		self.assertIn("Version: 1", fbtext)
+		self.assertEqual(parts[2].get_content_type(), "application/json")
+		self.assertEqual(parts[2].get_filename(), "xarf.json")
+		decoded = _b64.b64decode(parts[2].get_payload())
+		self.assertEqual(_json.loads(decoded)['source_identifier'],
+			"87.142.124.10")
+		# subject references the source IP:
+		self.assertIn("87.142.124.10", msg['Subject'])
