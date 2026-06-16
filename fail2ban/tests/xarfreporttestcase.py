@@ -48,3 +48,55 @@ class XarfEvidenceTest(unittest.TestCase):
 		ev = xarfreport._build_evidence_stdlib("a log line")
 		self.assertNotIn('description', ev)
 		self.assertEqual(ev['content_type'], "text/plain")
+
+
+class XarfLoginAttackStdlibTest(LogCaptureTestCase):
+
+	def _data(self, **over):
+		data = {
+			"source_identifier": "87.142.124.10",
+			"timestamp": "2025-01-11T12:17:20Z",
+			"first_seen": "2025-01-11T06:17:20Z",
+			"protocol": "tcp",
+			"service": "sshd",
+			"destination_port": 22,
+			"attempt_count": 5,
+			"evidence_text": "auth failure from 87.142.124.10",
+			"evidence_source": "log",
+			"reporter": {"org": "Acme", "contact": "abuse@acme.example",
+				"domain": "acme.example"},
+			"sender": {"org": "Acme", "contact": "abuse@acme.example",
+				"domain": "acme.example"},
+		}
+		data.update(over)
+		return data
+
+	def testBuildLoginAttackStdlib(self):
+		r = xarfreport._build_login_attack_stdlib(self._data())
+		self.assertEqual(r['xarf_version'], xarfreport.XARF_VERSION_FALLBACK)
+		self.assertEqual(r['category'], "connection")
+		self.assertEqual(r['type'], "login_attack")
+		self.assertEqual(r['source_identifier'], "87.142.124.10")
+		self.assertEqual(r['destination_port'], 22)
+		self.assertEqual(r['protocol'], "tcp")
+		self.assertEqual(r['service'], "sshd")
+		self.assertEqual(r['attempt_count'], 5)
+		self.assertEqual(r['timestamp'], "2025-01-11T12:17:20Z")
+		self.assertEqual(r['first_seen'], "2025-01-11T06:17:20Z")
+		self.assertEqual(r['reporter']['org'], "Acme")
+		self.assertEqual(r['sender']['domain'], "acme.example")
+		self.assertEqual(len(r['evidence']), 1)
+		self.assertEqual(r['evidence'][0]['content_type'], "text/plain")
+		import uuid as _uuid
+		_uuid.UUID(r['report_id'])
+
+	def testBuildLoginAttackStdlibOmitsMissingOptionals(self):
+		data = self._data()
+		del data['destination_port']
+		del data['attempt_count']
+		r = xarfreport._build_login_attack_stdlib(data)
+		self.assertNotIn('destination_port', r)
+		self.assertNotIn('attempt_count', r)
+		self.assertIn('source_identifier', r)
+		self.assertIn('protocol', r)
+		self.assertIn('first_seen', r)

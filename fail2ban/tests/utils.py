@@ -451,6 +451,7 @@ def gatherTests(regexps=None, opts=None):
 	tests.addTest(loadTests(misctestcase.MyTimeTest))
 	# XARF v4 reporting
 	tests.addTest(loadTests(xarfreporttestcase.XarfEvidenceTest))
+	tests.addTest(loadTests(xarfreporttestcase.XarfLoginAttackStdlibTest))
 	# Database
 	tests.addTest(loadTests(databasetestcase.DatabaseTest))
 	# Observer

@@ -55,3 +55,30 @@ def _build_evidence_stdlib(text, description=None):
 	if description is not None:
 		ev["description"] = description
 	return ev
+
+
+def _build_login_attack_stdlib(data):
+	"""Build a XARF v4 login_attack report dict using only the stdlib."""
+	report = {
+		"xarf_version": XARF_VERSION_FALLBACK,
+		"report_id": str(uuid.uuid4()),
+		"timestamp": data["timestamp"],
+		"reporter": dict(data["reporter"]),
+		"sender": dict(data["sender"]),
+		"source_identifier": data["source_identifier"],
+		"category": CATEGORY,
+		"type": TYPE,
+		"protocol": data["protocol"],
+		"first_seen": data["first_seen"],
+	}
+	# optional fields — include only when present and not None:
+	for key in ("evidence_source", "service", "destination_ip",
+			"destination_port", "source_port", "attempt_count"):
+		val = data.get(key)
+		if val is not None:
+			report[key] = val
+	evtext = data.get("evidence_text")
+	if evtext:
+		report["evidence"] = [
+			_build_evidence_stdlib(evtext, description="fail2ban log matches")]
+	return report
