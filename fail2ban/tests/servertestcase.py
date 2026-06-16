@@ -2495,3 +2495,33 @@ class XarfV4ActionTest(LogCaptureTestCase):
 			"87.142.124.10")
 		# subject references the source IP:
 		self.assertIn("87.142.124.10", msg['Subject'])
+
+	def testBanSendsReport(self):
+		import base64 as _b64, json as _json
+		act = self._mk(service="sshd", port="22")
+		sent = []
+		act._resolveAbuseContacts = lambda ip: ["abuse@isp.example"]
+		act._sendmail = lambda recipients, msg: sent.append((recipients, msg))
+		act.ban({'ip': '87.142.124.10', 'failures': 7,
+			'time': 1736597840, 'ipmatches': 'Jan 11 sshd auth failure'})
+		self.assertEqual(len(sent), 1)
+		recipients, msg = sent[0]
+		self.assertEqual(recipients, ["abuse@isp.example"])
+		self.assertEqual(msg['To'], "abuse@isp.example")
+		jsonpart = msg.get_payload()[2]
+		report = _json.loads(_b64.b64decode(jsonpart.get_payload()))
+		self.assertEqual(report['source_identifier'], '87.142.124.10')
+		self.assertEqual(report['type'], 'login_attack')
+		self.assertEqual(report['destination_port'], 22)
+		self.assertEqual(report['attempt_count'], 7)
+		self.assertEqual(len(report['evidence']), 1)
+
+	def testBanNoContactNoSend(self):
+		act = self._mk()
+		sent = []
+		act._resolveAbuseContacts = lambda ip: []
+		act._sendmail = lambda recipients, msg: sent.append((recipients, msg))
+		act.ban({'ip': '87.142.124.10', 'failures': 1,
+			'time': 1736597840, 'ipmatches': 'x'})
+		self.assertEqual(sent, [])
+		self.assertLogged("no abuse contact")

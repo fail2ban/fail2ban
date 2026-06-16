@@ -26,7 +26,9 @@ transport (RFC 5965 multipart/report). Requires the ``dig`` command
 """
 
 import json
+import shlex
 import subprocess
+import time
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
@@ -141,6 +143,46 @@ class XarfV4Action(ActionBase):
 		msg.attach(jsonpart)
 		return msg
 
+	def _iso(self, epoch):
+		return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(float(epoch)))
+
+	def _aInfoToData(self, aInfo):
+		try:
+			dport = int(self.port)
+		except (TypeError, ValueError):
+			dport = None
+		ts = self._iso(aInfo.get('time') or time.time())
+		evidence = aInfo.get(self.matches) or aInfo.get('matches') or ''
+		failures = aInfo.get('failures')
+		return {
+			"source_identifier": str(aInfo['ip']),
+			"timestamp": ts,
+			"first_seen": ts,
+			"protocol": self.protocol,
+			"service": self.service,
+			"destination_port": dport,
+			"attempt_count": int(failures) if failures is not None else None,
+			"evidence_text": evidence,
+			"evidence_source": "log",
+			"reporter": self.reporter,
+			"sender": self.sender_id,
+		}
+
+	def _sendmail(self, recipients, msg):
+		cmd = shlex.split(self.mailcmd) + list(recipients)
+		p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+		try:
+			p.communicate(msg.as_bytes(), timeout=30)
+		except subprocess.TimeoutExpired:
+			p.kill()
+			p.communicate()
+			self._logSys.error(
+				"xarf action %s: mail command timed out", self._name)
+			return
+		if p.returncode:
+			self._logSys.error("xarf action %s: mail command failed (rc=%s)",
+				self._name, p.returncode)
+
 	def ban(self, aInfo):
 		if aInfo.get('restored'):
 			return
@@ -150,8 +192,19 @@ class XarfV4Action(ActionBase):
 				"set reporter_org/contact/domain and sender_org/contact/"
 				"domain - skipping report", self._name)
 			return
-		# remaining wiring added in later tasks
-		self._logSys.debug("xarf action %s: ban() reached", self._name)
+		contacts = self._resolveAbuseContacts(str(aInfo['ip']))
+		if not contacts:
+			self._logSys.info(
+				"xarf action %s: no abuse contact for %s; skipping",
+				self._name, aInfo['ip'])
+			return
+		data = self._aInfoToData(aInfo)
+		report = xarfreport.build_login_attack(data)
+		msg = self._build_email(report)
+		msg["To"] = ", ".join(contacts)
+		self._sendmail(contacts, msg)
+		self._logSys.debug("xarf action %s: report sent for %s to %s",
+			self._name, aInfo['ip'], contacts)
 
 
 Action = XarfV4Action
