@@ -100,3 +100,41 @@ class XarfLoginAttackStdlibTest(LogCaptureTestCase):
 		self.assertIn('source_identifier', r)
 		self.assertIn('protocol', r)
 		self.assertIn('first_seen', r)
+
+
+class XarfBuildLoginAttackTest(XarfLoginAttackStdlibTest):
+
+	def testPublicEntryPointReturnsValidShape(self):
+		# Regardless of whether the lib is present, the public function
+		# returns a dict with the required v4 fields.
+		r = xarfreport.build_login_attack(self._data())
+		for field in ("xarf_version", "report_id", "timestamp", "reporter",
+				"sender", "source_identifier", "category", "type",
+				"protocol", "first_seen"):
+			self.assertIn(field, r)
+		self.assertEqual(r['category'], "connection")
+		self.assertEqual(r['type'], "login_attack")
+
+	@unittest.skipUnless(xarfreport._HAVE_XARF, "xarf library not installed")
+	def testLibPathValidatesAgainstSchema(self):
+		# When the lib is present, output must pass xarf's own validation.
+		import xarf
+		r = xarfreport.build_login_attack(self._data())
+		result = xarf.parse(r)
+		self.assertEqual(result.errors, [])
+
+	def testFallbackOnLibError(self):
+		# Force the lib path to raise; expect a clean fallback + warning.
+		orig_flag = xarfreport._HAVE_XARF
+		orig_lib = xarfreport._build_login_attack_lib
+		try:
+			xarfreport._HAVE_XARF = True
+			def boom(data):
+				raise RuntimeError("simulated lib failure")
+			xarfreport._build_login_attack_lib = boom
+			r = xarfreport.build_login_attack(self._data())
+			self.assertEqual(r['type'], "login_attack")
+			self.assertLogged("falling back to stdlib")
+		finally:
+			xarfreport._HAVE_XARF = orig_flag
+			xarfreport._build_login_attack_lib = orig_lib

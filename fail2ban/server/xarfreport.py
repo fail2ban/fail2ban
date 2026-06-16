@@ -36,6 +36,13 @@ from ..helpers import getLogger
 
 logSys = getLogger(__name__)
 
+try:
+	import xarf as _xarf
+	_HAVE_XARF = True
+except ImportError:  # pragma: no cover - depends on optional install
+	_xarf = None
+	_HAVE_XARF = False
+
 # Pinned fallback spec version used by the stdlib builder when the
 # official ``xarf`` library is not installed.
 XARF_VERSION_FALLBACK = "4.2.0"
@@ -82,3 +89,47 @@ def _build_login_attack_stdlib(data):
 		report["evidence"] = [
 			_build_evidence_stdlib(evtext, description="fail2ban log matches")]
 	return report
+
+
+def _build_login_attack_lib(data):
+	"""Build + validate a login_attack report via the official xarf lib."""
+	kwargs = {
+		"protocol": data["protocol"],
+		"first_seen": data["first_seen"],
+		"timestamp": data["timestamp"],
+	}
+	for key in ("evidence_source", "service", "destination_ip",
+			"destination_port", "source_port", "attempt_count"):
+		val = data.get(key)
+		if val is not None:
+			kwargs[key] = val
+	evtext = data.get("evidence_text")
+	if evtext:
+		kwargs["evidence"] = [_xarf.create_evidence(
+			"text/plain", evtext, description="fail2ban log matches")]
+	result = _xarf.create_report(
+		category=CATEGORY,
+		type=TYPE,
+		source_identifier=data["source_identifier"],
+		reporter=dict(data["reporter"]),
+		sender=dict(data["sender"]),
+		**kwargs)
+	if result.errors or result.report is None:
+		raise ValueError("xarf validation failed: %r" % (result.errors,))
+	return result.report.model_dump(by_alias=True, exclude_none=True)
+
+
+def build_login_attack(data):
+	"""Return a XARF v4 login_attack report dict from fail2ban ban data.
+
+	Uses the official ``xarf`` library when available; on any error falls
+	back to the stdlib builder so a report is still produced.
+	"""
+	if _HAVE_XARF:
+		try:
+			return _build_login_attack_lib(data)
+		except Exception as e:  # noqa: broad - never block reporting
+			logSys.warning(
+				"xarf library report build failed (%s: %s); "
+				"falling back to stdlib builder", type(e).__name__, e)
+	return _build_login_attack_stdlib(data)
