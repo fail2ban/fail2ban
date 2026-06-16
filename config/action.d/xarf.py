@@ -25,6 +25,8 @@ transport (RFC 5965 multipart/report). Requires the ``dig`` command
 (bind-utils) for contact resolution.
 """
 
+import subprocess
+
 from fail2ban.server.actions import ActionBase
 from fail2ban.server import xarfreport
 
@@ -65,6 +67,40 @@ class XarfV4Action(ActionBase):
 
 	def unban(self, aInfo):
 		pass
+
+	def _reverse_ip(self, ip):
+		"""Return the reversed-nibble/octet label for a TXT lookup."""
+		from fail2ban.server.ipdns import IPAddr
+		return IPAddr(ip).getPTR("")
+
+	def _dig_txt(self, fqdn):
+		"""Return raw `dig +short TXT` output for fqdn (overridable in tests)."""
+		try:
+			out = subprocess.check_output(
+				["dig", "+short", "-t", "txt", "-q", fqdn],
+				universal_newlines=True, timeout=30)
+		except Exception as e:
+			self._logSys.error("xarf action %s: dig failed for %s: %s",
+				self._name, fqdn, e)
+			return ''
+		return out
+
+	def _resolveAbuseContacts(self, ip):
+		"""Resolve abuse contact email(s) for ip via the Abusix Contact DB."""
+		fqdn = self._reverse_ip(ip) + self.resolver
+		self._logSys.debug("xarf action %s: try to resolve %s",
+			self._name, fqdn)
+		raw = self._dig_txt(fqdn)
+		addrs = []
+		for line in raw.splitlines():
+			line = line.strip().strip('"')
+			if not line or line.startswith(';;'):
+				continue
+			for part in line.split(','):
+				part = part.strip()
+				if part:
+					addrs.append(part)
+		return addrs
 
 	def ban(self, aInfo):
 		if aInfo.get('restored'):

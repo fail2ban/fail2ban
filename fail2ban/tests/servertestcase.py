@@ -2451,3 +2451,22 @@ class XarfV4ActionTest(LogCaptureTestCase):
 			'time': 1736597840, 'ipmatches': 'log line'})
 		self.assertEqual(sent, [])
 		self.assertLogged("reporter/sender identity is incomplete")
+
+	def testResolveParsesDigTxt(self):
+		act = self._mk()
+		# stub the dig invocation: return a TXT answer like dig +short
+		act._dig_txt = lambda fqdn: '"abuse-1@isp.example, abuse-2@isp.example"'
+		addrs = act._resolveAbuseContacts('87.142.124.10')
+		self.assertEqual(addrs, ["abuse-1@isp.example", "abuse-2@isp.example"])
+
+	def testResolveBuildsAbusixFqdn(self):
+		act = self._mk()
+		seen = []
+		act._dig_txt = lambda fqdn: seen.append(fqdn) or '"abuse@isp.example"'
+		act._resolveAbuseContacts('87.142.124.10')
+		self.assertEqual(seen, ["10.124.142.87.abuse-contacts.abusix.org"])
+
+	def testResolveEmptyOnNoAnswer(self):
+		act = self._mk()
+		act._dig_txt = lambda fqdn: ''
+		self.assertEqual(act._resolveAbuseContacts('87.142.124.10'), [])
