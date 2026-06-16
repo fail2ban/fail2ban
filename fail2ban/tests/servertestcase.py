@@ -2411,3 +2411,43 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					ticket = _actions.Actions.ActionInfo(ticket, dmyjail)
 					action.ban(ticket)
 					self.assertLogged(*tests[test], all=True)
+
+
+class XarfV4ActionTest(LogCaptureTestCase):
+
+	def setUp(self):
+		super(XarfV4ActionTest, self).setUp()
+		self.__jail = DummyJail()
+		actfile = os.path.join(CONFIG_DIR, "action.d", "xarf.py")
+		mod = Utils.load_python_module(actfile)
+		self.Action = mod.Action
+
+	def _mk(self, **over):
+		opts = dict(
+			reporter_org="Acme", reporter_contact="abuse@acme.example",
+			reporter_domain="acme.example",
+			sender_org="Acme", sender_contact="abuse@acme.example",
+			sender_domain="acme.example",
+			service="sshd", port="22")
+		opts.update(over)
+		return self.Action(self.__jail, "xarf", **opts)
+
+	def testMissingIdentitySkips(self):
+		act = self._mk(reporter_org=None)
+		sent = []
+		act._sendmail = lambda recipients, msg: sent.append((recipients, msg))
+		act._resolveAbuseContacts = lambda ip: ["abuse@isp.example"]
+		act.ban({'ip': '87.142.124.10', 'failures': 3,
+			'time': 1736597840, 'ipmatches': 'log line'})
+		self.assertEqual(sent, [])
+		self.assertLogged("reporter/sender identity is incomplete")
+
+	def testMissingSenderIdentitySkips(self):
+		act = self._mk(sender_domain=None)
+		sent = []
+		act._sendmail = lambda recipients, msg: sent.append((recipients, msg))
+		act._resolveAbuseContacts = lambda ip: ["abuse@isp.example"]
+		act.ban({'ip': '87.142.124.10', 'failures': 3,
+			'time': 1736597840, 'ipmatches': 'log line'})
+		self.assertEqual(sent, [])
+		self.assertLogged("reporter/sender identity is incomplete")
