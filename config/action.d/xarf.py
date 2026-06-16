@@ -23,6 +23,12 @@ Resolves the offending IP's abuse contact (Abusix Contact DB), builds a
 XARF v4 login_attack report, and sends it via the official XARF email
 transport (RFC 5965 multipart/report). Requires the ``dig`` command
 (bind-utils) for contact resolution.
+
+IMPORTANT: Reporting an IP for abuse is a serious complaint. Only use this
+action where you are confident the activity is genuinely abusive, e.g.:
+  * recidive (the IP has been banned repeatedly),
+  * a high maxretry, well beyond a normal user mistyping a password,
+  * filters with a low likelihood of false positives.
 """
 
 import json
