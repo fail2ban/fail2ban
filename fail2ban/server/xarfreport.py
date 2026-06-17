@@ -38,7 +38,9 @@ logSys = getLogger(__name__)
 
 try:
 	import xarf as _xarf
-	_HAVE_XARF = True
+	# Only use the library when it exposes the expected XARF v4 generator API
+	# (guards against an unrelated/older package squatting the `xarf` name).
+	_HAVE_XARF = hasattr(_xarf, "create_report") and hasattr(_xarf, "create_evidence")
 except ImportError:  # pragma: no cover - depends on optional install
 	_xarf = None
 	_HAVE_XARF = False
