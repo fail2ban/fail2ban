@@ -32,6 +32,7 @@ action where you are confident the activity is genuinely abusive, e.g.:
 """
 
 import json
+import re
 import shlex
 import socket
 import subprocess
@@ -44,6 +45,10 @@ from email.utils import formatdate, make_msgid
 
 from fail2ban.server.actions import ActionBase
 from fail2ban.server import xarfreport
+
+# Strict address validation for abuse contacts resolved from DNS (untrusted):
+# rejects anything that is not an email and anything that could be an argv flag.
+_EMAIL_CRE = re.compile(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
 
 
 class XarfV4Action(ActionBase):
@@ -113,8 +118,14 @@ class XarfV4Action(ActionBase):
 				continue
 			for part in line.split(','):
 				part = part.strip()
-				if part:
+				if not part or part.startswith('-'):
+					continue
+				if _EMAIL_CRE.match(part):
 					addrs.append(part)
+				else:
+					self._logSys.warning(
+						"xarf action %s: ignoring invalid abuse contact %r",
+						self._name, part)
 		return addrs
 
 	def _build_email(self, report):
@@ -181,7 +192,7 @@ class XarfV4Action(ActionBase):
 		return data
 
 	def _sendmail(self, recipients, msg):
-		cmd = shlex.split(self.mailcmd) + list(recipients)
+		cmd = shlex.split(self.mailcmd) + ['--'] + list(recipients)
 		p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 		try:
 			p.communicate(msg.as_bytes(), timeout=30)

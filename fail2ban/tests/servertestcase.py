@@ -2478,6 +2478,14 @@ class XarfV4ActionTest(LogCaptureTestCase):
 		act._dig_txt = lambda fqdn: ''
 		self.assertEqual(act._resolveAbuseContacts('87.142.124.10'), [])
 
+	def testResolveRejectsFlagAndJunkTokens(self):
+		# DNS is untrusted: drop argv-flag-like and non-email tokens.
+		act = self._mk()
+		act._dig_txt = lambda fqdn: '"-X/tmp/evil, not-an-email, good@isp.example"'
+		self.assertEqual(
+			act._resolveAbuseContacts('87.142.124.10'), ["good@isp.example"])
+		self.assertLogged("ignoring invalid abuse contact")
+
 	def testBuildEmailStructure(self):
 		import base64 as _b64, json as _json
 		act = self._mk()
