@@ -20,8 +20,8 @@
 """Fail2Ban action: report login attacks as XARF v4 over email.
 
 Resolves the offending IP's abuse contact (Abusix Contact DB), builds a
-XARF v4 login_attack report, and sends it via the official XARF email
-transport (RFC 5965 multipart/report). Requires the ``dig`` command
+XARF v4 login_attack report, and sends it via the XARF v4 email transport
+format (RFC 5965 multipart/report). Requires the ``dig`` command
 (bind-utils) for contact resolution.
 
 IMPORTANT: Reporting an IP for abuse is a serious complaint. Only use this
@@ -33,12 +33,14 @@ action where you are confident the activity is genuinely abusive, e.g.:
 
 import json
 import shlex
+import socket
 import subprocess
 import time
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import formatdate, make_msgid
 
 from fail2ban.server.actions import ActionBase
 from fail2ban.server import xarfreport
@@ -62,7 +64,7 @@ class XarfV4Action(ActionBase):
 		self.service = service
 		self.port = port
 		self.protocol = protocol
-		self.envelope_from = sender or "fail2ban"
+		self.envelope_from = sender or ("fail2ban@" + socket.getfqdn())
 		self.mailcmd = mailcmd
 		self.resolver = resolver
 		self.matches = matches
@@ -116,7 +118,7 @@ class XarfV4Action(ActionBase):
 		return addrs
 
 	def _build_email(self, report):
-		"""Wrap a XARF v4 report dict in the official XARF email transport.
+		"""Wrap a XARF v4 report dict in the XARF v4 email transport format.
 
 		The returned message has no recipient header; the caller is
 		responsible for setting the recipients when sending.
@@ -127,6 +129,8 @@ class XarfV4Action(ActionBase):
 		msg["Subject"] = "Abuse report (login-attack) about %s" % ip
 		msg["From"] = self.envelope_from
 		msg["Auto-Submitted"] = "auto-generated"
+		msg["Date"] = formatdate()
+		msg["Message-ID"] = make_msgid()
 
 		human = ("An abuse login-attack report follows.\n\n"
 			"Report-Type: %s\nSource: %s\nTimestamp: %s\nReport-ID: %s\n\n"
@@ -160,19 +164,21 @@ class XarfV4Action(ActionBase):
 		ts = self._iso(aInfo.get('time') or time.time())
 		evidence = aInfo.get(self.matches) or aInfo.get('matches') or ''
 		failures = aInfo.get('failures')
-		return {
+		data = {
 			"source_identifier": str(aInfo['ip']),
 			"timestamp": ts,
 			"first_seen": ts,
 			"protocol": self.protocol,
 			"service": self.service,
-			"destination_port": dport,
 			"attempt_count": int(failures) if failures is not None else None,
 			"evidence_text": evidence,
 			"evidence_source": "log",
 			"reporter": self.reporter,
 			"sender": self.sender_id,
 		}
+		if dport is not None:
+			data["destination_port"] = dport
+		return data
 
 	def _sendmail(self, recipients, msg):
 		cmd = shlex.split(self.mailcmd) + list(recipients)
@@ -204,11 +210,17 @@ class XarfV4Action(ActionBase):
 				"xarf action %s: no abuse contact for %s; skipping",
 				self._name, aInfo['ip'])
 			return
-		data = self._aInfoToData(aInfo)
-		report = xarfreport.build_login_attack(data)
-		msg = self._build_email(report)
-		msg["To"] = ", ".join(contacts)
-		self._sendmail(contacts, msg)
+		try:
+			data = self._aInfoToData(aInfo)
+			report = xarfreport.build_login_attack(data)
+			msg = self._build_email(report)
+			msg["To"] = ", ".join(contacts)
+			self._sendmail(contacts, msg)
+		except Exception as e:  # never block the ban path
+			self._logSys.error(
+				"xarf action %s: failed to build/send report for %s: %s",
+				self._name, aInfo.get('ip'), e)
+			return
 		self._logSys.debug("xarf action %s: report sent for %s to %s",
 			self._name, aInfo['ip'], contacts)
 

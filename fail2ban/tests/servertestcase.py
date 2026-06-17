@@ -2466,6 +2466,13 @@ class XarfV4ActionTest(LogCaptureTestCase):
 		act._resolveAbuseContacts('87.142.124.10')
 		self.assertEqual(seen, ["10.124.142.87.abuse-contacts.abusix.org"])
 
+	def testResolveBuildsAbusixFqdnIPv6(self):
+		act = self._mk()
+		seen = []
+		act._dig_txt = lambda fqdn: seen.append(fqdn) or '"abuse@isp.example"'
+		act._resolveAbuseContacts('2001:db8::1')
+		self.assertEqual(seen, ["1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.abuse-contacts.abusix.org"])
+
 	def testResolveEmptyOnNoAnswer(self):
 		act = self._mk()
 		act._dig_txt = lambda fqdn: ''
@@ -2515,6 +2522,13 @@ class XarfV4ActionTest(LogCaptureTestCase):
 		self.assertEqual(report['destination_port'], 22)
 		self.assertEqual(report['attempt_count'], 7)
 		self.assertEqual(len(report['evidence']), 1)
+
+	def testAInfoToDataDropsPortRange(self):
+		act = self._mk(port="0:65535")
+		d = act._aInfoToData({'ip': '1.2.3.4', 'time': 1736597840,
+			'failures': 2, 'ipmatches': 'x'})
+		self.assertNotIn('destination_port', d)
+		self.assertEqual(d['source_identifier'], '1.2.3.4')
 
 	def testBanNoContactNoSend(self):
 		act = self._mk()
