@@ -2538,6 +2538,28 @@ class XarfV4ActionTest(LogCaptureTestCase):
 		self.assertNotIn('destination_port', d)
 		self.assertEqual(d['source_identifier'], '1.2.3.4')
 
+	def testAInfoExtractsSourcePortFromSshdLine(self):
+		act = self._mk(port="22")
+		d = act._aInfoToData({'ip': '203.0.113.5', 'time': 1736597840,
+			'failures': 4,
+			'ipmatches': 'Failed password for root from 203.0.113.5 port 52431 ssh2'})
+		self.assertEqual(d['source_port'], 52431)
+		self.assertEqual(d['destination_port'], 22)
+
+	def testAInfoNoSourcePortWhenAbsent(self):
+		act = self._mk(port="22")
+		d = act._aInfoToData({'ip': '203.0.113.5', 'time': 1736597840,
+			'failures': 4,
+			'ipmatches': 'authentication failure for kevin from 203.0.113.5'})
+		self.assertNotIn('source_port', d)
+
+	def testAInfoSourcePortLastMatchWins(self):
+		act = self._mk(port="22")
+		d = act._aInfoToData({'ip': '203.0.113.5', 'time': 1736597840,
+			'failures': 2,
+			'ipmatches': 'from 203.0.113.5 port 1111 ssh2\nfrom 203.0.113.5 port 2222 ssh2'})
+		self.assertEqual(d['source_port'], 2222)
+
 	def testBanNoContactNoSend(self):
 		act = self._mk()
 		sent = []

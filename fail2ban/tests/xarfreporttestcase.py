@@ -60,6 +60,7 @@ class XarfLoginAttackStdlibTest(LogCaptureTestCase):
 			"protocol": "tcp",
 			"service": "sshd",
 			"destination_port": 22,
+			"source_port": 45621,
 			"attempt_count": 5,
 			"evidence_text": "auth failure from 87.142.124.10",
 			"evidence_source": "log",
@@ -78,6 +79,7 @@ class XarfLoginAttackStdlibTest(LogCaptureTestCase):
 		self.assertEqual(r['type'], "login_attack")
 		self.assertEqual(r['source_identifier'], "87.142.124.10")
 		self.assertEqual(r['destination_port'], 22)
+		self.assertEqual(r['source_port'], 45621)
 		self.assertEqual(r['protocol'], "tcp")
 		self.assertEqual(r['service'], "sshd")
 		self.assertEqual(r['attempt_count'], 5)

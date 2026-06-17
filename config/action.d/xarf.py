@@ -58,7 +58,8 @@ class XarfV4Action(ActionBase):
 			sender_org=None, sender_contact=None, sender_domain=None,
 			service="unspecified", port="0", protocol="tcp",
 			sender=None, mailcmd="/usr/sbin/sendmail",
-			resolver="abuse-contacts.abusix.org", matches="ipmatches"):
+			resolver="abuse-contacts.abusix.org", matches="ipmatches",
+			source_port_regex=r"\bport (\d{1,5})\b"):
 		# reporter_*/sender_* are the XARF v4 report identities; the separate
 		# `sender` arg is the e-mail envelope From address (self.envelope_from).
 		super(XarfV4Action, self).__init__(jail, name)
@@ -73,6 +74,8 @@ class XarfV4Action(ActionBase):
 		self.mailcmd = mailcmd
 		self.resolver = resolver
 		self.matches = matches
+		self.source_port_regex = source_port_regex
+		self._source_port_cre = re.compile(source_port_regex) if source_port_regex else None
 		# bypass ban/unban for restored tickets
 		self.norestored = 1
 
@@ -167,6 +170,25 @@ class XarfV4Action(ActionBase):
 	def _iso(self, epoch):
 		return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(float(epoch)))
 
+	def _extract_source_port(self, text):
+		"""Best-effort: extract the attacker source port from matched log text.
+
+		fail2ban generally knows only the attacked (destination) port; some
+		services (e.g. sshd) log the source port in the failure line. When
+		present, the most recent (triggering) match is used. Returns an int
+		in 1..65535, or None when unavailable.
+		"""
+		if not self._source_port_cre or not text:
+			return None
+		for val in reversed(self._source_port_cre.findall(text)):
+			try:
+				p = int(val)
+			except (TypeError, ValueError):
+				continue
+			if 1 <= p <= 65535:
+				return p
+		return None
+
 	def _aInfoToData(self, aInfo):
 		try:
 			dport = int(self.port)
@@ -189,6 +211,9 @@ class XarfV4Action(ActionBase):
 		}
 		if dport is not None:
 			data["destination_port"] = dport
+		sport = self._extract_source_port(evidence)
+		if sport is not None:
+			data["source_port"] = sport
 		return data
 
 	def _sendmail(self, recipients, msg):
