@@ -31,15 +31,25 @@ FAIL2BAN_RUNDIR="/run/${RC_SVCNAME}"
 FAIL2BAN_SOCKET="${FAIL2BAN_RUNDIR}/${RC_SVCNAME}.sock"
 
 # The fail2ban-client program is also capable of starting and stopping
-# the server, but things are simpler if we let start-stop-daemon do it.
+# the server, but things are simpler if we let the supervisor do it.
 command="@BINDIR@/fail2ban-server"
-pidfile="${FAIL2BAN_RUNDIR}/${RC_SVCNAME}.pid"
 
 # We force the pidfile/socket location in this service script because
 # we're taking responsibility for ensuring that their parent directory
 # exists and has the correct permissions (which we can't do if the
 # user is allowed to change them).
-command_args="${FAIL2BAN_OPTIONS} -p ${pidfile} -s ${FAIL2BAN_SOCKET}"
+case "${supervisor}" in
+	supervise-daemon)
+		# Run in the foreground.
+		FAIL2BAN_OPTIONS="${FAIL2BAN_OPTIONS} -f"
+		;;
+	*)
+		# Run in the background and create a pidfile.
+		pidfile="${FAIL2BAN_RUNDIR}/${RC_SVCNAME}.pid"
+		FAIL2BAN_OPTIONS="${FAIL2BAN_OPTIONS} -p ${pidfile}"
+		;;
+esac
+command_args="${FAIL2BAN_OPTIONS} -s ${FAIL2BAN_SOCKET}"
 retry="30"
 
 depend() {
@@ -48,7 +58,7 @@ depend() {
 }
 
 checkconfig() {
-    "${command}" ${command_args} --test
+	"${command}" ${command_args} --test
 }
 
 start_pre() {

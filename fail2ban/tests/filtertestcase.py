@@ -663,7 +663,7 @@ class IgnoreIP(LogCaptureTestCase):
 				self.assertNotLogged("returned successfully")
 
 	def testIgnoreCauseOK(self):
-		ip = "51.159.55.100"
+		ip = "145.239.69.22"
 		for ignore_source in ["dns", "ip", "command"]:
 			self.filter.logIgnoreIp(ip, True, ignore_source=ignore_source)
 			self.assertLogged("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source))
@@ -2005,13 +2005,13 @@ class GetFailures(LogCaptureTestCase):
 		#unittest.F2B.SkipIfNoNetwork() ## without network it is simulated via cache in utils.
 		# We should still catch failures with usedns = no ;-)
 		output_yes = (
-			('51.159.55.100', 1, 1124013299.0,
+			('145.239.69.22', 1, 1124013299.0,
 			  ['Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from fail2ban.org port 51332 ssh2']
 			),
-			('51.159.55.100', 1, 1124013539.0,
-			  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:51.159.55.100 port 51332 ssh2']
+			('145.239.69.22', 1, 1124013539.0,
+			  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:145.239.69.22 port 51332 ssh2']
 			),
-			('2001:bc8:1200:6:208:a2ff:fe0c:61f8', 1, 1124013299.0,
+			('2001:41d0:303:3d16::1', 1, 1124013299.0,
 			  ['Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from fail2ban.org port 51332 ssh2']
 			),
 		)
@@ -2019,8 +2019,8 @@ class GetFailures(LogCaptureTestCase):
 			output_yes = output_yes[0:2]
 
 		output_no = (
-			('51.159.55.100', 1, 1124013539.0,
-			  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:51.159.55.100 port 51332 ssh2']
+			('145.239.69.22', 1, 1124013539.0,
+			  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:145.239.69.22 port 51332 ssh2']
 			)
 		)
 
@@ -2213,8 +2213,8 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 
 	## fail2ban.org IPs considering IPv6 support (without network it is simulated via cache in utils).
 	EXAMPLE_ADDRS = (
-		['51.159.55.100', '2001:bc8:1200:6:208:a2ff:fe0c:61f8'] if unittest.F2B.no_network or DNSUtils.IPv6IsAllowed() else \
-		['51.159.55.100']
+		['145.239.69.22', '2001:41d0:303:3d16::1'] if unittest.F2B.no_network or DNSUtils.IPv6IsAllowed() else \
+		['145.239.69.22']
 	)
 
 	def test_IPAddr(self):
@@ -2479,9 +2479,9 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 	def testIPAddr_CompareDNS(self):
 		#unittest.F2B.SkipIfNoNetwork() ## without network it is simulated via cache in utils.
 		ips = IPAddr('fail2ban.org')
-		self.assertTrue(IPAddr("51.159.55.100").isInNet(ips))
-		self.assertEqual(IPAddr("2001:bc8:1200:6:208:a2ff:fe0c:61f8").isInNet(ips),
-		                        "2001:bc8:1200:6:208:a2ff:fe0c:61f8" in self.EXAMPLE_ADDRS)
+		self.assertTrue(IPAddr("145.239.69.22").isInNet(ips))
+		self.assertEqual(IPAddr("2001:41d0:303:3d16::1").isInNet(ips),
+		                        "2001:41d0:303:3d16::1" in self.EXAMPLE_ADDRS)
 
 	def testIPAddr_wrongDNS_IP(self):
 		unittest.F2B.SkipIfNoNetwork()
@@ -2492,8 +2492,8 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		ips = [DNSUtils.dnsToIp('fail2ban.org'), DNSUtils.dnsToIp('fail2ban.org')]
 		for ip1, ip2 in zip(ips, ips):
 			self.assertEqual(id(ip1), id(ip2))
-		ip1 = IPAddr('51.159.55.100'); ip2 = IPAddr('51.159.55.100'); self.assertEqual(id(ip1), id(ip2))
-		ip1 = IPAddr('2001:bc8:1200:6:208:a2ff:fe0c:61f8'); ip2 = IPAddr('2001:bc8:1200:6:208:a2ff:fe0c:61f8'); self.assertEqual(id(ip1), id(ip2))
+		ip1 = IPAddr('145.239.69.22'); ip2 = IPAddr('145.239.69.22'); self.assertEqual(id(ip1), id(ip2))
+		ip1 = IPAddr('2001:41d0:303:3d16::1'); ip2 = IPAddr('2001:41d0:303:3d16::1'); self.assertEqual(id(ip1), id(ip2))
 
 	def test_NetworkInterfacesAddrs(self):
 		for withMask in (False, True):

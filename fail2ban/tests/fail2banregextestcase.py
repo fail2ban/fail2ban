@@ -572,6 +572,18 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			'192.0.2.1, git, '+lines[-1],
 			all=True)
 
+	def testFrmtOutputAddrInHeadOrBody(self):
+		unittest.F2B.SkipIfCfgMissing(stock=True)
+		self.assertTrue(_test_exec('-o', '== <ip> == <msg> ==',
+			'-c', CONFIG_DIR, '-d', '{NONE}',
+			'head: { ip: 192.0.2.1 }, auth failed\n'
+			'auth failed from 192.0.2.2\n',
+			r'common.conf[prefregex="^(?:head:\s*\{\s*ip: <ADDR>\s*\},\s*)?<F-CONTENT>.+</F-CONTENT>$"'
+			', failregex="^auth failed(?: from <ADDR>)?\n'
+			'", maxlines=1]'
+		))
+		self.assertLogged('== 192.0.2.1 == head: { ip: 192.0.2.1 }, auth failed ==', '== 192.0.2.2 == auth failed from 192.0.2.2 ==', all=True)
+
 	def testOutputNoPendingFailuresAfterGained(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
 		# connect finished without authorization must generate a failure, because

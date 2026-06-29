@@ -926,7 +926,7 @@ class Filter(JailThread):
 				raw = (defcidr == IPAddr.CIDR_RAW)
 				if preGroups:
 					currFail, fail = fail, preGroups.copy()
-					fail.update(currFail)
+					fail.update((k,v) for k,v in currFail.items() if v is not None)
 				# first try to check we have mlfid case (caching of connection id by multi-line):
 				mlfid = fail.get('mlfid')
 				if mlfid is not None:
