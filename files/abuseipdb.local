@@ -11,13 +11,30 @@
 #   - Isolated AbuseIPDB SQLite database to track reports independently.
 #   - Dual API calls: /v2/check and /v2/report for efficient reporting.
 #   - Optimizes AbuseIPDB daily API usage by reducing unnecessary report calls
-#   - Supports norestored=1 to avoid duplicate reports on restart.
+#   - Requires norestored=0 (Fail2Ban default); restart/duplicate
+#     handling is controlled at the script level via BYPASS_FAIL2BAN.
 #   - Maintains a separate, long-term persistent database of banned IPs to ensure accurate tracking
 #     and avoid reliance on Fail2Ban’s bantimes or ban state, even if Fail2Ban’s
 #     internal ban management becomes inconsistent over time.
 #   - Customizable report comments to avoid leaking sensitive info.
+#   - Bounded concurrent-worker pool (MAX_WORKERS) to prevent API
+#     rate-limit bursts and SQLite write contention during bulk bans.
+#   - Tracks AbuseIPDB's 15-minute per-IP report cooldown to avoid
+#     redundant API calls and HTTP 429 errors on repeat offenders.
 #
-# Example 'jail' configuration in 'jail.local' to prevent leaking sensitive information in AbuseIPDB reports:
+########################################################################
+# ! IMPORTANT: PREVENTING SENSITIVE DATA LEAKS IN ABUSEIPDB REPORTS
+########################################################################
+# AbuseIPDB reports are PUBLIC. Fail2Ban's default <matches> value can
+# include raw log lines — usernames, URLs, request paths, even partial
+# credentials — verbatim in your report.
+#
+# ALWAYS set a custom 'tp_comment' per jail and reference it via
+# matches="%(tp_comment)s" in your action line, as shown below. Do NOT
+# pass Fail2Ban's raw <matches> directly to this script's COMMENT
+# argument unless you have manually verified your logs contain nothing
+# sensitive.
+#
 #   [nginx-botsearch]
 #   enabled    = true
 #   logpath    = /var/log/nginx/*.log
@@ -29,7 +46,7 @@
 #   bantime    = 7200
 #   action     = %(action_mwl)s
 #                %(action_abuseipdb)s[matches="%(tp_comment)s", abuseipdb_apikey="YOUR_API_KEY", abuseipdb_category="21,15", bantime="%(bantime)s"]
-
+########################################################################
 
 [Definition]
 # Option:  norestored
@@ -46,11 +63,31 @@
 # Notes.:  * Path to AbuseIPDB SQLite database used by the action script.
 #          * Path to the log file where actions and events are recorded by the action script.
 #          * Rely on Fail2Ban for restarts (0) or completely isolate it by bypassing Fail2Ban (1)
-#          ! Bypassing Fail2Ban on restarts (BYPASS_FAIL2BAN = 1) can overhelm your server and AbuseIPDB API on restarts.
+#          ! Bypassing Fail2Ban on restarts (BYPASS_FAIL2BAN = 1) replays all
+#            restored IPs through the script on every restart. MAX_WORKERS
+#            bounds concurrent API calls, but a very large restore count
+#            will still take longer to fully process.
 #          ! SET 1 if you want to completely isolate from Fail2Ban and rely solely on the AbuseIPDB SQLite database for reporting on restart.
 # SQLITE_DB = "/var/lib/fail2ban/abuseipdb/fail2ban_abuseipdb"
 # LOG_FILE = "/var/log/abuseipdb/abuseipdb.log"
 # BYPASS_FAIL2BAN = 0
+
+
+# Option:  MAX_WORKERS
+######################
+# Notes.:  Maximum number of concurrent AbuseIPDB API workers.
+#          Each IP processed through the pool makes 2 API calls
+#          (/v2/check + /v2/report). Under sustained ban bursts, a
+#          single worker slot can cycle through several IPs per
+#          minute, so total request volume scales with MAX_WORKERS,
+#          not just with the number of IPs banned.
+#          Too high = risk of HTTP 429 rate-limit errors from AbuseIPDB.
+#          Too low  = slower processing under heavy ban load (but
+#          bans are queued, never dropped - see abuseipdb.log).
+#          Start conservative (5-10) and watch abuseipdb.log:
+#            - "pool may be saturated" warnings  -> raise MAX_WORKERS
+#            - HTTP 429 errors from AbuseIPDB     -> lower MAX_WORKERS
+# MAX_WORKERS = 10
 
 
 # Option:  actionstart
@@ -64,11 +101,11 @@
 ######################
 # Notes.:  Uncomment and leave as-is
 # actionban = /etc/fail2ban/action.d/fail2ban-abuseipdb.sh \
-#     "<abuseipdb_apikey>" "<matches>" "<ip>" "<abuseipdb_category>" "<bantime>" "<restored>" "<BYPASS_FAIL2BAN>" "<SQLITE_DB>" "<LOG_FILE>"
+#     "<abuseipdb_apikey>" "<matches>" "<ip>" "<abuseipdb_category>" "<bantime>" "<restored>" "<BYPASS_FAIL2BAN>" "<SQLITE_DB>" "<LOG_FILE>" "<MAX_WORKERS>"
 
 
 [Init]
 # Option:  abuseipdb_apikey
 ######################
-# Notes    Set your API key and uncomment
+# Notes.:  Set your API key and uncomment
 # abuseipdb_apikey =
