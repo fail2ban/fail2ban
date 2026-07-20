@@ -31,7 +31,7 @@ from ..helpers import getLogger
 
 # SafeConfigParser deprecated from Python 3.2 (renamed to ConfigParser)
 from configparser import ConfigParser as SafeConfigParser, BasicInterpolation, \
-	InterpolationMissingOptionError, NoOptionError, NoSectionError
+	InterpolationMissingOptionError, NoOptionError, NoSectionError, ParsingError
 
 # And interpolation of __name__ was simply removed, thus we need to
 # decorate default interpolator to handle it
@@ -215,6 +215,26 @@ after = 1.conf
 	def share_config(self):
 		return self._cfg_share
 
+	@staticmethod
+	def _logParsingError(e):
+		"""Log configparser.ParsingError with a clear invalid-directive warning."""
+		logSys.error("Invalid configuration syntax: %s", e)
+		for lineno, line in getattr(e, 'errors', ()) or ():
+			# line is already repr()'d by configparser
+			logSys.warning(
+				"Invalid directive in %s, line %s: %s (option lines must be 'name = value')",
+				getattr(e, 'source', '<unknown>'), lineno, line)
+
+	def _readSharedFile(self, cfg, filename):
+		"""Read a single config file; treat parse errors like unreadable files."""
+		try:
+			return cfg.read(filename, get_includes=False)
+		except ParsingError as e:
+			# Same idea as UnicodeDecodeError handling: don't apply a partial
+			# file and surface a clear error so `fail2ban-client -t` fails.
+			self._logParsingError(e)
+			return []
+
 	def _getSharedSCPWI(self, filename):
 		SCPWI = SafeConfigParserWithIncludes
 		# read single one, add to return list, use sharing if possible:
@@ -224,14 +244,14 @@ after = 1.conf
 			cfg, i = self._cfg_share.get(hashv, (None, None))
 			if cfg is None:
 				cfg = SCPWI(share_config=self._cfg_share)
-				i = cfg.read(filename, get_includes=False)
+				i = self._readSharedFile(cfg, filename)
 				self._cfg_share[hashv] = (cfg, i)
 			elif logSys.getEffectiveLevel() <= logLevel:
 				logSys.log(logLevel, "    Shared file: %s", filename)
 		else:
 			# don't have sharing:
 			cfg = SCPWI()
-			i = cfg.read(filename, get_includes=False)
+			i = self._readSharedFile(cfg, filename)
 		return (cfg, i)
 
 	def _getIncludes(self, filenames, seen=[]):

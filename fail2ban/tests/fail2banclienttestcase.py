@@ -842,6 +842,18 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"Read jails configuration failed.",
 			"ERROR: test configuration failed", all=True)
 
+		# bare line without '=' (e.g. forgotten 'ignoreip =') must fail config test:
+		self.pruneLog("[test-phase 1b]")
+		_write_file(pjoin(cfg, "jail.local"), "w",
+			"[DEFAULT]",
+			"192.168.1.10 10.0.0.2",
+			"bantime = 3600")
+		self.execCmd(FAILED, startparams, "-t")
+		self.assertLogged("Invalid directive",
+			"Could not read config files",
+			"Read jails configuration failed.",
+			"ERROR: test configuration failed", all=True)
+
 
 	@with_tmpdir
 	def testKillAfterStart(self, tmp):
