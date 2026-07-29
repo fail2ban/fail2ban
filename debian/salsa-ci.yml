@@ -6,3 +6,10 @@ variables:
   SALSA_CI_DISABLE_BLHC: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_ALL: 1
   SALSA_CI_DISABLE_BUILD_PACKAGE_ANY: 1
+
+test-build-profiles:
+  extends: .test-build-package-profiles
+  parallel:
+    matrix:
+      - BUILD_PROFILES: nocheck
+#      - BUILD_PROFILES: nodoc
