@@ -1,19 +1,19 @@
 Source: fail2ban
 Section: net
 Maintainer: Debian Python Team <team+python@tracker.debian.org>
-Uploaders: Yaroslav Halchenko <debian@onerussian.com>,
- Sylvestre Ledru <sylvestre@debian.org>
+Uploaders:
+ Yaroslav Halchenko <debian@onerussian.com>,
+ Sylvestre Ledru <sylvestre@debian.org>,
 Build-Depends:
- debhelper-compat (= 13)
- , debhelper
- , dh-sequence-cruft
- , dh-sequence-python3
- , python3
- , python3-setuptools
- , python3-pyinotify
- , sqlite3
- , pkgconf
- , systemd-dev
+ debhelper-compat (= 13),
+ dh-sequence-cruft,
+ dh-sequence-python3,
+ pkgconf,
+ python3,
+ python3-pyinotify,
+ python3-setuptools,
+ sqlite3,
+ systemd-dev,
 Homepage: https://www.fail2ban.org
 Vcs-Git: https://salsa.debian.org/python-team/packages/fail2ban.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/fail2ban
@@ -21,9 +21,19 @@ Standards-Version: 4.7.4
 
 Package: fail2ban
 Architecture: all
-Depends: ${python3:Depends}, ${misc:Depends}, python3-systemd
-Recommends: nftables | iptables, whois, python3-pyinotify,
-Suggests: mailx, system-log-daemon, monit, sqlite3
+Depends:
+ python3-systemd,
+ ${misc:Depends},
+ ${python3:Depends},
+Recommends:
+ nftables | iptables,
+ python3-pyinotify,
+ whois,
+Suggests:
+ mailx,
+ monit,
+ sqlite3,
+ system-log-daemon,
 Description: ban hosts that cause multiple authentication errors
  Fail2ban monitors log files (e.g. /var/log/auth.log,
  /var/log/apache/access.log) and temporarily or persistently bans
