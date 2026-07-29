@@ -1,3 +1,12 @@
+fail2ban (1.1.0-11) unstable; urgency=medium
+
+  * Team upload.
+  * Salsa CI: test nocheck profile
+  * Mark sqlite3 & python3-pyinotify as <!nocheck>
+  * Replace FSF postal address with a reference to https://www.gnu.org/...
+
+ -- Alexandre Detiste <tchet@debian.org>  Wed, 29 Jul 2026 11:51:23 +0200
+
 fail2ban (1.1.0-10) unstable; urgency=medium
 
   * Team upload.
