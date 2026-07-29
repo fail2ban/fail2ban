@@ -10,9 +10,9 @@ Build-Depends:
  dh-sequence-python3,
  pkgconf,
  python3,
- python3-pyinotify,
+ python3-pyinotify <!nocheck>,
  python3-setuptools,
- sqlite3,
+ sqlite3 <!nocheck>,
  systemd-dev,
 Homepage: https://www.fail2ban.org
 Vcs-Git: https://salsa.debian.org/python-team/packages/fail2ban.git
