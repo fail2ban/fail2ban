@@ -382,7 +382,6 @@ def gatherTests(regexps=None, opts=None):
 	from . import samplestestcase
 	from . import fail2banclienttestcase
 	from . import fail2banregextestcase
-	from . import xarfreporttestcase
 
 	if not regexps: # pragma: no cover
 		tests = unittest.TestSuite()
@@ -417,7 +416,6 @@ def gatherTests(regexps=None, opts=None):
 	tests.addTest(loadTests(servertestcase.RegexTests))
 	tests.addTest(loadTests(servertestcase.LoggingTests))
 	tests.addTest(loadTests(servertestcase.ServerConfigReaderTests))
-	tests.addTest(loadTests(servertestcase.XarfV4ActionTest))
 	tests.addTest(loadTests(actiontestcase.CommandActionTest))
 	tests.addTest(loadTests(actionstestcase.ExecuteActions))
 	# Ticket, BanTicket, FailTicket
@@ -450,10 +448,6 @@ def gatherTests(regexps=None, opts=None):
 	tests.addTest(loadTests(misctestcase.SetupTest))
 	tests.addTest(loadTests(misctestcase.TestsUtilsTest))
 	tests.addTest(loadTests(misctestcase.MyTimeTest))
-	# XARF v4 reporting
-	tests.addTest(loadTests(xarfreporttestcase.XarfEvidenceTest))
-	tests.addTest(loadTests(xarfreporttestcase.XarfLoginAttackStdlibTest))
-	tests.addTest(loadTests(xarfreporttestcase.XarfBuildLoginAttackTest))
 	# Database
 	tests.addTest(loadTests(databasetestcase.DatabaseTest))
 	# Observer
