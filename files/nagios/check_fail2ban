@@ -243,7 +243,7 @@ $script_name version $version by $author
 This plugin checks if the fail2ban server is running and how many IPs are currently banned.
 You can use this plugin to monitor all the jails or just a specific jail.
 
-Usage: /<path-to>/$script_name [-p] [-D "$display"] [-v] [-c 2] [-w 1] [-s /<path-to>/socket] [-P /usr/bin/fail2ban-client]
+Usage: /<path-to>/$script_name [-p] [-D "$display"] [-v] [-c 2] [-w 1] [-s /<path-to>/socket] [-P /usr/bin/fail2ban-client] [-j <jail>]
 
 Options:
  -h, --help
@@ -267,6 +267,9 @@ Options:
     default is unset
  -p, --perfdata
     If you want to activate the perfdata output
+ -j, --jail
+    Specify the name of the specific jail to monitor
+    omitted by default, i.e. all jails are being monitored
  -v, --verbose
     Show details for command-line debugging (Nagios may truncate the output)
 
