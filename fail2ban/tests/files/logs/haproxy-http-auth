@@ -6,3 +6,13 @@ Nov 14 22:45:11 test haproxy[760]: 192.168.33.1:58430 [14/Nov/2015:22:45:11.608]
 Nov 14 22:45:11 test haproxy[760]: 2001:db8::1234:58430 [14/Nov/2015:22:45:11.608] main main/<NOSRV> -1/-1/-1/-1/0 401 248 - - PR-- 0/0/0/0/0 0/0 "GET / HTTP/1.1"
 # failJSON: { "time": "2004-11-14T22:45:11", "match": true , "host": "192.168.33.1" }
 Nov 14 22:45:11 test haproxy[760]: ::ffff:192.168.33.1:58430 [14/Nov/2015:22:45:11.608] main main/<NOSRV> -1/-1/-1/-1/0 401 248 - - PR-- 0/0/0/0/0 0/0 "GET / HTTP/1.1"
+# failJSON: { "time": "2004-10-11T15:02:29", "match": true , "host": "192.168.1.54" }
+Oct 11 15:02:29 localhost haproxy[838]: 192.168.1.54:48556 [11/Oct/2021:15:02:29.601] public~ public/<NOSRV> 0/-1/-1/-1/0 401 256 - - LR-- 2/2/0/0/0 0/0 "GET / HTTP/1.1"
+# failJSON: { "time": "2004-10-11T15:02:29", "match": true , "host": "192.168.1.54" }
+Oct 11 15:02:29 localhost haproxy[838]: 192.168.1.54:48556 [11/Oct/2021:15:02:29.601] public~ public/<NOSRV> 154/-1/-1/-1/+154 401 256 - - LR-- 2/2/0/0/0 0/0 "GET / HTTP/1.1"
+# failJSON: { "time": "2004-10-11T15:02:29", "match": false , "host": "192.168.1.54" }
+Oct 11 15:02:29 localhost haproxy[838]: 192.168.1.54:48556 [11/Oct/2021:15:02:29.601] public~ public/<NOSRV> 154/-1/-1/-1/++154 401 256 - - LR-- 2/2/0/0/0 0/0 "GET / HTTP/1.1"
+# failJSON: { "time": "2004-10-11T15:02:29", "match": false , "host": "192.168.1.54" }
+Oct 11 15:02:29 localhost haproxy[838]: 192.168.1.54:48556 [11/Oct/2021:15:02:29.601] public~ public/<NOSRV> 154/-1/-1/-1/+ 401 256 - - LR-- 2/2/0/0/0 0/0 "GET / HTTP/1.1"
+# failJSON: { "time": "2004-10-11T15:02:29", "match": false , "host": "192.168.1.54" }
+Oct 11 15:02:29 localhost haproxy[838]: 192.168.1.54:48556 [11/Oct/2021:15:02:29.601] public~ public/<NOSRV> 401/-1/-1/-1/401 302 256 - - LR-- 2/2/0/0/0 0/0 "GET / HTTP/1.1"
