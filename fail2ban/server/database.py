@@ -144,7 +144,7 @@ class Fail2BanDb(object):
 			"data JSON, " \
 			"FOREIGN KEY(jail) REFERENCES jails(name) " \
 			");" \
-			"CREATE INDEX IF NOT EXISTS bans_jail_timeofban_ip ON bans(jail, timeofban);" \
+			"CREATE INDEX IF NOT EXISTS bans_jail_timeofban_ip ON bans(jail, timeofban, ip);" \
 			"CREATE INDEX IF NOT EXISTS bans_jail_ip ON bans(jail, ip);" \
 			"CREATE INDEX IF NOT EXISTS bans_ip ON bans(ip);")
 		,('bips', "CREATE TABLE IF NOT EXISTS bips(" \
