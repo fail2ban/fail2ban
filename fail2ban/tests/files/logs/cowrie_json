@@ -1,14 +1,27 @@
-# Cowrie honeypot JSON log (log.format = json)
+# Cowrie honeypot JSON log (log.format = json), real-world samples
 
-# failJSON: { "time": "2024-01-01T00:00:00", "match": true, "host": "1.2.3.4" }
-{"eventid": "cowrie.session.connect", "src_ip": "1.2.3.4", "src_port": 41000, "dst_ip": "192.168.1.1", "dst_port": 2222, "session": "1a2b3c4d", "protocol": "ssh", "message": "New connection: 1.2.3.4:41000 (192.168.1.1:2222) [session: 1a2b3c4d]", "sensor": "myhost", "timestamp": "2024-01-01T00:00:00.000000Z"}
+# failJSON: { "time": "2026-08-13T00:00:34", "match": true, "host": "137.184.154.9" }
+{"session":"2a5e755afa79","protocol":"ssh","src_ip":"137.184.154.9","src_port":37416,"dst_ip":"172.18.0.2","dst_port":2222,"eventid":"cowrie.session.connect","sensor":"580d0186ebeb","uuid":"8c5b1af2-8fc4-11f1-9350-ee70fe9b2de3","timestamp":"2026-08-13T00:00:34.803989Z","message":"New connection: 137.184.154.9:37416 (172.18.0.2:2222) [session: 2a5e755afa79]"}
 
-# failJSON: { "time": "2024-01-01T00:05:12", "match": true, "host": "2001:db8::1" }
-{"eventid": "cowrie.session.connect", "src_ip": "2001:db8::1", "src_port": 52344, "dst_ip": "192.168.1.1", "dst_port": 22, "session": "9f8e7d6c", "protocol": "telnet", "message": "New connection: [2001:db8::1]:52344 (192.168.1.1:22) [session: 9f8e7d6c]", "sensor": "myhost", "timestamp": "2024-01-01T00:05:12.500000Z"}
+# not a connect event (client version) -> should not match
+# failJSON: { "match": false }
+{"session":"2a5e755afa79","protocol":"ssh","src_ip":"137.184.154.9","src_port":37416,"dst_ip":"172.18.0.2","dst_port":2222,"version":"SSH-2.0-Go","eventid":"cowrie.client.version","sensor":"580d0186ebeb","uuid":"8c5b1af2-8fc4-11f1-9350-ee70fe9b2de3","timestamp":"2026-08-13T00:00:34.808236Z","message":"Remote SSH version: SSH-2.0-Go"}
 
-# not a connect event -> should not match
-# failJSON: { "time": "2024-01-01T00:10:00", "match": false }
-{"eventid": "cowrie.login.failed", "username": "root", "password": "123456", "message": "login attempt [root/123456] failed", "sensor": "myhost", "timestamp": "2024-01-01T00:10:00.000000Z", "src_ip": "1.2.3.4", "session": "1a2b3c4d"}
+# not a connect event (kex, has arrays/nested values) -> should not match
+# failJSON: { "match": false }
+{"session":"2a5e755afa79","protocol":"ssh","src_ip":"137.184.154.9","src_port":37416,"dst_ip":"172.18.0.2","dst_port":2222,"hassh":"16443846184eafde36765c9bab2f4397","hasshAlgorithms":"mlkem768x25519-sha256,curve25519-sha256","kexAlgs":["mlkem768x25519-sha256","curve25519-sha256"],"keyAlgs":["rsa-sha2-256-cert-v01@openssh.com","ssh-ed25519"],"encCS":["aes128-gcm@openssh.com","aes256-gcm@openssh.com"],"macCS":["hmac-sha2-256-etm@openssh.com"],"compCS":["none"],"langCS":[""],"eventid":"cowrie.client.kex","sensor":"580d0186ebeb","uuid":"8c5b1af2-8fc4-11f1-9350-ee70fe9b2de3","timestamp":"2026-08-13T00:00:34.924330Z","message":"SSH client hassh fingerprint: 16443846184eafde36765c9bab2f4397"}
+
+# not a connect event (login success) -> should not match
+# failJSON: { "match": false }
+{"session":"2a5e755afa79","protocol":"ssh","src_ip":"137.184.154.9","src_port":37416,"dst_ip":"172.18.0.2","dst_port":2222,"username":"brun","password":"brun","eventid":"cowrie.login.success","sensor":"580d0186ebeb","uuid":"8c5b1af2-8fc4-11f1-9350-ee70fe9b2de3","timestamp":"2026-08-13T00:00:35.273750Z","message":"login attempt [brun/brun] succeeded"}
+
+# not a connect event (log closed) -> should not match
+# failJSON: { "match": false }
+{"session":"2a5e755afa79","protocol":"ssh","src_ip":"137.184.154.9","src_port":37416,"dst_ip":"172.18.0.2","dst_port":2222,"ttylog":"var/lib/cowrie/tty/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","size":30,"shasum":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","duplicate":true,"duration_ms":5,"eventid":"cowrie.log.closed","sensor":"580d0186ebeb","uuid":"8c5b1af2-8fc4-11f1-9350-ee70fe9b2de3","timestamp":"2026-08-13T00:00:35.513067Z","message":"Closing TTY Log: var/lib/cowrie/tty/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 after 5 milliseconds"}
+
+# a second, different connect event -> should match
+# failJSON: { "time": "2026-08-13T00:05:00", "match": true, "host": "203.0.113.9" }
+{"session":"9f8e7d6c5b4a","protocol":"telnet","src_ip":"203.0.113.9","src_port":52344,"dst_ip":"172.18.0.2","dst_port":23,"eventid":"cowrie.session.connect","sensor":"580d0186ebeb","uuid":"9f8e7d6c-8fc4-11f1-9350-ee70fe9b2de3","timestamp":"2026-08-13T00:05:00.000000Z","message":"New connection: 203.0.113.9:52344 (172.18.0.2:23) [session: 9f8e7d6c5b4a]"}
 
 # malformed / non-JSON line -> should not match
 # failJSON: { "match": false }
