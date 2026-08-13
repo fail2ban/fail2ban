@@ -1,0 +1,15 @@
+# Cowrie honeypot JSON log (log.format = json)
+
+# failJSON: { "time": "2024-01-01T00:00:00", "match": true, "host": "1.2.3.4" }
+{"eventid": "cowrie.session.connect", "src_ip": "1.2.3.4", "src_port": 41000, "dst_ip": "192.168.1.1", "dst_port": 2222, "session": "1a2b3c4d", "protocol": "ssh", "message": "New connection: 1.2.3.4:41000 (192.168.1.1:2222) [session: 1a2b3c4d]", "sensor": "myhost", "timestamp": "2024-01-01T00:00:00.000000Z"}
+
+# failJSON: { "time": "2024-01-01T00:05:12", "match": true, "host": "2001:db8::1" }
+{"eventid": "cowrie.session.connect", "src_ip": "2001:db8::1", "src_port": 52344, "dst_ip": "192.168.1.1", "dst_port": 22, "session": "9f8e7d6c", "protocol": "telnet", "message": "New connection: [2001:db8::1]:52344 (192.168.1.1:22) [session: 9f8e7d6c]", "sensor": "myhost", "timestamp": "2024-01-01T00:05:12.500000Z"}
+
+# not a connect event -> should not match
+# failJSON: { "time": "2024-01-01T00:10:00", "match": false }
+{"eventid": "cowrie.login.failed", "username": "root", "password": "123456", "message": "login attempt [root/123456] failed", "sensor": "myhost", "timestamp": "2024-01-01T00:10:00.000000Z", "src_ip": "1.2.3.4", "session": "1a2b3c4d"}
+
+# malformed / non-JSON line -> should not match
+# failJSON: { "match": false }
+not a json line at all
