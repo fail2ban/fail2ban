@@ -198,3 +198,7 @@ Sep 19 12:10:58 hostname postfix/smtpd[14059]: warning: Message delivery request
 # filterOptions: [{}, {"mode": "ddos"}, {"mode": "aggressive"}]
 # failJSON: { "match": false, "desc": "don't affect lawful data (sporadical connection aborts within DATA-phase, see gh-1813 for discussion)" }
 Feb 18 09:50:05 xxx postfix/smtpd[42]: lost connection after DATA from good-host.example.com[192.0.2.10]
+
+# filterOptions: [{"mode": "aggressive"}]
+# failJSON: { "match": true , "host": "192.0.2.44", "desc": "hostname does not resolve to address, aggressive only (gh-4078)" }
+Aug 14 10:00:01 mail postfix/smtpd[1234]: warning: hostname bad.example.com does not resolve to address 192.0.2.44: Name or service not known
