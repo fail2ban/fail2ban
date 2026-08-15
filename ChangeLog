@@ -18,6 +18,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   to use it as before set `mode = more` for exim jail, but be aware of the consequences.
 
 ### Fixes
+* fixes catastrophic backtracking explosion for REs in domino-smtp and dovecot filters (GHSA-33wh-ccjc-p397, gh-4221)
 * fixes `systemd` bug with missing journal descriptor after rotation by reopening of journal if it is recognized as not alive (gh-3929)
 * improve threaded clean-up of all filters, new thread functions `afterStop` (to force clean-up after stop) and `done`, invoking `afterStop` once
 * ensure journal-reader is always closed (additional prevention against leaks and "too many open files"), thereby avoid sporadic segfault
