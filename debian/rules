@@ -16,7 +16,7 @@ export PYBUILD_INSTALL_ARGS=--without-tests
 endif
 
 %:
-	dh $@ --buildsystem pybuild
+	dh $@ --with python3 --buildsystem pybuild
 
 DESTDIR=$(CURDIR)/debian/fail2ban
 PYVERSION=$(shell py3versions -dv)
