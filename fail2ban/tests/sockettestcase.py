@@ -25,6 +25,7 @@ __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import os
+import socket
 import sys
 import tempfile
 import threading
@@ -34,6 +35,7 @@ import unittest
 from .utils import LogCaptureTestCase
 
 from .. import protocol
+from ..server import asyncserver
 from ..server.asyncserver import asyncore, RequestHandler, loop, AsyncServer, AsyncServerException
 from ..server.utils import Utils
 from ..client.csocket import CSocket
@@ -202,6 +204,39 @@ class Socket(LogCaptureTestCase):
 		# check errors were logged:
 		self.assertLogged("Server connection was closed: test errors in poll",
 			"Too many errors - stop logging connection errors", all=True)
+
+	def testSocketActivation(self):
+		# Simulate a socket already bound/listening, handed to us as an
+		# inherited fd (systemd socket activation, sd_listen_fds(3)):
+		presock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+		presock.bind(self.sock_name)
+		presock.listen(5)
+		# dup to a fresh fd first (presock.fileno() might already be 3):
+		fd = os.dup(presock.fileno())
+		presock.close()
+		os.dup2(fd, 3)
+		os.close(fd)
+
+		self.addCleanup(os.environ.pop, "LISTEN_PID", None)
+		self.addCleanup(os.environ.pop, "LISTEN_FDS", None)
+		self.addCleanup(lambda: os.path.exists(self.sock_name) and os.remove(self.sock_name))
+		os.environ["LISTEN_PID"] = str(os.getpid())
+		os.environ["LISTEN_FDS"] = "1"
+
+		serverThread = self._createServerThread()
+		# consumed once picked up, so forked actions don't misinterpret them:
+		self.assertNotIn("LISTEN_PID", os.environ)
+		self.assertNotIn("LISTEN_FDS", os.environ)
+
+		client = Utils.wait_for(self._serverSocket, 2)
+		testMessage = ["A", "test", "message"]
+		self.assertEqual(client.send(testMessage), testMessage)
+
+		self.server.stop()
+		self._stopServerThread()
+		self.assertFalse(serverThread.is_alive())
+		# socket file is owned by the service manager, must not be removed:
+		self.assertTrue(os.path.exists(self.sock_name))
 
 	def testSocketForce(self):
 		open(self.sock_name, 'w').close() # Create sock file
