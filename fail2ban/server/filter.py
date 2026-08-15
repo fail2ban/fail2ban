@@ -32,7 +32,7 @@ import time
 
 from .actions import Actions
 from .failmanager import FailManagerEmpty, FailManager
-from .ipdns import DNSUtils, IPAddr
+from .ipdns import DNSUtils, IPAddr, FileIPAddrSet
 from .observer import Observers
 from .ticket import FailTicket
 from .jailthread import JailThread
@@ -475,6 +475,10 @@ class Filter(JailThread):
 		# Generate the failure attempt for the IP:
 		unixTime = MyTime.time()
 		ticket = FailTicket(ip, unixTime, matches=matches)
+		# check it shall be ignored:
+		if self._inIgnoreIPList(ip, ticket):
+			return 0
+		# add attempt (found failure):
 		logSys.info(
 			"[%s] Attempt %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
 		)
@@ -482,7 +486,9 @@ class Filter(JailThread):
 		# Perform the ban if this attempt is resulted to:
 		if attempts >= self.failManager.getMaxRetry():
 			self.performBan(ip)
-
+		# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
+		if Observers.Main is not None:
+			Observers.Main.add('failureFound', self.jail, ticket)
 		return 1
 
 	##
@@ -507,6 +513,12 @@ class Filter(JailThread):
 		# An empty string is always false
 		if ipstr == "":
 			return
+		# File?
+		ip = FileIPAddrSet.RE_FILE_IGN_IP.match(ipstr)
+		if ip:
+			ip = DNSUtils.getIPsFromFile(ip.group(1)) # FileIPAddrSet
+			self.__ignoreIpList.append(ip)
+			return
 		# Create IP address object
 		ip = IPAddr(ipstr)
 		# Avoid exact duplicates
@@ -529,6 +541,11 @@ class Filter(JailThread):
 			return
 		# delete by ip:
 		logSys.debug("  Remove %r from ignore list", ip)
+		# File?
+		if FileIPAddrSet.RE_FILE_IGN_IP.match(ip):
+			self.__ignoreIpList.remove(ip)
+			return
+		# IP / DNS
 		if ip in self.__ignoreIpSet:
 			self.__ignoreIpSet.remove(ip)
 		else:
@@ -585,7 +602,7 @@ class Filter(JailThread):
 			return True
 		for net in self.__ignoreIpList:
 			if ip.isInNet(net):
-				self.logIgnoreIp(ip, log_ignore, ignore_source=("ip" if net.isValid else "dns"))
+				self.logIgnoreIp(ip, log_ignore, ignore_source=(net.instanceType))
 				if self.__ignoreCache: c.set(key, True)
 				return True
 
@@ -909,7 +926,7 @@ class Filter(JailThread):
 				raw = (defcidr == IPAddr.CIDR_RAW)
 				if preGroups:
 					currFail, fail = fail, preGroups.copy()
-					fail.update(currFail)
+					fail.update((k,v) for k,v in currFail.items() if v is not None)
 				# first try to check we have mlfid case (caching of connection id by multi-line):
 				mlfid = fail.get('mlfid')
 				if mlfid is not None:
@@ -1097,8 +1114,8 @@ class FileFilter(Filter):
 	def getFailures(self, filename, inOperation=None):
 		if self.idle: return False
 		log = self.getLog(filename)
-		if log is None:
-			logSys.error("Unable to get failures in %s", filename)
+		if log is None and self.active:
+			logSys.log(logging.MSG, "Unable to get failures in %s", filename)
 			return False
 		# We should always close log (file), otherwise may be locked (log-rotate, etc.)
 		try:
@@ -1274,24 +1291,15 @@ class FileFilter(Filter):
 				break
 			db.updateLog(self.jail, log)
 			
-	def onStop(self):
+	def afterStop(self):
 		"""Stop monitoring of log-file(s). Invoked after run method.
 		"""
-		# ensure positions of pending logs are up-to-date:
-		if self._pendDBUpdates and self.jail.database:
-			self._updateDBPending()
 		# stop files monitoring:
 		for path in list(self.__logs.keys()):
 			self.delLogPath(path)
-
-	def stop(self):
-		"""Stop filter
-		"""
-		# normally onStop will be called automatically in thread after its run ends, 
-		# but for backwards compatibilities we'll invoke it in caller of stop method.
-		self.onStop()
-		# stop thread:
-		super(Filter, self).stop()
+		# ensure positions of pending logs are up-to-date:
+		if self._pendDBUpdates and self.jail.database:
+			self._updateDBPending()
 
 ##
 # FileContainer class.

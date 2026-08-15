@@ -24,3 +24,8 @@
 08-03 07:56:53.026292 [WARN] [SOFIA] [sofia_reg.c:4130] Can't find user [101@148.251.134.154] from 192.0.2.3
 # failJSON: { "time": "2005-08-03T08:10:21", "match": true, "host": "192.0.2.4", "desc": "optional year in datepattern and bit different format (gh-2193)" }
 08-03 08:10:21.026299 [WARN] [SOFIA] [sofia_reg.c:2248] SIP auth failure (INVITE) on sofia profile 'external' for [41801148436701961@148.251.134.154] from ip 192.0.2.4
+
+# failJSON: { "time": "2021-10-29T21:04:58", "match": true, "host": "192.0.2.5", "desc": "percent in prefix (gh-3143)" }
+2021-10-29 21:04:58.150982 00.00% [WARNING] sofia_reg.c:2889 Can't find user [201@::1] from 192.0.2.5
+# failJSON: { "time": "2021-10-29T21:05:58", "match": true, "host": "192.0.2.5", "desc": "syslog (and extra date), percent in prefix (gh-3143)" }
+2021-10-29 21:05:58.894719 www.srv.tld freeswitch[123456]: 2021-10-29 14:13:24.894719 82.43% [WARNING] sofia_reg.c:2889 Can't find user [201@::1] from 192.0.2.5

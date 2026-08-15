@@ -116,11 +116,16 @@ class JailReader(ConfigReader):
 		"logtimezone": ["string", None],
 		"logencoding": ["string", None],
 		"logpath": ["string", None],
+		"skip_if_nologs": ["bool", False],
+		"systemd_if_nologs": ["bool", True],
 		"action": ["string", ""]
 	}
 	_configOpts.update(FilterReader._configOpts)
 
-	_ignoreOpts = set(['action', 'filter', 'enabled', 'backend'] + list(FilterReader._configOpts.keys()))
+	_ignoreOpts = set(
+		['action', 'filter', 'enabled', 'backend', 'skip_if_nologs', 'systemd_if_nologs'] +
+		list(FilterReader._configOpts.keys())
+	)
 
 	def getOptions(self, addOpts=None):
 
@@ -235,7 +240,7 @@ class JailReader(ConfigReader):
 			return self.__opts
 		return _merge_dicts(self.__opts, self.__filter.getCombined())
 
-	def convert(self, allow_no_files=False):
+	def convert(self, allow_no_files=False, systemd_if_nologs=True):
 		"""Convert read before __opts to the commands stream
 
 		Parameters
@@ -273,10 +278,26 @@ class JailReader(ConfigReader):
 						stream2.append(
 							["set", self.__name, "addlogpath", p, tail])
 				if not found_files:
-					msg = "Have not found any log file for %s jail" % self.__name
-					if not allow_no_files:
+					msg = "Have not found any log file for '%s' jail." % self.__name
+					skip_if_nologs = self.__opts.get('skip_if_nologs', False)
+					# if auto and we can switch to systemd backend (only possible if jail have journalmatch):
+					if backend.startswith("auto") and systemd_if_nologs and (
+					  self.__opts.get('systemd_if_nologs', True) and
+					  self.__opts.get('journalmatch', None) is not None
+					):
+						# switch backend to systemd:
+						backend = 'systemd'
+						msg += " Jail will monitor systemd journal."
+						skip_if_nologs = False
+					elif not allow_no_files and not skip_if_nologs:
 						raise ValueError(msg)
 					logSys.warning(msg)
+					if skip_if_nologs:
+						self.__opts['runtime-error'] = msg
+						msg = "Jail '%s' skipped, because of missing log files." % (self.__name,)
+						logSys.warning(msg)
+						stream = [['config-error', msg]]
+						return stream
 			elif opt == "ignoreip":
 				stream.append(["set", self.__name, "addignoreip"] + splitwords(value))
 			elif opt not in JailReader._ignoreOpts:

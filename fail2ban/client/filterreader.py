@@ -89,7 +89,7 @@ class FilterReader(DefinitionInitConfigReader):
 				stream.insert(0 if opt == 'usedns' else prio0idx,
 					["set", jailName, opt, value])
 				prio0idx += 1
-			elif opt in ('datepattern'):
+			elif opt == 'datepattern':
 				stream.append(["set", jailName, opt, value])
 			elif opt == 'journalmatch':
 				for match in value.split("\n"):

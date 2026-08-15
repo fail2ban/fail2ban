@@ -39,7 +39,7 @@ from io import StringIO
 from functools import wraps
 
 from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, uni_decode
-from ..server.ipdns import IPAddr, DNSUtils
+from ..server.ipdns import IPAddr, IPAddrSet, DNSUtils
 from ..server.mytime import MyTime
 from ..server.utils import Utils
 # for action_d.test_smtp :
@@ -219,7 +219,7 @@ class F2B(DefaultTestOptions):
 		# short only integer interval (avoid by conditional wait with callable, and dual 
 		# wrapping in some routines, if it will be called twice):
 		if self.fast and isinstance(wtime, int):
-			wtime = float(wtime) / 10
+			wtime = float(wtime) / 2.5
 		return wtime
 
 
@@ -326,8 +326,8 @@ def initTests(opts):
 			('failed.dns.ch', set()),
 			('doh1.2.3.4.buga.xxxxx.yyy.invalid', set()),
 			('1.2.3.4.buga.xxxxx.yyy.invalid', set()),
-			('example.com', set([IPAddr('2606:2800:21f:cb07:6820:80da:af6b:8b2c'), IPAddr('93.184.215.14')])),
-			('www.example.com', set([IPAddr('2606:2800:21f:cb07:6820:80da:af6b:8b2c'), IPAddr('93.184.215.14')])),
+			('fail2ban.org', set([IPAddr('2001:41d0:303:3d16::1'), IPAddr('145.239.69.22')])),
+			('www.fail2ban.org', set([IPAddr('2001:41d0:303:3d16::1'), IPAddr('145.239.69.22')])),
 		):
 			c.set(*i)
 		# if fast - precache all host names as localhost addresses (speed-up getSelfIPs/ignoreself):
@@ -335,6 +335,12 @@ def initTests(opts):
 			ips = set([IPAddr('127.0.0.1'), IPAddr('::1')]); # DNSUtils.dnsToIp('localhost')
 			for i in DNSUtils.getSelfNames():
 				c.set(i, ips)
+	# some test subnets (although normally they are not resolved to addr/cidr,
+	# we'll use IPAddrSet here to seek through the resolved subnet in tests):
+	c = DNSUtils.CACHE_nameToIp
+	c.set('test-local-net', IPAddrSet([IPAddr('127.0.0.1/8'), IPAddr('::1')]))
+	c.set('test-subnet-a', IPAddrSet([IPAddr('192.0.2.0/29'), IPAddr('2001:db8::0/125')]));   # 192.0.2.0  .. 192.0.2.7,  2001:db8::00 .. 2001:db8::07
+	c.set('test-subnet-b', IPAddrSet([IPAddr('192.0.2.16/29'), IPAddr('2001:db8::10/125')])); # 192.0.2.16 .. 192.0.2.23, 2001:db8::10 .. 2001:db8::17
 
 
 def mtimesleep():

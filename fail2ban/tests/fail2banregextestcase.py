@@ -148,7 +148,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged("Unable to compile regular expression")
 		self.assertLogged("unknown group name", "at position 23", all=False); # details of failed compilation
 
-	def testWrongIngnoreRE(self):
+	def testWrongIgnoreRE(self):
 		self.assertFalse(_test_exec(
 			"--datepattern", "{^LN-BEG}EPOCH",
 			"test", r".*? from <HOST>$", r".**"
@@ -316,6 +316,20 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		"-l", "notice", # put down log-level, because of too many debug-messages
 			FILENAME_ZZZ_GEN, FILTER_ZZZ_GEN+"[mode=test]"
 		))
+		self.assertLogged("Ignoreregex: 2 total",
+			"Lines: 23 lines, 2 ignored, 16 matched, 5 missed", all=True)
+		# cover filter ignoreregex gets overwritten by command argument:
+		self.pruneLog("[test-phase 2]")
+		self.assertTrue(_test_exec(
+		"-l", "notice", # put down log-level, because of too many debug-messages
+			"[Jun 21 16:56:03] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.251\n"
+			"[Jun 21 16:56:04] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.252\n"
+			"[Jun 21 16:56:05] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.255\n",
+			FILTER_ZZZ_GEN+"[mode=test]",
+			"F2B: error from 192.0.2.255$"
+		))
+		self.assertLogged("Use ignoreregex line", "Ignoreregex: 1 total",
+			"Lines: 3 lines, 1 ignored, 2 matched, 0 missed", all=True)
 
 	def testDirectMultilineBuf(self):
 		# test it with some pre-lines also to cover correct buffer scrolling (all multi-lines printed):
@@ -418,8 +432,16 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('output: %s' % "['192.0.2.0'", "'ip4': '192.0.2.0'", "'user': 'kevin'", all=True)
 		self.pruneLog()
 		# log msg :
-		self.assertTrue(_test_exec('-o', 'msg', STR_00, RE_00_USER))
+		nmline = "Dec 31 12:00:00 [sshd] error: PAM: No failure for user from 192.0.2.123"
+		lines = STR_00+"\n"+nmline
+		self.assertTrue(_test_exec('-o', 'msg', lines, RE_00_USER))
 		self.assertLogged('output: %s' % STR_00)
+		self.assertNotLogged('output: %s' % nmline)
+		self.pruneLog()
+		# log msg (inverted) :
+		self.assertTrue(_test_exec('-o', 'msg', '-i', lines, RE_00_USER))
+		self.assertLogged('output: %s' % nmline)
+		self.assertNotLogged('output: %s' % STR_00)
 		self.pruneLog()
 		# item of match (user):
 		self.assertTrue(_test_exec('-o', 'user', STR_00, RE_00_USER))
@@ -428,6 +450,17 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		# complex substitution using tags (ip, user, family):
 		self.assertTrue(_test_exec('-o', '<ip>, <F-USER>, <family>', STR_00, RE_00_USER))
 		self.assertLogged('output: %s' % '192.0.2.0, kevin, inet4')
+		self.pruneLog()
+		# log msg :
+		lines = nmline+"\n"+STR_00; # just reverse lines (to cover possible order dependencies)
+		self.assertTrue(_test_exec('-o', '<time> : <msg>', lines, RE_00_USER))
+		self.assertLogged('output: %s : %s' % (1104490799.0, STR_00))
+		self.assertNotLogged('output: %s' % nmline)
+		self.pruneLog()
+		# log msg (inverted) :
+		self.assertTrue(_test_exec('-o', '<time> : <msg>', '-i', lines, RE_00_USER))
+		self.assertLogged('output: %s : %s' % (1104490800.0, nmline))
+		self.assertNotLogged('output: %s' % STR_00)
 		self.pruneLog()
 
 	def testStalledIPByNoFailFrmtOutput(self):
@@ -539,6 +572,18 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			'192.0.2.1, git, '+lines[-1],
 			all=True)
 
+	def testFrmtOutputAddrInHeadOrBody(self):
+		unittest.F2B.SkipIfCfgMissing(stock=True)
+		self.assertTrue(_test_exec('-o', '== <ip> == <msg> ==',
+			'-c', CONFIG_DIR, '-d', '{NONE}',
+			'head: { ip: 192.0.2.1 }, auth failed\n'
+			'auth failed from 192.0.2.2\n',
+			r'common.conf[prefregex="^(?:head:\s*\{\s*ip: <ADDR>\s*\},\s*)?<F-CONTENT>.+</F-CONTENT>$"'
+			', failregex="^auth failed(?: from <ADDR>)?\n'
+			'", maxlines=1]'
+		))
+		self.assertLogged('== 192.0.2.1 == head: { ip: 192.0.2.1 }, auth failed ==', '== 192.0.2.2 == auth failed from 192.0.2.2 ==', all=True)
+
 	def testOutputNoPendingFailuresAfterGained(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
 		# connect finished without authorization must generate a failure, because
@@ -567,7 +612,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			FILENAME_ZZZ_GEN, FILENAME_ZZZ_GEN
 		))
 
-	def testWronChar(self):
+	def testWrongChar(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
 		self.assertTrue(_test_exec(
 		"-l", "notice", # put down log-level, because of too many debug-messages
@@ -582,7 +627,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('Nov  8 00:16:12 main sshd[32548]: input_userauth_request: invalid user llinco')
 		self.assertLogged('Nov  8 00:16:12 main sshd[32547]: pam_succeed_if(sshd:auth): error retrieving information about user llinco')
 
-	def testWronCharDebuggex(self):
+	def testWrongCharDebuggex(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
 		self.assertTrue(_test_exec(
 		"-l", "notice", # put down log-level, because of too many debug-messages

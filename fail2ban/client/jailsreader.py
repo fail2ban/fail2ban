@@ -88,7 +88,7 @@ class JailsReader(ConfigReader):
 				parse_status |= 2
 		return ((ignoreWrong and parse_status & 1) or not (parse_status & 2))
 
-	def convert(self, allow_no_files=False):
+	def convert(self, allow_no_files=False, systemd_if_nologs=True):
 		"""Convert read before __opts and jails to the commands stream
 
 		Parameters
@@ -101,11 +101,14 @@ class JailsReader(ConfigReader):
 		stream = list()
 		# Convert jails
 		for jail in self.__jails:
-			stream.extend(jail.convert(allow_no_files=allow_no_files))
+			stream.extend(jail.convert(allow_no_files, systemd_if_nologs))
 		# Start jails
 		for jail in self.__jails:
-			if not jail.options.get('config-error'):
+			if not jail.options.get('config-error') and not jail.options.get('runtime-error'):
 				stream.append(["start", jail.getName()])
+			else:
+				# just delete rtm-errors (to check next time if cached)
+				jail.options.pop('runtime-error', None)
 
 		return stream
 

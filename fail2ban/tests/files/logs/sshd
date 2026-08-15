@@ -360,6 +360,9 @@ Jun  7 04:29:10 host sshd[649921]: error: kex_exchange_identification: read: Con
 # failJSON: { "match": false, "desc": "Connection reset already triggered above (known IP, no-fail helper unused here)" }
 Jun  7 04:29:10 host sshd[649921]: Connection reset by 192.0.2.16 port 51280
 
+# failJSON: { "time": "2005-06-10T09:43:06", "match": true , "host": "192.0.2.17", "desc": "ddos: timeout ... connection from, gh-3907" }
+Jun 10 09:43:06 host sshd[3801]: Timeout before authentication for connection from 192.0.2.17 to 127.0.0.1, pid = 29098
+
 # filterOptions: [{"mode": "extra"}, {"mode": "aggressive"}]
 
 # several other cases from gh-864:

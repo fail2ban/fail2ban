@@ -232,16 +232,24 @@ the <> at the start so regex should be similar to '^<> error <HOST> is evil$' us
 
 The following general rules apply to regular expressions:
 
-* ensure regexes start with a ^ and are as restrictive as possible. E.g. do not
-  use .* if \d+ is sufficient;
+* ensure regexes are anchored (e. g. start with a ^) and are as restrictive
+  as possible. E.g. do not use catch-alls .+ or .* if \d+ or [^"]* is sufficient.
+  Basically avoid the catch-alls where it is possible, especially non-greedy 
+  catch-alls on RE with many branches or ambiguous matches;
 * use functionality of Python regexes defined in the standard Python re library
-  http://docs.python.org/2/library/re.html;
-* make regular expressions readable (as much as possible). E.g.
-  (?:...) represents a non-capturing regex but (...) is more readable, thus
-  preferred.
+  https://docs.python.org/library/re.html;
+* try to write regular expressions as efficient as possible. E.g. do not write
+  several REs for almost the same messages, just with A or B or C, if they can
+  be matched by single RE using | operator like ...(?:A|B|C)... and order them
+  by their frequency, so A before B and C, if A is more frequent or will match
+  faster;
+* make regular expressions readable (as much as possible), but only if it is
+  justified. E.g. (?:...) represents a non-capturing regex and (...) is more
+  readable, but capturing groups make the RE a bit slower, thus (?:...) may be
+  more preferable.
 
 If you have only a basic knowledge of regular repressions we advise to read
-http://docs.python.org/2/library/re.html first.  It doesn't take long and would
+https://docs.python.org/library/re.html first.  It doesn't take long and would
 remind you e.g. which characters you need to escape and which you don't.
 
 Developing/testing a regex
@@ -264,10 +272,6 @@ Take note of  -l heavydebug  / -l debug  and -v as they might be very useful.
      of, that need to form part of your regex.  It may also reveal how some
      parts are constrained and different formats depending on configuration or
      less common usages.
-
-.. TIP::
-     For looking through source code - http://sourcecodebrowser.com/ . It has
-     call graphs and can browse different versions.
 
 .. TIP::
      Some applications log spaces at the end. If you are not sure add \s*$ as
@@ -308,6 +312,8 @@ So more specifically in the [filter] section in jail.conf:
 
 Submit github pull request (See "Pull Requests" above) for
 github.com/fail2ban/fail2ban containing your great work.
+
+You may also consider https://github.com/fail2ban/fail2ban/wiki/Best-practice
 
 Filter Security
 ===============

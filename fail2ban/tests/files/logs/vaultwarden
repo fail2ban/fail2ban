@@ -1,0 +1,26 @@
+# failJSON: { "time": "2024-08-31T02:11:22", "match": true , "host": "2001:db8::b6d3:95d7:1425:766d" }
+[2024-08-31 02:11:22.129][vaultwarden::api::identity][ERROR] Username or password is incorrect. Try again. IP: 2001:db8::b6d3:95d7:1425:766d. Username: test@example.com.
+
+# failJSON: { "time": "2024-08-31T02:11:28", "match": true , "host": "80.187.85.94" }
+[2024-08-31 02:11:28.562][vaultwarden::api::identity][ERROR] Username or password is incorrect. Try again. IP: 80.187.85.94. Username: test@example.com.
+
+# failJSON: { "time": "2024-08-31T02:11:28", "match": true , "host": "80.187.85.94" }
+[2024-08-31 02:11:28.725][vaultwarden::api::admin][ERROR] Invalid admin token. IP: 80.187.85.94
+
+# failJSON: { "time": "2024-08-31T02:11:28", "match": true , "host": "2001:db8::b6d3:95d7:1425:766d" }
+[2024-08-31 02:11:28.725][vaultwarden::api::admin][ERROR] Invalid admin token. IP: 2001:db8::b6d3:95d7:1425:766d
+
+# failJSON: { "time": "2024-08-31T02:11:28", "match": true , "host": "80.187.85.94" }
+[2024-08-31 02:11:28.892][vaultwarden::api::core::two_factor::authenticator][ERROR] Invalid TOTP code! Server time: 2024-08-31 02:11:28 UTC IP: 80.187.85.94
+
+# failJSON: { "time": "2024-08-31T02:11:28", "match": true , "host": "2001:db8::b6d3:95d7:1425:766d" }
+[2024-08-31 02:11:28.892][vaultwarden::api::core::two_factor::authenticator][ERROR] Invalid TOTP code! Server time: 2024-08-31 02:11:28 UTC IP: 2001:db8::b6d3:95d7:1425:766d
+
+# failJSON: { "time": "2024-08-30T20:11:28", "match": true , "host": "80.187.85.94" }
+[2024-08-31 02:11:28.892+0800][vaultwarden::api::core::two_factor::authenticator][ERROR] Invalid TOTP code! Server time: 2024-08-30 18:11:28 UTC IP: 80.187.85.94
+
+# failJSON: { "time": "2024-08-30T20:11:28", "match": true , "host": "2001:db8::b6d3:95d7:1425:766d" }
+[2024-08-31 02:11:28.892+0800][vaultwarden::api::core::two_factor::authenticator][ERROR] Invalid TOTP code! Server time: 2024-08-30 18:11:28 UTC IP: 2001:db8::b6d3:95d7:1425:766d
+
+# failJSON: { "time": "2024-08-30T20:11:30", "match": true , "host": "192.0.2.7" }
+[2024-08-31 02:11:30.123+0800][vaultwarden::api::admin][ERROR] Invalid admin token! IP: 192.0.2.7. Username: alice

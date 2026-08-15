@@ -6,6 +6,41 @@
 2013-06-12 03:57:58 login authenticator failed for (ylmf-pc) [120.196.140.45]: 535 Incorrect authentication data: 1 Time(s)
 # failJSON: { "time": "2013-06-12T13:18:11", "match": true , "host": "101.66.165.86" }
 2013-06-12 13:18:11 login authenticator failed for (USER-KVI9FGS9KP) [101.66.165.86]: 535 Incorrect authentication data
+
+# 'https://github.com/fail2ban/fail2ban/pull/251#issuecomment-23001227' 
+# failJSON: { "time": "2013-08-20T07:48:02", "match": true , "host": "85.25.92.177" }
+2013-08-20 07:48:02 login authenticator failed for static-ip-85-25-92-177.inaddr.ip-pool.com (USER) [85.25.92.177]: 535 Incorrect authentication data: 1 Time(s)
+# failJSON: { "time": "2013-08-20T23:30:05", "match": true , "host": "91.218.72.71" }
+2013-08-20 23:30:05 plain authenticator failed for ([192.168.2.102]) [91.218.72.71]: 535 Incorrect authentication data: 1 Time(s)
+# failJSON: { "time": "2013-09-02T09:19:07", "match": true , "host": "118.233.20.68" }
+2013-09-02 09:19:07 login authenticator failed for (gkzwsoju) [118.233.20.68]: 535 Incorrect authentication data
+# failJSON: { "time": "2014-01-12T02:07:48", "match": true , "host": "85.214.85.40" }
+2014-01-12 02:07:48 dovecot_login authenticator failed for h1832461.stratoserver.net (User) [85.214.85.40]: 535 Incorrect authentication data (set_id=scanner)
+# failJSON: { "time": "2019-10-22T03:39:17", "match": true , "host": "192.0.2.37", "desc": "pid-prefix in form of 'hostname exim[...]:', gh-2553" }
+2019-10-22 03:39:17 mx1.fqdn.local exim[29786]: dovecot_login authenticator failed for (User) [192.0.2.37]: 535 Incorrect authentication data (set_id=test@domain.com)
+# failJSON: { "time": "2014-12-02T03:00:23", "match": true , "host": "193.254.202.35" }
+2014-12-02 03:00:23 auth_plain authenticator failed for (rom182) [193.254.202.35]:41556 I=[10.0.0.1]:25: 535 Incorrect authentication data (set_id=webmaster)
+# failJSON: { "time": "2017-04-23T22:45:59", "match": true , "host": "192.0.2.2", "desc": "optional part (...)" }
+2017-04-23 22:45:59 fixed_login authenticator failed for bad.host.example.com [192.0.2.2]:54412 I=[172.89.0.6]:587: 535 Incorrect authentication data (set_id=user@example.com)
+# failJSON: { "time": "2024-03-21T19:26:06", "match": true , "host": "194.169.175.1" }
+2024-03-21 19:26:06 dovecot_login authenticator failed for (User) [194.169.175.1]:21298 I=[22.33.44.55]:465 Ci=30416: 535 Incorrect authentication data (set_id=uaf589@example.com)
+
+## no matches with `mode = normal`:
+
+# failJSON: { "match": false , "desc": "aggressive mode only" }
+2017-12-03 08:32:00 no host name found for IP address 192.0.2.8
+# failJSON: { "match": false , "desc": "aggressive mode only" }
+2017-12-03 08:51:35 no IP address found for host test.example.com (during SMTP connection from [192.0.2.9])
+# failJSON: { "match": false , "desc": "aggressive mode only" }
+2022-04-03 21:53:53 no IP address found for host hos-t.example.tld (during SMTP connection from [63.85.123.6]:49390 I=[31.130.202.17]:25)
+
+# filterOptions: {"logtype": "journal"}
+
+# failJSON: { "match": true , "host": "192.0.2.27", "desc": "systemd-journal entry with additional timestamp, gh-3060" }
+mail.example.com exim[3751842]: 2021-07-17 23:20:49 plain_server authenticator failed for ([192.0.2.17]) [192.0.2.27]: 535 Incorrect authentication data
+
+# filterOptions: [{"mode": "more"}, {"mode": "aggressive"}]
+
 # failJSON: { "time": "2013-06-10T10:10:59", "match": true , "host": "193.169.56.211" }
 2013-06-10 10:10:59 H=ufficioestampa.it (srv.ufficioestampa.it) [193.169.56.211] sender verify fail for <user@example.com>: Unrouteable address
 # http://forum.lissyara.su/viewtopic.php?f=20&t=29857
@@ -34,24 +69,6 @@
 2013-06-15 16:34:55 H=mx.tillions.com [182.18.24.93] F=<buh@caladan.ebay.sun.com> rejected RCPT <ruslan@maslovskiy.com.ua>: Sender verify failed
 # failJSON: { "time": "2013-06-15T16:36:49", "match": true , "host": "111.67.203.116" }
 2013-06-15 16:36:49 H=altmx.marsukov.com [111.67.203.116] F=<kadrofutcheti@mail.ru> rejected RCPT <oksana@birzhatm.ua>: Unknown user
-
-# 'https://github.com/fail2ban/fail2ban/pull/251#issuecomment-23001227' 
-# failJSON: { "time": "2013-08-20T07:48:02", "match": true , "host": "85.25.92.177" }
-2013-08-20 07:48:02 login authenticator failed for static-ip-85-25-92-177.inaddr.ip-pool.com (USER) [85.25.92.177]: 535 Incorrect authentication data: 1 Time(s)
-# failJSON: { "time": "2013-08-20T23:30:05", "match": true , "host": "91.218.72.71" }
-2013-08-20 23:30:05 plain authenticator failed for ([192.168.2.102]) [91.218.72.71]: 535 Incorrect authentication data: 1 Time(s)
-
-# failJSON: { "time": "2013-09-02T09:19:07", "match": true , "host": "118.233.20.68" }
-2013-09-02 09:19:07 login authenticator failed for (gkzwsoju) [118.233.20.68]: 535 Incorrect authentication data
-
-# failJSON: { "time": "2014-01-12T02:07:48", "match": true , "host": "85.214.85.40" }
-2014-01-12 02:07:48 dovecot_login authenticator failed for h1832461.stratoserver.net (User) [85.214.85.40]: 535 Incorrect authentication data (set_id=scanner)
-
-# failJSON: { "time": "2019-10-22T03:39:17", "match": true , "host": "192.0.2.37", "desc": "pid-prefix in form of 'hostname exim[...]:', gh-2553" }
-2019-10-22 03:39:17 mx1.fqdn.local exim[29786]: dovecot_login authenticator failed for (User) [192.0.2.37]: 535 Incorrect authentication data (set_id=test@domain.com)
-
-# failJSON: { "time": "2014-12-02T03:00:23", "match": true , "host": "193.254.202.35" }
-2014-12-02 03:00:23 auth_plain authenticator failed for (rom182) [193.254.202.35]:41556 I=[10.0.0.1]:25: 535 Incorrect authentication data (set_id=webmaster)
 
 # failJSON: { "time": "2016-03-18T00:34:06", "match": true , "host": "45.32.34.167" }
 2016-03-18 00:34:06 [7513] SMTP protocol error in "AUTH LOGIN" H=(ylmf-pc) [45.32.34.167]:60723 I=[172.89.0.6]:587 AUTH command used when not advertised
@@ -86,8 +103,6 @@
 # failJSON: { "time": "2016-03-27T16:48:48", "match": true , "host": "192.0.2.1" }
 2016-03-27 16:48:48 [21478] 1akDqs-0005aQ-9b SMTP connection from host.example.com (SERVER) [192.0.2.1]:47714 I=[172.89.0.6]:25 closed by DROP in ACL
 
-# failJSON: { "time": "2017-04-23T22:45:59", "match": true , "host": "192.0.2.2", "desc": "optional part (...)" }
-2017-04-23 22:45:59 fixed_login authenticator failed for bad.host.example.com [192.0.2.2]:54412 I=[172.89.0.6]:587: 535 Incorrect authentication data (set_id=user@example.com)
 # failJSON: { "time": "2017-05-01T07:42:42", "match": true , "host": "192.0.2.3", "desc": "rejected RCPT - Unrouteable address" }
 2017-05-01 07:42:42 H=some.rev.dns.if.found (the.connector.reports.this.name) [192.0.2.3] F=<some.name@some.domain> rejected RCPT <some.invalid.name@a.domain>: Unrouteable address
 
@@ -98,19 +113,8 @@
 # failJSON: { "time": "2017-11-28T14:14:32", "match": true , "host": "192.0.2.6", "desc": "quoted injecting on AUTH command" }
 2017-11-28 14:14:32 SMTP protocol error in "aUtH lOgIn" H=(test) [8.8.8.8]" H=(roxzgj) [192.0.2.6] AUTH command used when not advertised
 
-# failJSON: { "time": "2024-03-21T19:26:06", "match": true , "host": "194.169.175.1" }
-2024-03-21 19:26:06 dovecot_login authenticator failed for (User) [194.169.175.1]:21298 I=[22.33.44.55]:465 Ci=30416: 535 Incorrect authentication data (set_id=uaf589@example.com)
 # failJSON: { "time": "2024-03-21T09:18:51", "match": true , "host": "9.12.1.21" }
 2024-03-21 09:18:51 H=m05.horp.tld [9.12.1.21]:43030 I=[194.169.175.2]:25 Ci=7326 CV=no SNI=mail.leone.tld F=<user@example.tld> rejected RCPT <locus@leone.tld>: relay not permitted
-
-## no matches with `mode = normal`:
-
-# failJSON: { "match": false , "desc": "aggressive mode only" }
-2017-12-03 08:32:00 no host name found for IP address 192.0.2.8
-# failJSON: { "match": false , "desc": "aggressive mode only" }
-2017-12-03 08:51:35 no IP address found for host test.example.com (during SMTP connection from [192.0.2.9])
-# failJSON: { "match": false , "desc": "aggressive mode only" }
-2022-04-03 21:53:53 no IP address found for host hos-t.example.tld (during SMTP connection from [63.85.123.6]:49390 I=[31.130.202.17]:25)
 
 # filterOptions: [{"mode": "aggressive"}]
 
@@ -120,8 +124,5 @@
 2017-12-03 08:51:35 no IP address found for host test.example.com (during SMTP connection from [192.0.2.9])
 # failJSON: { "time": "2022-04-03T21:53:53", "match": true , "host": "63.85.123.6", "desc": "no IP found for host long" }
 2022-04-03 21:53:53 no IP address found for host hos-t.example.tld (during SMTP connection from [63.85.123.6]:49390 I=[31.130.202.17]:25)
-
-# filterOptions: {"logtype": "journal"}
-
-# failJSON: { "match": true , "host": "192.0.2.27", "desc": "systemd-journal entry with additional timestamp, gh-3060" }
-mail.example.com exim[3751842]: 2021-07-17 23:20:49 plain_server authenticator failed for ([192.0.2.17]) [192.0.2.27]: 535 Incorrect authentication data
+# failJSON: { "time": "2022-04-03T21:53:54", "match": true , "host": "192.0.2.101", "desc": "dropped by ACL" }
+2022-04-03 21:53:54 H=[192.0.2.101]:62839 dropped by 'connect' ACL: Country is banned

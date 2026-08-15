@@ -230,6 +230,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 			missed = [ cf for cf in config_files if cf not in config_files_read ]
 			if missed:
 				logSys.error("Could not read config files: %s", ', '.join(missed))
+				return False
 			if config_files_read:
 				return True
 			logSys.error("Found no accessible config files for %r under %s",
@@ -353,6 +354,11 @@ class DefinitionInitConfigReader(ConfigReader):
 					if v is None: v = getopt(opt)
 					self._initOpts['known/'+opt] = v
 				if opt not in self._initOpts:
+					# overwrite also conditional init options (from init?... section):
+					cond = SafeConfigParserWithIncludes.CONDITIONAL_RE.match(opt)
+					if cond:
+						optc, cond = cond.groups()
+						v = pOpts.get(optc, v)
 					if v is None: v = getopt(opt)
 					self._initOpts[opt] = v
 		if all and self.has_section("Definition"):
@@ -406,7 +412,7 @@ class DefinitionInitConfigReader(ConfigReader):
 			if cond:
 				n, cond = cond.groups()
 				ignore.add(n)
-		# substiture options already specified direct:
+		# substitute options already specified direct:
 		opts = substituteRecursiveTags(combinedopts, 
 			ignore=ignore, addrepl=self.getCombOption)
 		if not opts:

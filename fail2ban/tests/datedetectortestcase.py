@@ -580,7 +580,7 @@ class CustomDateFormatsTest(unittest.TestCase):
 			else: # pragma: no cover
 				self.assertEqual(date, None)
 
-#	def testDefaultTempate(self):
+#	def testDefaultTemplate(self):
 #		self.__datedetector.setDefaultRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 #		self.__datedetector.setDefaultPattern("%b %d %H:%M:%S")
 #		

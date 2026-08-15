@@ -212,8 +212,8 @@ class Beautifier:
 				else:
 					msg = "These IP addresses/networks are ignored:\n"
 					for ip in response[:-1]:
-						msg += "|- " + ip + "\n"
-					msg += "`- " + response[-1]
+						msg += "|- " + str(ip) + "\n"
+					msg += "`- " + str(response[-1])
 			elif inC[2] in ("failregex", "addfailregex", "delfailregex",
 							"ignoreregex", "addignoreregex", "delignoreregex"):
 				if len(response) == 0:

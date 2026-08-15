@@ -282,7 +282,18 @@ def excepthook(exctype, value, traceback):
 		"Unhandled exception in Fail2Ban:", exc_info=True)
 	return sys.__excepthook__(exctype, value, traceback)
 
-def splitwords(s):
+RE_REM_COMMENTS = re.compile(r'(?m)(?:^|\s)[\#;].*')
+def removeComments(s):
+	"""Helper to remove comments:
+		# comment ...
+		; comment ...
+		no comment # comment ...
+		no comment ; comment ...
+	"""
+	return RE_REM_COMMENTS.sub('', s)
+
+RE_SPLT_WORDS = re.compile(r'[\s,]+')
+def splitwords(s, ignoreComments=False):
 	"""Helper to split words on any comma, space, or a new line
 
 	Returns empty list if input is empty (or None) and filters
@@ -290,7 +301,9 @@ def splitwords(s):
 	"""
 	if not s:
 		return []
-	return list(filter(bool, [v.strip() for v in re.split(r'[\s,]+', s)]))
+	if ignoreComments:
+		s = removeComments(s)
+	return list(filter(bool, [v.strip() for v in RE_SPLT_WORDS.split(s)]))
 
 def _merge_dicts(x, y):
 	"""Helper to merge dicts.
@@ -310,15 +323,17 @@ def _merge_copy_dicts(x, y):
 
 # regex, to extract list of options:
 OPTION_CRE = re.compile(r"^([^\[]+)(?:\[(.*)\])?\s*$", re.DOTALL)
+# regex, matching option name (inclusive conditional option, like n?family=inet6):
+OPTION_NAME_CRE = r'[\w\-_\.]+(?:\?[\w\-_\.]+=[\w\-_\.]+)?'
 # regex, to iterate over single option in option list, syntax:
 # `action = act[p1="...", p2='...', p3=...]`, where the p3=... not contains `,` or ']'
 # since v0.10 separator extended with `]\s*[` for support of multiple option groups, syntax 
 # `action = act[p1=...][p2=...]`
 OPTION_EXTRACT_CRE = re.compile(
-	r'\s*([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$|(?P<wrngA>.+))|,?\s*$|(?P<wrngB>.+)', re.DOTALL)
+	r'\s*('+OPTION_NAME_CRE+r')=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$|(?P<wrngA>.+))|,?\s*$|(?P<wrngB>.+)', re.DOTALL)
 # split by new-line considering possible new-lines within options [...]:
 OPTION_SPLIT_CRE = re.compile(
-	r'(?:[^\[\s]+(?:\s*\[\s*(?:[\w\-_\.]+=(?:"[^"]*"|\'[^\']*\'|[^,\]]*)\s*(?:,|\]\s*\[)?\s*)*\])?\s*|\S+)(?=\n\s*|\s+|$)', re.DOTALL)
+	r'(?:[^\[\s]+(?:\s*\[\s*(?:'+OPTION_NAME_CRE+r'=(?:"[^"]*"|\'[^\']*\'|[^,\]]*)\s*(?:,|\]\s*\[)?\s*)*\])?\s*|\S+)(?=\n\s*|\s+|$)', re.DOTALL)
 
 def extractOptions(option):
 	match = OPTION_CRE.match(option)

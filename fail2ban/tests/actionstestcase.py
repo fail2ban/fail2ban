@@ -66,7 +66,7 @@ class ExecuteActions(LogCaptureTestCase):
 		self.__actions.add('test')
 		self.assertTrue(self.__actions['test'])
 		self.assertIn('test', self.__actions)
-		self.assertNotIn('nonexistant action', self.__actions)
+		self.assertNotIn('nonexistent action', self.__actions)
 		self.__actions.add('test1')
 		del self.__actions['test']
 		del self.__actions['test1']
@@ -287,7 +287,7 @@ class ExecuteActions(LogCaptureTestCase):
 		# no flush for inet4 (already successfully flushed):
 		self.assertNotLogged("ERROR",
 			"stdout: %r" % 'ip flush inet4',
-			'Unban tickets each individualy',
+			'Unban tickets each individually',
 			all=True)
 
 	def testActionsConsistencyCheckDiffFam(self):
@@ -401,7 +401,7 @@ class ExecuteActions(LogCaptureTestCase):
 		# no flush for inet4 (already successfully flushed):
 		self.assertNotLogged("ERROR",
 			"stdout: %r" % 'ip flush inet4',
-			'Unban tickets each individualy',
+			'Unban tickets each individually',
 			all=True)
 
 	@with_alt_time

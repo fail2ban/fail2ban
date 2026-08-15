@@ -63,11 +63,13 @@ class Configurator:
 		return fail2ban_basedir
 	
 	def readEarly(self):
-		self.__fail2ban.read()
+		if not self.__fail2ban.read():
+			raise LookupError("Read fail2ban configuration failed.")
 	
 	def readAll(self):
 		self.readEarly()
-		self.__jails.read()
+		if not self.__jails.read():
+			raise LookupError("Read jails configuration failed.")
 	
 	def getEarlyOptions(self):
 		return self.__fail2ban.getEarlyOptions()

@@ -29,6 +29,7 @@ import subprocess
 import sys
 from	 threading import Lock
 import time
+import types
 from ..helpers import getLogger, _merge_dicts, uni_decode
 from collections import OrderedDict
 
@@ -352,6 +353,7 @@ class Utils():
 	def load_python_module(pythonModule):
 		pythonModuleName = os.path.splitext(
 			os.path.basename(pythonModule))[0]
-		mod = importlib.machinery.SourceFileLoader(
-			pythonModuleName, pythonModule).load_module()
+		ldr = importlib.machinery.SourceFileLoader(pythonModuleName, pythonModule)
+		mod = types.ModuleType(ldr.name)
+		ldr.exec_module(mod)
 		return mod

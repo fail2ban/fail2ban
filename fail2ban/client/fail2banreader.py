@@ -37,7 +37,7 @@ class Fail2banReader(ConfigReader):
 		ConfigReader.__init__(self, **kwargs)
 	
 	def read(self):
-		ConfigReader.read(self, "fail2ban")
+		return ConfigReader.read(self, "fail2ban")
 	
 	def getEarlyOptions(self):
 		opts = [
