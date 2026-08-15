@@ -58,10 +58,8 @@ override_dh_install:
 	install -m 644 files/bash-completion $(DESTDIR)/usr/share/bash-completion/completions/fail2ban
 	: # Install systemd files
 	install -d $(DESTDIR)$(SYSTEMD_SYSTEM_UNIT_DIR)
-	install -d $(DESTDIR)/usr/lib/tmpfiles.d
 	install -m 644 build/fail2ban.service $(DESTDIR)$(SYSTEMD_SYSTEM_UNIT_DIR)
-	install -m 644 files/fail2ban-tmpfiles.conf $(DESTDIR)/usr/lib/tmpfiles.d
-	install -d $(DESTDIR)$(SYSTEMD_SYSTEM_UNIT_DIR)
+	install -m 644 build/fail2ban.socket $(DESTDIR)$(SYSTEMD_SYSTEM_UNIT_DIR)
 	dh_install
 
 override_dh_installexamples:
