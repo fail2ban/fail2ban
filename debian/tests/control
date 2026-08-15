@@ -1,0 +1,15 @@
+Tests:
+ unit,
+Depends:
+ libsystemd-dev,
+ python3-all,
+ python3-dnspython,
+ python3-pyinotify,
+ python3-setuptools,
+ python3-systemd,
+ sqlite3,
+ @,
+Restrictions:
+ allow-stderr,
+ build-needed,
+ needs-root,

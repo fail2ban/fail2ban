@@ -1,0 +1,4 @@
+#!/bin/sh
+
+set -e
+for py in $(py3versions -s); do $py bin/fail2ban-testcases --verbosity=2  --no-network 2>&1; done

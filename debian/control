@@ -1,28 +1,35 @@
 Source: fail2ban
 Section: net
-Priority: optional
 Maintainer: Sergey G. Brester <fail2ban@sebres.de>
 Uploaders: Sergey G. Brester <fail2ban@sebres.de>
 Build-Depends:
- debhelper (>= 9.20160709)
- , dh-python
- , python3
- , python3-setuptools
- , python3-pyinotify
- , sqlite3
- , 2to3
- , pkg-config
- , systemd
+ debhelper (>= 9.20160709),
+ pkgconf,
+ python3,
+ python3-pyinotify <!nocheck>,
+ python3-setuptools,
+ sqlite3 <!nocheck>,
+ systemd-dev,
 Homepage: https://www.fail2ban.org
 Vcs-Git: https://github.com/fail2ban/fail2ban.git
 Vcs-Browser: https://github.com/fail2ban/fail2ban
-Standards-Version: 4.6.1
+Standards-Version: 4.7.4
 
 Package: fail2ban
 Architecture: all
-Depends: ${python3:Depends}, ${misc:Depends}, python3-systemd
-Recommends: nftables | iptables, whois, python3-pyinotify
-Suggests: mailx, system-log-daemon, monit, sqlite3
+Depends:
+ python3-systemd,
+ ${misc:Depends},
+ ${python3:Depends},
+Recommends:
+ nftables | iptables,
+ python3-pyinotify,
+ whois,
+Suggests:
+ mailx,
+ monit,
+ sqlite3,
+ system-log-daemon,
 Description: ban hosts that cause multiple authentication errors
  Fail2ban monitors log files (e.g. /var/log/auth.log,
  /var/log/apache/access.log) and temporarily or persistently bans

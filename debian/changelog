@@ -5,6 +5,126 @@ fail2ban (1.1.1-1~upstream1) unstable; urgency=medium
 
  -- Sergey G. Brester <serg.brester@sebres.de>  Thu, 15 Aug 2026 17:00:30 +0200
 
+fail2ban (1.1.0-11) unstable; urgency=medium
+
+  * Team upload.
+  * Salsa CI: test nocheck profile
+  * Mark sqlite3 & python3-pyinotify as <!nocheck>
+  * Replace FSF postal address with a reference to https://www.gnu.org/...
+
+ -- Alexandre Detiste <tchet@debian.org>  Wed, 29 Jul 2026 11:51:23 +0200
+
+fail2ban (1.1.0-10) unstable; urgency=medium
+
+  * Team upload.
+
+  [ Cyril Brulebois ]
+  * Delete python3-setuptools from Recommends:
+     - It was added to fix runtime crashes (See: #1076494).
+     - The various references to distutils.version's LooseVersion were
+       removed (via replace-distutils.patch), rendering that obsolete
+       (See: #1104790).
+
+  [ Alexandre Detiste ]
+  * Bump Standards-Version to 4.7.4, drop Priority: tag
+  * Rewrite d/watch in v5 format
+  * Use dh-sequence-python3
+  * Rename files under debian/ for debhelper 14/15 compatibility
+  * Use dh-cruft to register & purge volatile files
+  * Add debian/salsa-ci.yml
+
+ -- Alexandre Detiste <tchet@debian.org>  Wed, 06 May 2026 14:36:05 +0200
+
+fail2ban (1.1.0-9) unstable; urgency=medium
+
+  * Team upload.
+  * Depend on python3-all in the autopkgtest.
+
+ -- Stefano Rivera <stefanor@debian.org>  Sun, 21 Dec 2025 16:14:58 -0400
+
+fail2ban (1.1.0-8) unstable; urgency=medium
+
+  * Team upload.
+
+  [ Sylvestre Ledru ]
+  * Add autopkgtest testing.  Thanks to Zaiba Sanglikar for the patch
+  * Remove patch deb_path_to_common. Thanks to Zaiba Sanglikar
+    for the patch
+
+  [ Colin Watson ]
+  * Revert patch to fail on any invalid ssh public key, since this would ban
+    legitimate users with multiple public keys.  See
+    https://github.com/fail2ban/fail2ban/issues/3922 for the rationale.
+
+  [ Antoine Beaupré ]
+  * Remove runtime calls to distutils, crashing in trixie (Closes: #1104790)
+
+  [ MichaIng ]
+  * Fix log identifier for OpenSSH 10.0.
+
+ -- Colin Watson <cjwatson@debian.org>  Fri, 09 May 2025 11:19:16 +0100
+
+fail2ban (1.1.0-7) unstable; urgency=medium
+
+  * Add python3-setuptools to the run time build deps
+    (Closes: #1076494)
+    Should be removed at some point when upstream removes the need
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Sun, 01 Sep 2024 08:40:14 +0200
+
+fail2ban (1.1.0-6) unstable; urgency=medium
+
+  * Adjust the ssh configuration to work with openssh 9.8
+    (closes: #1078208)
+    Thanks to Vincent Lefèvre for the patch
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Sat, 17 Aug 2024 07:40:22 +0100
+
+fail2ban (1.1.0-5) unstable; urgency=medium
+
+  * Follow upstream recommendation for ssh
+    See
+    https://github.com/fail2ban/fail2ban/issues/3747#issuecomment-2122420989
+    https://github.com/fail2ban/fail2ban/issues/3812
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Sun, 11 Aug 2024 11:59:06 +0200
+
+fail2ban (1.1.0-4) unstable; urgency=medium
+
+  * Fix spurious ">" character in paths-debian.conf
+    (Fixes: #1071829)
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Sat, 25 May 2024 12:06:07 +0200
+
+fail2ban (1.1.0-3) unstable; urgency=medium
+
+  * Restore the use of nftables and, for some jails,
+    the systemd backend.
+    Many thanks to Vincent Lefevre
+    (Closes: #1070677)
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Sat, 25 May 2024 08:34:39 +0200
+
+fail2ban (1.1.0-2) unstable; urgency=medium
+
+  * Fix Build-Depends: pkg-config => pkgconf
+  * Switch Build-Depends to systemd-dev
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 16 May 2024 09:56:41 +0200
+
+fail2ban (1.1.0-1) unstable; urgency=medium
+
+  * New upstream release
+    (LP: #2055114)
+  * Block ssh invalid keys too (Closes: #1038779)
+  * Follow upstream advice
+    https://github.com/fail2ban/fail2ban/issues/3292#issuecomment-2078361360
+    to only have sshd as enabled = true in jail.d_defaults-debian.conf
+  * Update lintian override info format in d/source/lintian-overrides on line 1-2.
+  * Update standards version to 4.6.2, no changes needed.
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 02 May 2024 13:57:06 +0200
+
 fail2ban (1.1.0-1~upstream1) unstable; urgency=medium
 
   [ Sergey Brester ]
