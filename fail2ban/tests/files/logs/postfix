@@ -154,6 +154,9 @@ Jan 14 16:18:16 xxx postfix/smtpd[14933]: warning: host[192.0.2.5]: SASL CRAM-MD
 # failJSON: { "time": "2004-11-04T09:11:01", "match": true , "host": "192.0.2.152", "user": "admin", "desc": "reason unavailable" }
 Nov  4 09:11:01 mail postfix/smtpd[1234]: warning: unknown[192.0.2.152]: SASL LOGIN authentication failed: (reason unavailable), sasl_username=admin
 
+# failJSON: { "match": true , "host": "192.0.2.44", "desc": "hostname does not resolve to address, aggressive only (gh-4078)" }
+Aug 14 10:00:01 mail postfix/smtpd[1234]: warning: hostname bad.example.com does not resolve to address 192.0.2.44: Name or service not known
+
 # ---------------------------------------
 # Test-cases of postfix DDOS mode:
 # ---------------------------------------

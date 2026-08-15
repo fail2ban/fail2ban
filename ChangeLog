@@ -65,6 +65,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   - add optional `NOQUEUE:` prefix to ddos regex (gh-4072)
   - internal parameter `_pref` is renamed to `_cmd`, `_pref` matches now optional prefix like `NOQUEUE: ` etc
   - modes `ddos` and `aggressive` extended to match `rate limit exceeded` for connection or message delivery request rates (gh-3265, gh-4073)
+  - modes `aggressive` extended to match `hostname does not resolve to address` (gh-4218, gh-4078)
 * `filter.d/dropbear.conf`:
   - recognizes extra pid/timestamp if logged into stdout/journal, added `journalmatch` (gh-3597)
   - failregex extended to match different format of "Exit before auth" message (gh-3791)
