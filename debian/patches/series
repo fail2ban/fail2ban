@@ -1,4 +1,3 @@
 deb_init_paths
 deb_manpages_reportbug
 0002-ENH-verify-that-use_stock_cfg-was-not-provided-while.patch
-update_backend_system.diff
