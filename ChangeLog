@@ -11,6 +11,7 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Fixes
+* `filter.d/nginx-botsearch.conf` - error-log regex extended with support of journal format (gh-3732)
 
 ### New Features and Enhancements
 
