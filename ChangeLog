@@ -16,6 +16,7 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
   the `cgi-bin` alternative required a following path segment so `/cgi-bin/` and `/cgi-bin` were not matched (gh-4217)
 
 ### New Features and Enhancements
+* `filter.d/cowrie.conf` - new filter and jail for Cowrie SSH/Telnet honeypot JSON log output (gh-4216)
 
 
 ver. 1.1.1 (2026/08/15) - triple-one-win
