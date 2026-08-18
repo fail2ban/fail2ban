@@ -122,6 +122,7 @@ ver. 1.1.1 (2026/08/15) - triple-one-win
 * `action.d/nftables.conf` (gh-3291):
   - new parameter `addr_options` for addr-set (default `flags interval\;`, allows to store CIDR or address ranges);
     can be set to empty value to create simple addresses set (restore previous behavior).
+* `action.d/ntfy.conf` - new action for sending push notifications with ntfy.sh
 * `action.d/firewallcmd-rich-*.conf` - fixed incorrect quoting, disabling port variable expansion
   by substitution of rich rule (gh-3815)
 * `filter.d/dovecot.conf`:
