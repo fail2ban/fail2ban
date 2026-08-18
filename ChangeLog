@@ -14,6 +14,7 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 * `filter.d/nginx-botsearch.conf` - error-log regex extended with support of journal format (gh-3732)
 
 ### New Features and Enhancements
+* `filter.d/cowrie.conf` - new filter and jail for Cowrie SSH/Telnet honeypot JSON log output (gh-4216)
 
 
 ver. 1.1.1 (2026/08/15) - triple-one-win
@@ -135,7 +136,6 @@ ver. 1.1.1 (2026/08/15) - triple-one-win
 * `filter.d/sendmail-reject.conf` - also recognize "Domain of sender address ... does not resolve" (gh-4035)
 * `filter.d/vaultwarden.conf` - new filter and jail for Vaultwarden (gh-3979)
 * `filter.d/xrdp.conf` - new filter for XRDP, an open source RDP server (gh-3254)
-* `filter.d/cowrie_json.conf` - new filter and jail for Cowrie SSH/Telnet honeypot JSON log output (gh-4216)
 * `fail2ban-regex` extended with new option `-i` or `--invert` to output not-matched lines by `-o` or `--out` (gh-4001)
 
 
