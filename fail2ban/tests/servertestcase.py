@@ -2411,3 +2411,4 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					ticket = _actions.Actions.ActionInfo(ticket, dmyjail)
 					action.ban(ticket)
 					self.assertLogged(*tests[test], all=True)
+
