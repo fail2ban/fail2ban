@@ -213,9 +213,10 @@ class Socket(LogCaptureTestCase):
 		presock.listen(5)
 		# dup to a fresh fd first (presock.fileno() might already be 3):
 		fd = os.dup(presock.fileno())
+		# keep backup fd to allow for shutdown test
+		self.addCleanup(os.close, fd)
 		presock.close()
 		os.dup2(fd, 3)
-		os.close(fd)
 
 		self.addCleanup(os.environ.pop, "LISTEN_PID", None)
 		self.addCleanup(os.environ.pop, "LISTEN_FDS", None)
@@ -237,6 +238,10 @@ class Socket(LogCaptureTestCase):
 		self.assertFalse(serverThread.is_alive())
 		# socket file is owned by the service manager, must not be removed:
 		self.assertTrue(os.path.exists(self.sock_name))
+
+		# socket is owned by the service manager, must not be shut down:
+		with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as csock:
+			csock.connect(self.sock_name)
 
 	def testSocketForce(self):
 		open(self.sock_name, 'w').close() # Create sock file
