@@ -14,6 +14,7 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 * `filter.d/nginx-botsearch.conf` - error-log regex extended with support of journal format (gh-3732)
 * `filter.d/apache-noscript.conf` - match a request for the `cgi-bin` directory itself (no script name after it),
   the `cgi-bin` alternative required a following path segment so `/cgi-bin/` and `/cgi-bin` were not matched (gh-4217)
+* sockets passed via `systemd` socket activation (`sd_listen_fds(3)`) are not shut down anymore
 
 ### New Features and Enhancements
 * `filter.d/cowrie.conf` - new filter and jail for Cowrie SSH/Telnet honeypot JSON log output (gh-4216)

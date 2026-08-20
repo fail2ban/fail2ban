@@ -201,6 +201,7 @@ class AsyncServer(asyncore.dispatcher):
 		asyncore.dispatcher.__init__(self)
 		self.__transmitter = transmitter
 		self.__sock = "/var/run/fail2ban/fail2ban.sock"
+		self.__shutdown_socket = True
 		self.__init = False
 		self.__active = False
 		self.__errCount = {'accept': 0, 'listen': 0}
@@ -249,6 +250,8 @@ class AsyncServer(asyncore.dispatcher):
 			os.environ.pop("LISTEN_FDS", None)
 			os.environ.pop("LISTEN_FDNAMES", None)
 			logSys.info("Using socket activation, inherited socket %r", sock)
+			# prevent socket from being shut down on close
+			self.__shutdown_socket = False
 			self.set_socket(socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, fileno=3 + idx))
 			self.socket.setblocking(False)
 			self.accepting = True
@@ -298,7 +301,7 @@ class AsyncServer(asyncore.dispatcher):
 		if self.__active:
 			self.__loop = False
 			# shutdown socket here:
-			if self.socket:
+			if self.__shutdown_socket and self.socket:
 				try:
 					self.socket.shutdown(socket.SHUT_RDWR)
 				except socket.error: # pragma: no cover - normally unreachable
