@@ -8,6 +8,8 @@ PartOf=iptables.service firewalld.service ip6tables.service ipset.service nftabl
 Type=simple
 Environment="PYTHONNOUSERSITE=1"
 RuntimeDirectory=fail2ban
+# prevents socket created by fail2ban.socket from being removed
+RuntimeDirectoryPreserve=yes
 StateDirectory=fail2ban
 ExecStart=@BINDIR@/fail2ban-server -xf start
 # if should be logged in systemd journal, use following line or set logtarget to sysout in fail2ban.local
