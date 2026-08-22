@@ -15,6 +15,8 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 * `filter.d/apache-noscript.conf` - match a request for the `cgi-bin` directory itself (no script name after it),
   the `cgi-bin` alternative required a following path segment so `/cgi-bin/` and `/cgi-bin` were not matched (gh-4217)
 * sockets passed via `systemd` socket activation (`sd_listen_fds(3)`) are not shut down or removed anymore (gh-4225)
+* `paths-*.conf`: add default banactions for several includes depending on default net-filter for distribution (gh-4224, gh-4229):
+  `paths-arch.conf`, `paths-fedora.conf`, `paths-opensuse.conf` - nftables, `paths-freebsd.conf`, `paths-osx.conf ` - pf;
 
 ### New Features and Enhancements
 * `filter.d/cowrie.conf` - new filter and jail for Cowrie SSH/Telnet honeypot JSON log output (gh-4216)
