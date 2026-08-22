@@ -26,6 +26,7 @@ from ..server.mytime import MyTime
 import unittest
 
 from ..server.ticket import Ticket, FailTicket, BanTicket
+from ..server.ipdns import IPAddr
 
 
 class TicketTests(unittest.TestCase):
@@ -39,7 +40,9 @@ class TicketTests(unittest.TestCase):
 
     # Ticket
     t = Ticket('193.168.0.128', tm, matches)
+    self.assertIsInstance(t.getID(), str)
     self.assertEqual(t.getID(), '193.168.0.128')
+    self.assertIsInstance(t.getIP(), IPAddr)
     self.assertEqual(t.getIP(), '193.168.0.128')
     self.assertEqual(t.getTime(), tm)
     self.assertEqual(t.getMatches(), matches2)
@@ -61,12 +64,18 @@ class TicketTests(unittest.TestCase):
     self.assertFalse(t.isTimedOut(tm + 60 + 1))
     t.setBanTime(60)
 
+    # wrong id type causes error
+    with self.assertRaises(TypeError):
+        Ticket(id=123)
+
     # BanTicket
     tm = MyTime.time()
     matches = ['first', 'second']
     ft = FailTicket('193.168.0.128', tm, matches)
     ft.setBanTime(60*60)
+    self.assertIsInstance(t.getID(), str)
     self.assertEqual(ft.getID(), '193.168.0.128')
+    self.assertIsInstance(t.getIP(), IPAddr)
     self.assertEqual(ft.getIP(), '193.168.0.128')
     self.assertEqual(ft.getTime(), tm)
     self.assertEqual(ft.getMatches(), matches2)
@@ -110,6 +119,8 @@ class TicketTests(unittest.TestCase):
     # copy all from another ticket:
     ft2 = FailTicket(ticket=ft)
     self.assertEqual(ft, ft2)
+    self.assertEqual(ft.getID(), ft2.getID())
+    self.assertEqual(ft.getIP(), ft2.getIP())
     self.assertEqual(ft.getData(), ft2.getData())
     self.assertEqual(ft2.getAttempt(), 4)
     self.assertEqual(ft2.getRetry(), 7)
@@ -122,12 +133,27 @@ class TicketTests(unittest.TestCase):
     tm = MyTime.time()
     # different ID (string) and IP:
     t = Ticket('123-456-678', tm, data={'ip':'192.0.2.1'})
+    self.assertIsInstance(t.getID(), str)
     self.assertEqual(t.getID(), '123-456-678')
+    self.assertIsInstance(t.getIP(), IPAddr)
     self.assertEqual(t.getIP(), '192.0.2.1')
     # different ID (tuple) and IP:
     t = Ticket(('192.0.2.1', '5000'), tm, data={'ip':'192.0.2.1'})
+    self.assertIsInstance(t.getID(), tuple)
+    self.assertIsInstance(t.getID()[0], str)
+    self.assertIsInstance(t.getID()[1], str)
     self.assertEqual(t.getID(), ('192.0.2.1', '5000'))
+    self.assertIsInstance(t.getIP(), IPAddr)
     self.assertEqual(t.getIP(), '192.0.2.1')
+
+    # invalid ip type causes an error
+    with self.assertRaises(TypeError):
+        Ticket('123-456-789', tm, data={'ip':192021})
+
+    # no IPAddr causes an error
+    t = Ticket(('192.0.2.1', '5000'), tm, data={})
+    with self.assertRaises(ValueError):
+        t.getIP()
 
   def testTicketFlags(self):
     flags = ('restored', 'banned')
