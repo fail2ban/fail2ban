@@ -126,7 +126,6 @@ class SMTPAction(ActionBase):
 		self.message_values = CallingMap(
 			jailname = self._jail.name,
 			hostname = socket.gethostname,
-			bantime = lambda: self._jail.actions.getBanTime(),
 			)
 
 		# bypass ban/unban for restored tickets

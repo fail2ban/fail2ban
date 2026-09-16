@@ -27,6 +27,8 @@ import importlib
 
 from ..dummyjail import DummyJail
 from ..utils import CONFIG_DIR, asyncserver, Utils, uni_decode
+from ...server.actions import Actions
+from ...server.ticket import BanTicket
 
 
 class _SMTPActionTestCase():
@@ -63,6 +65,7 @@ class _SMTPActionTestCase():
 		aInfo = {
 			'ip': "127.0.0.2",
 			'failures': 3,
+			'bantime': self.jail.actions.getBanTime(),
 			'matches': "Test fail 1\n",
 			'ipjailmatches': "Test fail 1\nTest Fail2\n",
 			'ipmatches': "Test fail 1\nTest Fail2\nTest Fail3\n",
@@ -96,6 +99,17 @@ class _SMTPActionTestCase():
 	
 	def testBan(self):
 		self._testBan()
+
+	def testBanTime(self):
+		self.jail.actions.setBanTime(600)
+		for bantime, expected in ((None, 600), (3600, 3600), (-1, -1)):
+			with self.subTest(bantime=bantime):
+				ticket = BanTicket('127.0.0.2')
+				ticket.setBanTime(bantime)
+				aInfo = Actions.ActionInfo(ticket, self.jail)
+				self._exec_and_wait(lambda: self.action.ban(aInfo))
+				self.assertIn('banned for %i seconds' % expected, self.smtpd.data)
+				self.assertEqual(aInfo['bantime'], expected)
 
 	def testNOPByRestored(self):
 		self._testBan(restored=True)
