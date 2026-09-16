@@ -371,6 +371,16 @@ action = smtp.py[dest=chris@example.com, actname=smtp-chris]
          smtp.py[dest=sally@example.com, actname=smtp-sally]
 .fi
 
+The Python SMTP action accepts \fBban_delay\fR to enable batching. The default is zero, which sends each ban immediately. For example:
+.PP
+.nf
+action = smtp.py[host=localhost:25, dest=admin@example.com, ban_delay=10, ban_age=2, ban_count=20]
+.fi
+.PP
+With batching enabled, a ban becomes eligible after \fBban_age\fR seconds (default 2), or when its prolongation is reported. A background worker sends eligible bans together when \fBban_count\fR (default 20) is reached or \fBban_delay\fR seconds have elapsed since the previous batch. The first interval starts when the worker starts. Young tickets remain queued even when the interval expires. Age and delay must be finite, non-negative seconds; count must be a positive integer.
+.PP
+Ticket values are evaluated when sending. Age alone does not guarantee that the observer has finished increasing the ban duration. Pending bans are flushed together before the stop notification. Delivery failures are logged and are not retried.
+
 .SH "TIME ABBREVIATION FORMAT"
 The time entries in fail2ban configuration (like \fBfindtime\fR or \fBbantime\fR) can be provided as integer in seconds or as string using special abbreviation format (e. g. \fB600\fR is the same as \fB10m\fR).
 
