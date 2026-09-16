@@ -11,3 +11,5 @@ __pycache__
 .vagrant/
 .idea/
 .venv/
+bin/fail2ban-python
+fail2ban.egg-info/*
