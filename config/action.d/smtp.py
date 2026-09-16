@@ -77,7 +77,9 @@ class SMTPAction(ActionBase):
 
 	def __init__(
 		self, jail, name, host="localhost", ssl=False, user=None, password=None,
-		sendername="Fail2Ban", sender="fail2ban", dest="root", matches=None):
+		sendername="Fail2Ban", sender="fail2ban", dest="root", matches=None,
+		ban_subject="[Fail2Ban] %(jailname)s: banned %(ip)s from %(hostname)s",
+		ban_message=None):
 		"""Initialise action.
 
 		Parameters
@@ -107,6 +109,16 @@ class SMTPAction(ActionBase):
 			Type of matches to be included from ban in email. Can be one
 			of "matches", "ipmatches" or "ipjailmatches". Default None
 			(see man jail.conf.5).
+		ban_subject : str, optional
+			Ban email subject using Python mapping interpolation, e.g. %(ip)s.
+		ban_message : str, optional
+			Complete ban email body using the same interpolation. Default None
+			uses the standard message and the matches option. A custom body
+			must include its own matches placeholder if desired.
+			Templates can reference action information such as ip, time (Unix
+			timestamp), bantime, bancount, failures, ip-host and matches, plus
+			jailname and hostname. Values are evaluated only when referenced.
+			Escape percent signs as %% in jail configuration files.
 		"""
 
 		super(SMTPAction, self).__init__(jail, name)
@@ -122,6 +134,8 @@ class SMTPAction(ActionBase):
 		self.toaddr = dest
 
 		self.matches = matches
+		self.ban_subject = ban_subject
+		self.ban_message = ban_message
 
 		self.message_values = CallingMap(
 			jailname = self._jail.name,
@@ -229,14 +243,15 @@ class SMTPAction(ActionBase):
 		if aInfo.get('restored'):
 			return
 		aInfo.update(self.message_values)
-		message = "".join([
-			messages['ban']['head'],
-			messages['ban'].get(self.matches, ""),
-			messages['ban']['tail']
-			])
+		message = self.ban_message
+		if message is None:
+			message = "".join([
+				messages['ban']['head'],
+				messages['ban'].get(self.matches, ""),
+				messages['ban']['tail']
+				])
 		self._sendMessage(
-			"[Fail2Ban] %(jailname)s: banned %(ip)s from %(hostname)s" %
-				aInfo,
+			self.ban_subject % aInfo,
 			message % aInfo)
 
 Action = SMTPAction
