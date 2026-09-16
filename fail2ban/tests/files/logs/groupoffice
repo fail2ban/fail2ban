@@ -1,4 +1,4 @@
-# failJSON: { "time": "2014-01-06T10:59:38", "match": true, "host": "127.0.0.1" }
-[2014-01-06 10:59:38]LOGIN FAILED for user: "asdsad" from IP: 127.0.0.1
-# failJSON: { "time": "2014-01-06T10:59:49", "match": false, "host": "127.0.0.1" }
-[2014-01-06 10:59:49]LOGIN SUCCESS for user: "admin" from IP: 127.0.0.1
+# failJSON: { "time": "2024-03-26T07:59:08", "match": true, "host": "192.168.65.1" }
+localhost [Tue Mar 26 07:59:08 2024] [notice] [pid 1662] [client 192.168.65.1:17672] Password authentication failed for '192.168.100.100' from IP: '192.168.65.1'
+# failJSON: { "time": "2024-03-26T08:17:24", "match": false, "host": "192.168.65.1" }
+localhost [Tue Mar 26 08:17:24 2024] [notice] [pid 90] [client 192.168.65.1:17733] Lost password request from IP: '192.168.65.1'
