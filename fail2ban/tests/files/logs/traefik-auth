@@ -107,3 +107,24 @@
 # filterOptions: [{"logtype": "json", "mode": "normal"}, {"logtype": "json", "mode": "aggressive"}]
 # failJSON: {"match": true, "time": "2018-11-18T22:34:34", "host": "192.0.2.1", "user": "-alice", "desc": "Whitespace, username beginning with a dash, timestamp without fractions"}
 { "StartUTC" : "2018-11-18T21:34:34Z", "RequestMethod" : "GET", "ClientUsername" : "-alice", "ClientHost" : "192.0.2.1", "DownstreamStatus" : 401 }
+
+# Common-format logs captured from Traefik 3.6 with BasicAuth.
+# filterOptions: [{"mode": "normal"}, {"mode": "aggressive"}]
+# failJSON: {"time": "2026-09-16T12:12:35", "match": true, "host": "172.17.0.1", "user": "user name"}
+172.17.0.1 - user name [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 401 17 "-" "-" 4 "test@file" "-" 0ms
+# failJSON: {"time": "2026-09-16T12:12:35", "match": true, "host": "172.17.0.1", "user": "unknown"}
+172.17.0.1 - unknown [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 401 17 "-" "-" 3 "test@file" "-" 0ms
+# failJSON: {"match": false}
+172.17.0.1 - test [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 200 2 "-" "-" 6 "test@file" "-" 0ms
+
+# Synthetic regressions for username boundaries and request data.
+# failJSON: {"time": "2026-09-16T12:12:35", "match": true, "host": "2001:db8::1", "user": "- user name"}
+2001:db8::1 - - user name [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 401 17 "-" "-" 1 "test@file" "-" 0ms
+# failJSON: {"time": "2026-09-16T12:12:35", "match": true, "host": "172.17.0.1", "user": "user[name]"}
+172.17.0.1 - user[name] [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 401 17 "-" "-" 1 "test@file" "-" 0ms
+# failJSON: {"match": false}
+172.17.0.1 - user name [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 200 2 "-" "fake [] \"GET / HTTP/1.1\" 401" 1 "test@file" "-" 0ms
+
+# filterOptions: [{"mode": "ddos"}]
+# failJSON: {"match": false}
+172.17.0.1 - user name [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 401 17 "-" "-" 4 "test@file" "-" 0ms
