@@ -201,6 +201,7 @@ class AsyncServer(asyncore.dispatcher):
 		asyncore.dispatcher.__init__(self)
 		self.__transmitter = transmitter
 		self.__sock = "/var/run/fail2ban/fail2ban.sock"
+		self.__shutdown_socket = True
 		self.__init = False
 		self.__active = False
 		self.__errCount = {'accept': 0, 'listen': 0}
@@ -236,35 +237,56 @@ class AsyncServer(asyncore.dispatcher):
 		# Creates an instance of the handler class to handle the
 		# request/response on the incoming connection.
 		RequestHandler(conn, self.__transmitter)
-	
+
+	def setup_socket(self, sock, force):
+		nfds = os.environ.get("LISTEN_FDS")
+		if nfds and os.environ.get("LISTEN_PID") == str(os.getpid()):
+			# systemd socket activation (sd_listen_fds(3)): reuse an inherited,
+			# already bound and listening socket instead of creating our own.
+			names = os.environ.get("LISTEN_FDNAMES", "").split(":")
+			idx = names.index("fail2ban") if "fail2ban" in names else 0
+			idx = min(idx, int(nfds) - 1)
+			os.environ.pop("LISTEN_PID", None)
+			os.environ.pop("LISTEN_FDS", None)
+			os.environ.pop("LISTEN_FDNAMES", None)
+			logSys.info("Using socket activation, inherited socket %r", sock)
+			# prevent socket from being shut down on close
+			self.__shutdown_socket = False
+			self.set_socket(socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, fileno=3 + idx))
+			self.socket.setblocking(False)
+			self.accepting = True
+		else:
+			# Remove socket
+			if os.path.exists(sock):
+				logSys.error("Fail2ban seems to be already running")
+				if force:
+					logSys.warning("Forcing execution of the server")
+					self._remove_sock()
+				else:
+					raise AsyncServerException("Server already running")
+			# Creates the socket.
+			self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
+			self.set_reuse_addr()
+			try:
+				self.bind(sock)
+			except Exception: # pragma: no cover
+				raise AsyncServerException("Unable to bind socket %s" % self.__sock)
+			self.listen(1)
+			# Sets the init flag.
+			self.__init = True
+		AsyncServer.__markCloseOnExec(self.socket)
+
 	##
 	# Starts the communication server.
 	#
 	# @param sock: socket file.
 	# @param force: remove the socket file if exists.
-	
+
 	def start(self, sock, force, timeout=None, use_poll=False):
 		self.__worker = threading.current_thread()
 		self.__sock = sock
-		# Remove socket
-		if os.path.exists(sock):
-			logSys.error("Fail2ban seems to be already running")
-			if force:
-				logSys.warning("Forcing execution of the server")
-				self._remove_sock()
-			else:
-				raise AsyncServerException("Server already running")
-		# Creates the socket.
-		self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
-		self.set_reuse_addr()
-		try:
-			self.bind(sock)
-		except Exception: # pragma: no cover
-			raise AsyncServerException("Unable to bind socket %s" % self.__sock)
-		AsyncServer.__markCloseOnExec(self.socket)
-		self.listen(1)
-		# Sets the init flag.
-		self.__init = self.__loop = self.__active = True
+		self.setup_socket(sock, force)
+		self.__loop = self.__active = True
 		# Execute on start event (server ready):
 		if self.onstart:
 			self.onstart()
@@ -279,7 +301,7 @@ class AsyncServer(asyncore.dispatcher):
 		if self.__active:
 			self.__loop = False
 			# shutdown socket here:
-			if self.socket:
+			if self.__shutdown_socket and self.socket:
 				try:
 					self.socket.shutdown(socket.SHUT_RDWR)
 				except socket.error: # pragma: no cover - normally unreachable

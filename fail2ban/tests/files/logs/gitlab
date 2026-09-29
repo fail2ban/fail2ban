@@ -3,3 +3,14 @@
 2020-04-09T14:04:00.667Z: Failed Login: username=admin ip=80.10.11.12
 # failJSON: { "time": "2020-04-09T16:15:09", "match": true , "host": "80.10.11.12" }
 2020-04-09T14:15:09.344Z: Failed Login: username=user name ip=80.10.11.12
+
+# Access of unauthorized host in /var/log/gitlab/gitlab-rails/application_json.log
+# filterOptions: [{"logtype": "json"}]
+
+# failJSON: { "time": "2023-08-25T13:25:19", "match": true , "host": "87.250.224.11" }
+{"severity":"INFO","time":"2023-08-25T11:25:19.979Z","correlation_id":"01H8P721YTW1YH5Q7YCSJPVJ5T","meta.caller_id":"SessionsController#new","meta.remote_ip":"87.250.224.11","meta.feature_category":"system_access","meta.client_id":"ip/87.250.224.11","message":"Failed Login: username=admin ip=87.250.224.11"}
+# failJSON: { "time": "2023-08-25T13:31:07", "match": true , "host": "2001:db8::1" }
+{"severity":"INFO","time":"2023-08-25T11:31:07.512Z","correlation_id":"01H8P73ABCDEF1234567890ABCD","meta.caller_id":"SessionsController#new","meta.remote_ip":"2001:db8::1","meta.feature_category":"system_access","meta.client_id":"ip/2001:db8::1","message":"Failed Login: username=git ip=2001:db8::1"}
+# a successful login must not match
+# failJSON: { "match": false }
+{"severity":"INFO","time":"2023-08-25T11:55:10.525Z","correlation_id":"01H8P8RPMVW53W0KWEN2H2DNF4","meta.caller_id":"SessionsController#create","meta.remote_ip":"203.0.113.9","meta.feature_category":"system_access","meta.user":"admin","meta.user_id":2,"meta.client_id":"user/2","message":"Successful Login: username=admin ip=203.0.113.9 method=standard admin=true"}

@@ -7,6 +7,14 @@
 # failJSON: { "time": "2016-11-07T22:21:20", "match": true , "host": "1.2.3.4" }
 2016-11-07 22:21:20   smtp: postmaster [1.2.3.4] authentication failure using internet password
 
+# failJSON: { "time": "2016-11-07T22:21:21", "match": true , "host": "192.0.2.4", "user": "user with space in name" }
+2016-11-07 22:21:21   smtp: user with space in name [192.0.2.4] authentication failure using internet password
+
+# failJSON: { "time": "2016-11-07T22:21:22", "match": true , "host": "192.0.2.5", "desc": "GHSA-33wh-ccjc-p397, positive case (match, no hangs)" }
+2016-11-07 22:21:22   smtp: A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A 192.0.2.5 authentication failure using internet password
+# failJSON: { "match": false, "desc": "GHSA-33wh-ccjc-p397, negative case (bypass, no hangs)" }
+2016-11-07 22:21:23   smtp: A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A 192.0.2.5
+
 # failJSON: { "time": "2018-09-19T17:25:50", "match": true , "host": "192.0.2.1", "desc":"different log-format" }
 2018-09-19 17:25:50   SMTP Server [0D14:0027-1334] Authentication failed for user Bad Hacker ; connecting host [192.0.2.1]
 # failJSON: { "time": "2018-09-19T17:25:52", "match": true , "host": "192.0.2.2", "desc":"gh-2228, rejected for policy reasons" }

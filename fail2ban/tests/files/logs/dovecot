@@ -144,6 +144,11 @@ Aug 30 00:10:57 auth(info@example.com,192.0.2.110,sasl:login)<CvN+E95Uf4e7eEnj>:
 # failJSON: { "time": "2004-08-30T00:11:05", "match": true , "host": "192.0.2.110", "desc": "closed after 3 attempts (password mismatch), gh-4196" }
 Aug 30 00:11:05 imap-login: Info: Login aborted: Connection closed (auth failed, 3 attempts in 16 secs) (auth_failed): user=<info@example.com>, method=PLAIN, rip=192.0.2.110, lip=0.0.0.0, TLS, session=<CvN+E95Uf4e7eEnj>
 
+# failJSON: { "time": "2004-08-31T16:06:05", "match": true , "host": "192.0.2.111", "desc": "GHSA-33wh-ccjc-p397, positive case (match, no hangs)" }
+Aug 31 16:06:05 s166-62-100-187 dovecot: imap-login: Disconnected: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: (reason: some unknown reason) (tried to use disallowed test auth): user=<>, rip=192.0.2.111
+# failJSON: { "match": false , "desc": "GHSA-33wh-ccjc-p397, negative case (bypass, no hangs)" }
+Aug 31 16:06:06 s166-62-100-187 dovecot: imap-login: Disconnected: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: test no match
+
 # ---------------------------------------
 # Test-cases of aggressive mode:
 # ---------------------------------------

@@ -1,0 +1,12 @@
+[Unit]
+Description=Fail2Ban Socket
+Documentation=man:fail2ban(1)
+
+[Socket]
+ListenStream=%t/fail2ban/fail2ban.sock
+FileDescriptorName=fail2ban
+SocketMode=0600
+RuntimeDirectory=fail2ban
+
+[Install]
+WantedBy=sockets.target

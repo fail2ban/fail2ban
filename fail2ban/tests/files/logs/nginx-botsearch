@@ -33,3 +33,11 @@
 
 # failJSON: { "time": "2015-01-21T15:02:27", "match": true , "host": "5.7.9.2" }
 2015/01/21 15:02:27 [error] 2833#0: *16813 "/var/www/site/roundcube/" is not found (2: No such file or directory), client: 5.7.9.2, server: localhost, request: "GET /roundcube/ HTTP/1.1", host: "1.2.3.4"
+
+# filterOptions: [{"logtype": "journal"}]
+
+# failJSON: { "match": true, "host": "5.7.9.2", "desc": "systemd journal message, gh-3732" }
+host nginx[2833]: 2015/01/21 10:56:10 [error] 2833#0: *16336 open() "/var/www/site/cgi-bin/php4" failed (2: No such file or directory), client: 5.7.9.2, server: localhost, request: "GET /cgi-bin/php4 HTTP/1.1", host: "1.2.3.4"
+
+# failJSON: { "match": true, "host": "5.7.9.2", "desc": "systemd journal message, is not found variant, gh-3732" }
+host nginx[2833]: 2015/01/21 15:02:27 [error] 2833#0: *16813 "/var/www/site/roundcube/" is not found (2: No such file or directory), client: 5.7.9.2, server: localhost, request: "GET /roundcube/ HTTP/1.1", host: "1.2.3.4"

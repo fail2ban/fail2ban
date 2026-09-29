@@ -80,7 +80,7 @@ class install_scripts_f2b(install_scripts):
 		except: # pragma: no cover
 			print('WARNING: Cannot find root-base option, check the bin-path to fail2ban-scripts in "fail2ban.service" and "fail2ban-openrc.init".')
 
-		scripts = ['fail2ban.service', 'fail2ban-openrc.init']
+		scripts = ['fail2ban.service', 'fail2ban.socket', 'fail2ban-openrc.init']
 		for script in scripts:
 			print(('Creating %s/%s (from %s.in): @BINDIR@ -> %s' % (buildroot, script, script, install_dir)))
 			with open(os.path.join(source_dir, 'files/%s.in' % script), 'r') as fn:
@@ -294,5 +294,6 @@ if sys.argv[1] == "install":
 	print("They are in \"/etc/fail2ban/\".")
 	print("")
 	print("You can also install systemd service-unit file from \"build/fail2ban.service\"")
+	print("(optionally paired with \"build/fail2ban.socket\" to enable socket activation)")
 	print("resp. corresponding init script from \"files/*-initd\".")
 	print("")

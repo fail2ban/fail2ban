@@ -7,7 +7,24 @@
 Fail2Ban: Changelog
 ===================
 
-ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
+ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
+-----------
+
+### Fixes
+* `filter.d/nginx-botsearch.conf` - error-log regex extended with support of journal format (gh-3732)
+* `filter.d/apache-noscript.conf` - match a request for the `cgi-bin` directory itself (no script name after it),
+  the `cgi-bin` alternative required a following path segment so `/cgi-bin/` and `/cgi-bin` were not matched (gh-4217)
+* sockets passed via `systemd` socket activation (`sd_listen_fds(3)`) are not shut down or removed anymore (gh-4225)
+* `paths-*.conf`: add default banactions for several includes depending on default net-filter for distribution (gh-4224, gh-4229):
+  `paths-arch.conf`, `paths-fedora.conf`, `paths-opensuse.conf` - nftables, `paths-freebsd.conf`, `paths-osx.conf ` - pf;
+
+### New Features and Enhancements
+* `filter.d/cowrie.conf` - new filter and jail for Cowrie SSH/Telnet honeypot JSON log output (gh-4216)
+* `filter.d/gitlab.conf` - `logtype` option `json` adding support for the `application_json.log` format that
+  superseded the deprecated `application.log`; default type `file` keeps the previous behaviour (gh-3566, gh-4230)
+
+
+ver. 1.1.1 (2026/08/15) - triple-one-win
 -----------
 
 ### Compatibility
@@ -18,6 +35,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   to use it as before set `mode = more` for exim jail, but be aware of the consequences.
 
 ### Fixes
+* fixes catastrophic backtracking explosion for REs in domino-smtp and dovecot filters (GHSA-33wh-ccjc-p397, gh-4221)
 * fixes `systemd` bug with missing journal descriptor after rotation by reopening of journal if it is recognized as not alive (gh-3929)
 * improve threaded clean-up of all filters, new thread functions `afterStop` (to force clean-up after stop) and `done`, invoking `afterStop` once
 * ensure journal-reader is always closed (additional prevention against leaks and "too many open files"), thereby avoid sporadic segfault
@@ -65,6 +83,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
   - add optional `NOQUEUE:` prefix to ddos regex (gh-4072)
   - internal parameter `_pref` is renamed to `_cmd`, `_pref` matches now optional prefix like `NOQUEUE: ` etc
   - modes `ddos` and `aggressive` extended to match `rate limit exceeded` for connection or message delivery request rates (gh-3265, gh-4073)
+  - modes `aggressive` extended to match `hostname does not resolve to address` (gh-4218, gh-4078)
 * `filter.d/dropbear.conf`:
   - recognizes extra pid/timestamp if logged into stdout/journal, added `journalmatch` (gh-3597)
   - failregex extended to match different format of "Exit before auth" message (gh-3791)
@@ -83,6 +102,7 @@ ver. 1.1.1-dev-1 (20??/??/??) - development nightly edition
 * `filter.d/froxlor-auth.conf` - updated the regex to the new logging situation for froxlor and changed logpath in jail.conf (gh-4075).	
 
 ### New Features and Enhancements
+* `fail2ban-server` supports `systemd` socket activation (`sd_listen_fds(3)`); optional `fail2ban.socket` unit provided
 * backend `systemd` extended with new parameter `rotated` (default `false`, as prevention against "too many open files"),
   that allows to monitor only actual journals and ignore now a lot of rotated files by default; so can drastically reduce
   amount of used file descriptors, normally to 1 or 2 descriptors per jail (gh-3391)

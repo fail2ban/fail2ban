@@ -23,6 +23,7 @@ __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import os
+import threading
 import time
 
 from glob import glob
@@ -60,11 +61,11 @@ def _globJournalFiles(flags=None, path=None):
 		"""add journal files to set corresponding path and flags (without rotated *@*.journal)"""
 		# system journal:
 		if (flags is None) or (flags & journal.SYSTEM_ONLY):
-			filesSet |= set(glob(_join(p,'system.journal'))) - set(glob(_join(p,'system*@*.journal')))
+			filesSet |= set(glob(_join(p,'system.journal')))
 		# current user-journal:
 		if (flags is not None) and (flags & journal.CURRENT_USER):
 			uid = os.geteuid()
-			filesSet |= set(glob(_join(p,('user-%s.journal' % uid)))) - set(glob(_join(p,('user-%s@*.journal' % uid))))
+			filesSet |= set(glob(_join(p,('user-%s.journal' % uid))))
 		# all local journals:
 		if (flags is None) or not (flags & (journal.SYSTEM_ONLY|journal.CURRENT_USER)):
 			filesSet |= set(glob(_join(p,'*.journal'))) - set(glob(_join(p,'*@*.journal')))
@@ -102,6 +103,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		JournalFilter.__init__(self, jail, **kwargs)
 		self.__modified = 0
 		# Initialise systemd-journal connection
+		self.__lock = threading.Lock()
 		self.__journal = journal.Reader(**self.__jrnlargs)
 		self.__matches = []
 		self.__bypassInvalidateMsg = 0
@@ -170,7 +172,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		"""
 		try:
 			# open?
-			if self.__journal.closed: # pragma: no cover
+			if not self.__journal or self.__journal.closed: # pragma: no cover
 				return False
 			# has cursor? if it is broken (e. g. no descriptor) - it'd raise this:
 			# OSError: [Errno 99] Cannot assign requested address
@@ -196,10 +198,10 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 					ja.get('flags', 0), ja.get('path'), ja.get('files'), ja.get('namespace'))
 			except:
 				# cannot reopen in that way, so simply recreate reader:
-				self.closeJournal()
+				self._closeJournal()
 				self.__journal = journal.Reader(**self.__jrnlargs)
 		# restore journalmatch specified for the jail:
-		self.resetJournalMatches()
+		self._resetJournalMatches()
 		# just to avoid "Invalidate signaled" happening again after reopen:
 		self.__bypassInvalidateMsg = MyTime.time() + 1
 
@@ -226,28 +228,32 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	# @param match journalctl syntax matches in list structure
 
 	def addJournalMatch(self, match):
-		newMatches = [[]]
-		for match_element in match:
-			if match_element == "+":
-				newMatches.append([])
+		with self.__lock:
+			if not self.__journal or self.__journal.closed:
+				return
+			newMatches = [[]]
+			for match_element in match:
+				if match_element == "+":
+					newMatches.append([])
+				else:
+					newMatches[-1].append(match_element)
+			try:
+				self._addJournalMatches(newMatches)
+			except ValueError:
+				logSys.error(
+					"Error adding journal match for: %r", " ".join(match))
+				self._resetJournalMatches()
+				raise
 			else:
-				newMatches[-1].append(match_element)
-		try:
-			self._addJournalMatches(newMatches)
-		except ValueError:
-			logSys.error(
-				"Error adding journal match for: %r", " ".join(match))
-			self.resetJournalMatches()
-			raise
-		else:
-			logSys.info("[%s] Added journal match for: %r", self.jailName, 
-				" ".join(match))
+				logSys.info("[%s] Added journal match for: %r", self.jailName, 
+					" ".join(match))
+
 	##
 	# Reset a journal match filter called on removal or failure
 	#
 	# @return None 
 
-	def resetJournalMatches(self):
+	def _resetJournalMatches(self):
 		self.__journal.flush_matches()
 		logSys.debug("[%s] Flushed all journal matches", self.jailName)
 		match_copy = self.__matches[:]
@@ -266,19 +272,22 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	# @param match journalctl syntax matches
 
 	def delJournalMatch(self, match=None):
-		# clear all:
-		if match is None:
-			if not self.__matches:
+		with self.__lock:
+			if not self.__journal or self.__journal.closed:
 				return
-			del self.__matches[:]
-		# delete by index:
-		elif match in self.__matches:
-			del self.__matches[self.__matches.index(match)]
-		else:
-			raise ValueError("Match %r not found" % match)
-		self.resetJournalMatches()
-		logSys.info("[%s] Removed journal match for: %r", self.jailName, 
-			match if match else '*')
+			# clear all:
+			if match is None:
+				if not self.__matches:
+					return
+				del self.__matches[:]
+			# delete by index:
+			elif match in self.__matches:
+				del self.__matches[self.__matches.index(match)]
+			else:
+				raise ValueError("Match %r not found" % match)
+			self._resetJournalMatches()
+			logSys.info("[%s] Removed journal match for: %r", self.jailName, 
+				match if match else '*')
 
 	##
 	# Get current journal match filter
@@ -457,10 +466,11 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 							except OSError:
 								pass
 						# if it is not alive - reopen:
-						if not self._journalAlive:
-							logSys.log(logging.MSG, "[%s] Journal reader seems to be offline, reopen journal", self.jailName)
-							self._reopenJournal()
-							wcode = journal.NOP
+						with self.__lock:
+							if not self._journalAlive:
+								logSys.log(logging.MSG, "[%s] Journal reader seems to be offline, reopen journal", self.jailName)
+								self._reopenJournal()
+								wcode = journal.NOP
 				self.__modified = 0
 				while self.active:
 					logentry = None
@@ -527,7 +537,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		logSys.debug("[%s] filter exited (systemd)", self.jailName)
 		return True
 
-	def closeJournal(self):
+	def _closeJournal(self):
 		try:
 			jnl, self.__journal = self.__journal, None
 			if jnl:
@@ -558,8 +568,9 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 	def afterStop(self):
 		"""Cleanup"""
-		# close journal:
-		self.closeJournal()
+		with self.__lock:
+			# close journal:
+			self._closeJournal()
 		# ensure positions of pending logs are up-to-date:
 		if self._pendDBUpdates and self.jail.database:
 			self._updateDBPending()

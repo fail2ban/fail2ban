@@ -26,3 +26,6 @@
 
 # failJSON: { "time": "2024-12-18T23:58:03", "match": true , "host": "192.0.2.74", "desc": "script not found, changed log-format with stderr from (gh-3900)" }
 [Wed Dec 18 23:58:03.148113 2024] [cgi:error] [pid 16720:tid 1878] [client 192.0.2.74:35092] AH02811: stderr from /usr/lib/cgi-bin/luci: script not found or unable to stat
+
+# failJSON: { "time": "2025-07-30T16:43:26", "match": true , "host": "192.0.2.5", "desc": "stderr from a cgi-bin directory, no script name and no trailing slash (gh-4040)" }
+[Wed Jul 30 16:43:26.968908 2025] [cgi:error] [pid 147397:tid 147442] [client 192.0.2.5:33570] AH02811: stderr from /srv/http/cgi-bin: script not found or unable to stat
