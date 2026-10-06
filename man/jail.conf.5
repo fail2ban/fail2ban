@@ -457,6 +457,12 @@ IPv4 or IPv6 IP address to be banned. e.g. 192.168.0.2 or 2001:db8::1
 .B family
 IP address family as a string. e.g. inet4 or inet6
 .TP
+.B ip-regex
+POSIX extended regular expression for the IP address. With case-insensitive
+matching, recognizes IPv6 zero compression, leading zeros and dotted-decimal
+tails. Add address boundaries when searching log lines. Networks and non-IP
+identifiers are matched literally; this is not a subnet-matching expression.
+.TP
 .B ip-rev
 Reverse DNS PTR record for the IP address, or empty string if unavailable.
 .TP

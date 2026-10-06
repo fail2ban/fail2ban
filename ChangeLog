@@ -11,6 +11,8 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Fixes
+* `action.d/helpers-common.conf` - match equivalent IPv6 spellings in log excerpts,
+  using the new `<ip-regex>` action tag (gh-4194).
 * `filter.d/nginx-botsearch.conf` - error-log regex extended with support of journal format (gh-3732)
 * `filter.d/apache-noscript.conf` - match a request for the `cgi-bin` directory itself (no script name after it),
   the `cgi-bin` alternative required a following path segment so `/cgi-bin/` and `/cgi-bin` were not matched (gh-4217)
