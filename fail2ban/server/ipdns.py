@@ -503,6 +503,36 @@ class IPAddr(object):
 		"""
 		return self._plen == {socket.AF_INET: 32, socket.AF_INET6: 128}.get(self._family, -1000)
 
+	def getRegex(self):
+		"""Return a POSIX extended regex for textual forms of this address.
+
+		Use case-insensitive matching and address boundaries at the call site.
+		Networks and non-IP identifiers are treated as literal strings.
+		"""
+		if not self.isIPv6 or not self.isSingle:
+			return re.escape(str(self))
+
+		groups = [int(self.hexdump[i:i+4], 16) for i in range(0, 32, 4)]
+		def variants(groups):
+			parts = [('0{1,4}' if n == 0 else '0{0,%d}%x' %
+				(4 - len('%x' % n), n)) for n in groups]
+			yield ':'.join(parts)
+			# Any non-empty contiguous run of zero groups can be compressed,
+			# not just the longest run chosen by inet_ntop.
+			for start in range(len(groups)):
+				for end in range(start, len(groups)):
+					if groups[end] != 0:
+						break
+					yield ':'.join(parts[:start]) + '::' + ':'.join(parts[end+1:])
+
+		patterns = list(variants(groups))
+		# IPv6 may also represent its final 32 bits in dotted-decimal form.
+		tail = r'\.'.join(str((self._addr >> shift) & 255)
+			for shift in (24, 16, 8, 0))
+		for prefix in variants(groups[:6]):
+			patterns.append(prefix + ('' if prefix.endswith('::') else ':') + tail)
+		return '(' + '|'.join(patterns) + ')'
+
 	def __eq__(self, other):
 		if self._family == IPAddr.CIDR_RAW and not isinstance(other, IPAddr):
 			return self._raw == other

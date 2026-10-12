@@ -2241,6 +2241,29 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 			self.assertFalse(r.isIPv4)
 			self.assertFalse(r.isIPv6)
 
+	def test_IPAddr_Regex(self):
+		for address, forms in (
+			('2a04:5200:fff1::19b', (
+				'2a04:5200:fff1::19b', '2A04:5200:FFF1:0:0:0:0:19B',
+				'2a04:5200:fff1:0000:0000:0000:0000:019b',
+				'2a04:5200:fff1:0::0:019b')),
+			('::', ('::', '0:0:0:0:0:0:0:0', '0::0', '::0.0.0.0')),
+			('::1', ('::1', '0:0:0:0:0:0:0:1', '::0.0.0.1')),
+			('2001:db8::', ('2001:DB8::', '2001:0db8:0:0:0:0:0:0')),
+			('2001:db8::c000:201', ('2001:db8::192.0.2.1',
+				'2001:0db8:0:0:0:0:192.0.2.1')),
+		):
+			pattern = re.compile('^' + IPAddr(address).getRegex() + '$', re.I)
+			for form in forms:
+				self.assertTrue(pattern.match(form), (address, form))
+			for wrong in ('2001:db8::2', '2a04:5200:fff1:0:0:0:19b',
+				'2a04:5200:fff1:0:0:0:0:0:19b', '2a04:5200:fff1::119b'):
+				self.assertFalse(pattern.match(wrong), (address, wrong))
+		for literal in ('192.0.2.1', '2001:db8::/32', 'user.name[1]'):
+			pattern = re.compile('^' + IPAddr(literal).getRegex() + '$')
+			self.assertTrue(pattern.match(literal))
+			self.assertFalse(pattern.match(literal.replace('.', 'x') + 'x'))
+
 	def test_IPAddr_Raw(self):
 		# raw string:
 		r = IPAddr('xxx', IPAddr.CIDR_RAW)

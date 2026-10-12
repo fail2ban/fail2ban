@@ -41,7 +41,7 @@ from ..server.jailthread import JailThread
 from ..server.ticket import BanTicket
 from ..server.utils import Utils
 from .dummyjail import DummyJail
-from .utils import LogCaptureTestCase, with_alt_time, MyTime
+from .utils import LogCaptureTestCase, with_alt_time, with_tmpdir, MyTime
 from ..helpers import getLogger, extractOptions, PREFER_ENC
 from .. import version
 
@@ -1193,6 +1193,9 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 		super(ServerConfigReaderTests, self).tearDown()
 
 	def _executeCmd(self, realCmd, timeout=60):
+		# Dynamic regex tags are passed as shell variables, not interpolated.
+		if isinstance(realCmd, list):
+			realCmd = realCmd[0]
 		for l in realCmd.split('\n'):
 			if not l.startswith('#'):
 				logSys.debug('exec-cmd: `%s`', l)
@@ -2270,6 +2273,50 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			realCmd = cmd
 		# execute action:
 		return _actions.CommandAction.executeCmd(realCmd, timeout=timeout)
+
+	@with_tmpdir
+	def testGrepLogsAddressForms(self, tmp):
+		unittest.F2B.SkipIfCfgMissing(stock=True)
+		logpath = os.path.join(tmp, 'addresses.log')
+		server = TestServer()
+		os.mkdir(os.path.join(tmp, 'action.d'))
+		with open(os.path.join(tmp, 'action.d', 'grep-test.conf'), 'w') as f:
+			f.write('[INCLUDES]\nbefore = ' + os.path.abspath(os.path.join(
+				CONFIG_DIR, 'action.d', 'helpers-common.conf')) +
+				'\n[Definition]\nactionban = %(_grep_logs)s\n')
+		reader = ActionReader('grep-test', 'grep-test',
+			{'logpath': logpath}, basedir=tmp)
+		self.assertTrue(reader.read())
+		reader.getOptions({})
+		stream = [['add', 'grep-test', 'polling']] + reader.convert()
+		for cmd in stream:
+			ret, res = server._Server__transm.proceed(cmd)
+			self.assertEqual(ret, 0, res)
+		action = server._Server__jails['grep-test'].actions['grep-test']
+		for address, wanted, unwanted in (
+			('2a04:5200:fff1::19b', (
+				'from 2a04:5200:fff1::19b',
+				'relay=[IPv6:2A04:5200:FFF1:0:0:0:0:19B]',
+				'from [2a04:5200:fff1:0000:0000:0000:0000:019b]:25',
+				'from 2a04:5200:fff1:0::0:019b'), (
+				'from 2a04:5200:fff1::119b', 'from 2a04:5200:fff1::19b:1',
+				'from 1:2a04:5200:fff1::19b', 'from 2a04:5200:fff1:0:0:0:19b')),
+			('::1', ('from ::1', 'from [0:0:0:0:0:0:0:1]', 'from ::0.0.0.1'),
+				('from 2001:db8::1', 'from ::10', 'from ::1:2')),
+			('::', ('from ::', 'from 0:0:0:0:0:0:0:0'),
+				('from ::1', 'from 2001:db8::')),
+			('192.0.2.1', ('from 192.0.2.1', 'from [192.0.2.1]:22'),
+				('from 192.0.2.123', 'from 192x0x2x1')),
+		):
+			with open(logpath, 'w') as f:
+				f.write('\n'.join(wanted + unwanted) + '\n')
+			info = _actions.Actions.ActionInfo(BanTicket(address))
+			cmd = action.replaceTag(action.actionban, action._properties,
+				conditional='family=' + info['family'])
+			cmd = action.replaceDynamicTags(cmd, info)
+			success, stdout, stderr, code = Utils.executeCmd(cmd, output=True)
+			self.assertTrue(success, (stderr, code))
+			self.assertEqual(stdout.decode().splitlines(), list(wanted))
 
 	def testComplexMailActionMultiLog(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
