@@ -11,6 +11,7 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Fixes
+* `filter.d/traefik-auth.conf` - match usernames containing spaces in common-format access logs
 * `filter.d/nginx-botsearch.conf` - error-log regex extended with support of journal format (gh-3732)
 * `filter.d/apache-noscript.conf` - match a request for the `cgi-bin` directory itself (no script name after it),
   the `cgi-bin` alternative required a following path segment so `/cgi-bin/` and `/cgi-bin` were not matched (gh-4217)
@@ -19,6 +20,7 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
   `paths-arch.conf`, `paths-fedora.conf`, `paths-opensuse.conf` - nftables, `paths-freebsd.conf`, `paths-osx.conf ` - pf;
 
 ### New Features and Enhancements
+* `filter.d/traefik-auth.conf` - add JSON access log support with `logtype=json`, preserving the existing modes and default common log format (gh-2783)
 * `filter.d/cowrie.conf` - new filter and jail for Cowrie SSH/Telnet honeypot JSON log output (gh-4216)
 * `filter.d/gitlab.conf` - `logtype` option `json` adding support for the `application_json.log` format that
   superseded the deprecated `application.log`; default type `file` keeps the previous behaviour (gh-3566, gh-4230)

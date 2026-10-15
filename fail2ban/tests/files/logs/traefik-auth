@@ -21,3 +21,110 @@
 
 # failJSON: { "time": "2018-11-18T22:34:30", "match": true , "host": "10.0.0.2" }
 10.0.0.2 - - [18/Nov/2018:21:34:30 +0000] "GET /dashboard/ HTTP/2.0" 401 17 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0" 72 "Auth for frontend-Host-traefik-0" "/dashboard/" 0ms
+
+# JSON access logs (--accesslog.format=json).
+
+# filterOptions: [{"logtype": "json", "mode": "normal"}, {"logtype": "json", "mode": "aggressive"}]
+# failJSON: {"match": true, "desc": "Middleware 401, despite OriginStatus 0", "time": "2018-11-18T22:34:34", "host": "192.0.2.1"}
+{"ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","ClientUsername":"alice","DownstreamStatus":401,"OriginStatus":0,"RequestMethod":"GET","RequestPath":"/","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+# failJSON: {"match": true, "desc": "IPv6 and reordered fields", "time": "2018-11-18T22:34:34", "host": "2001:db8::1"}
+{"time":"2018-11-18T21:34:35Z","StartUTC":"2018-11-18T21:34:34.123456789Z","RequestPath":"/","RequestMethod":"GET","OriginStatus":0,"DownstreamStatus":401,"ClientUsername":"alice","ClientPort":"12345","ClientHost":"2001:db8::1","ClientAddr":"192.0.2.1:12345"}
+# failJSON: {"match": true, "desc": "Escaped quotes and backslashes in fields before ClientHost", "time": "2018-11-18T22:34:34", "host": "192.0.2.1"}
+{"request_header":"a \"ClientHost\":\"203.0.113.1\" \\ value","ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","ClientUsername":"alice","DownstreamStatus":401,"OriginStatus":0,"RequestMethod":"GET","RequestPath":"/","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+# failJSON: {"match": true, "desc": "Escaped username", "time": "2018-11-18T22:34:34", "host": "192.0.2.1"}
+{"ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","ClientUsername":"user \"name\\suffix","DownstreamStatus":401,"OriginStatus":0,"RequestMethod":"GET","RequestPath":"/","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+# failJSON: {"match": false, "desc": "Successful response despite OriginStatus 401"}
+{"ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","ClientUsername":"alice","DownstreamStatus":200,"OriginStatus":401,"RequestMethod":"GET","RequestPath":"/","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+# failJSON: {"match": false, "desc": "403 is not an authentication failure"}
+{"ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","ClientUsername":"alice","DownstreamStatus":403,"OriginStatus":0,"RequestMethod":"GET","RequestPath":"/","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+# failJSON: {"match": false, "desc": "Status must be exactly 401"}
+{"ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","ClientUsername":"alice","DownstreamStatus":4010,"OriginStatus":0,"RequestMethod":"GET","RequestPath":"/","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+# failJSON: {"match": false, "desc": "Injected status in a path"}
+{"ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","ClientUsername":"alice","DownstreamStatus":200,"OriginStatus":0,"RequestMethod":"GET","RequestPath":"/\",\"DownstreamStatus\":401,\"x\":\"","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+# failJSON: {"match": false, "desc": "Injected username cannot replace absent credentials"}
+{"ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","DownstreamStatus":401,"OriginStatus":0,"RequestMethod":"GET","RequestPath":"/\",\"ClientUsername\":\"alice\",\"x\":\"","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+# failJSON: {"match": false, "desc": "Injected client cannot replace missing ClientHost"}
+{"ClientAddr":"192.0.2.1:12345","ClientPort":"12345","ClientUsername":"alice","DownstreamStatus":401,"OriginStatus":0,"RequestMethod":"GET","RequestPath":"/\",\"ClientHost\":\"203.0.113.1\",\"x\":\"","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+# failJSON: {"match": false, "desc": "Nested fields cannot replace top-level status"}
+{"nested":{"DownstreamStatus":401},"ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","ClientUsername":"alice","DownstreamStatus":200,"OriginStatus":0,"RequestMethod":"GET","RequestPath":"/","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+
+# filterOptions: [{"logtype": "json", "mode": "normal"}]
+# failJSON: {"match": false, "desc": "Unauthenticated challenge ignored in normal mode"}
+{"ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","ClientUsername":"-","DownstreamStatus":401,"OriginStatus":0,"RequestMethod":"GET","RequestPath":"/","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+
+# filterOptions: [{"logtype": "json", "mode": "ddos"}]
+# failJSON: {"match": false, "desc": "Supplied username ignored in ddos mode"}
+{"ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","ClientUsername":"alice","DownstreamStatus":401,"OriginStatus":0,"RequestMethod":"GET","RequestPath":"/","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+
+# filterOptions: [{"logtype": "json", "mode": "ddos"}, {"logtype": "json", "mode": "aggressive"}]
+# failJSON: {"match": true, "desc": "Unauthenticated request", "time": "2018-11-18T22:34:34", "host": "192.0.2.1"}
+{"ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","ClientUsername":"-","DownstreamStatus":401,"OriginStatus":0,"RequestMethod":"GET","RequestPath":"/","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+
+# filterOptions: [{"logtype": "json", "mode": "normal", "req-method": "GET|POST"}, {"logtype": "json", "mode": "aggressive", "req-method": "GET|POST"}]
+# failJSON: {"match": true, "desc": "Configured request method", "time": "2018-11-18T22:34:34", "host": "192.0.2.1"}
+{"ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","ClientUsername":"alice","DownstreamStatus":401,"OriginStatus":0,"RequestMethod":"POST","RequestPath":"/","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+# failJSON: {"match": false, "desc": "Excluded request method"}
+{"ClientAddr":"192.0.2.1:12345","ClientHost":"192.0.2.1","ClientPort":"12345","ClientUsername":"alice","DownstreamStatus":401,"OriginStatus":0,"RequestMethod":"TRACE","RequestPath":"/","StartUTC":"2018-11-18T21:34:34.123456789Z","time":"2018-11-18T21:34:35Z"}
+
+# Captured from traefik:3.6 with BasicAuth and ping@internal.
+
+# filterOptions: [{"logtype": "json", "mode": "normal"}]
+# failJSON: {"match": false}
+{"ClientAddr":"172.17.0.1:36648","ClientHost":"172.17.0.1","ClientPort":"36648","ClientUsername":"","DownstreamContentSize":17,"DownstreamStatus":401,"Duration":67660,"GzipRatio":0,"OriginContentSize":0,"OriginDuration":0,"OriginStatus":0,"Overhead":67660,"RequestAddr":"127.0.0.1:63140","RequestContentSize":0,"RequestCount":1,"RequestHost":"127.0.0.1","RequestMethod":"GET","RequestPath":"/ping","RequestPort":"63140","RequestProtocol":"HTTP/1.1","RequestScheme":"http","RetryAttempts":0,"RouterName":"test@file","StartLocal":"2026-09-16T10:07:53.628171727Z","StartUTC":"2026-09-16T10:07:53.628171727Z","entryPointName":"web","level":"info","msg":"","time":"2026-09-16T10:07:53Z"}
+
+# filterOptions: [{"logtype": "json", "mode": "ddos"}, {"logtype": "json", "mode": "aggressive"}]
+# failJSON: {"match": true, "time": "2026-09-16T12:07:53", "host": "172.17.0.1"}
+{"ClientAddr":"172.17.0.1:36648","ClientHost":"172.17.0.1","ClientPort":"36648","ClientUsername":"","DownstreamContentSize":17,"DownstreamStatus":401,"Duration":67660,"GzipRatio":0,"OriginContentSize":0,"OriginDuration":0,"OriginStatus":0,"Overhead":67660,"RequestAddr":"127.0.0.1:63140","RequestContentSize":0,"RequestCount":1,"RequestHost":"127.0.0.1","RequestMethod":"GET","RequestPath":"/ping","RequestPort":"63140","RequestProtocol":"HTTP/1.1","RequestScheme":"http","RetryAttempts":0,"RouterName":"test@file","StartLocal":"2026-09-16T10:07:53.628171727Z","StartUTC":"2026-09-16T10:07:53.628171727Z","entryPointName":"web","level":"info","msg":"","time":"2026-09-16T10:07:53Z"}
+
+# filterOptions: [{"logtype": "json", "mode": "normal"}]
+# failJSON: {"match": true, "time": "2026-09-16T12:07:53", "host": "172.17.0.1"}
+{"ClientAddr":"172.17.0.1:36654","ClientHost":"172.17.0.1","ClientPort":"36654","ClientUsername":"test","DownstreamContentSize":17,"DownstreamStatus":401,"Duration":187770,"GzipRatio":0,"OriginContentSize":0,"OriginDuration":0,"OriginStatus":0,"Overhead":187770,"RequestAddr":"127.0.0.1:63140","RequestContentSize":0,"RequestCount":2,"RequestHost":"127.0.0.1","RequestMethod":"GET","RequestPath":"/ping","RequestPort":"63140","RequestProtocol":"HTTP/1.1","RequestScheme":"http","RetryAttempts":0,"RouterName":"test@file","StartLocal":"2026-09-16T10:07:53.629830745Z","StartUTC":"2026-09-16T10:07:53.629830745Z","entryPointName":"web","level":"info","msg":"","time":"2026-09-16T10:07:53Z"}
+
+# filterOptions: [{"logtype": "json", "mode": "ddos"}]
+# failJSON: {"match": false}
+{"ClientAddr":"172.17.0.1:36654","ClientHost":"172.17.0.1","ClientPort":"36654","ClientUsername":"test","DownstreamContentSize":17,"DownstreamStatus":401,"Duration":187770,"GzipRatio":0,"OriginContentSize":0,"OriginDuration":0,"OriginStatus":0,"Overhead":187770,"RequestAddr":"127.0.0.1:63140","RequestContentSize":0,"RequestCount":2,"RequestHost":"127.0.0.1","RequestMethod":"GET","RequestPath":"/ping","RequestPort":"63140","RequestProtocol":"HTTP/1.1","RequestScheme":"http","RetryAttempts":0,"RouterName":"test@file","StartLocal":"2026-09-16T10:07:53.629830745Z","StartUTC":"2026-09-16T10:07:53.629830745Z","entryPointName":"web","level":"info","msg":"","time":"2026-09-16T10:07:53Z"}
+
+# filterOptions: [{"logtype": "json", "mode": "aggressive"}]
+# failJSON: {"match": true, "time": "2026-09-16T12:07:53", "host": "172.17.0.1"}
+{"ClientAddr":"172.17.0.1:36654","ClientHost":"172.17.0.1","ClientPort":"36654","ClientUsername":"test","DownstreamContentSize":17,"DownstreamStatus":401,"Duration":187770,"GzipRatio":0,"OriginContentSize":0,"OriginDuration":0,"OriginStatus":0,"Overhead":187770,"RequestAddr":"127.0.0.1:63140","RequestContentSize":0,"RequestCount":2,"RequestHost":"127.0.0.1","RequestMethod":"GET","RequestPath":"/ping","RequestPort":"63140","RequestProtocol":"HTTP/1.1","RequestScheme":"http","RetryAttempts":0,"RouterName":"test@file","StartLocal":"2026-09-16T10:07:53.629830745Z","StartUTC":"2026-09-16T10:07:53.629830745Z","entryPointName":"web","level":"info","msg":"","time":"2026-09-16T10:07:53Z"}
+
+# filterOptions: [{"logtype": "json", "mode": "normal"}]
+# failJSON: {"match": true, "time": "2026-09-16T12:07:53", "host": "172.17.0.1"}
+{"ClientAddr":"172.17.0.1:36658","ClientHost":"172.17.0.1","ClientPort":"36658","ClientUsername":"unknown","DownstreamContentSize":17,"DownstreamStatus":401,"Duration":138966,"GzipRatio":0,"OriginContentSize":0,"OriginDuration":0,"OriginStatus":0,"Overhead":138966,"RequestAddr":"127.0.0.1:63140","RequestContentSize":0,"RequestCount":3,"RequestHost":"127.0.0.1","RequestMethod":"GET","RequestPath":"/ping","RequestPort":"63140","RequestProtocol":"HTTP/1.1","RequestScheme":"http","RetryAttempts":0,"RouterName":"test@file","StartLocal":"2026-09-16T10:07:53.63130406Z","StartUTC":"2026-09-16T10:07:53.63130406Z","entryPointName":"web","level":"info","msg":"","time":"2026-09-16T10:07:53Z"}
+
+# filterOptions: [{"logtype": "json", "mode": "ddos"}]
+# failJSON: {"match": false}
+{"ClientAddr":"172.17.0.1:36658","ClientHost":"172.17.0.1","ClientPort":"36658","ClientUsername":"unknown","DownstreamContentSize":17,"DownstreamStatus":401,"Duration":138966,"GzipRatio":0,"OriginContentSize":0,"OriginDuration":0,"OriginStatus":0,"Overhead":138966,"RequestAddr":"127.0.0.1:63140","RequestContentSize":0,"RequestCount":3,"RequestHost":"127.0.0.1","RequestMethod":"GET","RequestPath":"/ping","RequestPort":"63140","RequestProtocol":"HTTP/1.1","RequestScheme":"http","RetryAttempts":0,"RouterName":"test@file","StartLocal":"2026-09-16T10:07:53.63130406Z","StartUTC":"2026-09-16T10:07:53.63130406Z","entryPointName":"web","level":"info","msg":"","time":"2026-09-16T10:07:53Z"}
+
+# filterOptions: [{"logtype": "json", "mode": "aggressive"}]
+# failJSON: {"match": true, "time": "2026-09-16T12:07:53", "host": "172.17.0.1"}
+{"ClientAddr":"172.17.0.1:36658","ClientHost":"172.17.0.1","ClientPort":"36658","ClientUsername":"unknown","DownstreamContentSize":17,"DownstreamStatus":401,"Duration":138966,"GzipRatio":0,"OriginContentSize":0,"OriginDuration":0,"OriginStatus":0,"Overhead":138966,"RequestAddr":"127.0.0.1:63140","RequestContentSize":0,"RequestCount":3,"RequestHost":"127.0.0.1","RequestMethod":"GET","RequestPath":"/ping","RequestPort":"63140","RequestProtocol":"HTTP/1.1","RequestScheme":"http","RetryAttempts":0,"RouterName":"test@file","StartLocal":"2026-09-16T10:07:53.63130406Z","StartUTC":"2026-09-16T10:07:53.63130406Z","entryPointName":"web","level":"info","msg":"","time":"2026-09-16T10:07:53Z"}
+
+# filterOptions: [{"logtype": "json", "mode": "normal"}, {"logtype": "json", "mode": "ddos"}, {"logtype": "json", "mode": "aggressive"}]
+# failJSON: {"match": false}
+{"ClientAddr":"172.17.0.1:36668","ClientHost":"172.17.0.1","ClientPort":"36668","ClientUsername":"test","DownstreamContentSize":2,"DownstreamStatus":200,"Duration":137614,"GzipRatio":0,"OriginContentSize":0,"OriginDuration":0,"OriginStatus":0,"Overhead":137614,"RequestAddr":"127.0.0.1:63140","RequestContentSize":0,"RequestCount":4,"RequestHost":"127.0.0.1","RequestMethod":"GET","RequestPath":"/ping","RequestPort":"63140","RequestProtocol":"HTTP/1.1","RequestScheme":"http","RetryAttempts":0,"RouterName":"test@file","StartLocal":"2026-09-16T10:07:53.63256206Z","StartUTC":"2026-09-16T10:07:53.63256206Z","entryPointName":"web","level":"info","msg":"","time":"2026-09-16T10:07:53Z"}
+
+# filterOptions: [{"logtype": "json", "mode": "normal"}, {"logtype": "json", "mode": "aggressive"}]
+# failJSON: {"match": true, "time": "2018-11-18T22:34:34", "host": "192.0.2.1", "user": "-alice", "desc": "Whitespace, username beginning with a dash, timestamp without fractions"}
+{ "StartUTC" : "2018-11-18T21:34:34Z", "RequestMethod" : "GET", "ClientUsername" : "-alice", "ClientHost" : "192.0.2.1", "DownstreamStatus" : 401 }
+
+# Common-format logs captured from Traefik 3.6 with BasicAuth.
+# filterOptions: [{"mode": "normal"}, {"mode": "aggressive"}]
+# failJSON: {"time": "2026-09-16T12:12:35", "match": true, "host": "172.17.0.1", "user": "user name"}
+172.17.0.1 - user name [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 401 17 "-" "-" 4 "test@file" "-" 0ms
+# failJSON: {"time": "2026-09-16T12:12:35", "match": true, "host": "172.17.0.1", "user": "unknown"}
+172.17.0.1 - unknown [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 401 17 "-" "-" 3 "test@file" "-" 0ms
+# failJSON: {"match": false}
+172.17.0.1 - test [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 200 2 "-" "-" 6 "test@file" "-" 0ms
+
+# Synthetic regressions for username boundaries and request data.
+# failJSON: {"time": "2026-09-16T12:12:35", "match": true, "host": "2001:db8::1", "user": "- user name"}
+2001:db8::1 - - user name [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 401 17 "-" "-" 1 "test@file" "-" 0ms
+# failJSON: {"time": "2026-09-16T12:12:35", "match": true, "host": "172.17.0.1", "user": "user[name]"}
+172.17.0.1 - user[name] [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 401 17 "-" "-" 1 "test@file" "-" 0ms
+# failJSON: {"match": false}
+172.17.0.1 - user name [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 200 2 "-" "fake [] \"GET / HTTP/1.1\" 401" 1 "test@file" "-" 0ms
+
+# filterOptions: [{"mode": "ddos"}]
+# failJSON: {"match": false}
+172.17.0.1 - user name [16/Sep/2026:10:12:35 +0000] "GET /ping HTTP/1.1" 401 17 "-" "-" 4 "test@file" "-" 0ms
