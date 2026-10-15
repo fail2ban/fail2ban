@@ -371,6 +371,17 @@ action = smtp.py[dest=chris@example.com, actname=smtp-chris]
          smtp.py[dest=sally@example.com, actname=smtp-sally]
 .fi
 
+The Python SMTP action accepts \fBban_subject\fR and \fBban_message\fR to customize ban notifications. Both use Python mapping interpolation with action information such as \fBip\fR, \fBtime\fR (Unix timestamp), \fBbantime\fR, \fBbancount\fR, \fBfailures\fR, \fBip-host\fR and \fBmatches\fR, plus \fBjailname\fR and \fBhostname\fR. Escape percent signs as \fB%%\fR in jail configuration files, for example:
+.PP
+.nf
+action = smtp.py[host=localhost:25, dest=admin@example.com,
+         ban_subject="Ban %%(ip)s in %%(jailname)s",
+         ban_message="IP: %%(ip)s; count: %%(bancount)i;
+         matches: %%(matches)s"]
+.fi
+.PP
+The default subject and body are retained when these options are omitted. A custom body replaces the entire ban message, including the matches section; include the desired matches placeholder explicitly. Reverse DNS is resolved only if the template references \fBip-host\fR. Start and stop notifications are unaffected.
+
 .SH "TIME ABBREVIATION FORMAT"
 The time entries in fail2ban configuration (like \fBfindtime\fR or \fBbantime\fR) can be provided as integer in seconds or as string using special abbreviation format (e. g. \fB600\fR is the same as \fB10m\fR).
 
