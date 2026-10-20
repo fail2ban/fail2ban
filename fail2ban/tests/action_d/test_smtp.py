@@ -19,14 +19,18 @@
 
 import os
 import threading
+import time
 import unittest
 import re
 import sys
 import types
 import importlib
+from unittest.mock import patch
 
 from ..dummyjail import DummyJail
 from ..utils import CONFIG_DIR, asyncserver, Utils, uni_decode
+from ...server.actions import Actions
+from ...server.ticket import BanTicket
 
 
 class _SMTPActionTestCase():
@@ -63,6 +67,7 @@ class _SMTPActionTestCase():
 		aInfo = {
 			'ip': "127.0.0.2",
 			'failures': 3,
+			'bantime': self.jail.actions.getBanTime(),
 			'matches': "Test fail 1\n",
 			'ipjailmatches': "Test fail 1\nTest Fail2\n",
 			'ipmatches': "Test fail 1\nTest Fail2\nTest Fail3\n",
@@ -97,8 +102,149 @@ class _SMTPActionTestCase():
 	def testBan(self):
 		self._testBan()
 
+	def testBanTime(self):
+		self.jail.actions.setBanTime(600)
+		for bantime, expected in ((None, 600), (3600, 3600), (-1, -1)):
+			with self.subTest(bantime=bantime):
+				ticket = BanTicket('127.0.0.2')
+				ticket.setBanTime(bantime)
+				aInfo = Actions.ActionInfo(ticket, self.jail)
+				self._exec_and_wait(lambda: self.action.ban(aInfo))
+				self.assertIn('banned for %i seconds' % expected, self.smtpd.data)
+				self.assertEqual(aInfo['bantime'], expected)
+
 	def testNOPByRestored(self):
 		self._testBan(restored=True)
+
+	def testDelayedBan(self):
+		self.action.ban_delay = 0.01
+		self.action.ban_age = 0.01
+		ticket = BanTicket('127.0.0.2')
+		ticket.setBanTime(3600)
+		try:
+			self._exec_and_wait(lambda: self.action.ban(Actions.ActionInfo(ticket, self.jail)))
+			self.assertIn('banned for 3600 seconds', self.smtpd.data)
+		finally:
+			self.action.stop()
+
+	def testDelayedBanFlush(self):
+		self.action.ban_delay = 60
+		with patch.object(self.action, '_sendMessage') as send:
+			try:
+				for bantime in (3600, -1):
+					ticket = BanTicket('127.0.0.2')
+					aInfo = Actions.ActionInfo(ticket, self.jail)
+					# Simulate an earlier action caching the initial duration.
+					self.assertEqual(aInfo['bantime'], self.jail.actions.getBanTime())
+					self.action.ban(aInfo)
+					ticket.setBanTime(bantime)
+					# The original info may be reset/reused by the action executor.
+					aInfo.reset()
+				send.assert_not_called()
+				worker = self.action._mail_thread
+			finally:
+				self.action.stop()
+			self.assertFalse(worker.is_alive())
+			self.assertEqual(send.call_count, 2)
+			self.assertIn('banned for 3600 seconds', send.call_args_list[0][0][1])
+			self.assertIn('banned for -1 seconds', send.call_args_list[0][0][1])
+			self.assertIn('stopped', send.call_args_list[1][0][0])
+
+	def testDelayedBanFailure(self):
+		self.action.ban_delay = 60
+		self.action.ban_age = 0
+		self.action.ban_count = 1
+		with patch.object(self.action, '_sendBans', side_effect=[RuntimeError('SMTP unavailable'), None]) as send:
+			with patch.object(self.action._logSys, 'exception') as log:
+				with patch.object(self.action, '_sendMessage'):
+					try:
+						self.action.ban({'ip': '127.0.0.2'})
+						Utils.wait_for(lambda: log.call_count == 1, 3)
+						self.action.ban({'ip': '127.0.0.3'})
+						Utils.wait_for(lambda: send.call_count == 2, 3)
+					finally:
+						self.action.stop()
+				self.assertEqual(send.call_count, 2)
+				log.assert_called_once()
+
+	def testBatchProlongation(self):
+		self.action.ban_delay = 60
+		self.action.ban_age = 60
+		self.action.ban_count = 2
+		self.action.matches = 'matches'
+		with patch.object(self.action, '_sendMessage') as send:
+			try:
+				infos = [Actions.ActionInfo(BanTicket(ip), self.jail)
+					for ip in ('127.0.0.2', '127.0.0.3', '127.0.0.4')]
+				for info in infos:
+					self.action.ban(info)
+				send.assert_not_called()
+				for info in infos[:2]:
+					self.action.prolong(info)
+				Utils.wait_for(lambda: send.call_count == 1, 3)
+				self.assertEqual(send.call_count, 1)
+				self.assertIn('banned 2 IPs', send.call_args[0][0])
+				self.assertIn('127.0.0.2', send.call_args[0][1])
+				self.assertIn('127.0.0.3', send.call_args[0][1])
+				self.assertNotIn('127.0.0.4', send.call_args[0][1])
+			finally:
+				self.action.stop()
+			self.assertEqual(send.call_count, 3)
+			self.assertIn('127.0.0.4', send.call_args_list[1][0][1])
+
+	def testBatchAge(self):
+		self.action.ban_delay = 0.01
+		self.action.ban_age = 0.1
+		self.action.ban_count = 1
+		sent = threading.Event()
+		times = []
+		def record(*args):
+			times.append(time.monotonic())
+			sent.set()
+		with patch.object(self.action, '_sendMessage', side_effect=record):
+			try:
+				started = time.monotonic()
+				self.action.ban(Actions.ActionInfo(BanTicket('127.0.0.2'), self.jail))
+				self.assertTrue(sent.wait(3))
+				self.assertGreaterEqual(times[0] - started, self.action.ban_age)
+			finally:
+				self.action.stop()
+
+	def testBatchLatency(self):
+		self.action.ban_delay = 0.1
+		self.action.ban_age = 0
+		sent = threading.Event()
+		times = []
+		def record(*args):
+			times.append(time.monotonic())
+			sent.set()
+		with patch.object(self.action, '_sendMessage', side_effect=record):
+			try:
+				started = time.monotonic()
+				self.action.ban(Actions.ActionInfo(BanTicket('127.0.0.2'), self.jail))
+				self.assertTrue(sent.wait(3))
+				self.assertGreaterEqual(times[0] - started, self.action.ban_delay)
+			finally:
+				self.action.stop()
+
+	def testDelayedRestoredBan(self):
+		self.action.ban_delay = 60
+		self._testBan(restored=True)
+		self.assertIsNone(self.action._mail_thread)
+		self.assertTrue(not self.action._mail_pending)
+
+	def testBanDelayOption(self):
+		for delay in ('-1', 'nan', 'inf', 'invalid'):
+			with self.subTest(delay=delay):
+				with self.assertRaises(ValueError):
+					type(self.action)(self.jail, 'test', ban_delay=delay)
+		self.assertEqual(type(self.action)(self.jail, 'test', ban_delay='10').ban_delay, 10)
+		for option, values in (('ban_age', ('-1', 'nan', 'inf', 'invalid')),
+			('ban_count', ('0', '-1', '1.5', 'invalid'))):
+			for value in values:
+				with self.subTest(option=option, value=value):
+					with self.assertRaises(ValueError):
+						type(self.action)(self.jail, 'test', **{option: value})
 
 	def testOptions(self):
 		self._exec_and_wait(self.action.start)
