@@ -169,7 +169,7 @@ This option sets the max number of matched log-lines could be stored per ticket 
 .B dbpurgeage
 Database purge age in seconds. Default: 86400 (24hours)
 .br
-This sets the age at which bans should be purged from the database.
+This sets how long the history of bans is kept in the database, counted from the start of each ban. It does not limit the bans themselves: still active and permanent bans are kept and reinstated when fail2ban is restarted.
 
 .RE
 The config parameters of section [Thread] are:
