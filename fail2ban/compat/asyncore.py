@@ -83,7 +83,7 @@ def read(obj):
         obj.handle_read_event()
     except _reraised_exceptions:
         raise
-    except:
+    except Exception:
         obj.handle_error()
 
 def write(obj):
@@ -91,7 +91,7 @@ def write(obj):
         obj.handle_write_event()
     except _reraised_exceptions:
         raise
-    except:
+    except Exception:
         obj.handle_error()
 
 def _exception(obj):
@@ -99,7 +99,7 @@ def _exception(obj):
         obj.handle_expt_event()
     except _reraised_exceptions:
         raise
-    except:
+    except Exception:
         obj.handle_error()
 
 def readwrite(obj, flags):
@@ -119,7 +119,7 @@ def readwrite(obj, flags):
             obj.handle_close()
     except _reraised_exceptions:
         raise
-    except:
+    except Exception:
         obj.handle_error()
 
 def poll(timeout=0.0, map=None):
@@ -459,7 +459,7 @@ class dispatcher:
         # sometimes a user repr method will crash.
         try:
             self_repr = repr(self)
-        except:
+        except Exception:
             self_repr = '<__repr__(self) failed for object at %0x>' % id(self)
 
         self.log_info(
@@ -563,7 +563,7 @@ def close_all(map=None, ignore_all=False):
                 raise
         except _reraised_exceptions:
             raise
-        except:
+        except Exception:
             if not ignore_all:
                 raise
     map.clear()
