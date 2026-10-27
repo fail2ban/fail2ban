@@ -24,9 +24,13 @@ import re
 import sys
 import types
 import importlib
+import configparser
+from unittest.mock import Mock
 
 from ..dummyjail import DummyJail
 from ..utils import CONFIG_DIR, asyncserver, Utils, uni_decode
+from ...client.jailreader import extractOptions
+from ...server.action import CallingMap
 
 
 class _SMTPActionTestCase():
@@ -98,6 +102,41 @@ class _SMTPActionTestCase():
 		self._testBan()
 
 	def testNOPByRestored(self):
+		self._testBan(restored=True)
+
+	def testBanTemplates(self):
+		config = configparser.ConfigParser()
+		config.read_string('''[test]
+action = smtp.py[ban_subject="Ban %%(ip)s in %%(jailname)s",
+         ban_message="Time: %%(time)s; count: %%(bancount)i; host: %%(ip-host)s;
+         matches: %%(matches)s"]
+''')
+		name, options = extractOptions(config.get('test', 'action'))
+		self.action = type(self.action)(self.jail, name, host=self.action.host,
+			ssl=self.action.ssl, matches='ipmatches', **options)
+		aInfo = {
+			'ip': '127.0.0.2', 'time': 1234567890, 'bancount': 3,
+			'ip-host': 'example.test', 'matches': 'GET /test%20path',
+		}
+		self._exec_and_wait(lambda: self.action.ban(aInfo))
+		self.assertIn('Subject: Ban 127.0.0.2 in %s' % self.jail.name, self.smtpd.data)
+		self.assertIn('Time: 1234567890; count: 3; host: example.test;', self.smtpd.data)
+		self.assertIn('matches: GET /test%20path', self.smtpd.data)
+		self.assertNotIn('Regards,', self.smtpd.data)
+
+	def testBanTemplateLazyValues(self):
+		lookup = Mock(return_value='example.test')
+		aInfo = CallingMap({'ip': '127.0.0.2', 'failures': 3, 'ip-host': lookup})
+		self._exec_and_wait(lambda: self.action.ban(aInfo))
+		lookup.assert_not_called()
+		self.action.ban_message = '%(ip-host)s %(ip-host)s'
+		self._exec_and_wait(lambda: self.action.ban(aInfo))
+		lookup.assert_called_once_with()
+		self.assertIn('example.test example.test', self.smtpd.data)
+
+	def testBanTemplateRestored(self):
+		self.action.ban_subject = '%(missing)s'
+		self.action.ban_message = '%(missing)s'
 		self._testBan(restored=True)
 
 	def testOptions(self):
