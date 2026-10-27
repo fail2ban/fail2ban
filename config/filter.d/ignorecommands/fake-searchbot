@@ -1,0 +1,62 @@
+#!/usr/bin/env fail2ban-python
+
+"""
+Fake Search Bot checker
+
+This checker is designed to distinguish genuine search engine bots (like
+Googlebot) from fake or malicious bots that may be impersonating them. 
+It uses DNS lookups to verify the authenticity of the bot's IP address.
+
+This file replaces apache-fakegooglebot, which only checks for Googlebot, 
+whereas this checker is extended to check for other search engine bots as well.
+The exit code is 1 if the IP is a genuine search bot, and 0 otherwise.
+
+It can be invoked from a jail like this:
+
+[your_jail]
+enabled = true
+ignorecommand = %(fail2ban_confpath)s/filter.d/ignorecommands/fake-searchbot <ip>
+"""
+
+
+import re
+import sys
+from fail2ban.server.ipdns import DNSUtils, IPAddr
+
+
+KNOWN_SEARCH_BOTS = [
+    r'crawl[0-9-]+\.googlebot\.com',          # Googlebot
+    r'msnbot[0-9-]+\.search\.msn\.com',       # Bingbot
+    r'\d+\.bl\.bot\.semrush\.com',            # SEMrush Bot
+    r'.*\.ahrefs\.net',                       # Ahrefs Bot
+    r'[0-9-]+\.applebot\.apple\.com',         # Applebot
+    r'baiduspider[0-9-]+\.crawl\.baidu\.com', # Baidu Spider
+    r'[0-9-]+\spider\.yandex\.com',           # Yandex Bot
+]
+
+
+def is_fake_searchbot(ip):
+    host = DNSUtils.ipToName(ip)
+
+    if not host:
+        return False
+
+    for regex in KNOWN_SEARCH_BOTS:
+        if re.match(regex, host):
+            return False
+
+    host_ips = DNSUtils.dnsToIp(host)
+    return (ip in host_ips)
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+       sys.stderr.write("Usage: %s ip\n" % sys.argv[0])
+       sys.exit(2)
+
+    ip = sys.argv[1]
+    if not IPAddr(ip).isValid:
+        sys.stderr.write("Argument must be a single valid IP. Got: %s\n" % ip)
+        sys.exit(2)
+
+    sys.exit(0 if is_fake_searchbot(ip) else 1)
