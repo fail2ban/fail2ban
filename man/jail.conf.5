@@ -190,6 +190,26 @@ name of the filter -- filename of the filter in /etc/fail2ban/filter.d/ without 
 .br
 Only one filter can be specified.
 .TP
+.B mode
+selects filter-specific matching rules. The available modes and their meaning
+depend on the selected filter; some filters do not use this parameter.
+Consult the corresponding file in \fI/etc/fail2ban/filter.d/\fR for supported
+modes and the log messages they match.
+.br
+For example, the \fBsshd\fR filter supports \fBnormal\fR (the default),
+\fBddos\fR, \fBextra\fR and \fBaggressive\fR. Its aggressive mode combines the
+additional matches from ddos and extra, including non-authentication failures.
+Set \fBmode = aggressive\fR in the \fB[sshd]\fR section of \fIjail.local\fR,
+or pass it explicitly as \fBfilter = sshd[mode=aggressive]\fR.
+.br
+Test the chosen mode against your logs with \fBfail2ban-regex\fR before enabling
+it, for example:
+.RS
+.nf
+fail2ban-regex /var/log/auth.log 'sshd[mode=aggressive]'
+.fi
+.RE
+.TP
 .B logpath
 filename(s) of the log files to be monitored, separated by new lines.
 .br
