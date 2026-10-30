@@ -1,0 +1,29 @@
+# Authelia authentication log samples (standard text / file format)
+# failJSON: { "time": "2025-06-24T15:47:29", "match": true, "host": "10.10.10.4" }
+time="2025-06-24T15:47:29+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'example'" error="authentication failed. Cause: error occurred performing bind: LDAP Result Code 49 \"Invalid Credentials\": " method=POST path=/api/firstfactor remote_ip=10.10.10.4
+
+# failJSON: { "time": "2025-06-24T15:47:35", "match": true, "host": "192.168.1.50" }
+time="2025-06-24T15:47:35+02:00" level=error msg="Unsuccessful TOTP authentication attempt by user 'john'" method=POST path=/api/secondfactor/totp remote_ip=192.168.1.50
+
+# failJSON: { "time": "2025-06-24T15:47:40", "match": true, "host": "2001:db8::1" }
+time="2025-06-24T15:47:40+02:00" level=error msg="Unsuccessful Duo authentication attempt by user 'admin'" remote_ip=2001:db8::1
+
+# a successful login must not match
+# failJSON: { "match": false }
+time="2025-06-24T15:50:00+02:00" level=info msg="Successful 1FA authentication attempt by user 'example'" method=POST path=/api/firstfactor remote_ip=10.10.10.4
+
+# Authelia authentication log samples (JSON format)
+# filterOptions: [{"logtype": "json"}]
+
+# failJSON: { "time": "2025-06-24T15:49:10", "match": true, "host": "10.10.10.4" }
+{"error":"authentication failed. Cause: error occurred performing bind: LDAP Result Code 49 \"Invalid Credentials\": ","level":"error","method":"POST","msg":"Unsuccessful 1FA authentication attempt by user 'example'","path":"/api/firstfactor","remote_ip":"10.10.10.4","time":"2025-06-24T15:49:10+02:00"}
+
+# failJSON: { "time": "2025-06-24T15:49:10", "match": true, "host": "2001:db8::1" }
+{"error":"authentication failed","level":"error","method":"POST","msg":"Unsuccessful TOTP authentication attempt by user 'admin'","path":"/api/secondfactor/totp","remote_ip":"2001:db8::1","time":"2025-06-24T15:49:10+02:00"}
+
+# failJSON: { "time": "2025-06-24T15:49:10", "match": true, "host": "192.168.1.100" }
+{"level":"error","remote_ip":"192.168.1.100","msg":"Unsuccessful WebAuthn authentication attempt by user 'alice'","time":"2025-06-24T15:49:10+02:00"}
+
+# a successful JSON login must not match
+# failJSON: { "match": false }
+{"level":"info","method":"POST","msg":"Successful 1FA authentication attempt by user 'example'","path":"/api/firstfactor","remote_ip":"10.10.10.4","time":"2025-06-24T15:50:00+02:00"}
