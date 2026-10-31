@@ -312,7 +312,7 @@ regex (Python \fBreg\fRular \fBex\fRpression) to parse a common part containing 
 regex (Python \fBreg\fRular \fBex\fRpression) to be added to the filter's failregexes (see \fBfailregex\fR in section FILTER FILES for details). If this is useful for others using your application please share you regular expression with the fail2ban developers by reporting an issue (see REPORTING BUGS below).
 .TP
 .B ignoreregex
-regex which, if the log line matches, would cause Fail2Ban not consider that line.  This line will be ignored even if it matches a failregex of the jail or any of its filters.
+regex which, if the log line matches, would cause Fail2Ban not consider that line.  This line will be ignored even if it matches a failregex of the jail or any of its filters (see \fBignoreregex\fR in section FILTER FILES for details).
 .TP
 .B maxmatches
 max number of matched log-lines the jail would hold in memory per ticket. By default it is the same value as \fBmaxretry\fR of jail (or default).  This option also affects values resolvable via tag \fB<matches>\fR in actions.
@@ -525,6 +525,13 @@ These are used to identify failed authentication attempts in log files and to ex
 
 Like action files, filter files are ini files. The main section is the [Definition] section.
 
+The regular expressions below use
+.UR https://docs.python.org/3/library/re.html#regular-expression-syntax
+Python's \fBre\fR syntax
+.UE ,
+with the Fail2Ban replacement tags described below.
+The same syntax and matching rules apply when these options are set in a jail.
+.PP
 There are several standard filter definitions used in the [Definition] section:
 .TP
 .B prefregex
@@ -557,7 +564,7 @@ this provides a new multi-line parsing method as replacement for old (slow an ug
 
 .TP
 .B failregex
-is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The standard replacement tags can be used as part of the regex:
+is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. Test expressions against representative log lines with \fBfail2ban-regex\fR(1) before enabling a jail. The standard replacement tags can be used as part of the regex:
 .RS
 .IP
 \fI<HOST>\fR - common regex for IP addresses and hostnames (if \fBusedns\fR is enabled). Fail2Ban will work out which one of these it actually is.
@@ -591,6 +598,11 @@ All standard tags like IP4 or IP6 can be also specified with custom regex using 
 Tags \fI<ADDR>\fR, \fI<HOST>\fR and \fI<SUBNET>\fR would also match the IP address enclosed in square brackets.
 .PP
 \fBNOTE:\fR the \fBfailregex\fR will be applied to the remaining part of message after \fBprefregex\fR processing (if specified), which in turn takes place after \fBdatepattern\fR processing (whereby the string of timestamp matching the best pattern, cut out from the message).
+.PP
+Anchor expressions with \fB^\fR and, where appropriate, \fB$\fR to match the
+expected message structure rather than arbitrary substrings. The anchors apply
+to the message after the processing described above, not to the original log
+line; whitespace around a removed timestamp may remain.
 .PP
 For multiline regexs (parsing with \fImaxlines\fR greater that 1) the tag \fI<SKIPLINES>\fR can be used to separate lines. This allows lines between the matched lines to continue to be searched for other failures. The tag can be used multiple times.
 .br
@@ -664,4 +676,4 @@ Licensed under the GNU General Public License v2 (GPL) or
 .
 .SH "SEE ALSO"
 .br
-fail2ban-server(1)
+fail2ban-server(1), fail2ban-regex(1)
