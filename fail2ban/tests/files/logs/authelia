@@ -27,3 +27,15 @@ time="2025-06-24T15:50:00+02:00" level=info msg="Successful 1FA authentication a
 # a successful JSON login must not match
 # failJSON: { "match": false }
 {"level":"info","method":"POST","msg":"Successful 1FA authentication attempt by user 'example'","path":"/api/firstfactor","remote_ip":"10.10.10.4","time":"2025-06-24T15:50:00+02:00"}
+
+# failJSON: { "time": "2025-06-24T15:49:11", "match": true, "host": "192.168.1.100", "desc": "JSON format with journal prefix" }
+2025-06-24T15:49:11 server authelia[1234]: {"level":"error","remote_ip":"192.168.1.100","msg":"Unsuccessful WebAuthn authentication attempt by user 'alice'","time":"2025-06-24T15:49:10+02:00"}
+
+# Authelia authentication log samples (systemd-journal format)
+# filterOptions: [{"logtype": "journal"}]
+
+# failJSON: { "match": true, "host": "10.10.10.4", "desc": "systemd-journal entry" }
+server authelia[1234]: time="2025-06-24T15:47:29+02:00" level=error msg="Unsuccessful 1FA authentication attempt by user 'example'" method=POST path=/api/firstfactor remote_ip=10.10.10.4
+
+# failJSON: { "match": false }
+server authelia[1234]: time="2025-06-24T15:50:00+02:00" level=info msg="Successful 1FA authentication attempt by user 'example'" method=POST path=/api/firstfactor remote_ip=10.10.10.4
