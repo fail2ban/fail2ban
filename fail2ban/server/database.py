@@ -96,8 +96,13 @@ class Fail2BanDb(object):
 		File name for SQLite3 database, which will be created if
 		doesn't already exist.
 	purgeAge : int
-		Purge age in seconds, used to remove old bans from
-		database during purge.
+		Purge age in seconds, how long the history of bans is kept.
+		The last ban of each IP (needed to restore active bans and for
+		ban time increment) is kept longer, see outDatedFactor.
+	outDatedFactor : int
+		Only for the last ban of an IP, not the history: it is kept until
+		purgeAge plus outDatedFactor times its ban time have passed since
+		the ban started (default 3, e.g. a 1 day ban is kept 4 days).
 
 	Raises
 	------
