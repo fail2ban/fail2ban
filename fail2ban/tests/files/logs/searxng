@@ -1,0 +1,38 @@
+# SearXNG 2026.10.x (docker image, stdout), limiter with link_token = true in limiter.toml
+
+# failJSON: { "time": "2026-11-04T23:00:11", "match": true , "host": "192.0.2.10" }
+2026-11-04 23:00:11,815 ERROR:searx.botdetection.ip_limit: BLOCK: too many request from 192.0.2.10/32 in SUSPICIOUS_IP_WINDOW (redirect to /)
+# SearXNG logs the client network (default ipv6_prefix = 48), the whole network is banned:
+# failJSON: { "time": "2026-11-04T23:00:28", "match": true , "host": "2001:db8:1::/48" }
+2026-11-04 23:00:28,729 ERROR:searx.botdetection.ip_limit: BLOCK: too many request from 2001:db8:1::/48 in SUSPICIOUS_IP_WINDOW (redirect to /)
+# ipv4_prefix = 24 in limiter.toml (client was 198.51.100.57):
+# failJSON: { "time": "2026-11-04T23:02:36", "match": true , "host": "198.51.100.0/24" }
+2026-11-04 23:02:36,742 ERROR:searx.botdetection.ip_limit: BLOCK: too many request from 198.51.100.0/24 in SUSPICIOUS_IP_WINDOW (redirect to /)
+
+# client in block list of SearXNG (botdetection.ip_lists.block_ip) - blocked by admin decision (with a message for the user), not a bot detection:
+# failJSON: { "match": false }
+2026-11-04 23:00:34,480 ERROR:searx.limiter: BLOCK 192.0.2.66/32: matched BLOCKLIST - IP matches 192.0.2.66/32 in botdetection.ip_lists.block_ip. To remove IP from list, please contact the maintainer of the service.
+# failJSON: { "match": false }
+2026-11-04 23:00:40,175 WARNING:searx.limiter: PASS 192.0.2.77/32: matched PASSLIST - IP matches 192.0.2.77/32 in botdetection.ip_lists.pass_ip.
+# failJSON: { "match": false }
+2026-11-04 23:00:11,052 WARNING:searx.botdetection: Sec-Fetch cannot be verified for non-secure requests (HTTP headers are not set/sent by the client).
+# failJSON: { "match": false }
+2026-11-04 23:00:11,331 WARNING:searx.engines.brave: ErrorContext('searx/search/processors/online.py', 211, 'response = req(params["url"], **request_args)  # pyright: ignore[reportArgumentType]', 'curl_cffi.requests.exceptions.DNSError', None, (None, None, 'search.brave.com')) False
+
+# injection attempt: any client can write the value of its X-Forwarded-For header to the log
+# (here a quoted value with a fake timestamp and a fake BLOCK message):
+# failJSON: { "match": false }
+2026-11-04 23:10:53,936 ERROR:searx.botdetection: X-Forwarded-For: '2026-11-04 23:01:00,000 ERROR:searx.botdetection.ip_limit: BLOCK: too many request from 203.0.113.97/32 in SUSPICIOUS_IP_WINDOW (redirect to /)' does not appear to be an IPv4 or IPv6 address / discard HTTP_X_FORWARDED_FOR from WSGI environment
+
+# filterOptions: [{"logtype": "short"}]
+
+# syslog-like file (here output of `journalctl -o short`):
+# failJSON: { "time": "2004-11-04T23:08:52", "match": true , "host": "192.0.2.10" }
+Nov 04 23:08:52 ba424caaee1a uwsgi[612]: 2026-11-04 23:00:11,815 ERROR:searx.botdetection.ip_limit: BLOCK: too many request from 192.0.2.10/32 in SUSPICIOUS_IP_WINDOW (redirect to /)
+
+# filterOptions: [{"logtype": "journal"}]
+
+# failJSON: { "match": true , "host": "2001:db8:1::/48" }
+ba424caaee1a uwsgi[612]: 2026-11-04 23:00:28,729 ERROR:searx.botdetection.ip_limit: BLOCK: too many request from 2001:db8:1::/48 in SUSPICIOUS_IP_WINDOW (redirect to /)
+# failJSON: { "match": false }
+ba424caaee1a uwsgi[666]: 2026-11-04 23:10:53,936 ERROR:searx.botdetection: X-Forwarded-For: '2026-11-04 23:01:00,000 ERROR:searx.botdetection.ip_limit: BLOCK: too many request from 203.0.113.97/32 in SUSPICIOUS_IP_WINDOW (redirect to /)' does not appear to be an IPv4 or IPv6 address / discard HTTP_X_FORWARDED_FOR from WSGI environment

@@ -24,6 +24,8 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 * `filter.d/cowrie.conf` - new filter and jail for Cowrie SSH/Telnet honeypot JSON log output (gh-4216)
 * `filter.d/gitlab.conf` - `logtype` option `json` adding support for the `application_json.log` format that
   superseded the deprecated `application.log`; default type `file` keeps the previous behaviour (gh-3566, gh-4230)
+* `filter.d/searxng.conf` - new filter and jail for SearXNG bot detection, matches the networks blocked by the limiter
+  for too many suspicious requests (link_token method) and bans the whole network logged by SearXNG (gh-3803)
 
 
 ver. 1.1.1 (2026/08/15) - triple-one-win
