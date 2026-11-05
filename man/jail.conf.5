@@ -300,7 +300,7 @@ number of failures that have to occur in the last \fBfindtime\fR seconds to ban 
 .B backend
 backend to be used to detect changes in the logpath.
 .br
-It defaults to "auto" which will try "pyinotify" before "polling" and may switch to "systemd" if no files matching \fBlogpath\fR will be found (see section \fBBackends\fR below). Any of these can be specified. "pyinotify" is only valid on Linux systems with the "pyinotify" Python libraries.
+It defaults to "auto" which will try "pyinotify" and "watchdog" (on systems other than Linux "watchdog" and "pyinotify") before "polling" and may switch to "systemd" if no files matching \fBlogpath\fR will be found (see section \fBBackends\fR below). Any of these can be specified. "pyinotify" is only valid on Linux systems with the "pyinotify" Python libraries, "watchdog" requires the "watchdog" Python library.
 .TP
 .B usedns
 use DNS to resolve HOST names that appear in the logs. By default it is "warn" which will resolve hostnames to IPs however it will also log a warning. If you are using DNS here you could be blocking the wrong IPs due to the asymmetric nature of reverse DNS (that the application used to write the domain name to log) compared to forward DNS that fail2ban uses to resolve this back to an IP (but not necessarily the same one). Ideally you should configure your applications to log a real IP. This can be set to "yes" to prevent warnings in the log or "no" to disable DNS resolution altogether (thus ignoring entries where hostname, not an IP is logged)..
@@ -321,7 +321,7 @@ max number of matched log-lines the jail would hold in memory per ticket. By def
 Available options are listed below.
 .TP
 .B auto
-automatically selects best suitable \fBbackend\fR, starting with file-based like \fIpyinotify\fR or \fIpolling\fR to monitor the \fBlogpath\fR matching files, but can also automatically switch to backend \fIsystemd\fR, when the following is true:
+automatically selects best suitable \fBbackend\fR, starting with file-based like \fIpyinotify\fR, \fIwatchdog\fR or \fIpolling\fR to monitor the \fBlogpath\fR matching files, but can also automatically switch to backend \fIsystemd\fR, when the following is true:
 .RS
 .IP • 4n
 no files matching \fBlogpath\fR found for this jail;
@@ -336,6 +336,9 @@ Option \fBskip_if_nologs\fR will be ignored if we could switch \fBbackend\fR to 
 .TP
 .B pyinotify
 requires pyinotify (a file alteration monitor) to be installed. The backend would receive modification events from a built-in Linux kernel \fIinotify\fR feature used to watch for changes on tracking files and directories, and therefore is better suitable for monitoring of logfiles than \fIpolling\fR.
+.TP
+.B watchdog
+requires watchdog (a cross-platform file system events monitor) to be installed. The backend would receive modification events from native notification facilities of the operating system (\fIinotify\fR on Linux and FreeBSD 15+, \fIkqueue\fR on other BSD, \fIFSEvents\fR on macOS, \fIReadDirectoryChangesW\fR on Windows), so it is better suitable for monitoring of logfiles than \fIpolling\fR also on systems where \fIpyinotify\fR is not available. It watches the parent directories of the monitored files only (with kqueue an open file descriptor is needed for every entry of such a directory).
 .TP
 .B polling
 uses a polling algorithm which does not require additional libraries.

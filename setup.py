@@ -70,7 +70,12 @@ class install_scripts_f2b(install_scripts):
 		return outputs
 
 	def update_scripts(self, dry_run=False):
-		buildroot = os.path.dirname(self.build_dir)
+		# generated scripts are placed in build-base directory (e. g. "build"); don't use the parent
+		# of build_dir, since by editable install (PEP 660) it is the ".data" directory of the
+		# wheel, where any foreign file (not in "<scheme>/<path>") causes the installation error:
+		buildroot = self.get_finalized_command('build').build_base
+		if not dry_run and not isdir(buildroot):
+			os.makedirs(buildroot)
 		install_dir = self.install_dir
 		try:
 			# remove root-base from install scripts path:
