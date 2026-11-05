@@ -16,6 +16,7 @@ fail2ban.server package
    fail2ban.server.filterpoll
    fail2ban.server.filterpyinotify
    fail2ban.server.filtersystemd
+   fail2ban.server.filterwatchdog
    fail2ban.server.jail
    fail2ban.server.jails
    fail2ban.server.jailthread
