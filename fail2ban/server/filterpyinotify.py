@@ -243,10 +243,16 @@ class FilterPyinotify(FileFilter):
 	def _addDirWatcher(self, path_dir):
 		# Add watch for the directory:
 		if path_dir not in self.__watchDirs:
+			# note: IN_ISDIR is an output flag only (set in events by kernel), it must not be
+			# specified in the mask, since some systems reject it with EINVAL (e. g. FreeBSD 15+,
+			# with native inotify), so the directory would be not monitored at all (gh-4250);
+			# IN_ONLYDIR (input flag) to watch the path only if it is a directory;
+			# IN_DELETE and IN_MOVED_FROM to notice removal of watched files in the directory, since
+			# not all systems send IN_IGNORED for the watch of a removed file (e. g. FreeBSD):
 			self.__watchDirs.update(
-				self.__monitor.add_watch(path_dir, pyinotify.IN_CREATE | 
-					pyinotify.IN_MOVED_TO | pyinotify.IN_MOVE_SELF |
-					pyinotify.IN_DELETE_SELF | pyinotify.IN_ISDIR))
+				self.__monitor.add_watch(path_dir, pyinotify.IN_CREATE |
+					pyinotify.IN_MOVED_TO | pyinotify.IN_DELETE | pyinotify.IN_MOVED_FROM |
+					pyinotify.IN_MOVE_SELF | pyinotify.IN_DELETE_SELF | pyinotify.IN_ONLYDIR))
 			logSys.debug("Added monitor for the parent directory %s", path_dir)
 
 	def _delDirWatcher(self, path_dir):

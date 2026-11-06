@@ -11,6 +11,10 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Fixes
+* backend `pyinotify`: fixes monitoring on systems with native inotify other than Linux (e. g. FreeBSD 15+),
+  where the parent directory of the log could not be watched (`EINVAL` for output-only flag `IN_ISDIR` in the mask),
+  so log rotation was not detected and the jail silently stopped to find failures; also removal of a log file
+  is detected now without relying on `IN_IGNORED` (not sent there for a watched file) (gh-4250)
 * `filter.d/postfix.conf` - monitor all Postfix instances in `system-postfix.slice` with the systemd backend (gh-4008)
 * `filter.d/nginx-botsearch.conf` - error-log regex extended with support of journal format (gh-3732)
 * `filter.d/apache-noscript.conf` - match a request for the `cgi-bin` directory itself (no script name after it),
