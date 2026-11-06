@@ -274,7 +274,8 @@ def initTests(opts):
 		# sleep intervals are large - use replacement for sleep to check time to sleep:
 		_org_sleep = time.sleep
 		def _new_sleep(v):
-			if v > 0.25: # pragma: no cover
+			# check our own code only (foreign modules like watchdog may sleep longer in its threads):
+			if v > 0.25 and not sys._getframe(1).f_globals.get('__name__', '').startswith('watchdog.'): # pragma: no cover
 				raise ValueError('[BAD-CODE] To long sleep interval: %s, try to use conditional Utils.wait_for instead' % v)
 			_org_sleep(v)
 		time.sleep = _new_sleep
@@ -506,6 +507,11 @@ def gatherTests(regexps=None, opts=None):
 		filters.append(FilterPyinotify)
 	except ImportError as e: # pragma: no cover
 		logSys.warning("I: Skipping pyinotify backend testing. Got exception '%s'" % e)
+	try:
+		from ..server.filterwatchdog import FilterWatchdog
+		filters.append(FilterWatchdog)
+	except ImportError as e: # pragma: no cover
+		logSys.warning("I: Skipping watchdog backend testing. Got exception '%s'" % e)
 
 	for Filter_ in filters:
 		tests.addTest(loadTests(

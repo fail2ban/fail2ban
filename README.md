@@ -40,6 +40,7 @@ Required:
 Optional:
 - [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify), may require:
   * Linux >= 2.6.13
+- [watchdog](https://github.com/gorakhargosh/watchdog), native file monitoring on Linux, BSD, macOS and Windows
 - [systemd >= 204](http://www.freedesktop.org/wiki/Software/systemd) and python bindings:
   * [python-systemd package](https://www.freedesktop.org/software/systemd/python-systemd/index.html)
 - [dnspython](http://www.dnspython.org/)

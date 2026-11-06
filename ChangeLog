@@ -22,12 +22,19 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 * sockets passed via `systemd` socket activation (`sd_listen_fds(3)`) are not shut down or removed anymore (gh-4225)
 * `paths-*.conf`: add default banactions for several includes depending on default net-filter for distribution (gh-4224, gh-4229):
   `paths-arch.conf`, `paths-fedora.conf`, `paths-opensuse.conf` - nftables, `paths-freebsd.conf`, `paths-osx.conf ` - pf;
+* `setup.py`: fixes editable installation (`pip install -e .`), which failed with "Unexpected file in ... .data directory"
+  because the generated `fail2ban.service`, `fail2ban.socket` and `fail2ban-openrc.init` were written into the wheel
 
 ### New Features and Enhancements
 * `filter.d/authelia.conf` - new filter and jail for Authelia 2FA/SSO authentication portal supporting file and json log formats (gh-4005)
 * `filter.d/cowrie.conf` - new filter and jail for Cowrie SSH/Telnet honeypot JSON log output (gh-4216)
 * `filter.d/gitlab.conf` - `logtype` option `json` adding support for the `application_json.log` format that
   superseded the deprecated `application.log`; default type `file` keeps the previous behaviour (gh-3566, gh-4230)
+* new backend `watchdog` (requires python module `watchdog`) providing native file monitoring also on platforms
+  without (established) inotify support (kqueue on BSD before FreeBSD 15, FSEvents on macOS, ReadDirectoryChangesW
+  on Windows); `auto` tries it after `pyinotify` and before `polling` on Linux, and before `pyinotify` on other
+  systems, where inotify is unavailable, provided by a userspace library or a fairly new kernel implementation
+  (FreeBSD 15+), and unmaintained pyinotify is less reliable (gh-3984, gh-4250)
 
 
 ver. 1.1.1 (2026/08/15) - triple-one-win
