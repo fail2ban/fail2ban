@@ -110,7 +110,7 @@ class Beautifier:
 							msg.append("   %s Jail: %s" % (prefix1, n))
 							jail_stat(j, "      " if i == len(jstat) else "   |  ")
 				msg = "\n".join(msg)
-			elif inC[0:1] == ['stats'] or inC[0:1] == ['statistics']:
+			elif inC[0] in ("stats", "statistic", "statistics"):
 				chrTable = [
 					['|', '-', '|', 'x', 'x', '-', '|', '-'], ## ascii
 					["\u2551", "\u2550", "\u255F", "\u256B", "\u256C", "\u2569", "\u2502", "\u2500"] ## utf-8
