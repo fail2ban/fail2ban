@@ -11,6 +11,8 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Fixes
+* `fail2ban-client statistic`: format the existing singular alias as the same
+  statistics table as `stats` and `statistics` (gh-4266).
 * backend `pyinotify`: fixes monitoring on systems with native inotify other than Linux (e. g. FreeBSD 15+),
   where the parent directory of the log could not be watched (`EINVAL` for output-only flag `IN_ISDIR` in the mask),
   so log rotation was not detected and the jail silently stopped to find failures; also removal of a log file

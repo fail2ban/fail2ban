@@ -193,6 +193,16 @@ class BeautifierTest(unittest.TestCase):
 		self.assertEqual(response, output)
 			
 
+	def testStatusStatsAliases(self):
+		for response in ({}, {"ssh": ["polling", (3, 6), (12, 24)]}):
+			self.b.setInputCmd(["stats"])
+			expected = self.b.beautify(response)
+			for command in ("statistics", "statistic"):
+				with self.subTest(command=command, response=response):
+					self.b.setInputCmd([command])
+					self.assertEqual(self.b.beautify(response), expected)
+
+
 	def testFlushLogs(self):
 		self.b.setInputCmd(["flushlogs"])
 		self.assertEqual(self.b.beautify("rolled over"), "logs: rolled over")
