@@ -11,6 +11,8 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Fixes
+* retain and start actions added during jail reload after their parameters are configured,
+  without replaying previously banned tickets into the new actions (gh-2716).
 * `fail2ban-client statistic`: format the existing singular alias as the same
   statistics table as `stats` and `statistics` (gh-4266).
 * backend `pyinotify`: fixes monitoring on systems with native inotify other than Linux (e. g. FreeBSD 15+),
