@@ -57,6 +57,14 @@ start server in background (default)
 \fB\-f\fR
 start server in foreground
 .TP
+\fB\-\-async-command\fR
+queue a set <JAIL> banip or unbanip command without waiting for completion.
+The server acknowledges queue admission only; results and failures are not
+returned to the client. Failures are logged by the server. Requires an active
+observer; rejects commands when stopping or when 1024 events are pending.
+This is opt-in for actions which make nested client calls. Synchronous behavior
+is unchanged without this option.
+.TP
 \fB\-\-async\fR
 start server in async mode (for internal usage only, don't read configuration)
 .TP
