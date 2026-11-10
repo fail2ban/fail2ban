@@ -58,6 +58,106 @@ class ExecuteActions(LogCaptureTestCase):
 		act.actionstop = 'echo ip stop'+o.get('stop', '')
 		return act
 
+	def testNewActionSurvivesReload(self):
+		self.__actions.add('existing')
+		self.__actions.reload(begin=True)
+		self.__actions.add('existing', reload=True)
+		self.__actions.add('new', reload=True)
+		self.__actions.reload(begin=False)
+		self.assertIn('existing', self.__actions)
+		self.assertIn('new', self.__actions)
+
+	def testNewPythonActionSurvivesReload(self):
+		self.__actions.reload(begin=True)
+		self.__actions.add('new',
+			os.path.join(TEST_FILES_DIR, 'action.d/action.py'),
+			{'opt1': 'configured-before-start'}, reload=True)
+		self.__actions.reload(begin=False)
+		self.assertIn('new', self.__actions)
+		self.assertLogged('TestAction action start')
+		self.__actions.stopActions()
+
+	def testNewActionDoesNotReplayPriorBansOnReload(self):
+		# Reload must not replay old tickets into a new reporting action.
+		self.__actions.addBannedIP('192.0.2.1')
+		self.__actions.reload(begin=True)
+		self.__actions.add('new', reload=True)
+		new = self.__actions['new']
+		new.actionstart = 'echo new-action-start'
+		new.actionban = 'echo new-action-ban <ip>'
+		new.actionstop = 'echo new-action-stop'
+		self.__actions.reload(begin=False)
+		self.assertIn('new', self.__actions)
+		self.assertNotLogged('new-action-ban 192.0.2.1')
+		self.__actions.addBannedIP('192.0.2.2')
+		self.assertLogged('new-action-ban 192.0.2.2')
+		self.__actions.stopActions()
+
+	def testReloadStillRemovesOmittedAction(self):
+		self.__actions.add('omitted')
+		self.__actions.reload(begin=True)
+		self.__actions.reload(begin=False)
+		self.assertNotIn('omitted', self.__actions)
+
+	def testNewActionStartsAfterConfiguration(self):
+		self.__actions.reload(begin=True)
+		self.__actions.add('new', reload=True)
+		new = self.__actions['new']
+		new.actionstart = 'echo configured-start'
+		new.actionreload = 'echo unexpected-reload'
+		self.assertNotLogged("stdout: 'configured-start'")
+		self.__actions.reload(begin=False)
+		self.assertLogged("stdout: 'configured-start'")
+		self.assertNotLogged("stdout: 'unexpected-reload'")
+		self.__actions.stopActions()
+
+	def testExistingPythonActionReloadsWithoutClearingParameters(self):
+		self.__actions.add('existing',
+			os.path.join(TEST_FILES_DIR, 'action.d/action.py'), {'opt1': 'initial'})
+		existing = self.__actions['existing']
+		calls = []
+		existing.reload = lambda **kwargs: calls.append(kwargs)
+		existing.start = lambda: self.fail('existing action must not start again')
+		self.__actions.reload(begin=True)
+		self.__actions.add('existing', initOpts={'opt1': 'changed'}, reload=True)
+		self.assertEqual(calls, [])
+		self.__actions.reload(begin=False)
+		self.assertIs(self.__actions['existing'], existing)
+		self.assertEqual(calls, [{'opt1': 'changed'}])
+		self.__actions.stopActions()
+
+	def testRepeatedReloadDoesNotRestartNewAction(self):
+		self.__actions.reload(begin=True)
+		self.__actions.add('new', reload=True)
+		new = self.__actions['new']
+		calls = []
+		new.start = lambda: calls.append('start')
+		new.reload = lambda **kwargs: calls.append('reload')
+		self.__actions.reload(begin=False)
+		self.__actions.reload(begin=True)
+		self.__actions.add('new', reload=True)
+		self.__actions.reload(begin=False)
+		self.assertEqual(calls, ['start', 'reload'])
+		self.assertFalse(hasattr(self.__actions, '_reload_actions'))
+		self.assertFalse(hasattr(self.__actions, '_reload_start_actions'))
+		self.__actions.stopActions()
+
+	def testNewActionStartFailureDoesNotInterruptReloadCleanup(self):
+		self.__actions.add('omitted')
+		self.__actions.reload(begin=True)
+		self.__actions.add('new', reload=True)
+		new = self.__actions['new']
+		def failStart():
+			raise RuntimeError('start failure')
+		new.start = failStart
+		self.__actions.reload(begin=False)
+		self.assertIn('new', self.__actions)
+		self.assertNotIn('omitted', self.__actions)
+		self.assertLogged("Failed to start jail 'DummyJail' action 'new': start failure")
+		self.assertFalse(hasattr(self.__actions, '_reload_actions'))
+		self.assertFalse(hasattr(self.__actions, '_reload_start_actions'))
+		self.__actions.stopActions()
+
 	def testActionsAddDuplicateName(self):
 		self.__actions.add('test')
 		self.assertRaises(ValueError, self.__actions.add, 'test')

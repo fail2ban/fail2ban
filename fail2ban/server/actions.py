@@ -138,7 +138,7 @@ class Actions(JailThread, Mapping):
 				# don't execute reload right now, reload after all parameters are actualized
 				if hasattr(action, 'clearAllParams'):
 					action.clearAllParams()
-					self._reload_actions[name] = initOpts
+				self._reload_actions[name] = (False, initOpts)
 				return
 		## Create new action:
 		if pythonModule is None:
@@ -147,7 +147,8 @@ class Actions(JailThread, Mapping):
 			customActionModule = self._load_python_module(pythonModule)
 			action = customActionModule.Action(self._jail, name, **initOpts)
 		self._actions[name] = action
-
+		if reload:
+			self._reload_actions[name] = (True, initOpts)
 	def reload(self, begin=True):
 		""" Begin or end of reloading resp. refreshing of all parameters
 		"""
@@ -156,9 +157,17 @@ class Actions(JailThread, Mapping):
 		else:
 			if hasattr(self, '_reload_actions'):
 				# reload actions after all parameters set via stream:
-				for name, initOpts in self._reload_actions.items():
+				for name, (startNewAct, initOpts) in self._reload_actions.items():
 					if name in self._actions:
-						self._actions[name].reload(**(initOpts if initOpts else {}))
+						if startNewAct:
+							try:
+								self._actions[name].start()
+							except Exception as e:
+								logSys.error("Failed to start jail '%s' action '%s': %s",
+									self._jail.name, name, e,
+									exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+						else:
+							self._actions[name].reload(**(initOpts if initOpts else {}))
 				# remove obsolete actions (untouched by reload process):
 				delacts = OrderedDict((name, action) for name, action in self._actions.items()
 					if name not in self._reload_actions)
