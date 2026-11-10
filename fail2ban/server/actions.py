@@ -138,7 +138,7 @@ class Actions(JailThread, Mapping):
 				# don't execute reload right now, reload after all parameters are actualized
 				if hasattr(action, 'clearAllParams'):
 					action.clearAllParams()
-				self._reload_actions[name] = initOpts
+				self._reload_actions[name] = (False, initOpts)
 				return
 		## Create new action:
 		if pythonModule is None:
@@ -147,22 +147,19 @@ class Actions(JailThread, Mapping):
 			customActionModule = self._load_python_module(pythonModule)
 			action = customActionModule.Action(self._jail, name, **initOpts)
 		self._actions[name] = action
-		if reload and hasattr(self, '_reload_actions'):
-			self._reload_actions[name] = initOpts
-			self._reload_start_actions.add(name)
-
+		if reload:
+			self._reload_actions[name] = (True, initOpts)
 	def reload(self, begin=True):
 		""" Begin or end of reloading resp. refreshing of all parameters
 		"""
 		if begin:
 			self._reload_actions = dict()
-			self._reload_start_actions = set()
 		else:
 			if hasattr(self, '_reload_actions'):
 				# reload actions after all parameters set via stream:
-				for name, initOpts in self._reload_actions.items():
+				for name, (startNewAct, initOpts) in self._reload_actions.items():
 					if name in self._actions:
-						if name in self._reload_start_actions:
+						if startNewAct:
 							try:
 								self._actions[name].start()
 							except Exception as e:
@@ -180,7 +177,6 @@ class Actions(JailThread, Mapping):
 					# stop and remove it:
 					self.stopActions(actions=delacts)
 				delattr(self, '_reload_actions')
-				delattr(self, '_reload_start_actions')
 
 	def __getitem__(self, name):
 		try:
