@@ -40,14 +40,11 @@ __author__ = "Fail2Ban Developers"
 __copyright__ = "Copyright (c) 2026 Fail2Ban Developers"
 __license__ = "GPL"
 
-import logging
 import os
 import queue
-from os.path import dirname, realpath, sep as pathsep
+from os.path import dirname, realpath
 
-from .filter import FileFilter
-from .mytime import time
-from .utils import Utils
+from .filternotify import FileNotifyFilter
 from ..helpers import getLogger
 
 # Platform specific observers of watchdog may fail with other errors than ImportError
@@ -91,23 +88,20 @@ class _EventBridge(FileSystemEventHandler):
 		self._events.put(event)
 
 
-class FilterWatchdog(FileFilter):
+class FilterWatchdog(FileNotifyFilter):
 	"""Log reader class using watchdog to detect modifications of the log files."""
 
+	_monitorName = 'watchdog'
+
 	def __init__(self, jail, **kwargs):
-		FileFilter.__init__(self, jail, **kwargs)
+		FileNotifyFilter.__init__(self, jail, **kwargs)
 		self.__events = queue.Queue()
 		self.__handler = _EventBridge(self.__events)
 		self.__observer = None
-		# monitored files: path -> real path (target of symlink or the path itself):
-		self.__watchFiles = dict()
+		# monitored files (self._watchFiles): path -> real path (target of symlink or the path itself);
+		# watched directories (self._watchDirs): path -> ObservedWatch or None (not scheduled);
 		# real path -> set of monitored paths (to map events of symlink targets):
 		self.__realFiles = dict()
-		# watched directories: path -> ObservedWatch or None (not scheduled)
-		self.__watchDirs = dict()
-		self.__pending = dict()
-		self.__pendingChkTime = 0
-		self.__pendingMinTime = 60
 		logSys.debug("Created FilterWatchdog")
 
 	def _wakeup(self):
@@ -118,7 +112,7 @@ class FilterWatchdog(FileFilter):
 
 	def _monitoredPaths(self, path):
 		"""Returns the monitored log paths an event path refers to."""
-		if path in self.__watchFiles:
+		if path in self._watchFiles:
 			return (path,)
 		return tuple(self.__realFiles.get(path, ()))
 
@@ -135,7 +129,7 @@ class FilterWatchdog(FileFilter):
 			if not path:
 				continue
 			path = os.fsdecode(path)
-			if path in self.__watchDirs:
+			if path in self._watchDirs:
 				# watched directory itself (event from its own watcher or the watcher of its parent):
 				if not os.path.isdir(path):
 					# removed or moved away:
@@ -147,9 +141,7 @@ class FilterWatchdog(FileFilter):
 			if event.is_directory:
 				# a directory containing watched directories may be removed or moved:
 				if evtype == EVENT_TYPE_DELETED:
-					for wdir in list(self.__watchDirs):
-						if wdir.startswith(path + pathsep) and not os.path.isdir(wdir):
-							self._dirLost(wdir, (evtype, path))
+					self._subDirsLost(path, (evtype, path))
 				else:
 					logSys.log(5, "Ignoring event (%s) of directory %s", evtype, path)
 				continue
@@ -172,97 +164,22 @@ class FilterWatchdog(FileFilter):
 			return
 		self._process_file(logpath)
 
-	def _process_file(self, path):
-		"""Process a given file"""
-		if not self.idle:
-			self.getFailures(path)
-
 	##
-	# Pending files and directories (absent, e. g. by log-rotation).
-
-	def _addPending(self, path, reason, isDir=False):
-		if path not in self.__pending:
-			self.__pending[path] = [Utils.DEFAULT_SLEEP_INTERVAL, isDir]
-			self.__pendingMinTime = 0
-			logSys.log(logging.MSG, "Log absence detected (possibly rotation) for %s, reason: %s of %s",
-				path, *reason)
-
-	def _delPending(self, path):
-		try:
-			del self.__pending[path]
-		except KeyError: pass
-
-	def getPendingPaths(self):
-		return list(self.__pending.keys())
-
-	def _checkPending(self):
-		if not self.__pending:
-			self.__pendingMinTime = 60
-			return
-		ntm = time.time()
-		if ntm < self.__pendingChkTime + self.__pendingMinTime:
-			return
-		found = {}
-		minTime = 60
-		for path, (retardTM, isDir) in list(self.__pending.items()):
-			if ntm - self.__pendingChkTime < retardTM:
-				if minTime > retardTM: minTime = retardTM
-				continue
-			chkpath = os.path.isdir if isDir else os.path.isfile
-			if not chkpath(path): # not found - prolong for next time
-				if retardTM < 60: retardTM *= 2
-				if minTime > retardTM: minTime = retardTM
-				try:
-					self.__pending[path][0] = retardTM
-				except KeyError: pass
-				continue
-			logSys.log(logging.MSG, "Log presence detected for %s %s",
-				"directory" if isDir else "file", path)
-			found[path] = isDir
-		self.__pendingChkTime = time.time()
-		self.__pendingMinTime = minTime
-		# process now because we've missed it in monitoring:
-		for path, isDir in found.items():
-			self._delPending(path)
-			if isDir:
-				self._dirFound(path)
-			else:
-				# isDir is None for initial processing only (monitor is up-to-date):
-				if isDir is not None:
-					self._refreshFileWatcher(path)
-				# process (possibly no old events for it from watcher):
-				self._process_file(path)
-
-	def _dirFound(self, path_dir):
-		"""Directory (re)appeared: refresh its watcher and process the files below it."""
-		self._delPending(path_dir)
-		self._refreshDirWatcher(path_dir)
-		prefix = path_dir if path_dir.endswith(pathsep) else path_dir + pathsep
-		for logpath in list(self.__watchFiles):
-			if logpath.startswith(prefix):
-				# if still no file - add to pending, otherwise refresh and process:
-				if not os.path.isfile(logpath):
-					self._addPending(logpath, ('FROM_PARDIR', path_dir))
-				else:
-					self._refreshFileWatcher(logpath)
-					self._process_file(logpath)
+	# Watchers.
 
 	def _dirLost(self, path_dir, reason):
 		"""Directory removed or moved away: stop its watcher and wait for it."""
 		# watchdog stops the emitter of a removed directory, but keeps it registered
 		# (and would follow a moved directory), so unschedule it here:
-		watch = self.__watchDirs.get(path_dir)
+		watch = self._watchDirs.get(path_dir)
 		if watch is not None:
-			self.__watchDirs[path_dir] = None
+			self._watchDirs[path_dir] = None
 			self._unschedule(watch)
-		self._addPending(path_dir, reason, isDir=True)
-
-	##
-	# Watchers.
+		super(FilterWatchdog, self)._dirLost(path_dir, reason)
 
 	def _neededDirs(self):
 		dirs = set()
-		for path, real in self.__watchFiles.items():
+		for path, real in self._watchFiles.items():
 			dirs.add(dirname(path))
 			dirs.add(dirname(real))
 		# watch the parents too, to get notified about removal, move or (re)creation
@@ -276,12 +193,12 @@ class FilterWatchdog(FileFilter):
 	def _syncDirWatchers(self):
 		"""Adds or removes directory watchers according to the monitored files."""
 		needed = self._neededDirs()
-		for path_dir in list(self.__watchDirs):
+		for path_dir in list(self._watchDirs):
 			if path_dir not in needed:
 				self._delPending(path_dir)
 				self._delDirWatcher(path_dir)
 		for path_dir in needed:
-			if path_dir not in self.__watchDirs:
+			if path_dir not in self._watchDirs:
 				self._addDirWatcher(path_dir)
 
 	def _addDirWatcher(self, path_dir):
@@ -297,13 +214,13 @@ class FilterWatchdog(FileFilter):
 			if watch is None:
 				# wait for it (the watcher of its parent notifies if it gets created):
 				self._addPending(path_dir, ('NOT_FOUND', path_dir), isDir=True)
-		self.__watchDirs[path_dir] = watch
+		self._watchDirs[path_dir] = watch
 		if watch is not None:
 			logSys.debug("Added monitor for the directory %s", path_dir)
 
 	def _delDirWatcher(self, path_dir):
 		try:
-			watch = self.__watchDirs.pop(path_dir)
+			watch = self._watchDirs.pop(path_dir)
 		except KeyError: # pragma: no cover
 			return False
 		self._unschedule(watch)
@@ -319,13 +236,13 @@ class FilterWatchdog(FileFilter):
 			logSys.debug("Remove watch causes: %r", e)
 
 	def _refreshDirWatcher(self, path_dir):
-		if path_dir in self.__watchDirs:
+		if path_dir in self._watchDirs:
 			self._delDirWatcher(path_dir)
 		self._addDirWatcher(path_dir)
 
 	def _addFileWatcher(self, path):
 		real = realpath(path)
-		self.__watchFiles[path] = real
+		self._watchFiles[path] = real
 		if real != path:
 			self.__realFiles.setdefault(real, set()).add(path)
 		self._syncDirWatchers()
@@ -333,7 +250,7 @@ class FilterWatchdog(FileFilter):
 
 	def _delFileWatcher(self, path):
 		try:
-			real = self.__watchFiles.pop(path)
+			real = self._watchFiles.pop(path)
 		except KeyError: # pragma: no cover
 			return False
 		paths = self.__realFiles.get(real)
@@ -347,55 +264,21 @@ class FilterWatchdog(FileFilter):
 
 	def _refreshFileWatcher(self, path):
 		"""Refreshes the file watcher (target of symlink may be changed)."""
-		real = self.__watchFiles.get(path)
+		real = self._watchFiles.get(path)
 		if real is not None and real != realpath(path):
 			self._delFileWatcher(path)
 			self._addFileWatcher(path)
 
-	##
-	# Add a log file path
-	#
-	# @param path log file path
-
-	def _addLogPath(self, path):
-		self._addFileWatcher(path)
-		# retard until filter gets started, isDir=None signals special case: process file only (don't need to refresh monitor):
-		self._addPending(path, ('INITIAL', path), isDir=None)
-		# notify (wake up if in waiting):
-		if self.active:
-			self._wakeup()
-
-	##
-	# Delete a log path
-	#
-	# @param path the log file to delete
-
-	def _delLogPath(self, path):
-		self._delPending(path)
-		if not self._delFileWatcher(path): # pragma: no cover
-			logSys.error("Failed to remove watch on path: %s", path)
-
-	@property
-	def __maxtout(self):
-		# max 0.5 sec (additionally regards pending check time):
-		return min(self.sleeptime, 0.5, self.__pendingMinTime)
-
-	def __processEvents(self, timeout):
-		"""Waits for events up to timeout and processes all available events."""
+	def _waitEvents(self):
+		"""Waits for events (up to max wait time) and processes all available events."""
+		timeout = self._maxWaitTime
 		try:
 			event = self.__events.get(timeout=timeout) if timeout > 0 else self.__events.get_nowait()
 		except queue.Empty:
 			return
 		while True:
 			if event is not _WAKEUP:
-				try:
-					self.callback(event, origin='Default ')
-				except Exception as e: # pragma: no cover
-					logSys.error("Error in FilterWatchdog callback: %s",
-						e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
-					# incr common error counter:
-					self.commonError()
-				self.ticks += 1
+				self._handleEvent(event)
 			if not self.active:
 				return
 			try:
@@ -403,56 +286,14 @@ class FilterWatchdog(FileFilter):
 			except queue.Empty:
 				return
 
-	def __startObserver(self):
+	def _startMonitor(self):
 		self.__observer = Observer()
 		self.__observer.start()
-		# schedule watchers registered before start:
-		for path_dir in list(self.__watchDirs):
-			self._refreshDirWatcher(path_dir)
-
-	##
-	# Main loop.
-
-	def run(self):
-		self.__startObserver()
-		logSys.debug("[%s] filter started (watchdog %s)", self.jailName,
+		logSys.debug("[%s] watchdog observer: %s", self.jailName,
 			self.__observer.__class__.__name__)
-		while self.active:
-			try:
-
-				# slow check events while idle:
-				if self.idle:
-					if Utils.wait_for(lambda: not self.active or not self.idle,
-						min(self.sleeptime * 10, self.__pendingMinTime),
-						min(self.sleeptime, self.__pendingMinTime)
-					):
-						if not self.active: break
-
-				# wait for events / timeout and process them:
-				self.__processEvents(self.__maxtout)
-				if not self.active: break
-
-				self.ticks += 1
-
-				# check pending files/dirs (logrotate ready):
-				if self.idle:
-					continue
-				self._checkPending()
-				if self.ticks % 10 == 0:
-					self.performSvc()
-
-			except Exception as e: # pragma: no cover
-				if not self.active: # if not active - error by stop...
-					break
-				logSys.error("Caught unhandled exception in main cycle: %r", e,
-					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-				# incr common error counter:
-				self.commonError("unhandled", e)
-
-		logSys.debug("[%s] filter exited (watchdog)", self.jailName)
-		self.done()
-
-		return True
+		# schedule watchers registered before start:
+		for path_dir in list(self._watchDirs):
+			self._refreshDirWatcher(path_dir)
 
 	##
 	# Clean-up: stop monitoring and the observer.
@@ -467,11 +308,3 @@ class FilterWatchdog(FileFilter):
 			except RuntimeError: # pragma: no cover - not started
 				pass
 		self._wakeup()
-
-	##
-	# Wait for exit with cleanup.
-
-	def join(self):
-		self.join = lambda *args: 0
-		super(FilterWatchdog, self).join()
-		logSys.debug("[%s] filter terminated (watchdog)", self.jailName)

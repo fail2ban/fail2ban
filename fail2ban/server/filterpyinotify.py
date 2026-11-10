@@ -23,13 +23,10 @@ __author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging
 import os
-from os.path import dirname, sep as pathsep
+from os.path import dirname
 
-from .failmanager import FailManagerEmpty
-from .filter import FileFilter
-from .mytime import MyTime, time
+from .filternotify import FileNotifyFilter, _dirPrefix
 from .utils import Utils
 from ..helpers import getLogger
 
@@ -62,7 +59,10 @@ pyinotify.log = logSys
 # that matches a given regular expression. This class is instantiated by
 # a Jail object.
 
-class FilterPyinotify(FileFilter):
+class FilterPyinotify(FileNotifyFilter):
+
+	_monitorName = 'pyinotifier'
+
 	##
 	# Constructor.
 	#
@@ -70,24 +70,20 @@ class FilterPyinotify(FileFilter):
 	# @param jail the jail object
 
 	def __init__(self, jail):
-		FileFilter.__init__(self, jail)
+		FileNotifyFilter.__init__(self, jail)
 		# Pyinotify watch manager
 		self.__monitor = pyinotify.WatchManager()
 		self.__notifier = None
-		self.__watchFiles = dict()
-		self.__watchDirs = dict()
-		self.__pending = dict()
-		self.__pendingChkTime = 0
-		self.__pendingMinTime = 60
 		logSys.debug("Created FilterPyinotify")
 
 	def callback(self, event, origin=''):
 		logSys.log(4, "[%s] %sCallback for Event: %s", self.jailName, origin, event)
 		path = event.pathname
+		reason = (event.maskname, event.pathname)
 		# check watching of this path:
 		isWF = False
-		isWD = path in self.__watchDirs
-		if not isWD and path in self.__watchFiles:
+		isWD = path in self._watchDirs
+		if not isWD and path in self._watchFiles:
 			isWF = True
 		assumeNoDir = False
 		if event.mask & ( pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO ):
@@ -99,7 +95,7 @@ class FilterPyinotify(FileFilter):
 			if not isWF:
 				logSys.debug("Ignoring creation of %s we do not monitor", path)
 				return
-			self._refreshWatcher(path)
+			self._refreshFileWatcher(path)
 		elif event.mask & (pyinotify.IN_IGNORED | pyinotify.IN_MOVE_SELF | pyinotify.IN_DELETE_SELF):
 			assumeNoDir = event.mask & (pyinotify.IN_MOVE_SELF | pyinotify.IN_DELETE_SELF)
 			# fix pyinotify behavior with '-unknown-path' (if target not watched also):
@@ -107,16 +103,14 @@ class FilterPyinotify(FileFilter):
 					path.endswith('-unknown-path') and not isWF and not isWD
 			):
 				path = path[:-len('-unknown-path')]
-				isWD = path in self.__watchDirs
+				isWD = path in self._watchDirs
 			# watch was removed for some reasons (log-rotate?):
 			if isWD and (assumeNoDir or not os.path.isdir(path)):
-				self._addPending(path, event, isDir=True)
+				self._dirLost(path, reason)
 			elif not isWF: # pragma: no cover (assume too sporadic)
-				for logpath in self.__watchDirs:
-					if logpath.startswith(path + pathsep) and (assumeNoDir or not os.path.isdir(logpath)):
-						self._addPending(logpath, event, isDir=True)
+				self._subDirsLost(path, reason, assumeNoDir)
 		if isWF and not os.path.isfile(path):
-			self._addPending(path, event)
+			self._addPending(path, reason)
 			return
 		# do nothing if idle:
 		if self.idle: # pragma: no cover (too sporadic to get idle in callback)
@@ -127,94 +121,22 @@ class FilterPyinotify(FileFilter):
 			return
 		self._process_file(path)
 
-	def _process_file(self, path):
-		"""Process a given file
-
-		TODO -- RF:
-		this is a common logic and must be shared/provided by FileFilter
-		"""
-		if not self.idle:
-			self.getFailures(path)
-
-	def _addPending(self, path, reason, isDir=False):
-		if path not in self.__pending:
-			self.__pending[path] = [Utils.DEFAULT_SLEEP_INTERVAL, isDir];
-			self.__pendingMinTime = 0
-			if isinstance(reason, pyinotify.Event):
-				reason = [reason.maskname, reason.pathname]
-			logSys.log(logging.MSG, "Log absence detected (possibly rotation) for %s, reason: %s of %s",
-				path, *reason)
-
-	def _delPending(self, path):
-		try:
-			del self.__pending[path]
-		except KeyError: pass
-
-	def getPendingPaths(self):
-		return list(self.__pending.keys())
-
-	def _checkPending(self):
-		if not self.__pending:
-			return
-		ntm = time.time()
-		if ntm < self.__pendingChkTime + self.__pendingMinTime:
-			return
-		found = {}
-		minTime = 60
-		for path, (retardTM, isDir) in list(self.__pending.items()):
-			if ntm - self.__pendingChkTime < retardTM:
-				if minTime > retardTM: minTime = retardTM
-				continue
-			chkpath = os.path.isdir if isDir else os.path.isfile
-			if not chkpath(path): # not found - prolong for next time
-				if retardTM < 60: retardTM *= 2
-				if minTime > retardTM: minTime = retardTM
-				try:
-					self.__pending[path][0] = retardTM
-				except KeyError: pass
-				continue
-			logSys.log(logging.MSG, "Log presence detected for %s %s", 
-				"directory" if isDir else "file", path)
-			found[path] = isDir
-		self.__pendingChkTime = time.time()
-		self.__pendingMinTime = minTime
-		# process now because we've missed it in monitoring:
-		for path, isDir in found.items():
-			self._delPending(path)
-			# refresh monitoring of this:
-			if isDir is not None:
-				self._refreshWatcher(path, isDir=isDir)
-			if isDir:
-				# check all files belong to this dir:
-				for logpath in list(self.__watchFiles):
-					if logpath.startswith(path + pathsep):
-						# if still no file - add to pending, otherwise refresh and process:
-						if not os.path.isfile(logpath):
-							self._addPending(logpath, ('FROM_PARDIR', path))
-						else:
-							self._refreshWatcher(logpath)
-							self._process_file(logpath)
-			else:
-				# process (possibly no old events for it from watcher):
-				self._process_file(path)
-
-	def _refreshWatcher(self, oldPath, newPath=None, isDir=False):
-		if not newPath: newPath = oldPath
+	def _refreshFileWatcher(self, path):
 		# we need to substitute the watcher with a new one, so first
 		# remove old one and then place a new one
-		if not isDir:
-			self._delFileWatcher(oldPath)
-			self._addFileWatcher(newPath)
-		else:
-			self._delDirWatcher(oldPath)
-			self._addDirWatcher(newPath)
+		self._delFileWatcher(path)
+		self._addFileWatcher(path)
+
+	def _refreshDirWatcher(self, path_dir):
+		self._delDirWatcher(path_dir)
+		self._addDirWatcher(path_dir)
 
 	def _addFileWatcher(self, path):
 		# we need to watch also the directory for IN_CREATE
 		self._addDirWatcher(dirname(path))
 		# add file watcher:
 		wd = self.__monitor.add_watch(path, pyinotify.IN_MODIFY)
-		self.__watchFiles.update(wd)
+		self._watchFiles.update(wd)
 		logSys.debug("Added file watcher for %s", path)
 
 	def _delWatch(self, wdInt):
@@ -231,7 +153,7 @@ class FilterPyinotify(FileFilter):
 
 	def _delFileWatcher(self, path):
 		try:
-			wdInt = self.__watchFiles.pop(path)
+			wdInt = self._watchFiles.pop(path)
 			if not self._delWatch(wdInt):
 				logSys.debug("Non-existing file watcher %r for file %s", wdInt, path)
 			logSys.debug("Removed file watcher for %s", path)
@@ -242,14 +164,14 @@ class FilterPyinotify(FileFilter):
 
 	def _addDirWatcher(self, path_dir):
 		# Add watch for the directory:
-		if path_dir not in self.__watchDirs:
+		if path_dir not in self._watchDirs:
 			# note: IN_ISDIR is an output flag only (set in events by kernel), it must not be
 			# specified in the mask, since some systems reject it with EINVAL (e. g. FreeBSD 15+,
 			# with native inotify), so the directory would be not monitored at all (gh-4250);
 			# IN_ONLYDIR (input flag) to watch the path only if it is a directory;
 			# IN_DELETE and IN_MOVED_FROM to notice removal of watched files in the directory, since
 			# not all systems send IN_IGNORED for the watch of a removed file (e. g. FreeBSD):
-			self.__watchDirs.update(
+			self._watchDirs.update(
 				self.__monitor.add_watch(path_dir, pyinotify.IN_CREATE |
 					pyinotify.IN_MOVED_TO | pyinotify.IN_DELETE | pyinotify.IN_MOVED_FROM |
 					pyinotify.IN_MOVE_SELF | pyinotify.IN_DELETE_SELF | pyinotify.IN_ONLYDIR))
@@ -258,7 +180,7 @@ class FilterPyinotify(FileFilter):
 	def _delDirWatcher(self, path_dir):
 		# Remove watches for the directory:
 		try:
-			wdInt = self.__watchDirs.pop(path_dir)
+			wdInt = self._watchDirs.pop(path_dir)
 			if not self._delWatch(wdInt): # pragma: no cover
 				logSys.debug("Non-existing file watcher %r for directory %s", wdInt, path_dir)
 			logSys.debug("Removed monitor for the parent directory %s", path_dir)
@@ -266,31 +188,16 @@ class FilterPyinotify(FileFilter):
 			pass
 
 	##
-	# Add a log file path
-	#
-	# @param path log file path
-
-	def _addLogPath(self, path):
-		self._addFileWatcher(path)
-		# notify (wake up if in waiting):
-		if self.active:
-			self.__pendingMinTime = 0
-		# retard until filter gets started, isDir=None signals special case: process file only (don't need to refresh monitor):
-		self._addPending(path, ('INITIAL', path), isDir=None)
-
-	##
 	# Delete a log path
 	#
 	# @param path the log file to delete
 
 	def _delLogPath(self, path):
-		self._delPending(path)
-		if not self._delFileWatcher(path): # pragma: no cover
-			logSys.error("Failed to remove watch on path: %s", path)
-
+		super(FilterPyinotify, self)._delLogPath(path)
 		path_dir = dirname(path)
-		for k in list(self.__watchFiles):
-			if k.startswith(path_dir + pathsep):
+		prefix = _dirPrefix(path_dir)
+		for k in list(self._watchFiles):
+			if k.startswith(prefix):
 				path_dir = None
 				break
 		if path_dir:
@@ -299,83 +206,28 @@ class FilterPyinotify(FileFilter):
 			self._delPending(path_dir)
 			self._delDirWatcher(path_dir)
 
-	# pyinotify.ProcessEvent default handler:
-	def __process_default(self, event):
-		try:
-			self.callback(event, origin='Default ')
-		except Exception as e: # pragma: no cover
-			logSys.error("Error in FilterPyinotify callback: %s",
-				e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
-			# incr common error counter:
-			self.commonError()
-		self.ticks += 1
-
-	@property
-	def __notify_maxtout(self):
-		# timeout for pyinotify must be set in milliseconds (fail2ban time values are 
-		# floats contain seconds), max 0.5 sec (additionally regards pending check time)
-		return min(self.sleeptime, 0.5, self.__pendingMinTime) * 1000
-
-	##
-	# Main loop.
-	#
-	# Since all detection is offloaded to pyinotifier -- no manual
-	# loop is necessary
-
-	def run(self):
+	def _startMonitor(self):
 		prcevent = pyinotify.ProcessEvent()
-		prcevent.process_default = self.__process_default
+		prcevent.process_default = self._handleEvent
+		# timeout for pyinotify must be set in milliseconds (fail2ban time values are
+		# floats contain seconds):
 		self.__notifier = pyinotify.Notifier(self.__monitor,
-			prcevent, timeout=self.__notify_maxtout)
-		logSys.debug("[%s] filter started (pyinotifier)", self.jailName)
-		while self.active:
-			try:
+			prcevent, timeout=self._maxWaitTime * 1000)
 
-				# slow check events while idle:
-				if self.idle:
-					if Utils.wait_for(lambda: not self.active or not self.idle,
-						min(self.sleeptime * 10, self.__pendingMinTime), 
-						min(self.sleeptime, self.__pendingMinTime)
-					):
-						if not self.active: break
+	def _waitEvents(self):
+		# default pyinotify handling using Notifier:
+		self.__notifier.process_events()
 
-				# default pyinotify handling using Notifier:
-				self.__notifier.process_events()
-
-				# wait for events / timeout:
-				def __check_events():
-					return (
-						not self.active
-						or bool(self.__notifier.check_events(timeout=self.__notify_maxtout))
-						or (self.__pendingMinTime and self.__pending)
-					)
-				wres = Utils.wait_for(__check_events, min(self.sleeptime, self.__pendingMinTime))
-				if wres:
-					if not self.active: break
-					if not isinstance(wres, dict):
-						self.__notifier.read_events()
-
-				self.ticks += 1
-
-				# check pending files/dirs (logrotate ready):
-				if self.idle:
-					continue
-				self._checkPending()
-				if self.ticks % 10 == 0:
-					self.performSvc()
-
-			except Exception as e: # pragma: no cover
-				if not self.active: # if not active - error by stop...
-					break
-				logSys.error("Caught unhandled exception in main cycle: %r", e,
-					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-				# incr common error counter:
-				self.commonError("unhandled", e)
-			
-		logSys.debug("[%s] filter exited (pyinotifier)", self.jailName)
-		self.done()
-
-		return True
+		# wait for events / timeout:
+		def __check_events():
+			return (
+				not self.active
+				or bool(self.__notifier.check_events(timeout=self._maxWaitTime * 1000))
+				or (self._pendingMinTime and self._pending)
+			)
+		wres = Utils.wait_for(__check_events, min(self.sleeptime, self._pendingMinTime))
+		if wres and self.active and not isinstance(wres, dict):
+			self.__notifier.read_events()
 
 	##
 	# Clean-up: then stop the 'Notifier'
@@ -389,18 +241,9 @@ class FilterPyinotify(FileFilter):
 			if self.__notifier: raise
 
 	##
-	# Wait for exit with cleanup.
-
-	def join(self):
-		self.join = lambda *args: 0
-		self.__cleanup()
-		super(FilterPyinotify, self).join()
-		logSys.debug("[%s] filter terminated (pyinotifier)", self.jailName)
-
-	##
 	# Deallocates the resources used by pyinotify.
 
-	def __cleanup(self):
+	def _cleanup(self):
 		if self.__notifier:
 			if Utils.wait_for(lambda: not self.__notifier, self.sleeptime * 10):
 				self.__notifier = None

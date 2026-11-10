@@ -217,6 +217,7 @@ fail2ban/server/failmanager.py
 fail2ban/server/failregex.py
 fail2ban/server/filterpoll.py
 fail2ban/server/filter.py
+fail2ban/server/filternotify.py
 fail2ban/server/filterpyinotify.py
 fail2ban/server/filtersystemd.py
 fail2ban/server/filterwatchdog.py
