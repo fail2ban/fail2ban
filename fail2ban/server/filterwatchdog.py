@@ -27,6 +27,9 @@ Only the parent directories of the monitored log files are watched (non
 recursively); events are filtered against the set of monitored files.
 Symlinked log files are supported by additionally watching the directory of
 the link target.
+The parents of these directories are watched as well, because watchdog does
+not report a move of the watched directory itself: the watcher of the parent
+notifies about removal, move and (re)creation of the directory.
 
 The observer of watchdog dispatches events in its own thread, so they are
 handed over via a queue and processed in the filter thread (run loop), which
@@ -100,7 +103,7 @@ class FilterWatchdog(FileFilter):
 		self.__watchFiles = dict()
 		# real path -> set of monitored paths (to map events of symlink targets):
 		self.__realFiles = dict()
-		# watched directories: path -> (ObservedWatch or None, (st_dev, st_ino) or None)
+		# watched directories: path -> ObservedWatch or None (not scheduled)
 		self.__watchDirs = dict()
 		self.__pending = dict()
 		self.__pendingChkTime = 0
@@ -133,18 +136,22 @@ class FilterWatchdog(FileFilter):
 				continue
 			path = os.fsdecode(path)
 			if path in self.__watchDirs:
-				# watched directory itself removed (watchdog stops its emitter in this case):
-				if evtype == EVENT_TYPE_DELETED or not os.path.isdir(path):
-					self._addPending(path, (evtype, path), isDir=True)
+				# watched directory itself (event from its own watcher or the watcher of its parent):
+				if not os.path.isdir(path):
+					# removed or moved away:
+					self._dirLost(path, (evtype, path))
+				elif evtype in (EVENT_TYPE_CREATED, EVENT_TYPE_DELETED):
+					# (re)created or moved in (or obsolete removal, since it exists again):
+					self._dirFound(path)
 				continue
 			if event.is_directory:
 				# a directory containing watched directories may be removed or moved:
 				if evtype == EVENT_TYPE_DELETED:
 					for wdir in list(self.__watchDirs):
 						if wdir.startswith(path + pathsep) and not os.path.isdir(wdir):
-							self._addPending(wdir, (evtype, path), isDir=True)
+							self._dirLost(wdir, (evtype, path))
 				else:
-					logSys.debug("Ignoring event (%s) of directory %s", evtype, path)
+					logSys.log(5, "Ignoring event (%s) of directory %s", evtype, path)
 				continue
 			logpaths = self._monitoredPaths(path)
 			if not logpaths:
@@ -218,17 +225,7 @@ class FilterWatchdog(FileFilter):
 		for path, isDir in found.items():
 			self._delPending(path)
 			if isDir:
-				# refresh monitoring of this directory:
-				self._refreshDirWatcher(path)
-				# check all files belong to this dir:
-				for logpath in list(self.__watchFiles):
-					if logpath.startswith(path + pathsep):
-						# if still no file - add to pending, otherwise refresh and process:
-						if not os.path.isfile(logpath):
-							self._addPending(logpath, ('FROM_PARDIR', path))
-						else:
-							self._refreshFileWatcher(logpath)
-							self._process_file(logpath)
+				self._dirFound(path)
 			else:
 				# isDir is None for initial processing only (monitor is up-to-date):
 				if isDir is not None:
@@ -236,58 +233,44 @@ class FilterWatchdog(FileFilter):
 				# process (possibly no old events for it from watcher):
 				self._process_file(path)
 
-	def _checkDirWatchers(self):
-		"""Verifies the watched directories still exist and are the same.
+	def _dirFound(self, path_dir):
+		"""Directory (re)appeared: refresh its watcher and process the files below it."""
+		self._delPending(path_dir)
+		self._refreshDirWatcher(path_dir)
+		prefix = path_dir if path_dir.endswith(pathsep) else path_dir + pathsep
+		for logpath in list(self.__watchFiles):
+			if logpath.startswith(prefix):
+				# if still no file - add to pending, otherwise refresh and process:
+				if not os.path.isfile(logpath):
+					self._addPending(logpath, ('FROM_PARDIR', path_dir))
+				else:
+					self._refreshFileWatcher(logpath)
+					self._process_file(logpath)
 
-		Watchdog does not notify about a move of the watched directory itself,
-		and a directory recreated in-between would be not monitored anymore.
-		"""
-		for path_dir, (watch, ident) in list(self.__watchDirs.items()):
-			if path_dir in self.__pending:
-				continue
-			cur = self._dirIdent(path_dir)
-			if cur is None:
-				self._addPending(path_dir, ('VANISHED', path_dir), isDir=True)
-			elif watch is None or cur != ident or not self._watchAlive(watch):
-				logSys.log(logging.MSG if watch is not None and cur == ident else logging.DEBUG,
-					"Directory %s changed or not monitored, refresh", path_dir)
-				self._refreshDirWatcher(path_dir)
-				for logpath in list(self.__watchFiles):
-					if dirname(logpath) == path_dir:
-						if os.path.isfile(logpath):
-							self._process_file(logpath)
-						else:
-							self._addPending(logpath, ('FROM_PARDIR', path_dir))
+	def _dirLost(self, path_dir, reason):
+		"""Directory removed or moved away: stop its watcher and wait for it."""
+		# watchdog stops the emitter of a removed directory, but keeps it registered
+		# (and would follow a moved directory), so unschedule it here:
+		watch = self.__watchDirs.get(path_dir)
+		if watch is not None:
+			self.__watchDirs[path_dir] = None
+			self._unschedule(watch)
+		self._addPending(path_dir, reason, isDir=True)
 
 	##
 	# Watchers.
-
-	def _watchAlive(self, watch):
-		"""Checks the emitter thread of the watch is still running (may die by error)."""
-		observer = self.__observer
-		if observer is None: # pragma: no cover
-			return True
-		try:
-			for emitter in list(observer.emitters):
-				if emitter.watch == watch:
-					return emitter.is_alive()
-		except RuntimeError: # pragma: no cover - set changed during iteration
-			return True
-		return False
-
-	@staticmethod
-	def _dirIdent(path_dir):
-		try:
-			st = os.stat(path_dir)
-		except OSError:
-			return None
-		return (st.st_dev, st.st_ino)
 
 	def _neededDirs(self):
 		dirs = set()
 		for path, real in self.__watchFiles.items():
 			dirs.add(dirname(path))
 			dirs.add(dirname(real))
+		# watch the parents too, to get notified about removal, move or (re)creation
+		# of these directories (watchdog does not report a move of the watched directory itself):
+		for path_dir in list(dirs):
+			parent = dirname(path_dir)
+			if parent != path_dir:
+				dirs.add(parent)
 		return dirs
 
 	def _syncDirWatchers(self):
@@ -303,30 +286,28 @@ class FilterWatchdog(FileFilter):
 
 	def _addDirWatcher(self, path_dir):
 		watch = None
-		ident = self._dirIdent(path_dir)
 		observer = self.__observer
 		# schedule only if observer is running (otherwise it'd be scheduled on start):
-		if observer is not None and ident is not None:
-			try:
-				watch = observer.schedule(self.__handler, path_dir, recursive=False)
-				# stat again after schedule (avoid race by recreation in-between):
-				ident = self._dirIdent(path_dir)
-			except OSError as e:
-				logSys.debug("Unable to monitor directory %s: %s", path_dir, e)
-				ident = None
-		self.__watchDirs[path_dir] = (watch, ident)
+		if observer is not None:
+			if os.path.isdir(path_dir):
+				try:
+					watch = observer.schedule(self.__handler, path_dir, recursive=False)
+				except OSError as e:
+					logSys.debug("Unable to monitor directory %s: %s", path_dir, e)
+			if watch is None:
+				# wait for it (the watcher of its parent notifies if it gets created):
+				self._addPending(path_dir, ('NOT_FOUND', path_dir), isDir=True)
+		self.__watchDirs[path_dir] = watch
 		if watch is not None:
-			logSys.debug("Added monitor for the parent directory %s", path_dir)
-		elif observer is not None and ident is None:
-			self._addPending(path_dir, ('NOT_FOUND', path_dir), isDir=True)
+			logSys.debug("Added monitor for the directory %s", path_dir)
 
 	def _delDirWatcher(self, path_dir):
 		try:
-			watch, _ = self.__watchDirs.pop(path_dir)
+			watch = self.__watchDirs.pop(path_dir)
 		except KeyError: # pragma: no cover
 			return False
 		self._unschedule(watch)
-		logSys.debug("Removed monitor for the parent directory %s", path_dir)
+		logSys.debug("Removed monitor for the directory %s", path_dir)
 		return True
 
 	def _unschedule(self, watch):
@@ -458,7 +439,6 @@ class FilterWatchdog(FileFilter):
 					continue
 				self._checkPending()
 				if self.ticks % 10 == 0:
-					self._checkDirWatchers()
 					self.performSvc()
 
 			except Exception as e: # pragma: no cover

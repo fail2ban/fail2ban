@@ -338,7 +338,7 @@ Option \fBskip_if_nologs\fR will be ignored if we could switch \fBbackend\fR to 
 requires pyinotify (a file alteration monitor) to be installed. The backend would receive modification events from a built-in Linux kernel \fIinotify\fR feature used to watch for changes on tracking files and directories, and therefore is better suitable for monitoring of logfiles than \fIpolling\fR.
 .TP
 .B watchdog
-requires watchdog (a cross-platform file system events monitor) to be installed. The backend would receive modification events from native notification facilities of the operating system (\fIinotify\fR on Linux and FreeBSD 15+, \fIkqueue\fR on other BSD, \fIFSEvents\fR on macOS, \fIReadDirectoryChangesW\fR on Windows), so it is better suitable for monitoring of logfiles than \fIpolling\fR also on systems where \fIpyinotify\fR is not available. It watches the parent directories of the monitored files only (with kqueue an open file descriptor is needed for every entry of such a directory).
+requires watchdog (a cross-platform file system events monitor) to be installed. The backend would receive modification events from native notification facilities of the operating system (\fIinotify\fR on Linux and FreeBSD 15+, \fIkqueue\fR on other BSD, \fIFSEvents\fR on macOS, \fIReadDirectoryChangesW\fR on Windows), so it is better suitable for monitoring of logfiles than \fIpolling\fR also on systems where \fIpyinotify\fR is not available. It watches the parent directories of the monitored files only, and their parents to notice when such a directory gets moved, removed or recreated (with kqueue an open file descriptor is needed for every entry of these directories).
 .TP
 .B polling
 uses a polling algorithm which does not require additional libraries.
