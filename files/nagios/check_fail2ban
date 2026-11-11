@@ -99,6 +99,7 @@ my $version_value = 0;
 my $more_value = 0;
 my $help_value = 0;
 my $perfdata_value = 0;
+my $perfdata_summary_value = 0;
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
 
 # Plugin default variables
@@ -130,6 +131,8 @@ GetOptions (
     'D=s' => \ $display,
     'perfdata' => \ $perfdata_value,
     'p' => \ $perfdata_value,
+    'summary' => \ $perfdata_summary_value,
+    'e' => \ $perfdata_summary_value,
     'v' => \ $verbose_value,
     'verbose' => \ $verbose_value
 );
@@ -221,13 +224,14 @@ else {
     }
     $return_print = $how_many_jail.' detected jails with '.$how_many_banned.' current banned IP(s)';
 }
+$perf_print = "jails=$how_many_jail currentBannedIP=$how_many_banned " . $perf_print if ($perfdata_summary_value);
 
 ### Final
 $plugstate = "CRITICAL" if ($how_many_banned >= $critical);
 $plugstate = "WARNING" if (($how_many_banned >= $warning) && ($how_many_banned < $critical));
 
 $return_print = $display." - ".$plugstate." - ".$return_print;
-$return_print .= " | $perf_print" if ($perfdata_value);
+$return_print .= " | $perf_print" if ($perfdata_value || $perfdata_summary_value);
 
 print $return_print;
 exit $ERRORS{"$plugstate"};
@@ -267,6 +271,8 @@ Options:
     default is unset
  -p, --perfdata
     If you want to activate the perfdata output
+ -e, --summary
+    Prints a perfdata summary
  -v, --verbose
     Show details for command-line debugging (Nagios may truncate the output)
 
