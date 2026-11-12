@@ -27,6 +27,7 @@ import logging
 import math
 import random
 import queue
+import sys
 
 from .actions import Actions
 from ..helpers import getLogger, _as_bool, extractOptions, MyTime
@@ -66,7 +67,19 @@ class Jail(object):
 	#Known backends. Each backend should have corresponding __initBackend method
 	# yoh: stored in a list instead of a tuple since only
 	#      list had .index until 2.6
-	_BACKENDS = ['pyinotify', 'polling', 'systemd']
+	# The order is also the order of preference for backend 'auto'. On Linux
+	# pyinotify is preferred (inotify is native and well-established there).
+	# On other systems inotify is either unavailable, provided by a userspace
+	# library (libinotify on older BSD), or a fairly new kernel implementation
+	# with slightly different semantics (FreeBSD 15+, see gh-4250), whereas
+	# pyinotify is unmaintained, so watchdog (maintained, selecting the best
+	# suitable facility for the platform: kqueue, FSEvents, inotify, etc) is
+	# preferred there:
+	_BACKENDS = (
+		['pyinotify', 'watchdog', 'polling', 'systemd']
+		if sys.platform.startswith('linux') else
+		['watchdog', 'pyinotify', 'polling', 'systemd']
+	)
 
 	def __init__(self, name, backend = "auto", db=None):
 		self.__db = db
@@ -137,6 +150,12 @@ class Jail(object):
 		from .filterpyinotify import FilterPyinotify
 		logSys.info("Jail '%s' uses pyinotify %r" % (self.name, kwargs))
 		self.__filter = FilterPyinotify(self, **kwargs)
+
+	def _initWatchdog(self, **kwargs):
+		# Try to import watchdog
+		from .filterwatchdog import FilterWatchdog
+		logSys.info("Jail '%s' uses watchdog %r" % (self.name, kwargs))
+		self.__filter = FilterWatchdog(self, **kwargs)
 
 	def _initSystemd(self, **kwargs): # pragma: systemd no cover
 		# Try to import systemd
