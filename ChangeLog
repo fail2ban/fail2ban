@@ -15,6 +15,8 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
   without replaying previously banned tickets into the new actions (gh-2716).
 * `fail2ban-client statistic`: format the existing singular alias as the same
   statistics table as `stats` and `statistics` (gh-4266).
+* `fail2ban-client status --all stats` and `fail2ban-client status <JAIL> stats`: the documented flavor `stats` is formatted
+  as statistics table now (the same as `stats`), instead of "Beautifier error" and unformatted output
 * backend `pyinotify`: fixes monitoring on systems with native inotify other than Linux (e. g. FreeBSD 15+),
   where the parent directory of the log could not be watched (`EINVAL` for output-only flag `IN_ISDIR` in the mask),
   so log rotation was not detected and the jail silently stopped to find failures; also removal of a log file
