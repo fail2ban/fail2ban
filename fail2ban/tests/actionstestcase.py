@@ -126,6 +126,55 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertEqual(calls, [{'opt1': 'changed'}])
 		self.__actions.stopActions()
 
+	@with_tmpdir
+	def testReplacedPythonActionOnReload(self, tmp):
+		# python action without reload support is replaced by reload with new instance;
+		# test action logs "<name>-<tag> <method> [<ip> <restored>]", action "nores" has norestored set:
+		pyact = os.path.join(tmp, 'action.py')
+		with open(pyact, 'w') as f:
+			f.write("\n".join((
+				"from fail2ban.server.action import ActionBase",
+				"class Action(ActionBase):",
+				"	def __init__(self, jail, name, tag, norestored=0):",
+				"		super(Action, self).__init__(jail, name)",
+				"		if norestored: self.norestored = 1",
+				"		self._pref = '%s-%s' % (name, tag)",
+				"	def start(self): self._logSys.info('%s start', self._pref)",
+				"	def stop(self): self._logSys.info('%s stop', self._pref)",
+				"	def ban(self, aInfo): self._logSys.info('%s ban %s %s', self._pref, aInfo['ip'], aInfo['restored'])",
+				"	def unban(self, aInfo): self._logSys.info('%s unban %s', self._pref, aInfo['ip'])",
+				""
+			)))
+		self.__actions.add('act', pyact, {'tag': 'old'})
+		self.__actions.add('other')
+		self.__actions.add('nores', pyact, {'tag': 'old', 'norestored': 1})
+		self.__actions.start()
+		self.assertLogged('act-old start', 'nores-old start', all=True, wait=True)
+		self.__actions.addBannedIP('192.0.2.1')
+		self.assertLogged('act-old ban 192.0.2.1 0', 'nores-old ban 192.0.2.1 0', all=True)
+		self.pruneLog('[test-phase] reload')
+		self.__actions.reload(begin=True)
+		self.__actions.add('act', pyact, {'tag': 'new'}, reload=True)
+		self.__actions.add('other', reload=True)
+		self.__actions.add('nores', pyact, {'tag': 'new', 'norestored': 1}, reload=True)
+		# old instances are stopped, new ones are not started yet:
+		self.assertLogged('act-old stop', 'nores-old stop', all=True)
+		self.assertNotLogged('act-new start', 'nores-new start', all=True)
+		self.__actions.reload(begin=False)
+		# new instances are started, current ban is executed again as restored (if not norestored):
+		self.assertLogged('act-new start', 'act-new ban 192.0.2.1 1', 'nores-new start', all=True)
+		self.assertNotLogged('nores-new ban', 'unban 192.0.2.1', all=True)
+		# position of actions is retained:
+		self.assertEqual(list(self.__actions), ['act', 'other', 'nores'])
+		# further bans and unban (by stop) with new instances only:
+		self.pruneLog('[test-phase] after reload')
+		self.__actions.addBannedIP('192.0.2.2')
+		self.assertLogged('act-new ban 192.0.2.2 0', 'nores-new ban 192.0.2.2 0', all=True)
+		self.__actions.stop()
+		self.__actions.join()
+		self.assertLogged('act-new unban 192.0.2.1', 'act-new unban 192.0.2.2', 'act-new stop', 'nores-new stop', all=True)
+		self.assertNotLogged('act-old', 'nores-old', all=True)
+
 	def testRepeatedReloadDoesNotRestartNewAction(self):
 		self.__actions.reload(begin=True)
 		self.__actions.add('new', reload=True)

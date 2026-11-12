@@ -16,6 +16,9 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 * `fail2ban-client reload` resets the jail options removed from configuration to their defaults now: `bantime.increment` and
   other `bantime.*` options, `ignoreself`, `ignorecommand`, `ignorecache`, `logtimezone`, `prefregex`, `maxlines` and `datepattern`
   retained their previous values until restart of the jail, if they were no more specified in config
+* reload handles a Python action without `reload` method (e. g. `smtp.py`) correctly: such action is replaced with new instance,
+  which was started by every reload, but the previous instance was never stopped and the new one did not know current bans;
+  now the previous instance is stopped and current bans are executed for the new one as restored tickets (like after restart)
 * `fail2ban-client statistic`: format the existing singular alias as the same
   statistics table as `stats` and `statistics` (gh-4266).
 * backend `pyinotify`: fixes monitoring on systems with native inotify other than Linux (e. g. FreeBSD 15+),

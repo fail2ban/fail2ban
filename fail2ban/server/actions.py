@@ -146,9 +146,20 @@ class Actions(JailThread, Mapping):
 		else:
 			customActionModule = self._load_python_module(pythonModule)
 			action = customActionModule.Action(self._jail, name, **initOpts)
+		# existing action without reload support gets replaced, so stop it (new one is started
+		# and gets current bans by end of reload):
+		replaced = self.active and name in self._actions
+		if replaced:
+			try:
+				self._actions[name].stop()
+			except Exception as e:
+				logSys.error("Failed to stop jail '%s' action '%s': %s",
+					self._jail.name, name, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 		self._actions[name] = action
 		if reload:
-			self._reload_actions[name] = (True, initOpts)
+			# to start: 1 - new action, 2 - replaced action
+			self._reload_actions[name] = (2 if replaced else 1, initOpts)
 	def reload(self, begin=True):
 		""" Begin or end of reloading resp. refreshing of all parameters
 		"""
@@ -166,6 +177,8 @@ class Actions(JailThread, Mapping):
 								logSys.error("Failed to start jail '%s' action '%s': %s",
 									self._jail.name, name, e,
 									exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+							if startNewAct == 2:
+								self.__restoreBans(name, self._actions[name])
 						else:
 							self._actions[name].reload(**(initOpts if initOpts else {}))
 				# remove obsolete actions (untouched by reload process):
@@ -570,6 +583,26 @@ class Actions(JailThread, Mapping):
 			logSys.debug("Banned %s / %s, %s ticket(s) in %r", cnt, 
 				self.banManager.getBanTotal(), self.banManager.size(), self._jail.name)
 		return cnt
+
+	def __restoreBans(self, name, action):
+		"""Executes ban of all current tickets for the given action only.
+
+		Used for the action replaced by reload (previous instance is stopped), the tickets are
+		handled like tickets restored after restart.
+		"""
+		if getattr(action, 'norestored', False):
+			return
+		for ticket in self.banManager:
+			aInfo = self._getActionInfo(ticket)
+			aInfo['restored'] = 1
+			try:
+				action.ban(aInfo)
+			except Exception as e:
+				logSys.error(
+					"Failed to execute ban jail '%s' action '%s' "
+					"info '%r': %s",
+					self._jail.name, name, aInfo, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
 	def __reBan(self, ticket, actions=None, log=True):
 		"""Repeat bans for the ticket.
