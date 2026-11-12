@@ -13,6 +13,9 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 ### Fixes
 * retain and start actions added during jail reload after their parameters are configured,
   without replaying previously banned tickets into the new actions (gh-2716).
+* `fail2ban-client reload` resets the jail options removed from configuration to their defaults now: `bantime.increment` and
+  other `bantime.*` options, `ignoreself`, `ignorecommand`, `ignorecache`, `logtimezone`, `prefregex`, `maxlines` and `datepattern`
+  retained their previous values until restart of the jail, if they were no more specified in config
 * `fail2ban-client statistic`: format the existing singular alias as the same
   statistics table as `stats` and `statistics` (gh-4266).
 * backend `pyinotify`: fixes monitoring on systems with native inotify other than Linux (e. g. FreeBSD 15+),
