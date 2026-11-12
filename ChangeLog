@@ -13,6 +13,13 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 ### Fixes
 * retain and start actions added during jail reload after their parameters are configured,
   without replaying previously banned tickets into the new actions (gh-2716).
+* backend `systemd`: fixes jail that stopped to find failures after journal rotation (default mode, without `rotated`):
+  the journal files were retrieved only once at start and the reader opened with a list of files doesn't follow new files,
+  so if some file of the list remained (journal of other machine-id or namespace, already rotated files matching a glob
+  in `journalfiles`) the reader was considered alive and the new `system.journal` was never read, and if some file of the list
+  was gone (e. g. user journal archived by rotation) the reopen failed with `FileNotFoundError` and the jail got stuck;
+  now the list is retrieved again (if reader signals invalidate and periodically, because new files are not signaled),
+  the journal is reopened if the files are changed and continues after the last read entry (gh-4250, gh-4175)
 * `fail2ban-client statistic`: format the existing singular alias as the same
   statistics table as `stats` and `statistics` (gh-4266).
 * backend `pyinotify`: fixes monitoring on systems with native inotify other than Linux (e. g. FreeBSD 15+),
