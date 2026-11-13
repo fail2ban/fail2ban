@@ -111,6 +111,126 @@ class Socket(LogCaptureTestCase):
 		except Exception as e:
 			return None
 
+	def testDeferredUnbanCanReadStatusThroughSocket(self):
+		from types import SimpleNamespace
+		from ..server.server import Server
+		from ..server.observer import Observers, ObserverThread
+		from ..server.ticket import BanTicket
+		from ..server.mytime import MyTime
+		from ..client.fail2banclient import Fail2banClient
+
+		control = Server()
+		control.addJail('nested', 'polling')
+		actions = control.getActions('nested')
+		self.server = AsyncServer(control._Server__transm)
+		previous = Observers.Main
+		observer = ObserverThread()
+		Observers.Main = observer
+		observer.start()
+		entered, release, done = (threading.Event() for _ in range(3))
+		results, order = [], []
+		def unban(info):
+			order.append(str(info['ip']))
+			entered.set()
+			try:
+				if not release.wait(2):
+					return
+				client = CSocket(self.sock_name, timeout=1)
+				try:
+					results.append(client.send(['status', 'nested']))
+				finally:
+					client.close()
+			finally:
+				done.set()
+		actions._actions['nested-reader'] = SimpleNamespace(unban=unban, stop=lambda: None)
+		for ip in ['192.0.2.1', '192.0.2.2']:
+			ticket = BanTicket(ip, MyTime.time())
+			ticket.banned = True
+			actions.banManager.addBanTicket(ticket)
+		try:
+			self._createServerThread()
+			# Exercise parsing and the real client/socket/transmitter path.
+			client = Fail2banClient()
+			self.assertTrue(client.start(['fail2ban-client', '-c', os.path.abspath('config'), '-s', self.sock_name,
+				'--async-command', 'set', 'nested', 'unbanip', '192.0.2.1']))
+			self.assertTrue(entered.wait(1))
+			self.assertFalse(done.is_set(), 'queue admission must not wait for the action')
+			second = CSocket(self.sock_name, timeout=1)
+			try:
+				self.assertEqual(second.send(['async', 'set', 'nested', 'unbanip', '192.0.2.2'])[0], 0)
+			finally:
+				second.close()
+			self.assertEqual(order, ['192.0.2.1'])
+			release.set()
+			self.assertTrue(done.wait(2))
+			self.assertTrue(observer.wait_empty(2))
+			self.assertEqual(order, ['192.0.2.1', '192.0.2.2'])
+			self.assertEqual(len(results), 2)
+			self.assertEqual([r[0] for r in results], [0, 0])
+			self.assertEqual(actions.banManager.getBanList(), [])
+			self.assertLogged('Command queued; completion and errors are logged by the server')
+		finally:
+			release.set()
+			observer.stop()
+			threading.Thread.join(observer, 2)
+			Observers.Main = previous
+			actions._actions.clear()
+			control.quit()
+
+	def testDeferredFailureIsLoggedAndObserverContinues(self):
+		from ..server.server import Server
+		from ..server.observer import Observers, ObserverThread
+		control = Server()
+		previous = Observers.Main
+		observer = ObserverThread()
+		Observers.Main = observer
+		observer.start()
+		try:
+			self.server = AsyncServer(control._Server__transm)
+			self._createServerThread()
+			client = CSocket(self.sock_name)
+			try:
+				result = client.send(['async', 'set', 'absent', 'unbanip', '192.0.2.1'])
+				self.assertEqual(result[0], 0) # admission is not execution success
+				finished = threading.Event()
+				observer.add(finished.set)
+				self.assertTrue(finished.wait(1))
+				self.assertLogged("Command ['set', 'absent', 'unbanip', '192.0.2.1'] has failed")
+				self.assertEqual(client.send(['ping']), (0, 'pong'))
+			finally:
+				client.close()
+		finally:
+			observer.stop()
+			threading.Thread.join(observer, 2)
+			Observers.Main = previous
+			control.quit()
+
+	def testDeferredCommandsRejectLifecycleAndMissingObserver(self):
+		from ..server.server import Server
+		from ..server.observer import Observers
+		control = Server()
+		previous = Observers.Main
+		Observers.Main = None
+		try:
+			self.server = AsyncServer(control._Server__transm)
+			self._createServerThread()
+			client = CSocket(self.sock_name)
+			try:
+				for command in [['async'], ['async', 'stop'],
+					['async', 'reload', '--all'], ['async', 'set', 'jail', 'bantime', '1']]:
+					result = client.send(command)
+					self.assertEqual(result[0], 1)
+					self.assertIsInstance(result[1], ValueError)
+				result = client.send(['async', 'set', 'jail', 'unbanip', '192.0.2.1'])
+				self.assertEqual(result[0], 1)
+				self.assertIsInstance(result[1], RuntimeError)
+				self.assertEqual(client.send(['ping']), (0, 'pong'))
+			finally:
+				client.close()
+		finally:
+			Observers.Main = previous
+			control.quit()
+
 	def testSocket(self):
 		# start in separate thread :
 		serverThread = self._createServerThread()

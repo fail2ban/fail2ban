@@ -274,6 +274,10 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		# wrap tuple to list (because could be modified here):
 		if not isinstance(cmd, list):
 			cmd = list(cmd)
+		# Acknowledge queue admission, not command completion. Preserve --async,
+		# which is already used internally for server startup.
+		if self._conf.get("async-command", False):
+			return self.__processCmd([['async'] + cmd])
 		# process:
 		if len(cmd) == 1 and cmd[0] == "start":
 
@@ -514,4 +518,3 @@ def exec_command_line(argv):
 		exit(0)
 	else:
 		exit(255)
-

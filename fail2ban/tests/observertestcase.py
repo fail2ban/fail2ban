@@ -29,6 +29,7 @@ import sys
 import unittest
 import tempfile
 import time
+import threading
 
 from ..server.mytime import MyTime
 from ..server.ticket import FailTicket, BanTicket
@@ -577,6 +578,45 @@ class ObserverTest(LogCaptureTestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 		super(ObserverTest, self).tearDown()
+
+	def testExternalAdmissionLifecycleAndOrder(self):
+		obs = ObserverThread()
+		self.assertFalse(obs.add_if_active(lambda: None))
+		obs.start()
+		values = []
+		try:
+			self.assertTrue(obs.add_if_active(values.append, 1))
+			self.assertTrue(obs.add_if_active(values.append, 2))
+			self.assertTrue(obs.stop())
+			threading.Thread.join(obs, 2)
+			self.assertFalse(obs.is_alive())
+			self.assertEqual(values, [1, 2])
+			self.assertFalse(obs.add_if_active(values.append, 3))
+			self.assertFalse(obs.is_full)
+		finally:
+			obs.stop()
+
+	def testExternalAdmissionLimitKeepsInternalEvents(self):
+		obs = ObserverThread()
+		obs.start()
+		started = threading.Event()
+		obs.add(started.set)
+		try:
+			self.assertTrue(started.wait(1))
+			obs.paused = True
+			# Hold the worker while checking external admission against its bound.
+			with obs._queue_lock:
+				obs._queue = [('nop',)] * 1024
+			self.assertFalse(obs.add_if_active('nop'))
+			self.assertEqual(len(obs), 1024)
+			obs.add('nop')
+			self.assertEqual(len(obs), 1025)
+			obs.paused = False
+			self.assertTrue(obs.wait_empty(2))
+		finally:
+			obs.paused = False
+			obs.stop()
+			threading.Thread.join(obs, 2)
 
 	def testObserverBanTimeIncr(self):
 		obs = ObserverThread()
