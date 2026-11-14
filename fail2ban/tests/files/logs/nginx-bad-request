@@ -21,3 +21,11 @@
 
 # failJSON: { "time": "2014-12-12T22:59:02", "match": true , "host": "2.5.2.5" }
 2.5.2.5 - tomcat [12/Dec/2014:22:59:02 +0100] "GET /cgi-bin/tools/tools.pl HTTP/1.1" 400 162 "-" "-" "-"
+
+# filterOptions: [{"logtype": "journal"}]
+
+# failJSON: { "match": true, "host": "12.34.56.78", "desc": "systemd journal message, gh-3732" }
+host nginx[2833]: 12.34.56.78 - - [20/Jan/2015:19:53:28 +0100] "" 400 47 "-" "-" "-"
+
+# failJSON: { "match": true, "host": "12.34.56.78", "desc": "systemd journal message with auth user, gh-3732" }
+host nginx[2833]: 12.34.56.78 - root [20/Jan/2015:19:53:28 +0100] "" 400 47 "-" "-" "-"
