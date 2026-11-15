@@ -160,6 +160,18 @@ class ObserverThread(JailThread):
 			self._queue.append(event)
 		self.pulse_notify()
 
+	def add_if_active(self, *event):
+		"""Admit external work while active, bounded to 1024 pending events.
+
+		Internal events use add(), so they are not dropped when this limit is hit.
+		"""
+		with self._queue_lock:
+			if not self.active or self._notify is None or len(self._queue) >= 1024:
+				return False
+			self._queue.append(event)
+			self._notify.set()
+			return True
+
 	def add_wn(self, *event):
 		"""Add a event to queue without notifying thread to wake up.
 		"""

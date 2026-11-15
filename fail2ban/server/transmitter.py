@@ -29,6 +29,7 @@ import json
 
 from ..helpers import getLogger, logging
 from .. import version
+from .observer import Observers
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -71,7 +72,18 @@ class Transmitter:
 	
 	def __commandHandler(self, command):
 		name = command[0]
-		if name == "ping":
+		if name == "async":
+			# Keep lifecycle/configuration operations synchronous. Only the
+			# ban/unban operations needed by actions may use deferred execution.
+			inner = command[1:]
+			if not (len(inner) >= 4 and inner[0] == 'set'
+				and inner[2] in ('banip', 'unbanip')):
+				raise ValueError("async requires set <JAIL> banip|unbanip <IP> ...")
+			observer = Observers.Main
+			if observer is None or not observer.add_if_active(self.proceed, inner):
+				raise RuntimeError("observer is not accepting asynchronous commands")
+			return "Command queued; completion and errors are logged by the server"
+		elif name == "ping":
 			return "pong"
 		elif name == "add":
 			name = command[1]
