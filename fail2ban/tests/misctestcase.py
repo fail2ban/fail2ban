@@ -93,8 +93,15 @@ class SetupTest(unittest.TestCase):
 	def setUp(self):
 		super(SetupTest, self).setUp()
 		unittest.F2B.SkipIfFast()
-		setup = os.path.join(os.path.dirname(__file__), '..', '..', 'setup.py')
-		self.setup = os.path.exists(setup) and setup or None
+		global F2B_SETUP_PATH
+		if 'F2B_SETUP_PATH' not in globals():
+			try:
+				import setuptools
+				F2B_SETUP_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'setup.py')
+				F2B_SETUP_PATH = os.path.exists(F2B_SETUP_PATH) and F2B_SETUP_PATH or None
+			except ModuleNotFoundError as e:
+				raise unittest.SkipTest(str(e))
+		self.setup = F2B_SETUP_PATH
 		if not self.setup: # pragma: no cover - running not out of the source
 			raise unittest.SkipTest(
 				"Seems to be running not out of source distribution"
@@ -114,7 +121,7 @@ class SetupTest(unittest.TestCase):
 		supdbgout = ' >/dev/null 2>&1' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
 		try:
 			# try dry-run:
-			os.system("%s %s --dry-run install --root=%s%s"
+			os.system("%s %s --dry-run install-ex --root=%s%s --without-tests"
 					  % (sys.executable, self.setup , tmp, supdbgout))
 			# check nothing was created:
 			self.assertTrue(not os.listdir(tmp))
@@ -130,7 +137,8 @@ class SetupTest(unittest.TestCase):
 		# suppress stdout (and stderr) if not heavydebug
 		supdbgout = ' >/dev/null' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
 		try:
-			self.assertEqual(os.system("%s -W 'ignore:setup.py install is deprecated' %s install --root=%s%s"
+			import setuptools
+			self.assertEqual(os.system("%s %s install-ex --root=%s%s --prefix=/usr --without-tests"
 					  % (sys.executable, self.setup, tmp, supdbgout)), 0)
 
 			def strippath(l):
