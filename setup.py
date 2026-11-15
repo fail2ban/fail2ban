@@ -269,7 +269,7 @@ if "install-ex" in sys.argv or "build-ex" in sys.argv:
 	cfg = {'dry-run':False, 'quiet':False}
 	# Reads the command line options.
 	def _dispUsage():
-		print(("usage: %s comand [options]\n"
+		print(("usage: %s command [options]\n"
 			"Commands:\n"
 			"  build-ex        build the package underneath ./build (or --build-base)\n"
 			"  install-ex      will install the package\n"
@@ -346,7 +346,9 @@ if "install-ex" in sys.argv or "build-ex" in sys.argv:
 	# build:
 	sys.argv = ['setup.py', 'build', '--build-base=' + build_base, '--build-lib=' + build_lib, '--build-scripts=' + build_scripts] + add_args
 	setup(**params)
-	updatePyExec(build_scripts); # bin/fail2ban-python link
+	if not cfg["dry-run"]:
+		updatePyExec(build_scripts); # bin/fail2ban-python link
+	elif not cfg["quiet"]: print("update python executable link (bin/*) in %s" % (build_scripts,))
 	_generate_scripts(build_base, cfg["bin"], dry_run=cfg["dry-run"], quiet=cfg["quiet"]); # fail2ban.service, fail2ban-openrc.init
 	# /etc, /var/lib:
 	for p in params['data_files']:

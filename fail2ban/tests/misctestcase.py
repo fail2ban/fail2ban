@@ -117,6 +117,7 @@ class SetupTest(unittest.TestCase):
 		if not self.setup:
 			return			  # if verbose skip didn't work out
 		tmp = tempfile.mkdtemp()
+		remove_build = not os.path.exists('build')
 		# suppress stdout (and stderr) if not heavydebug
 		supdbgout = ' >/dev/null 2>&1' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
 		try:
@@ -128,6 +129,8 @@ class SetupTest(unittest.TestCase):
 		finally:
 			# clean up
 			shutil.rmtree(tmp)
+			if remove_build and os.path.exists('build'):
+				shutil.rmtree('build')
 
 	def testSetupInstallRoot(self):
 		if not self.setup:
