@@ -132,14 +132,13 @@ class Actions(JailThread, Mapping):
 		if name in self._actions:
 			if not reload:
 				raise ValueError("Action %s already exists" % name)
-			# don't create new action if reload supported:
+			# keep existing action (no new instance, no start/stop), don't execute reload
+			# right now, reload after all parameters are actualized:
 			action = self._actions[name]
-			if hasattr(action, 'reload'):
-				# don't execute reload right now, reload after all parameters are actualized
-				if hasattr(action, 'clearAllParams'):
-					action.clearAllParams()
-				self._reload_actions[name] = (False, initOpts)
-				return
+			if hasattr(action, 'clearAllParams'):
+				action.clearAllParams()
+			self._reload_actions[name] = (False, initOpts)
+			return
 		## Create new action:
 		if pythonModule is None:
 			action = CommandAction(self._jail, name)
@@ -166,8 +165,11 @@ class Actions(JailThread, Mapping):
 								logSys.error("Failed to start jail '%s' action '%s': %s",
 									self._jail.name, name, e,
 									exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-						else:
+						elif hasattr(self._actions[name], 'reload'):
 							self._actions[name].reload(**(initOpts if initOpts else {}))
+						else:
+							logSys.info("Jail '%s' action '%s' does not support reload, changed "
+								"parameters take effect after restart of the jail", self._jail.name, name)
 				# remove obsolete actions (untouched by reload process):
 				delacts = OrderedDict((name, action) for name, action in self._actions.items()
 					if name not in self._reload_actions)

@@ -111,20 +111,55 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertNotLogged("stdout: 'unexpected-reload'")
 		self.__actions.stopActions()
 
-	def testExistingPythonActionReloadsWithoutClearingParameters(self):
-		self.__actions.add('existing',
+	def testExistingPythonActionReloads(self):
+		self.__actions.add('act',
 			os.path.join(TEST_FILES_DIR, 'action.d/action.py'), {'opt1': 'initial'})
-		existing = self.__actions['existing']
-		calls = []
-		existing.reload = lambda **kwargs: calls.append(kwargs)
-		existing.start = lambda: self.fail('existing action must not start again')
+		act = self.__actions['act']
+		self.__actions.start()
+		self.assertLogged('TestAction action start', wait=True)
+		self.assertEqual(act.opt1, "initial")
+		self.__actions.addBannedIP('192.0.2.1')
+		self.assertLogged('TestAction action ban 192.0.2.1', wait=True)
+		# firstly action with reload method:
+		self.pruneLog('[test-phase 1] with reload method')
+		act.reload = act._testreload
 		self.__actions.reload(begin=True)
-		self.__actions.add('existing', initOpts={'opt1': 'changed'}, reload=True)
-		self.assertEqual(calls, [])
+		self.__actions.add('act', initOpts={'opt1': 'reload', 'name': 'ReloadedAction'}, reload=True)
 		self.__actions.reload(begin=False)
-		self.assertIs(self.__actions['existing'], existing)
-		self.assertEqual(calls, [{'opt1': 'changed'}])
-		self.__actions.stopActions()
+		self.assertIs(self.__actions['act'], act)
+		self.assertEqual(act.opt1, "reload")
+		self.assertLogged('TestAction action reload', wait=True)
+		self.assertNotLogged('action stop', 'action start', all=True)
+		self.__actions.addBannedIP('192.0.2.2')
+		self.assertLogged('ReloadedAction action ban 192.0.2.2', wait=True)
+		# then without reload method - same instance, not stopped, not started again, 
+		# no new instance created, furthermore, no parameters are updated (which is to be expected,
+		# given that no reloading takes place):
+		self.pruneLog('[test-phase 2] no reload method')
+		del act.reload
+		self.assertFalse(hasattr(act, 'reload'))
+		self.__actions.reload(begin=True)
+		self.__actions.add('act', act, {'opt1': 'no-reload', 'name': 'NoReloadAction'}, reload=True)
+		self.__actions.reload(begin=False)
+		self.assertEqual(act.opt1, "reload") # no reload method, remain changed by 1st phase
+		self.assertLogged("Jail 'DummyJail' action 'act' does not support reload, changed "
+			"parameters take effect after restart of the jail", 
+			wait=True)
+		self.assertIs(self.__actions['act'], act)
+		self.assertNotLogged('action reload', 'action stop', 'action start', all=True)
+		self.__actions.addBannedIP('192.0.2.3')
+		self.assertLogged('ReloadedAction action ban 192.0.2.3', wait=True)
+		# stop
+		self.pruneLog('[test-phase 3] stop')
+		self.__actions.stop()
+		self.__actions.join()
+		self.assertLogged(
+			'ReloadedAction action unban 192.0.2.1',
+			'ReloadedAction action unban 192.0.2.2',
+			'ReloadedAction action unban 192.0.2.3',
+			'ReloadedAction action stop', all=True,
+			wait=True
+		)
 
 	def testRepeatedReloadDoesNotRestartNewAction(self):
 		self.__actions.reload(begin=True)
