@@ -64,7 +64,6 @@ class Fail2banCmdLine():
 			"verbose": 1,
 			"socket": None,
 			"pidfile": None,
-			"async-command": False,
 			"timeout": MAX_WAITTIME
 		}
 
@@ -116,8 +115,8 @@ class Fail2banCmdLine():
 		output("    -x                      force execution of the server (remove socket file)")
 		output("    -b                      start server in background (default)")
 		output("    -f                      start server in foreground")
-		output("    --async-command         queue ban/unban command without waiting for its result")
-		output("    --async                 start server in async mode (for internal usage only, don't read configuration)")
+		output("    --async                 queue set banip/unbanip without waiting for its result")
+		output("                            also used internally for asynchronous server startup")
 		output("    --timeout               timeout to wait for the server (for internal usage only, don't read configuration)")
 		output("    --str2sec <STRING>      convert time abbreviation format to seconds")
 		output("    -h, --help              display this help message")
@@ -160,8 +159,6 @@ class Fail2banCmdLine():
 				self._conf["background"] = True
 			elif o == "-f":
 				self._conf["background"] = False
-			elif o == "--async-command":
-				self._conf["async-command"] = True
 			elif o == "--async":
 				self._conf["async"] = True
 			elif o == "--timeout":
@@ -194,7 +191,7 @@ class Fail2banCmdLine():
 			# Reads the command line options.
 			try:
 				cmdOpts = 'hc:s:p:xfbdtviqV'
-				cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'test', 'async', 'async-command',
+				cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'test', 'async',
 					'conf=', 'pidfile=', 'pname=', 'socket=',
 					'timeout=', 'str2sec=', 'help', 'version', 'dp', 'dump-pretty']
 				optList, self._args = getopt.getopt(self._argv[1:], cmdOpts, cmdLongOpts)

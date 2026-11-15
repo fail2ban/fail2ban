@@ -152,7 +152,10 @@ class Socket(LogCaptureTestCase):
 			# Exercise parsing and the real client/socket/transmitter path.
 			client = Fail2banClient()
 			self.assertTrue(client.start(['fail2ban-client', '-c', os.path.abspath('config'), '-s', self.sock_name,
-				'--async-command', 'set', 'nested', 'unbanip', '192.0.2.1']))
+				'--async', 'set', 'nested', 'unbanip', '192.0.2.1']))
+			self.assertFalse(Fail2banClient().start(['fail2ban-client', '-c', os.path.abspath('config'),
+				'-s', self.sock_name, 'async', 'set', 'nested', 'unbanip', '192.0.2.2']))
+			self.assertLogged('Use --async set <JAIL> banip|unbanip <IP> ...')
 			self.assertTrue(entered.wait(1))
 			self.assertFalse(done.is_set(), 'queue admission must not wait for the action')
 			second = CSocket(self.sock_name, timeout=1)
@@ -204,6 +207,25 @@ class Socket(LogCaptureTestCase):
 			threading.Thread.join(observer, 2)
 			Observers.Main = previous
 			control.quit()
+
+	def testAsyncFlagUsesOneClientInterface(self):
+		from ..client.fail2banclient import Fail2banClient
+		for flags, command, expected in [
+			([], ['set', 'jail', 'unbanip', '192.0.2.1'], ['set', 'jail', 'unbanip', '192.0.2.1']),
+			(['--async'], ['set', 'jail', 'unbanip', '192.0.2.1'], ['async', 'set', 'jail', 'unbanip', '192.0.2.1']),
+			(['--async'], ['set', 'jail', 'banip', '192.0.2.1'], ['async', 'set', 'jail', 'banip', '192.0.2.1']),
+			(['--async'], ['get', 'jail', 'ignoreip'], ['get', 'jail', 'ignoreip']),
+		]:
+			client = Fail2banClient()
+			requests = []
+			def process(commands):
+				requests.extend(commands)
+				return True
+			client._Fail2banClient__processCmd = process
+			self.assertTrue(client.start(['fail2ban-client', '-c', os.path.abspath('config')] + flags + command))
+			self.assertEqual(requests, [expected])
+		self.assertFalse(Fail2banClient().start(['fail2ban-client', '-c', os.path.abspath('config'),
+			'--async-command', 'set', 'jail', 'banip', '192.0.2.1']))
 
 	def testDeferredCommandsRejectLifecycleAndMissingObserver(self):
 		from ..server.server import Server

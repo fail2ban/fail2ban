@@ -274,9 +274,12 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		# wrap tuple to list (because could be modified here):
 		if not isinstance(cmd, list):
 			cmd = list(cmd)
-		# Acknowledge queue admission, not command completion. Preserve --async,
-		# which is already used internally for server startup.
-		if self._conf.get("async-command", False):
+		if cmd and cmd[0] == 'async':
+			logSys.error("Use --async set <JAIL> banip|unbanip <IP> ...")
+			return False
+		# The wire envelope marks deferred work; --async keeps its startup behavior.
+		if (self._conf.get("async", False) and len(cmd) >= 3
+			and cmd[0] == 'set' and cmd[2] in ('banip', 'unbanip')):
 			return self.__processCmd([['async'] + cmd])
 		# process:
 		if len(cmd) == 1 and cmd[0] == "start":
