@@ -18,8 +18,8 @@ well as a web-based Git repository browser and an issue tracker.
 
 If you are familiar with Python and you have a bug fix or a feature that you
 would like to add to Fail2Ban, the best way to do so it to use the GitHub Pull
-Request feature. You can find more details on the Fail2Ban wiki
-(http://www.fail2ban.org/wiki/index.php/Get_Involved)
+Request feature. You can find more details on the Fail2Ban developer docs.
+(https://fail2ban.readthedocs.io/)
 
 Pull Requests
 =============
