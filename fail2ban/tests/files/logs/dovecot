@@ -168,6 +168,12 @@ Aug 30 08:42:47 host dovecot[2623853]: auth-worker(eric,192.0.2.60)<3499329>: re
 # failJSON: { "match": false , "desc": "don't match to avoid double counting" }
 Aug 30 08:42:49 host postfix/submission/smtpd[3497874]: warning: unknown[192.0.2.60]: SASL LOGIN authentication failed: (reason unavailable), sasl_username=eric
 
+# OpenPAM (FreeBSD, macOS) words PAM_AUTH_ERR as "Authentication error", Linux-PAM as "Authentication failure"; dovecot appends " (Password mismatch?)" to either:
+# failJSON: { "time": "2004-11-17T00:01:23", "match": true , "host": "192.0.2.70", "desc": "OpenPAM wording 'Authentication error', dovecot 2.3 auth-worker with session" }
+Nov 17 00:01:23 host dovecot[17698]: auth-worker(9912): conn unix:auth-worker (uid=143): auth-worker<4>: pam(eric,192.0.2.70,<PNHQq8pZhqIKAQGd>): pam_authenticate() failed: Authentication error (Password mismatch?)
+# failJSON: { "time": "2004-11-17T00:01:30", "match": true , "host": "192.0.2.71", "desc": "OpenPAM wording 'Authentication error', no session ID" }
+Nov 17 00:01:30 host dovecot: auth-worker(9912): pam(eric,192.0.2.71): pam_authenticate() failed: Authentication error (Password mismatch?)
+
 # failJSON: { "time": "2004-08-31T16:06:05", "match": true , "host": "192.0.2.111", "desc": "GHSA-33wh-ccjc-p397, positive case (match, no hangs)" }
 Aug 31 16:06:05 s166-62-100-187 dovecot: imap-login: Disconnected: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: a: (reason: some unknown reason) (tried to use disallowed test auth): user=<>, rip=192.0.2.111
 # failJSON: { "match": false , "desc": "GHSA-33wh-ccjc-p397, negative case (bypass, no hangs)" }
