@@ -16,6 +16,10 @@
 # failJSON: { "time": "2025-09-07T21:20:40", "match": true, "host": "192.0.2.120", "desc": "PAM auth failure, gh-4071"}
 2025/09/07 21:20:40 [error] 23141#23141: *24470 PAM: user 'username' - not authenticated: Authentication failure, client: 192.0.2.120, server: webdav.sub.domain, request: "GET / HTTP/2.0", host: "webdav.sub.domain"
 
+# OpenPAM (FreeBSD, macOS) words PAM_AUTH_ERR as "Authentication error", Linux-PAM as "Authentication failure":
+# failJSON: { "time": "2025-09-07T21:21:40", "match": true, "host": "192.0.2.121", "desc": "PAM auth failure, OpenPAM wording 'Authentication error'"}
+2025/09/07 21:21:40 [error] 23141#23141: *24471 PAM: user 'username' - not authenticated: Authentication error, client: 192.0.2.121, server: webdav.sub.domain, request: "GET / HTTP/2.0", host: "webdav.sub.domain"
+
 # filterOptions: [{"logtype": "journal"}]
 
 # failJSON: { "match": true, "host": "192.0.2.3", "desc": "systemd journal message, with optional extra timestamp, gh-3646"}
