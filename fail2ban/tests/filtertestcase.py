@@ -2623,3 +2623,14 @@ class JailTests(unittest.TestCase):
 		# Must not fail to initiate
 		Jail('test', backend='polling')
 
+	def testBackendsAutoOrder(self):
+		backends = Jail._BACKENDS
+		self.assertEqual(sorted(backends), ['polling', 'pyinotify', 'systemd', 'watchdog'])
+		# file based backends are tried before polling, systemd is the last:
+		self.assertEqual(backends[2:], ['polling', 'systemd'])
+		# pyinotify is preferred on Linux only, watchdog elsewhere (gh-4250):
+		if sys.platform.startswith('linux'):
+			self.assertEqual(backends[:2], ['pyinotify', 'watchdog'])
+		else: # pragma: no cover - platform dependent
+			self.assertEqual(backends[:2], ['watchdog', 'pyinotify'])
+

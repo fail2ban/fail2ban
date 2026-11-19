@@ -25,6 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import os
+import shutil
 import tempfile
 import time
 import unittest
@@ -525,6 +526,9 @@ class CommandActionTest(LogCaptureTestCase):
 		                  ' -- killed with SIGKILL')
 
 	def testExecuteTimeoutWithNastyChildren(self):
+		# the nasty kid script is executed by bash (not always available, e. g. on BSD):
+		if not shutil.which('bash'): # pragma: no cover - platform dependent
+			raise unittest.SkipTest('bash is not available')
 		# temporary file for a nasty kid shell script
 		tmpFilename = tempfile.mktemp(".sh", "fail2ban_")
 		# Create a nasty script which would hang there for a while
