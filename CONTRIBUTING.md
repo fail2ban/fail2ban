@@ -6,9 +6,7 @@ email details to fail2ban-vulnerabilities at lists dot sourceforge dot net .
 
 ### You need some new features, you found bugs?
 visit [Issues](https://github.com/fail2ban/fail2ban/issues)
-and if your issue is not yet known -- file a bug report. See
-[Fail2Ban wiki](http://www.fail2ban.org/wiki/index.php/HOWTO_Seek_Help)
-on further instructions.
+and if your issue is not yet known -- file a bug report.
 
 ### You would like to troubleshoot or discuss?
 join the [mailing list](https://lists.sourceforge.net/lists/listinfo/fail2ban-users)
