@@ -5,3 +5,9 @@
 145.239.69.22 - - - [31/Jan/2015:14:29:44 ] fail2ban.org "GET / HTTP/1.1" 200 814 "-" "NOT A __GOOGLE_BOT__" + 293 1149 546
 # failJSON: { "time": "2024-08-18T22:08:39", "match": true , "host": "192.0.2.222", "desc": "vhost in accesslog, gh-1594" }
 www.sitename.com 192.0.2.222 - - [18/Aug/2024:21:08:39 +0100] "GET / HTTP/1.1" 403 332 "-" "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+# failJSON: { "time": "2026-11-22T21:15:02", "match": true , "host": "192.0.2.223", "desc": "Googlebot-Image user agent" }
+192.0.2.223 - - [22/Nov/2026:21:15:02 +0100] "GET /img/logo.png HTTP/1.1" 200 4096 "-" "Googlebot-Image/1.0"
+# failJSON: { "time": "2026-11-22T21:15:03", "match": true , "host": "192.0.2.224", "desc": "Googlebot-Video user agent" }
+192.0.2.224 - - [22/Nov/2026:21:15:03 +0100] "GET /video/intro.mp4 HTTP/1.1" 200 8192 "-" "Googlebot-Video/1.0"
+# failJSON: { "time": "2026-11-22T21:15:04", "match": false , "host": "192.0.2.225", "desc": "Googlebot only as part of another word" }
+192.0.2.225 - - [22/Nov/2026:21:15:04 +0100] "GET / HTTP/1.1" 200 814 "-" "NotGooglebot/2.1"
