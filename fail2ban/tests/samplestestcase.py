@@ -33,7 +33,7 @@ import unittest
 from ..server.failregex import Regex
 from ..server.filter import Filter, FileContainer
 from ..client.filterreader import FilterReader
-from .utils import setUpMyTime, tearDownMyTime, TEST_NOW, CONFIG_DIR
+from .utils import MyTime, setUpMyTime, tearDownMyTime, TEST_NOW, CONFIG_DIR
 
 # test-time in UTC as string in isoformat (2005-08-14T10:00:00):
 TEST_NOW_STR = datetime.datetime.utcfromtimestamp(TEST_NOW).isoformat()
@@ -291,10 +291,10 @@ def testSampleRegexsFactory(name, basedir):
 								jsonTime = time.mktime(jsonTimeLocal.timetuple())
 								jsonTime += jsonTimeLocal.microsecond / 1000000.0
 								self.assertEqual(fail2banTime, jsonTime,
-									"UTC Time  mismatch %s (%s) != %s (%s)  (diff %.3f seconds)" % 
-									(fail2banTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(fail2banTime)),
-									jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(jsonTime)),
-									fail2banTime - jsonTime) )
+									"Time mismatch %s (%s) != %s (%s)  (diff %s)" % 
+									(fail2banTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(fail2banTime)),
+									jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(jsonTime)),
+									MyTime.seconds2str(fail2banTime - jsonTime)) )
 
 							regexsUsedIdx.add(failregex)
 							regexsUsedRe.add(regexList[failregex])
