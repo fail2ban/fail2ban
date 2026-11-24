@@ -834,10 +834,10 @@ class CommandAction(ActionBase):
 
 		Parameters
 		----------
-		query : str
+		realCmd : str
 			String with tags.
 		aInfo : dict
-			Tags(keys) and associated values for substitution in query.
+			Tags(keys) and associated values for substitution in realCmd.
 
 		Returns
 		-------

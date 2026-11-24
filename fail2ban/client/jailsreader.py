@@ -93,7 +93,7 @@ class JailsReader(ConfigReader):
 
 		Parameters
 		----------
-		allow_missing : bool
+		allow_no_files : bool
 		  Either to allow log files to be missing entirely.  Primarily is
 		  used for testing
 		"""
