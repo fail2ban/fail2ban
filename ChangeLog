@@ -11,6 +11,8 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 -----------
 
 ### Fixes
+* docstrings of `JailReader.convert`, `JailsReader.convert` and `Action.replaceDynamicTags`
+  name the arguments the signatures accept (`allow_no_files`, `realCmd`)
 * retain and start actions added during jail reload after their parameters are configured,
   without replaying previously banned tickets into the new actions (gh-2716).
 * `fail2ban-client reload` resets the jail options removed from configuration to their defaults now: `bantime.increment` and
