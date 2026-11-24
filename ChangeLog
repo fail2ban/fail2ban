@@ -33,6 +33,7 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
   `paths-arch.conf`, `paths-fedora.conf`, `paths-opensuse.conf` - nftables, `paths-freebsd.conf`, `paths-osx.conf ` - pf;
 
 ### New Features and Enhancements
+* `filter.d/immich.conf` - new filter and jail for Immich photo and video management solution supporting reverse proxy and server log formats (gh-4029)
 * `filter.d/authelia.conf` - new filter and jail for Authelia 2FA/SSO authentication portal supporting file and json log formats (gh-4005)
 * `filter.d/cowrie.conf` - new filter and jail for Cowrie SSH/Telnet honeypot JSON log output (gh-4216)
 * `filter.d/exim.conf` - several new rules for mode `aggressive` (TLS error, SMTP syntax error, timeouts, rejected commands)
