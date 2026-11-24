@@ -1,0 +1,49 @@
+# Immich authentication log samples
+
+# Reverse proxy (Nginx / Traefik / Apache) access log format
+# failJSON: { "match": true, "host": "192.168.2.1" }
+192.168.2.1 - - [01/Jul/2025:00:46:25 +0800] "POST /api/auth/login HTTP/1.1" 401 108 "https://domain.net:12036/auth/login" "Mozilla/5.0"
+
+# Reverse proxy access log with IPv6
+# failJSON: { "match": true, "host": "2001:db8::1" }
+2001:db8::1 - - [01/Jul/2025:00:46:25 +0000] "POST /api/auth/login HTTP/2.0" 401 43 "-" "immich/1.106.0 (iOS)"
+
+# Reverse proxy with vhost prefix and user
+# failJSON: { "match": true, "host": "192.0.2.10" }
+immich.example.com 192.0.2.10 - user@example.com [01/Jul/2025:00:46:25 +0000] "POST /api/auth/login HTTP/1.1" 401 108 "-" "Mozilla/5.0"
+
+# Successful login should not match
+# failJSON: { "match": false }
+192.168.2.1 - - [01/Jul/2025:00:53:23 +0800] "POST /api/auth/login HTTP/1.1" 201 246 "https://domain.net:12036/auth/login" "Mozilla/5.0"
+
+# Non-auth endpoint returning 401 should not match
+# failJSON: { "match": false }
+192.168.2.1 - - [01/Jul/2025:00:46:25 +0800] "GET /api/photos HTTP/1.1" 401 108 "https://domain.net:12036/photos" "Mozilla/5.0"
+
+# Immich server direct NestJS log format
+# failJSON: { "match": true, "host": "192.168.1.100" }
+[Nest] 1 - 01/07/2025, 12:34:56 AM WARN [Api:AuthService] Failed login attempt for user test@example.com from ip address 192.168.1.100
+
+# Immich server direct NestJS log format (older version without Api: prefix)
+# failJSON: { "match": true, "host": "156.70.33.157" }
+[Nest] 8 - 08/09/2023, 3:27:42 PM WARN [AuthService] Failed login attempt for user test@example.com from ip address 156.70.33.157
+
+# Immich server direct NestJS log with IPv6
+# failJSON: { "match": true, "host": "2001:db8::1" }
+[Nest] 1 - 01/07/2025, 12:34:56 AM WARN [Api:AuthService] Failed login attempt for user test@example.com from ip address 2001:db8::1
+
+# Immich server log with syslog / systemd-journal prefix (standard logtype=file)
+# failJSON: { "match": true, "host": "10.0.0.5" }
+server immich-server[1234]: WARN [Api:AuthService] Failed login attempt for user admin@domain.com from ip address 10.0.0.5
+
+# Immich systemd-journal log samples
+# filterOptions: [{"logtype": "journal"}]
+
+# failJSON: { "match": true, "host": "10.0.0.5", "desc": "systemd-journal entry with NestJS" }
+server immich-server[1234]: [Nest] 1 - 01/07/2025, 12:34:56 AM WARN [Api:AuthService] Failed login attempt for user admin@domain.com from ip address 10.0.0.5
+
+# failJSON: { "match": true, "host": "2001:db8::2", "desc": "systemd-journal entry with IPv6" }
+server immich-server[1234]: WARN [Api:AuthService] Failed login attempt for user admin@domain.com from ip address 2001:db8::2
+
+# failJSON: { "match": false, "desc": "systemd-journal legitimate entry" }
+server immich-server[1234]: [Nest] 1 - 01/07/2025, 12:34:56 AM LOG [Api:AuthService] User admin@domain.com successfully logged in
