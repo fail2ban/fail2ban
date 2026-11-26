@@ -77,7 +77,7 @@ class Beautifier:
 				msg = "logs: " + response
 			elif inC[0] == "echo":
 				msg = ' '.join(msg)
-			elif inC[0:1] == ['status']:
+			elif inC[0:1] == ['status'] and inC[2:3] != ['stats']:
 				def jail_stat(response, pref=""):
 					# Display jail information
 					for n, res1 in enumerate(response):
@@ -110,7 +110,10 @@ class Beautifier:
 							msg.append("   %s Jail: %s" % (prefix1, n))
 							jail_stat(j, "      " if i == len(jstat) else "   |  ")
 				msg = "\n".join(msg)
-			elif inC[0] in ("stats", "statistic", "statistics"):
+			elif inC[0] in ("status", "stats", "statistic", "statistics"):
+				# statistics of all jails or status with flavor "stats" (all jails or single jail):
+				if inC[0] == "status" and inC[1] != "--all":
+					response = {inC[1]: response}
 				chrTable = [
 					['|', '-', '|', 'x', 'x', '-', '|', '-'], ## ascii
 					["\u2551", "\u2550", "\u255F", "\u256B", "\u256C", "\u2569", "\u2502", "\u2500"] ## utf-8

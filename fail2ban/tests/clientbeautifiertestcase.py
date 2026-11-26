@@ -189,9 +189,23 @@ class BeautifierTest(unittest.TestCase):
 			+ " jail-with-long-name | polling   |   0 |   0 |   0 |   0\n"
 			+ "---------------------------------------------------------"
 		)
-		response = self.b.beautify(response)
-		self.assertEqual(response, output)
-			
+		self.assertEqual(self.b.beautify(response), output)
+		## the same as flavor of status for all jails:
+		self.b.setInputCmd(["status", "--all", "stats"])
+		self.assertEqual(self.b.beautify({}), "No jails found.")
+		self.assertEqual(self.b.beautify(response), output)
+		## and for the single jail:
+		self.b.setInputCmd(["status", "ssh", "stats"])
+		output = (""
+			+ "          |          | Filter    | Actions  \n"
+			+ " Jail     | Backend  |-----------x-----------\n"
+			+ "          |          | cur | tot | cur | tot\n"
+			+ "----------x----------x-----------x-----------\n"
+			+ " ssh      | systemd  |   3 |   6 |  12 |  24\n"
+			+ "---------------------------------------------"
+		)
+		self.assertEqual(self.b.beautify(response["ssh"]), output)
+
 
 	def testStatusStatsAliases(self):
 		for response in ({}, {"ssh": ["polling", (3, 6), (12, 24)]}):
