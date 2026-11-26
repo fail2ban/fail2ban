@@ -144,6 +144,15 @@ class Filter(JailThread):
 		self.delFailRegex()
 		self.delIgnoreRegex()
 		self.delIgnoreIP()
+		# reset options to defaults, because they are set again only if still specified in config:
+		self.__prefRegex = None
+		self.__lineBufferSize = 1
+		self.__logtimezone = None
+		if self.dateDetector is not None:
+			self.dateDetector = DateDetector()
+		self.__ignoreSelf = True
+		self.__ignoreCommand = False
+		self.__ignoreCache = None
 
 	def reload(self, begin=True):
 		""" Begin or end of reloading resp. refreshing of all parameters

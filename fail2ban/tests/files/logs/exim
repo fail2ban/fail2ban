@@ -126,3 +126,39 @@ mail.example.com exim[3751842]: 2021-07-17 23:20:49 plain_server authenticator f
 2022-04-03 21:53:53 no IP address found for host hos-t.example.tld (during SMTP connection from [63.85.123.6]:49390 I=[31.130.202.17]:25)
 # failJSON: { "time": "2022-04-03T21:53:54", "match": true , "host": "192.0.2.101", "desc": "dropped by ACL" }
 2022-04-03 21:53:54 H=[192.0.2.101]:62839 dropped by 'connect' ACL: Country is banned
+
+# failJSON: { "time": "2026-11-22T08:18:30", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:18:30 TLS error on connection from some.annoying.scanner.com [192.0.2.59] (gnutls_handshake): An unexpected TLS packet was received.
+# failJSON: { "time": "2026-11-22T08:18:51", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:18:51 TLS error on connection from some.annoying.scanner.com [192.0.2.59] (gnutls_handshake): A packet with illegal or unsupported version was received.
+# failJSON: { "time": "2026-11-22T08:19:47", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:19:47 TLS error on connection from some.annoying.scanner.com [192.0.2.59] (gnutls_handshake): No common key share with peer.
+# failJSON: { "time": "2026-11-22T08:20:14", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:20:14 TLS error on connection from some.annoying.scanner.com [192.0.2.59] (gnutls_handshake): No common application protocol could be negotiated.
+# failJSON: { "time": "2026-11-22T08:20:16", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:20:16 TLS error on connection from some.annoying.scanner.com [192.0.2.59] (gnutls_handshake): No supported cipher suites have been found.
+# failJSON: { "time": "2026-11-22T08:37:23", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:37:23 TLS error on connection from [192.0.2.59] (recv): Error in the pull function
+# failJSON: { "time": "2026-11-22T08:38:22", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:38:22 TLS error on connection from [192.0.2.59] (gnutls_handshake): timed out
+# failJSON: { "time": "2026-11-22T08:39:18", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:39:18 TLS error on connection from [192.0.2.59] (gnutls_handshake): The TLS connection was non-properly terminated.
+# failJSON: { "time": "2026-11-22T08:39:23", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:39:23 TLS error on connection from [192.0.2.59] (recv): Error in the pull function.
+# failJSON: { "time": "2026-11-22T08:39:46", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:39:46 TLS error on connection from [192.0.2.59] (gnutls_handshake): A disallowed SNI server name has been received.
+
+# failJSON: { "time": "2026-11-22T08:44:04", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:44:04 SMTP syntax error in "MGLNDD_1.2.3.4_25" H=some.annoying.scanner.com [192.0.2.59] unrecognized command
+# failJSON: { "time": "2026-11-22T08:45:15", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:45:15 SMTP syntax error in "?\234?\235?/?5\300\022?" H=[192.0.2.59] NUL character(s) present (shown as '?')
+
+# failJSON: { "time": "2026-11-22T08:46:23", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:46:23 SMTP command timeout on TLS connection from [192.0.2.59]
+# failJSON: { "time": "2026-11-22T08:46:53", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:46:53 SMTP command timeout on connection from (whatever-example) [192.0.2.59]
+# failJSON: { "time": "2026-11-22T08:46:56", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:46:56 SMTP data timeout (message abandoned) on connection from (mail.example.com) [192.0.2.59] F=<update@example.com>
+
+# failJSON: { "time": "2026-11-22T08:47:18", "match": true , "host": "192.0.2.59" }
+2026-11-22 08:47:18 rejected EHLO from [192.0.2.59]: syntactically invalid argument(s): (no argument given)

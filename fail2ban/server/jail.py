@@ -267,6 +267,11 @@ class Jail(object):
 			be['evformula'] = evformula
 		#logSys.info('banTimeExtra : %s' % json.dumps(be))
 
+	def clearBanTimeExtra(self):
+		"""Reset extra ban-time options (used by reloading, they are set again only if still specified in config).
+		"""
+		self._banExtra = {}
+
 	def getBanTimeExtra(self, opt=None):
 		if opt is not None:
 			return self._banExtra.get(opt, None)

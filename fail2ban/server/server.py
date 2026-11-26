@@ -327,6 +327,7 @@ class Server:
 					if name == '--all' or jn == name:
 						jail.idle = True
 						self.__reload_state[jn] = jail
+						jail.clearBanTimeExtra()
 						jail.filter.reload(begin=True)
 						jail.actions.reload(begin=True)
 				pass

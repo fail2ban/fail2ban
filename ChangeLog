@@ -13,6 +13,11 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 ### Fixes
 * retain and start actions added during jail reload after their parameters are configured,
   without replaying previously banned tickets into the new actions (gh-2716).
+* `fail2ban-client reload` resets the jail options removed from configuration to their defaults now: `bantime.increment` and
+  other `bantime.*` options, `ignoreself`, `ignorecommand`, `ignorecache`, `logtimezone`, `prefregex`, `maxlines` and `datepattern`
+  retained their previous values until restart of the jail, if they were no more specified in config;
+  pythonic actions without `reload` method remain unchanged (neither stopped nor started again),
+  changed parameters of such action take effect after restart of the jail only (logged by reload)
 * backend `systemd`: fixes jail that stopped to find failures after journal rotation (default mode, without `rotated`):
   the journal files were retrieved only once at start and the reader opened with a list of files doesn't follow new files,
   so if some file of the list remained (journal of other machine-id or namespace, already rotated files matching a glob
@@ -37,6 +42,7 @@ ver. 1.1.2-dev-1 (20??/??/??) - development nightly edition
 ### New Features and Enhancements
 * `filter.d/authelia.conf` - new filter and jail for Authelia 2FA/SSO authentication portal supporting file and json log formats (gh-4005)
 * `filter.d/cowrie.conf` - new filter and jail for Cowrie SSH/Telnet honeypot JSON log output (gh-4216)
+* `filter.d/exim.conf` - several new rules for mode `aggressive` (TLS error, SMTP syntax error, timeouts, rejected commands)
 * `filter.d/gitlab.conf` - `logtype` option `json` adding support for the `application_json.log` format that
   superseded the deprecated `application.log`; default type `file` keeps the previous behaviour (gh-3566, gh-4230)
 

@@ -1566,6 +1566,52 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertFalse(exists(tofn))
 
 	@with_foreground_server_thread()
+	def testServerReloadResetsRemovedOptions(self, tmp, startparams):
+		cfg = pjoin(tmp, "config")
+		test1log = pjoin(tmp, "test1.log")
+		_write_file(test1log, "w")
+		def _write_jail_cfg(*opts):
+			_write_file(pjoin(cfg, "jail.conf"), "w",
+				"[test-jail1]", "backend = polling", "filter =",
+				"action =",
+				"logpath = " + test1log,
+				r"failregex = ^\s*failure from <HOST>",
+				"enabled = true",
+				*opts)
+		def _get(opt):
+			return self.execCmdDirect(startparams, 'get', 'test-jail1', opt)[1]
+		# options and their default values (if not set in config):
+		opts = (
+			("bantime.increment", "true", True, None),
+			("bantime.maxtime", "1h", 3600, None),
+			("bantime.rndtime", "5m", 300, None),
+			("bantime.factor", "2", "2", None),
+			("bantime.multipliers", "1 2 4", "1 2 4", None),
+			("bantime.overalljails", "true", True, None),
+			("ignoreself", "false", False, True),
+			("ignorecommand", "/bin/true <ip>", "/bin/true <ip>", False),
+			("ignorecache", 'key="<ip>", max-count=10, max-time=5m', ['<ip>', 10, 300], None),
+			("logtimezone", "UTC+0200", "UTC+0200", None),
+			("prefregex", "^pref <F-CONTENT>.+</F-CONTENT>$", "^pref (?P<content>.+)$", ""),
+			("maxlines", "3", 3, 1),
+			("datepattern", "^%%Y-%%m-%%d", ("^%Y-%m-%d", "^Year-Month-Day"), (None, "Default Detectors")),
+		)
+		# start with all options set:
+		_write_jail_cfg(*("%s = %s" % (o, v) for o, v, _, _ in opts))
+		self.pruneLog("[test-phase 1] options set")
+		self.execCmd(SUCCESS, startparams, "reload")
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
+		for o, _, v, _ in opts:
+			self.assertEqual(_get(o), v, "option %s" % o)
+		# reload after the options are removed from config, defaults are expected:
+		_write_jail_cfg()
+		self.pruneLog("[test-phase 2] options removed")
+		self.execCmd(SUCCESS, startparams, "reload")
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
+		for o, _, _, v in opts:
+			self.assertEqual(_get(o), v, "option %s" % o)
+
+	@with_foreground_server_thread()
 	def testServerObserver(self, tmp, startparams):
 		cfg = pjoin(tmp, "config")
 		test1log = pjoin(tmp, "test1.log")
