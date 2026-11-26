@@ -83,6 +83,17 @@ def _globJournalFiles(flags=None, path=None):
 		filesSet = [f for f in filesSet if os.access(f, os.R_OK)]
 	return filesSet if filesSet else None
 
+def _journalFilesState(files):
+	"""Get identity (device, inode) of given journal files, to recognize rotated, new or removed files."""
+	state = {}
+	for f in files or ():
+		try:
+			st = os.stat(f)
+			state[f] = (st.st_dev, st.st_ino)
+		except OSError: # removed in-between
+			pass
+	return state
+
 
 ##
 # Journal reader class.
@@ -99,12 +110,18 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	# @param jail the jail object
 
 	def __init__(self, jail, **kwargs):
+		# original arguments, to retrieve actual journal files again (see _journalFilesChanged):
+		self.__jrnlkwargs = kwargs.copy()
 		self.__jrnlargs = FilterSystemd._getJournalArgs(kwargs)
 		JournalFilter.__init__(self, jail, **kwargs)
 		self.__modified = 0
 		# Initialise systemd-journal connection
 		self.__lock = threading.Lock()
+		self.__jrnlfstate = _journalFilesState(self.__jrnlargs.get('files'))
 		self.__journal = journal.Reader(**self.__jrnlargs)
+		# last position (time or cursor of last read entry), to continue from there after reopen:
+		self.__jrnlpos = None
+		self.__nextFilesCheck = 0
 		self.__matches = []
 		self.__bypassInvalidateMsg = 0
 		self.setDatePattern(None)
@@ -182,8 +199,29 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			pass
 		return False
 
+	def _journalFilesChanged(self):
+		"""Checks the journal files to monitor are changed (rotated, created or removed).
+
+		The reader opened with a list of files (default, if not `rotated`) doesn't follow new files,
+		it only forgets the files renamed by rotation or removed, so the list must be retrieved again.
+		"""
+		if not self.__jrnlargs.get('files'):
+			return False
+		ja = FilterSystemd._getJournalArgs(self.__jrnlkwargs.copy())
+		fstate = _journalFilesState(ja.get('files'))
+		if fstate == self.__jrnlfstate:
+			return False
+		try:
+			# new files must be readable (a file just created by rotation may be still empty):
+			journal.Reader(**ja).close()
+		except OSError as e:
+			logSys.debug("[%s] Changed journal files are not readable yet, retry later: %s", self.jailName, e)
+			return False
+		self.__jrnlargs, self.__jrnlfstate = ja, fstate
+		return True
+
 	def _reopenJournal(self): # pragma: no cover
-		"""Reopen journal (if it becomes offline after rotation)
+		"""Reopen journal (if it becomes offline after rotation or its files are changed)
 		"""
 		if self.__journal.closed:
 			# recreate reader:
@@ -202,6 +240,17 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				self.__journal = journal.Reader(**self.__jrnlargs)
 		# restore journalmatch specified for the jail:
 		self._resetJournalMatches()
+		# continue after last read entry (don't process the entries of remaining files again):
+		pos = self.__jrnlpos
+		if pos is not None:
+			try:
+				if isinstance(pos, str):
+					self.__journal.seek_cursor(pos)
+				else:
+					self.__journal.seek_realtime(pos)
+				self.__journal.get_previous()
+			except OSError:
+				pass
 		# just to avoid "Invalidate signaled" happening again after reopen:
 		self.__bypassInvalidateMsg = MyTime.time() + 1
 
@@ -366,6 +415,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		if isinstance(date, int):
 			date = float(date)
 		self.__journal.seek_realtime(date)
+		self.__jrnlpos = date
 
 	def inOperationMode(self):
 		self.inOperation = True
@@ -465,9 +515,17 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 								if self.__journal.get_previous(): self.__journal.get_next()
 							except OSError:
 								pass
-						# if it is not alive - reopen:
+					# if it is not alive or its files are changed (invalidated or checked periodically,
+					# because new files are not signaled) - reopen:
+					invalidated = (wcode == journal.INVALIDATE)
+					if self.active and (invalidated or MyTime.time() >= self.__nextFilesCheck):
+						self.__nextFilesCheck = MyTime.time() + self.sleeptime * 10
 						with self.__lock:
-							if not self._journalAlive:
+							if self._journalFilesChanged():
+								logSys.log(logging.MSG, "[%s] Journal files changed, reopen journal", self.jailName)
+								self._reopenJournal()
+								wcode = journal.NOP
+							elif invalidated and not self._journalAlive:
 								logSys.log(logging.MSG, "[%s] Journal reader seems to be offline, reopen journal", self.jailName)
 								self._reopenJournal()
 								wcode = journal.NOP
@@ -481,6 +539,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 							e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
 					self.ticks += 1
 					if logentry:
+						self.__jrnlpos = logentry.get('__CURSOR')
 						line, tm = self.formatJournalEntry(logentry)
 						# switch "in operation" mode if we'll find start entry (+ some delta):
 						if not self.inOperation:

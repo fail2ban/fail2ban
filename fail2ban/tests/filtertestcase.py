@@ -28,6 +28,7 @@ import os
 import re
 import sys
 import time, datetime
+import shutil
 import tempfile
 import uuid
 
@@ -1573,6 +1574,75 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def testJournalFlags_RotatedArg(self):
 			self._initFilter(journalflags=0, rotated=1)
 			self._initFilter(journalflags=1, rotated=1)
+
+		def _sendJournal(self, msg, count=1):
+			"""Send message(s) to journal, wait until written, return the journal file they are written to"""
+			fields = dict(self.journal_fields, **TEST_JOURNAL_FIELDS)
+			for i in range(count):
+				journal.send(MESSAGE=msg, **fields)
+			self._jrnlSent = getattr(self, '_jrnlSent', 0) + count
+			def _find():
+				# system or user journal (depending on user the test is running):
+				for fn in _globJournalFiles(None, os.path.dirname(self._getRuntimeJournal())) or ():
+					with journal.Reader(files=[fn]) as jr:
+						jr.add_match("TEST_UUID=%s" % self.test_uuid)
+						if sum(1 for e in jr) >= self._jrnlSent:
+							return fn
+			fn = Utils.wait_for(_find, _maxWaitTime(10))
+			if not fn: # pragma: no cover
+				raise unittest.SkipTest('journal file with entries of the test not found')
+			return fn
+
+		def _rotateJournal(self, src, tmp):
+			"""Simulate rotation in tmp: system journal is archived (renamed), new one is the copy of src"""
+			fn = os.path.join(tmp, 'system.journal')
+			if os.path.exists(fn):
+				os.rename(fn, os.path.join(tmp, 'system@rotated-%s.journal' % len(os.listdir(tmp))))
+			shutil.copyfile(src, fn + '.tmp')
+			os.rename(fn + '.tmp', fn)
+
+		def _startRotationTest(self, **kwargs):
+			self._initFilter(**kwargs)
+			self.filter.sleeptime /= 10.0
+			self.filter.start()
+			# wait for operation mode and normal wait cycle (journal reader has current entry and waits for new):
+			self.assertTrue(Utils.wait_for(lambda: self.filter.inOperation, _maxWaitTime(10)))
+			self.waitForTicks(2)
+
+		@with_tmpdir
+		def testJournalRotation(self, tmp):
+			failmsg = "error: PAM: Authentication failure for test from "
+			# journal directory with 2 files, one will be rotated, other one remains as it is:
+			src = self._sendJournal("journal rotation test", 2)
+			shutil.copyfile(src, os.path.join(tmp, 'user-0.journal'))
+			self._rotateJournal(src, tmp)
+			self._startRotationTest(journalpath=tmp)
+			# new entries are written to new system journal after rotation:
+			self._rotateJournal(self._sendJournal(failmsg + "192.0.2.1", 3), tmp)
+			self.assert_correct_ban("192.0.2.1", 3)
+			# new journal file (not signaled by journal reader, found by periodical check):
+			shutil.copyfile(self._sendJournal(failmsg + "192.0.2.2", 3), os.path.join(tmp, 'user-1.tmp'))
+			os.rename(os.path.join(tmp, 'user-1.tmp'), os.path.join(tmp, 'user-1.journal'))
+			self.assert_correct_ban("192.0.2.2", 3)
+			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
+
+		@with_tmpdir
+		def testJournalRotation_FilesGlob(self, tmp):
+			failmsg = "error: PAM: Authentication failure for test from "
+			# journal files as glob, already rotated files are included:
+			src = self._sendJournal("journal rotation test", 2)
+			self._rotateJournal(src, tmp)
+			self._rotateJournal(src, tmp)
+			self._startRotationTest(journalfiles=os.path.join(tmp, '*.journal'))
+			self._rotateJournal(self._sendJournal(failmsg + "192.0.2.1", 2), tmp)
+			self.assertTrue(Utils.wait_for(
+				lambda: self.filter.failManager.getFailTotal() >= 2, _maxWaitTime(10)))
+			# entries of remaining (rotated) files are not processed again after reopen:
+			self._rotateJournal(self._sendJournal(failmsg + "192.0.2.1", 1), tmp)
+			self.assertTrue(Utils.wait_for(
+				lambda: self.filter.failManager.getFailTotal() >= 3, _maxWaitTime(10)))
+			self.waitForTicks(2)
+			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
 
 		def assert_correct_ban(self, test_ip, test_attempts):
 			self.assertTrue(self.waitFailTotal(test_attempts, 10)) # give Filter a chance to react
